@@ -1,0 +1,479 @@
+id: for-loops
+order: 8
+title: for and range
+summary: Run a block once for each value in a row of values.
+minutes: 25
+outcomes: [A1, A2]
+
+objectives:
+  - id: O1
+    text: Explain how for works - the variable gets each value in turn and the block runs once per value
+  - id: O2
+    text: Make rows of numbers with range(stop), range(start, stop) and range(start, stop, step)
+  - id: O3
+    text: Predict the values and the number of rounds of a for loop
+  - id: O4
+    text: Find a range that stops one value too early and fix it
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: A row of waiting values
+    question: The while loop needed three parts. Can Python count for you?
+    code: |
+      for n in range(4):
+          double = n * 2
+    beats:
+      - beat: empty
+        caption: "A counting loop with `while` needs a start value, a condition and a change. Forget one, and it breaks. For counting, Python has a loop that does all three."
+      - beat: row
+        line: 1
+        caption: "`range(4)` makes a row of four numbers. It starts at **0**, so the last one is 3. The 4 itself is **not** in the row."
+      - beat: first
+        line: 1
+        caption: "`for` takes the first value from the row and stores it in `n`."
+      - beat: block1
+        line: 2
+        caption: "Then the block runs with this value."
+      - beat: second
+        line: 1
+        caption: "Back to the `for` line. No question this time: `n` simply gets the **next** value."
+      - beat: block2
+        line: 2
+        caption: "The block runs again. The same lines, a new value."
+      - beat: rest
+        line: 2
+        caption: "The same happens for 2 and for 3. One round for each value in the row."
+      - beat: end
+        caption: "The row is empty, so the loop ends. `n` keeps the last value. You wrote no condition, and there was no change to forget."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: range
+    type: theory
+    objective: O2
+    title: Three forms of range
+    body: |
+      ## `for` and `range`
+
+      ```
+      for name in values:
+          block
+      ```
+
+      `for` gives the name each value, one after the other, and runs the
+      block once for each. `range` makes the values. It has three forms.
+
+      One rule is the same in all forms: **the stop value is not included.**
+      So `range(5)` gives five values, and the block runs five times.
+    keys:
+      - code: "range(5)"
+        means: "From 0, up to 5 but without 5: `0 1 2 3 4`."
+      - code: "range(2, 6)"
+        means: "With a start value: `2 3 4 5`."
+      - code: "range(0, 10, 2)"
+        means: "With a step of 2: `0 2 4 6 8`."
+      - code: "range(5, 0, -1)"
+        means: "A step below zero counts down: `5 4 3 2 1`."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-range
+    type: predict
+    objective: O3
+    title: Where does range start and stop
+    item:
+      kind: predict
+      id: p-range
+      prompt: "**Type every line that this program prints.**"
+      code: |
+        for i in range(3):
+            print(i)
+      explain: >-
+        `range(3)` gives three values: 0, 1 and 2. It starts at 0, and the
+        stop value 3 is not included.
+      misconceptions:
+        - answer: "1\n2\n3"
+          say: "`range` starts at 0 when you give no start value, and it stops before 3."
+        - answer: "0\n1\n2\n3"
+          say: "The stop value is never included. `range(3)` ends with 2."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O2
+    title: Build your own rows
+    intro: |
+      Press **Run**. The small cards at the top are the values that
+      `range` made. Watch `n` take them one by one.
+
+      Then change the range. Look at the row before the loop starts: is it
+      what you expected?
+    code: |
+      for n in range(5):
+          print(n)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Change the range, so that the program prints `1 2 3 4 5`."
+        expr: "err is None and lines == ['1', '2', '3', '4', '5']"
+      - text: "Use a step to print the even numbers `0 2 4 6 8`."
+        expr: "err is None and lines == ['0', '2', '4', '6', '8']"
+      - text: "Count down: `5 4 3 2 1`."
+        expr: "err is None and lines == ['5', '4', '3', '2', '1']"
+      - text: "Replace `range(...)` by a text, for example `\"hello\"`. What does `n` get in each round?"
+        expr: "err is None and isinstance(ns.get('n'), str) and len(lines) > 1 and all(len(line) == 1 for line in lines)"
+
+  # 5. PREDICT ---------------------------------------------------------------
+  - id: predict-sum
+    type: predict
+    objective: O3
+    title: A for loop that collects
+    item:
+      kind: predict
+      id: p-sum
+      prompt: "This program prints one line. **What is it?** Write the row of values first."
+      code: |
+        total = 0
+        for n in range(1, 5):
+            total = total + n
+        print(total)
+      explain: >-
+        `range(1, 5)` gives 1, 2, 3 and 4. The 5 is not included. The loop
+        adds them: 1 + 2 + 3 + 4 is 10. Compare this with the `while` loop of
+        the last lesson: the counter needs no lines of its own.
+      misconceptions:
+        - answer: "15"
+          say: "The stop value 5 is not included. The row is 1, 2, 3, 4."
+        - answer: "6"
+          say: "The row starts at 1 and has four values: 1, 2, 3, 4."
+        - answer: "1\n3\n6\n10"
+          say: "`print` has no spaces at the start. It is after the loop and runs one time."
+
+  # 6. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-table
+    type: worked
+    objective: O1
+    title: A multiplication table
+    problem: |
+      **Ask for a number and print its multiplication table from 1 to 10**,
+      with lines like `7 x 3 = 21`.
+
+      Ten lines that are almost the same: this is work for a loop.
+    lines:
+      - code: 'number = int(input("Number: "))'
+        note: "Ask and convert, one time, before the loop."
+      - code: "for i in range(1, 11):"
+        note: "The values 1 to 10. The stop value is 11, because the stop is not included."
+      - code: |2
+              print(f"{number} x {i} = {number * i}")
+        note: "The block uses the loop variable `i`. That is what makes each round different."
+    check:
+      kind: mcq
+      id: w-table
+      prompt: "This program uses `for`. The password program of the last lesson used `while`. **Why is `for` the right choice here?**"
+      options:
+        - text: "The number of rounds is known before the loop starts"
+          correct: true
+          why: "Ten rounds, always. Use `for` for a known row of values. Use `while` to repeat until something happens."
+        - text: "`while` cannot count to 10"
+          why: "`while` can do it, with a start value, a condition and a change. `for` is shorter and safer here."
+        - text: "`for` is needed when the block has a `print`"
+          why: "Both loops can print. The choice depends on what you know about the rounds."
+
+  # 7. EXERCISE: completion --------------------------------------------------
+  - id: ex-squares
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Square numbers
+    prompt: |
+      A square number is a number multiplied by itself.
+
+      **Replace `___` with a range**, so that the program prints the
+      squares of 1, 2, 3, 4 and 5: `1`, `4`, `9`, `16`, `25`.
+    starter: |
+      for n in ___:
+          print(n * n)
+    solution: |
+      for n in range(1, 6):
+          print(n * n)
+    after: >-
+      To end at 5, the stop value is 6. Many programmers say it this way:
+      the stop value is the first value that is **not** in the row.
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Write `range(...)` with a start value and a stop value."
+      - expr: "lines == ['1', '4', '9', '16', '25']"
+        pass: "It prints 1, 4, 9, 16, 25"
+        hint: "The row of values must be 1, 2, 3, 4, 5."
+        misconceptions:
+          - when: "lines == ['0', '1', '4', '9', '16']"
+            say: "The row starts at 0 and ends at 4. Give a start value of 1, and a stop value that lets the 5 in."
+          - when: "lines == ['1', '4', '9', '16']"
+            say: "The 25 is missing. The stop value is not included, so to reach 5 the stop value must be 6."
+          - when: "lines == ['0', '1', '4', '9', '16', '25']"
+            say: "The row starts at 0. Give `range` a start value: `range(1, ...)`."
+    hints:
+      - "With one number, `range` starts at 0. You need the form with two numbers."
+      - "The stop value is not included."
+      - "Write `range(1, 6)`."
+
+  # 8. EXERCISE: debug -------------------------------------------------------
+  - id: ex-off-by-one
+    type: exercise
+    fade: debug
+    objective: O4
+    title: One value is missing
+    prompt: |
+      This program must add all whole numbers from 1 to `last`, **with
+      `last` included**. For 100 the right answer is `5050`.
+
+      **Run it.** It gives no error, but the result is `4950`. Find the
+      mistake and fix it.
+    starter: |
+      last = 100
+      total = 0
+      for n in range(1, last):
+          total = total + n
+      print(total)
+    solution: |
+      last = 100
+      total = 0
+      for n in range(1, last + 1):
+          total = total + n
+      print(total)
+    after: >-
+      4950 is 5050 minus 100: exactly the last value was missing. This kind
+      of mistake is so common that it has a name: an **off-by-one error**.
+      When a loop result is a little wrong, check the first and the last
+      value of the row.
+    cases:
+      - {}
+      - label: "`last` is 10"
+        set: { last: 10 }
+      - label: "`last` is 1"
+        set: { last: 1 }
+    checks:
+      - expr: "err is None and lines[-1:] == [str(total)]"
+        pass: "The program prints `total`"
+        hint: "Keep the last line."
+      - expr: "total == sum(range(1, last + 1))"
+        pass: "`total` is the sum of 1 to `last`, with `last` included"
+        hint: "Which values does `range(1, last)` give? Is `last` one of them?"
+        misconceptions:
+          - when: "ns.get('total') == sum(range(1, last))"
+            say: "The value of `last` itself is not added. The stop value of a range is not included."
+          - when: "ns.get('total') == 5050 and last != 100"
+            say: "`total` is always 5050. The loop must use `last`."
+    hints:
+      - "The difference between 5050 and 4950 is 100. Which value did the loop not add?"
+      - "The stop value is not included. To include `last`, the stop must be one bigger."
+      - "Write `range(1, last + 1)`."
+
+  # 9. EXERCISE: independent -------------------------------------------------
+  - id: ex-triangle
+    type: exercise
+    fade: independent
+    objective: O1
+    title: A triangle of stars
+    prompt: |
+      **Ask for a height. Print a triangle of stars with that number of
+      lines.** For the height `3`:
+
+      ```
+      *
+      **
+      ***
+      ```
+
+      Line 1 has one star, line 2 has two, and so on. Remember from lesson
+      3: `"*" * 3` gives `***`. Print only the question and the triangle.
+    starter: |
+      # Ask for the height.
+      # Print the triangle with a for loop.
+    solution: |
+      height = int(input("Height: "))
+      for row in range(1, height + 1):
+          print("*" * row)
+    after: >-
+      Two lines of loop made a picture of any size. The loop variable did
+      the work: it was 1, then 2, then 3, and each round used it to decide
+      the length of its line.
+    cases:
+      - {}
+      - label: "the height is `3`"
+        stdin: ["3"]
+      - label: "the height is `1`"
+        stdin: ["1"]
+      - label: "the height is `6`"
+        stdin: ["6"]
+    checks:
+      - expr: "len(inputs) == 1 and err is None"
+        pass: "The program asks one question and runs without an error"
+        hint: "Use `int(input(...))` one time, before the loop."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "`range` needs a whole number. Change the answer of `input()` with `int()`."
+          - when: "err == 'ValueError'"
+            say: "The answer must be a whole number, like `4`. Run again and type a number."
+      - expr: "lines[1:] == ['*' * k for k in range(1, int(inputs[0]) + 1)]"
+        pass: "It prints the triangle: 1 star, 2 stars, ... up to the height"
+        hint: "The loop variable must go from 1 to the height. Use it to repeat the star."
+        misconceptions:
+          - when: "[line for line in lines[1:] if line != ''] == ['*' * k for k in range(1, int(inputs[0]))]"
+            say: "The last line is missing. The stop value is not included: use `height + 1`. If the first line is empty, the row also starts at 0 and must start at 1."
+          - when: "len(lines) > 1 and all(line == '*' * int(inputs[0]) for line in lines[1:])"
+            say: "Every line has the same length. Use the loop variable, not the height, to repeat the star."
+          - when: "len(lines) > 2 and lines[1] != '*' and '*' in lines[-1]"
+            say: "The first line of the triangle must be one star. Check the start value of the range."
+    hints:
+      - "Start with `height = int(input(...))`."
+      - "The loop: `for row in range(1, height + 1):`."
+      - 'The block is one line: `print("*" * row)`.'
+
+  # 10. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-values
+        objective: O2
+        prompt: "Which numbers does `range(2, 6)` give?"
+        options:
+          - text: "`2 3 4 5`"
+            correct: true
+            why: "It starts at 2 and stops before 6."
+          - text: "`2 3 4 5 6`"
+            why: "The stop value 6 is not included."
+          - text: "`3 4 5`"
+            why: "The start value is included. Only the stop value is left out."
+      - kind: predict
+        id: q-keeps
+        objective: O3
+        code: |
+          for x in range(0, 10, 5):
+              print(x)
+          print(x)
+        explain: >-
+          With a step of 5 the row is 0 and 5. The 10 is the stop value, so
+          it is not included. After the loop, `x` still holds the last
+          value, so the last line prints 5 again.
+        misconceptions:
+          - answer: "0\n5\n10\n10"
+            say: "10 is the stop value. It is not in the row."
+          - answer: "0\n5"
+            say: "The last `print` is outside the block. It runs after the loop and shows the last value of `x`."
+      - kind: mcq
+        id: q-choice
+        objective: O1
+        prompt: "A program must ask for a password until it is right. Which loop fits?"
+        options:
+          - text: "`while`, because nobody knows how many tries the user needs"
+            correct: true
+            why: "Use `while` to repeat until something happens. Use `for` for a known row of values."
+          - text: "`for` with `range(10)`"
+            why: "That stops after 10 tries, also when the password is still wrong, and goes on asking after a right one."
+          - text: "It makes no difference"
+            why: "The loops are for different jobs. Here the number of rounds is not known."
+      - kind: mcq
+        id: q-include
+        objective: O4
+        prompt: "A loop must run for the numbers 1 to 20, **with 20 included**. Which range is right?"
+        options:
+          - text: "`range(1, 21)`"
+            correct: true
+            why: "The stop value is the first number that is not in the row."
+          - text: "`range(1, 20)`"
+            why: "This ends at 19. The stop value is not included."
+          - text: "`range(20)`"
+            why: "This gives 0 to 19: it starts one too early and ends one too early."
+      - kind: predict
+        id: q-text
+        objective: O3
+        code: |
+          for c in "hi!":
+              print(c)
+        explain: "`for` works with every row of values. A text is a row of characters, so `c` gets one character in each round."
+      - kind: mcq
+        id: q-rounds
+        objective: O3
+        prompt: "How many times does the block of `for k in range(10):` run?"
+        options:
+          - text: "10 times"
+            correct: true
+            why: "`range(10)` gives ten values, 0 to 9. One round for each."
+          - text: "9 times"
+            why: "The values are 0 to 9. Count them: there are ten."
+          - text: "11 times"
+            why: "The 10 is not included. The values are 0 to 9."
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-range
+    objective: O3
+    code: |
+      for i in range(4):
+          print(i)
+    explain: "`range(4)` gives four values: 0, 1, 2, 3. It starts at 0 and the 4 is not included."
+    misconceptions:
+      - answer: "1\n2\n3\n4"
+        say: "`range` starts at 0 and stops before the stop value."
+  - kind: mcq
+    id: r-two
+    objective: O2
+    prompt: "Which numbers does `range(1, 4)` give?"
+    options:
+      - text: "`1 2 3`"
+        correct: true
+        why: "The start value is included, the stop value is not."
+      - text: "`1 2 3 4`"
+        why: "The stop value 4 is not included."
+      - text: "`0 1 2 3`"
+        why: "The row starts at the start value, here 1."
+  - kind: mcq
+    id: r-stop
+    objective: O4
+    prompt: "A loop with `range(1, n)` gives a result that is a little too small. What do you check first?"
+    options:
+      - text: "If the last value `n` must be included: then the stop is `n + 1`"
+        correct: true
+        why: "The stop value is never in the row. This is the most common mistake with `range`."
+      - text: "If the block has 4 spaces"
+        why: "Wrong spaces give an error or a very different result, not a result that is a little too small."
+      - text: "If the loop variable has a good name"
+        why: "A name does not change the result."
+  - kind: predict
+    id: r-sum
+    objective: O3
+    code: |
+      total = 0
+      for n in range(4):
+          total = total + n
+      print(total)
+    explain: "The row is 0, 1, 2, 3. The sum is 6."
+    misconceptions:
+      - answer: "10"
+        say: "The 4 is not in the row. The values are 0, 1, 2, 3."
+  - kind: mcq
+    id: r-which
+    objective: O1
+    prompt: "When is `for` a better choice than `while`?"
+    options:
+      - text: "When the values or the number of rounds are known before the loop starts"
+        correct: true
+        why: "`for` walks through a row of values. `while` repeats until something happens."
+      - text: "When the loop must run until the user types the right answer"
+        why: "Nobody knows how many rounds that takes. That is a job for `while`."
+      - text: "When the block has more than one line"
+        why: "The size of the block does not matter for the choice."

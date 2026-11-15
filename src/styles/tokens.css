@@ -1,0 +1,42 @@
+/* Design tokens of the paper workshop. See docs/design.md. */
+:root {
+  --paper: #f3ede2;
+  --paper-2: #fbf7ef;
+  --paper-3: #e7ddcb;
+  --ink: #1a1b2e;
+  --ink-2: #4a4b63;
+  --ink-3: #8b889a;
+  --sun: #f6b92b;
+  --blue: #2b50d6;
+  --leaf: #1e9e6a;
+  --tomato: #e4472b;
+  --kraft: #c99b63;
+  --kraft-dark: #a97c47;
+
+  --tint-good: #dcf2e6;
+  --tint-bad: #fbe3dc;
+  --tint-info: #fdf0cc;
+
+  /* Code on the ink slab */
+  --code-text: #f6f1e7;
+  --code-dim: #8f8ca3;
+  --code-kw: #ff8f73;
+  --code-str: #8fddb0;
+  --code-num: #f9cb5e;
+  --code-fn: #a9bcff;
+
+  --font-display: 'Bricolage Grotesque Variable', 'Arial Narrow', sans-serif;
+  --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, Consolas, monospace;
+
+  --line: 2px solid var(--ink);
+  --radius: 14px;
+  --radius-s: 9px;
+  --shadow: 4px 4px 0 var(--ink);
+  --shadow-s: 3px 3px 0 var(--ink);
+  --shadow-l: 8px 8px 0 var(--ink);
+
+  --bar-h: 64px;
+  --dock-h: 76px;
+  --wrap: 1180px;
+}

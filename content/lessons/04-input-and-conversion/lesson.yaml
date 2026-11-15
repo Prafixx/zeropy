@@ -1,0 +1,432 @@
+id: input-and-conversion
+order: 4
+title: Input and conversion
+summary: Ask the user for values and change text into numbers.
+minutes: 25
+outcomes: [A1, A2]
+
+objectives:
+  - id: O1
+    text: Ask the user for a value with input()
+  - id: O2
+    text: Explain why the answer of input() is always text
+  - id: O3
+    text: Change the type of a value with int(), float() and str()
+  - id: O4
+    text: Read a ValueError and find the value that cannot be changed
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O2
+    title: The answer is text
+    question: The user types 12. What does Python receive?
+    code: |
+      answer = input("Age? ")
+      age = int(answer)
+      next_age = age + 1
+    beats:
+      - beat: empty
+        caption: "Until now, all values were in the code. A real program gets values from the **user**."
+      - beat: ask
+        line: 1
+        caption: "`input` shows the question and waits. The user types 12. Look at the color: the answer is **text**, always."
+      - beat: convert
+        line: 2
+        caption: "`int()` reads the text and makes a **number** from it. This is a new value with a new type. The text stays as it was."
+      - beat: compute
+        line: 3
+        caption: "Now Python can compute. With the text `'12'`, the line `answer + 1` gives a `TypeError`."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: tools
+    type: theory
+    objective: O1
+    title: Ask, then convert
+    body: |
+      ## `input()` and conversion
+
+      `input("question")` does three things: it shows the question, it waits
+      until the user presses Enter, and it gives back the typed characters
+      as text (`str`).
+
+      To compute with the answer, change its type first. This is called
+      **conversion**. Each type has a conversion with the same name.
+
+      Programmers often write both steps on one line:
+      `age = int(input("Age? "))`. Python works from the inside to the outside.
+    keys:
+      - code: 'input("Name: ")'
+        means: "Ask. The result is always text."
+      - code: 'int("12")'
+        means: "Text to whole number: `12`."
+      - code: 'float("2.5")'
+        means: "Text to number with decimals: `2.5`."
+      - code: "str(12)"
+        means: 'Number to text: `"12"`.'
+      - code: 'int("ten")'
+        means: "Not possible. Python stops with a `ValueError`."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-convert
+    type: predict
+    objective: O3
+    title: Before and after int()
+    item:
+      kind: predict
+      id: p-convert
+      prompt: "This program prints two lines. **Type both lines** before you check."
+      code: |
+        a = "2"
+        b = "3"
+        print(a + b)
+        print(int(a) + int(b))
+      explain: >-
+        `a` and `b` are text, so `+` joins them: `23`. After `int()`, both
+        are numbers, so `+` adds them: 5. The answers of `input()` behave
+        like `a` and `b` here.
+      misconceptions:
+        - answer: "5\n5"
+          say: "On line 3, `a` and `b` are text. `+` joins text."
+        - answer: "23\n23"
+          say: "On line 4, `int()` makes numbers. `+` adds numbers."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O1
+    title: Talk to your program
+    intro: |
+      Press **Run**. When the program asks, a field appears under the output.
+      Type your answer and press Enter.
+
+      Watch the colors of the cards: which values are text, which are numbers?
+    code: |
+      name = input("Your name: ")
+      age = int(input("Your age: "))
+      print(f"Hello, {name}!")
+      print(f"Next year you are {age + 1}.")
+    experiments:
+      - text: "Run the program. Answer both questions."
+        expr: "err is None and len(inputs) >= 2"
+      - text: "Run again. For the age, type a word, for example `ten`. Read the message."
+        expr: "err == 'ValueError'"
+      - text: "Change the last line: print the age in 10 years."
+        expr: "err is None and isinstance(ns.get('age'), int) and str(ns['age'] + 10) in lines[-1]"
+      - text: "Add a third question, for example about a city, and print the answer."
+        expr: "err is None and len(inputs) >= 3 and inputs[-1] != '' and any(inputs[-1] in line for line in lines[len(inputs):])"
+
+  # 5. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-total
+    type: worked
+    objective: O3
+    title: Price times count
+    problem: |
+      A shop program asks for a price and for a count.
+
+      **Print the total price.** The price can have decimals, like 2.5.
+    lines:
+      - code: 'price = float(input("Price: "))'
+        note: "The price can have decimals, so the conversion is `float()`."
+      - code: 'count = int(input("How many: "))'
+        note: "A count is a whole number, so the conversion is `int()`."
+      - code: "total = price * count"
+        note: "Both values are numbers now. Python can multiply them."
+      - code: 'print(f"Total: {total}")'
+        note: "An f-string takes any type, so no conversion back to text is needed."
+    check:
+      kind: mcq
+      id: w-total
+      prompt: "You remove `float()` and `int()` from lines 1 and 2. **What happens on line 3?**"
+      options:
+        - text: "A `TypeError`: Python cannot multiply text by text"
+          correct: true
+          why: "Both answers stay text. `*` between two texts is not possible."
+        - text: "The total is still correct"
+          why: "Python does not convert by itself. The answers stay text."
+        - text: "Python asks the user again"
+          why: "Python asks only when it meets `input()`. Line 3 has no `input()`."
+
+  # 6. EXERCISE: completion --------------------------------------------------
+  - id: ex-area
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Area of a room
+    prompt: |
+      This program asks for the width and the height of a room and prints
+      the area.
+
+      **Replace each `___` with the right conversion.** The numbers can have
+      decimals, for example `2.5`.
+
+      Then run it and answer the questions. The check also runs your program
+      with other answers.
+    starter: |
+      width = ___(input("Width: "))
+      height = ___(input("Height: "))
+      print(width * height)
+    solution: |
+      width = float(input("Width: "))
+      height = float(input("Height: "))
+      print(width * height)
+    after: >-
+      `float()` reads numbers with and without a decimal point. `int()` reads
+      only whole numbers. When a value can have decimals, choose `float()`.
+    cases:
+      - {}
+      - label: "the user types `3` and `4`"
+        stdin: ["3", "4"]
+      - label: "the user types `2.5` and `4`"
+        stdin: ["2.5", "4"]
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Each `___` must be the name of a conversion."
+        misconceptions:
+          - when: "err == 'ValueError' and any('.' in text for text in inputs)"
+            say: "`int()` cannot read a number with a decimal point. Use `float()`."
+          - when: "err == 'ValueError'"
+            say: "The answer must be a number, like `3` or `2.5`. Run again and type a number."
+          - when: "err == 'TypeError'"
+            say: "`str()` keeps the answer as text. Text cannot be multiplied by text."
+      - expr: "len(inputs) == 2 and lines[-1:] == [str(float(inputs[0]) * float(inputs[1]))]"
+        pass: "It prints the width multiplied by the height"
+        hint: "Convert both answers to numbers with decimals, then multiply."
+    hints:
+      - "The answers are text. Which conversion makes a number?"
+      - "The numbers can have decimals. `int()` reads only whole numbers."
+      - 'Write `float(input("Width: "))` and the same for the height.'
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-likes
+    type: exercise
+    fade: debug
+    objective: O2
+    title: A wrong total
+    prompt: |
+      This program adds likes and shares. It runs without an error, but the
+      total is wrong.
+
+      **Run it with `12` and `3`. Look at the total. Fix the program.**
+
+      A program can be wrong without an error message. Always check the
+      result with values you can compute in your head.
+    starter: |
+      likes = input("Likes: ")
+      shares = input("Shares: ")
+      total = likes + shares
+      print(f"Total: {total}")
+    solution: |
+      likes = int(input("Likes: "))
+      shares = int(input("Shares: "))
+      total = likes + shares
+      print(f"Total: {total}")
+    after: >-
+      The answers were text, so `+` joined them: `123`. Python gave no error,
+      because joining text is allowed. This kind of mistake is found only by
+      testing with known values.
+    cases:
+      - {}
+      - label: "the user types `12` and `3`"
+        stdin: ["12", "3"]
+      - label: "the user types `0` and `7`"
+        stdin: ["0", "7"]
+    checks:
+      - expr: "err is None and len(inputs) == 2"
+        pass: "The program asks two questions and runs without an error"
+        hint: "Keep the two `input()` lines. Type whole numbers as answers."
+      - expr: "lines[-1:] == [f'Total: {int(inputs[0]) + int(inputs[1])}']"
+        pass: "The total is the sum of the two numbers"
+        hint: "Which type do `likes` and `shares` have on line 3?"
+        misconceptions:
+          - when: "len(inputs) == 2 and lines[-1:] == [f'Total: {inputs[0]}{inputs[1]}']"
+            say: "The two answers were joined as text. Change them to numbers with `int()` before you add them."
+    hints:
+      - "With 12 and 3 the program prints 123. What did `+` do?"
+      - "The answer of `input()` is always text."
+      - 'Write `likes = int(input("Likes: "))` and the same for `shares`.'
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-fahrenheit
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Celsius to Fahrenheit
+    prompt: |
+      **Write a program that asks for a temperature in Celsius and prints
+      it in Fahrenheit.**
+
+      The rule: multiply by 1.8, then add 32. The temperature can have
+      decimals.
+
+      Print the result on the last line, for example `Fahrenheit: 68.0`
+      when the user types `20`.
+    starter: |
+      # Ask for the temperature in Celsius.
+      # Print the temperature in Fahrenheit.
+    solution: |
+      celsius = float(input("Celsius: "))
+      fahrenheit = celsius * 1.8 + 32
+      print(f"Fahrenheit: {fahrenheit}")
+    after: >-
+      Ask, convert, compute, print. Almost every small program has these
+      four parts. You wrote all of them alone.
+    cases:
+      - {}
+      - label: "the user types `20`"
+        stdin: ["20"]
+      - label: "the user types `36.6`"
+        stdin: ["36.6"]
+    checks:
+      - expr: "len(inputs) == 1"
+        pass: "The program asks one question"
+        hint: "Use `input()` one time and store the answer in a variable."
+      - expr: "err is None"
+        pass: "It runs without an error"
+        hint: "Read the message under the editor."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "The answer of `input()` is text. Change it with `float()` before you compute."
+          - when: "err == 'ValueError' and any('.' in text for text in inputs)"
+            say: "`int()` cannot read a number with a decimal point. Use `float()`."
+          - when: "err == 'ValueError'"
+            say: "The answer must be a number, like `20`. Run again and type a number."
+      - expr: "abs(float(lines[-1].split()[-1]) - (float(inputs[0]) * 1.8 + 32)) < 0.01"
+        pass: "The last line ends with the temperature in Fahrenheit"
+        hint: "Compute `celsius * 1.8 + 32` and print it at the end of the last line."
+    hints:
+      - "Start with the question: store `float(input(...))` in a variable."
+      - "Compute the new value in a second variable."
+      - 'Print it with an f-string: `print(f"Fahrenheit: {fahrenheit}")`.'
+
+  # 9. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-inputtype
+        objective: O2
+        prompt: "The user types `7`. What is the type of `x` after `x = input()`?"
+        options:
+          - text: "`str`"
+            correct: true
+            why: "`input()` always gives text, also when the user types digits."
+          - text: "`int`"
+            why: "Python does not guess. The answer stays text until you convert it."
+          - text: "It depends on what the user types"
+            why: "The type is always `str`. That makes `input()` easy to predict."
+      - kind: predict
+        id: q-times
+        objective: O3
+        code: |
+          n = "4"
+          print(n * 2)
+          print(int(n) * 2)
+        explain: "Text times 2 repeats the text: `44`. After `int()`, the number 4 times 2 is 8."
+        misconceptions:
+          - answer: "8\n8"
+            say: "On line 2, `n` is text. `*` repeats text."
+      - kind: mcq
+        id: q-valueerror
+        objective: O4
+        prompt: "You see `ValueError: invalid literal for int() with base 10: 'ten'`. What is the problem?"
+        options:
+          - text: "The text `ten` cannot be changed into a whole number"
+            correct: true
+            why: "The message shows the value at the end. `int()` reads only digits, like `10`."
+          - text: "The name `ten` does not exist"
+            why: "An unknown name gives a `NameError`. Here `'ten'` is a text value, shown in quotes."
+          - text: "The word `int` is spelled wrong"
+            why: "Then Python would not know the name and give a `NameError`."
+      - kind: mcq
+        id: q-first
+        objective: O1
+        prompt: 'What does `input("City: ")` do first?'
+        options:
+          - text: "It shows `City: ` and waits for the user"
+            correct: true
+            why: "The text in the brackets is the question. Then Python waits for Enter."
+          - text: "It prints the name of a city"
+            why: "`input` does not know any city. It shows your question and waits."
+          - text: "It creates a variable with the name `City`"
+            why: "A variable is created only with `=`, for example `city = input(\"City: \")`."
+      - kind: predict
+        id: q-float
+        objective: O3
+        code: |
+          print(float("3"))
+          print(int("3") + 1)
+        explain: "`float()` makes a number with a decimal point, so Python shows `3.0`. `int(\"3\")` is 3, and 3 + 1 is 4."
+        misconceptions:
+          - answer: "3\n4"
+            say: "A `float` is always shown with a point: `3.0`."
+          - answer: "3.0\n31"
+            say: "`int(\"3\")` is a number, so `+` adds."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-join
+    objective: O2
+    code: |
+      a = "1"
+      b = "1"
+      print(a + b)
+    explain: "Both values are text, so `+` joins them. Answers of `input()` behave the same way."
+    misconceptions:
+      - answer: "2"
+        say: "The quotes make `a` and `b` text. `+` joins text."
+  - kind: mcq
+    id: r-ask
+    objective: O1
+    prompt: "Which line asks the user and stores a whole number?"
+    options:
+      - text: '`age = int(input("Age: "))`'
+        correct: true
+        why: "Python works from the inside: first `input`, then `int`, then the result is stored."
+      - text: '`age = input(int("Age: "))`'
+        why: "Here `int` gets the question text. `int(\"Age: \")` gives a `ValueError`."
+      - text: '`int(age) = input("Age: ")`'
+        why: "The left side of `=` must be a name. This is a `SyntaxError`."
+  - kind: mcq
+    id: r-decimal
+    objective: O4
+    prompt: 'What does `int("3.5")` give?'
+    options:
+      - text: "A `ValueError`"
+        correct: true
+        why: "`int()` reads only whole numbers in text. For `3.5`, use `float()`."
+      - text: "`3`"
+        why: "`int()` does not cut text. It stops with a `ValueError`."
+      - text: "`3.5`"
+        why: "`int()` can never give a number with decimals."
+  - kind: predict
+    id: r-both
+    objective: O3
+    code: |
+      x = int("5")
+      print(x + x)
+      print(str(x) + str(x))
+    explain: "`x` is the number 5, so line 2 adds: 10. `str(x)` is the text `5`, so line 3 joins: `55`."
+  - kind: mcq
+    id: r-silent
+    objective: O2
+    prompt: "A program adds two answers of `input()` with `+` and no conversion. The user types `2` and `2`. What does it print?"
+    options:
+      - text: "`22`"
+        correct: true
+        why: "The answers are text, so `+` joins them. There is no error message."
+      - text: "`4`"
+        why: "That needs `int()` first. Without conversion the answers are text."
+      - text: "A `TypeError`"
+        why: "Text plus text is allowed. That is why this mistake is hard to see."

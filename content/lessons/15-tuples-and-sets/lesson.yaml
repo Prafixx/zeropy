@@ -1,0 +1,527 @@
+id: tuples-and-sets
+order: 15
+title: Tuples and sets
+summary: A row that cannot change, and a group that keeps each value only once.
+minutes: 25
+outcomes: [A1, A2, A8]
+
+objectives:
+  - id: O1
+    text: Make a tuple and unpack it into names, also in a for loop over items()
+  - id: O2
+    text: Explain why a tuple cannot change, and read the TypeError when code tries
+  - id: O3
+    text: Make a set, add values, and use it to remove repeated values and to ask with in
+  - id: O4
+    text: Choose a list, a tuple, a set or a dictionary for a task
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: Two more kinds of collection
+    question: You know lists and dictionaries. Why does Python need two more?
+    code: |
+      point = (3, 5)
+      x, y = point
+      colors = {"red", "blue", "red"}
+    beats:
+      - beat: empty
+        caption: "A list can change, and it can hold the same value many times. Sometimes you want the opposite."
+      - beat: tuple
+        line: 1
+        caption: "A **tuple** is written with round brackets. It has numbered places like a list, but it is **sealed**: it cannot change."
+      - beat: first
+        line: 2
+        caption: "`x, y = point` **unpacks** the tuple: the first value goes to `x` ..."
+      - beat: second
+        line: 2
+        caption: "... and the second value goes to `y`. One line, two names."
+      - beat: set
+        line: 3
+        caption: "A **set** keeps each value only **once**: the second `\"red\"` is not added. A set has no order, so its places have no numbers."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: tuples
+    type: theory
+    objective: O2
+    title: Tuples
+    body: |
+      ## A tuple
+
+      A tuple is a group of values that belong together and do not change:
+      a point `(x, y)`, a date `(2024, 5, 17)`, a size `(width, height)`.
+
+      You read a tuple like a list: `point[0]`, `len(point)`, `for v in
+      point:`. But you cannot change a place, add or take out a value. A
+      line that tries gives a `TypeError`.
+
+      To get a different tuple, make a new one.
+
+      **Unpacking** puts the values of a tuple into names, in order. The
+      number of names must be equal to the number of values.
+    keys:
+      - code: "point = (3, 5)"
+        means: "A tuple with two values."
+      - code: "x, y = point"
+        means: "Unpacking: `x` gets 3, `y` gets 5."
+      - code: "a, b = b, a"
+        means: "Swaps two values in one line."
+      - code: "point[0] = 9"
+        means: "Not possible: a `TypeError`."
+      - code: "for name, score in d.items():"
+        means: "Each pair of a dictionary, unpacked into two names."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-unpack
+    type: predict
+    objective: O1
+    title: Unpack and swap
+    item:
+      kind: predict
+      id: p-unpack
+      prompt: "This program prints two lines. **Type both lines.**"
+      code: |
+        a, b = 1, 2
+        a, b = b, a
+        print(a)
+        print(b)
+      explain: >-
+        Python first builds the tuple on the right side, `(2, 1)`, from the
+        old values. Then it unpacks it into `a` and `b`. This is the short
+        form of the swap with three lines from lesson 2.
+      misconceptions:
+        - answer: "1\n2"
+          say: "Line 2 swaps the values: the right side `b, a` is `(2, 1)`."
+        - answer: "2\n2"
+          say: "The right side is computed first, from the old values. So no value is lost."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O3
+    title: Values only once
+    intro: |
+      Press **Run**. The set has no numbers under its values: it has no
+      order. A value that is already in it is not added again.
+    code: |
+      visitors = ["Ana", "Ben", "Ana", "Cleo", "Ben"]
+      unique = set(visitors)
+      unique.add("Dan")
+      print(len(visitors))
+      print(len(unique))
+    experiments:
+      - text: "Run the code as it is. How many names, how many different names?"
+        expr: "True"
+      - text: "Add `unique.add(\"Ana\")` at the end. Does the set grow?"
+        expr: "err is None and len(ns.get('unique', set())) == len(set(ns.get('visitors', []))) + 1 and src.count('add(') >= 2"
+      - text: "Take Ben out with `unique.remove(\"Ben\")`."
+        expr: "err is None and 'Ben' not in ns.get('unique', {'Ben'})"
+      - text: "Ask with `in`: print if `\"Zoe\"` is in the set."
+        expr: "err is None and ' in unique' in src and 'False' in lines"
+      - text: "Try `unique[0]`. Read the message: a set has no places."
+        expr: "err == 'TypeError'"
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: sets
+    type: theory
+    objective: O3
+    title: Sets
+    body: |
+      ## A set
+
+      A set is a group of **different** values with **no order**. Write it
+      with curly brackets, but with values only, no keys.
+
+      A set is the right tool for two questions:
+
+      - **Which different values are there?** `set(names)` removes every
+        repeated name.
+      - **Is this value in the group?** `in` gives the answer fast, also
+        for a very big set.
+
+      A set has no index, because it has no order. Python can show its
+      values in any order. To show them in order, use `sorted()`: it gives a
+      new sorted **list**.
+    keys:
+      - code: '{"red", "blue"}'
+        means: "A set with two values."
+      - code: "set(names)"
+        means: "A set with the different values of a list."
+      - code: 's.add("green")'
+        means: "Adds a value, if it is not in the set yet."
+      - code: 's.remove("red")'
+        means: "Takes a value out."
+      - code: "sorted(s)"
+        means: "A sorted list of the values."
+      - code: "set()"
+        means: "An empty set. `{}` is an empty dictionary."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O2
+    title: Sealed and unique
+    items:
+      - kind: diagnose
+        id: d-tuple
+        objective: O2
+        mode: read
+        code: |
+          size = (1920, 1080)
+          print(size[0])
+          size[0] = 1280
+        explain: >-
+          "Does not support item assignment" means: you cannot put a new
+          value in a place of a tuple. Make a new tuple instead.
+        fix:
+          - text: "Make a new tuple: `size = (1280, size[1])`"
+            correct: true
+            why: "The name `size` moves to a new tuple. The old one did not change."
+          - text: "Use `size.append(1280)`"
+            why: "A tuple has no `append`. It cannot change at all."
+          - text: "Use `size[0] == 1280`"
+            why: "`==` only compares. It changes nothing."
+      - kind: predict
+        id: d-items
+        objective: O1
+        code: |
+          ages = {"Ana": 30, "Ben": 25}
+          for name, age in ages.items():
+              print(f"{name} is {age}")
+        explain: "`items()` gives each pair as a tuple, and the loop unpacks it into `name` and `age`."
+      - kind: predict
+        id: d-set-len
+        objective: O3
+        code: |
+          nums = [3, 1, 3, 2, 1, 3]
+          print(len(nums))
+          print(len(set(nums)))
+          print(sorted(set(nums)))
+        explain: "The list has 6 values, but only 3 different ones. `sorted` gives them as a list in order."
+        misconceptions:
+          - answer: "6\n6\n[1, 1, 2, 3, 3, 3]"
+            say: "A set keeps each value only once. Three different values are left."
+      - kind: diagnose
+        id: d-unpack
+        objective: O1
+        mode: predict
+        code: |
+          date = (2024, 5, 17)
+          print(date[0])
+          year, month = date
+        explain: "The tuple has three values, but there are only two names. Python cannot unpack it: a `ValueError`. Use three names."
+        distractors: [TypeError, IndexError, NameError, SyntaxError]
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-report
+    type: worked
+    objective: O1
+    title: A report from a dictionary
+    problem: |
+      A teacher has a dictionary of marks. **Print one line for each
+      student, and find the best student.**
+
+      `items()` gives the pairs as tuples. Unpacking makes the loop easy
+      to read.
+    lines:
+      - code: 'marks = {"Ana": 72, "Ben": 88, "Cleo": 65}'
+        note: "The data: a name and a mark for each student."
+      - code: 'best_name, best_mark = "", -1'
+        note: "Two start values in one line, also by unpacking. -1 is lower than every mark."
+      - code: |
+          for name, mark in marks.items():
+              print(f"{name}: {mark}")
+              if mark > best_mark:
+                  best_name, best_mark = name, mark
+        note: "Each round unpacks one pair. The best-so-far pattern of lesson 12 keeps a name and a mark together."
+      - code: 'print(f"Best: {best_name}")'
+        note: "`Best: Ben`."
+    check:
+      kind: mcq
+      id: w-report
+      prompt: "What does `marks.items()` give the loop in each round?"
+      options:
+        - text: "One pair as a tuple, like `(\"Ana\", 72)`"
+          correct: true
+          why: "`for name, mark in ...` unpacks that tuple into two names."
+        - text: "Only the key, like `\"Ana\"`"
+          why: "That is `for name in marks:`. `items()` gives key and value together."
+        - text: "The whole dictionary"
+          why: "The loop gets one pair in each round."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-swap
+    type: exercise
+    fade: completion
+    objective: O1
+    title: The swap in one line
+    prompt: |
+      In lesson 2 you swapped two values with three lines and a third
+      variable. **Replace `___`** to swap `left` and `right` in one line.
+    given: |
+      left = "tea"
+      right = "milk"
+    starter: |
+      left, right = ___
+      print(left)
+      print(right)
+    solution: |
+      left, right = right, left
+      print(left)
+      print(right)
+    after: >-
+      The right side builds a tuple from the old values first, so no value
+      is lost. This short form is how Python programmers swap.
+    cases:
+      - {}
+      - label: "`left` is 1 and `right` is 2"
+        setup: |
+          left = 1
+          right = 2
+    checks:
+      - expr: "err is None and left == pre['right'] and right == pre['left']"
+        pass: "`left` and `right` have swapped values"
+        hint: "The right side lists the values in the new order."
+        misconceptions:
+          - when: "ns.get('left') == pre['left'] and ns.get('right') == pre['right']"
+            say: "The order is the same as before. Write the names on the right in the other order."
+          - when: "ns.get('left') == 'milk' and pre['right'] != 'milk'"
+            say: "You typed the values. Use the names, so the code works for any values."
+      - expr: "lines == [str(left), str(right)]"
+        pass: "It prints both values"
+        hint: "Keep the two `print` lines."
+    hints:
+      - "On the right, write the two names with a comma between them."
+      - "The new `left` is the old `right`."
+      - "Write `left, right = right, left`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-size
+    type: exercise
+    fade: debug
+    objective: O2
+    title: A new window size
+    prompt: |
+      A window size is a tuple `(width, height)`. The program must make the
+      window narrower: the width becomes 1280, the height stays.
+
+      **Run it.** It stops with a `TypeError`. Fix line 1, so that `size` is
+      a **tuple** with the new width.
+    given: |
+      size = (1920, 1080)
+    starter: |
+      size[0] = 1280
+      print(size)
+    solution: |
+      size = (1280, size[1])
+      print(size)
+    after: >-
+      The tuple did not change: Python made a new one and moved the name
+      `size` to it. That is how you "change" a value that cannot change.
+    cases:
+      - {}
+      - label: "the size is `(800, 600)`"
+        setup: |
+          size = (800, 600)
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "A tuple cannot change. Make a new tuple."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "You cannot put a new value in a place of a tuple. Make a new tuple: `size = (1280, size[1])`."
+      - expr: "isinstance(size, tuple) and len(size) == 2 and size[0] == 1280"
+        pass: "`size` is a tuple with the width 1280"
+        hint: "Build the new tuple with round brackets."
+        misconceptions:
+          - when: "isinstance(ns.get('size'), list)"
+            say: "`size` is a list now. The task needs a tuple: use round brackets."
+      - expr: "size[1] == pre['size'][1] and lines == [str(size)]"
+        pass: "The height did not change, and the new size is printed"
+        hint: "Take the height from the old tuple: `size[1]`."
+        misconceptions:
+          - when: "ns.get('size', (0, 0))[1] == 1080 and pre['size'][1] != 1080"
+            say: "You typed the height. Take it from the old tuple, so the code works for any size."
+    hints:
+      - "Line 1 must build a new tuple and give it the name `size`."
+      - "The new height is the old height: `size[1]`."
+      - "Write `size = (1280, size[1])`."
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-visitors
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Different visitors
+    prompt: |
+      A shop writes down the name of each visitor. Some people came more
+      than once.
+
+      **Print three lines:**
+
+      1. The number of **different** visitors.
+      2. `True` if `Zoe` visited, else `False`.
+      3. The different names as a sorted list.
+    given: |
+      visits = ["Ben", "Ana", "Ben", "Cleo", "Ana", "Ben"]
+    starter: |
+      # visits already exists.
+    solution: |
+      people = set(visits)
+      print(len(people))
+      print("Zoe" in people)
+      print(sorted(people))
+    after: >-
+      One line made the set, and the set answered all three questions. With
+      a list you would need a loop and an `if` for each of them.
+    cases:
+      - {}
+      - label: "the visits are `Zoe`, `Zoe`, `Al`"
+        setup: |
+          visits = ["Zoe", "Zoe", "Al"]
+    checks:
+      - expr: "err is None and len(lines) >= 1 and lines[-3:-2] == [str(len(set(visits)))]"
+        pass: "Line 1 is the number of different visitors"
+        hint: "`set(visits)` keeps each name once. `len` counts them."
+        misconceptions:
+          - when: "str(len(visits)) in lines"
+            say: "This counts every visit. Count the different names: make a set first."
+      - expr: "lines[-2:-1] == [str('Zoe' in visits)]"
+        pass: "Line 2 says if Zoe visited"
+        hint: "Use `in`."
+      - expr: "lines[-1:] == [str(sorted(set(visits)))]"
+        pass: "Line 3 is the sorted list of different names"
+        hint: "`sorted(...)` of the set gives a sorted list."
+    hints:
+      - "Make a set: `people = set(visits)`."
+      - "Line 1: `len(people)`. Line 2: `\"Zoe\" in people`."
+      - "Line 3: `print(sorted(people))`."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O4
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-choose-coord
+        objective: O4
+        prompt: "A program stores the latitude and longitude of a city. They belong together and do not change. What fits best?"
+        options:
+          - text: "A tuple"
+            correct: true
+            why: "A fixed group of values that belong together."
+          - text: "A set"
+            why: "A set has no order, so you would not know which value is the latitude."
+          - text: "A dictionary with one key"
+            why: "Possible, but too much for two values that always belong together."
+      - kind: mcq
+        id: q-choose-tags
+        objective: O4
+        prompt: "A blog post has tags. The same tag must not appear twice, and the order does not matter. What fits best?"
+        options:
+          - text: "A set"
+            correct: true
+            why: "A set keeps each value once, and it has no order."
+          - text: "A list"
+            why: "A list can hold the same tag twice. You would need to check before each `append`."
+          - text: "A tuple"
+            why: "A tuple cannot change, so you could not add a tag."
+      - kind: mcq
+        id: q-choose-phone
+        objective: O4
+        prompt: "A program must find the phone number of a person by the name. What fits best?"
+        options:
+          - text: "A dictionary"
+            correct: true
+            why: "Look up a value by a key: the name is the key."
+          - text: "A set"
+            why: "A set holds only values, not pairs."
+          - text: "A tuple"
+            why: "A tuple has positions, not names."
+      - kind: predict
+        id: q-unpack-loop
+        objective: O1
+        code: |
+          pairs = [(1, "a"), (2, "b")]
+          for n, letter in pairs:
+              print(letter * n)
+        explain: "Each tuple is unpacked: `n` is 1 and `letter` is `a`, then 2 and `b`. A text times a number repeats it."
+      - kind: diagnose
+        id: q-set-index
+        objective: O3
+        mode: predict
+        code: |
+          s = {10, 20, 30}
+          print(len(s))
+          print(s[0])
+        explain: "A set has no order, so it has no index. Reading `s[0]` is a `TypeError`."
+      - kind: mcq
+        id: q-empty
+        objective: O3
+        prompt: "How do you make an empty set?"
+        options:
+          - text: "`set()`"
+            correct: true
+            why: "`{}` is already taken: it is an empty dictionary."
+          - text: "`{}`"
+            why: "That is an empty dictionary."
+          - text: "`[]`"
+            why: "That is an empty list."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-unpack
+    objective: O1
+    code: |
+      first, second = (8, 9)
+      print(second)
+    explain: "Unpacking gives the values in order: `first` gets 8, `second` gets 9."
+  - kind: mcq
+    id: r-tuple-change
+    objective: O2
+    prompt: "What happens with `t = (1, 2)` and then `t[0] = 5`?"
+    options:
+      - text: "A `TypeError`: a tuple cannot change"
+        correct: true
+        why: "To get a different tuple, make a new one: `t = (5, t[1])`."
+      - text: "`t` becomes `(5, 2)`"
+        why: "That would be a change in place. Tuples do not allow it."
+      - text: "`t` becomes a list"
+        why: "Python never changes the type of a value by itself."
+  - kind: predict
+    id: r-set
+    objective: O3
+    code: |
+      s = set([2, 2, 2, 5])
+      print(len(s))
+    explain: "A set keeps each value once: only 2 and 5 are left."
+  - kind: mcq
+    id: r-choose
+    objective: O4
+    prompt: "Which kind of collection keeps values in order and can change?"
+    options:
+      - text: "A list"
+        correct: true
+        why: "A list has numbered places and can grow and change."
+      - text: "A tuple"
+        why: "A tuple keeps the order, but it cannot change."
+      - text: "A set"
+        why: "A set can change, but it has no order."
+  - kind: predict
+    id: r-items
+    objective: O1
+    code: |
+      prices = {"tea": 2, "cake": 4}
+      for item, price in prices.items():
+          print(item, price)
+    explain: "`items()` gives each pair as a tuple, unpacked into `item` and `price`. `print` with two values puts a space between them."

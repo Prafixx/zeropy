@@ -1,0 +1,188 @@
+// Build-time lesson validation. No imports with runtime code: this file is
+// loaded by vite.config.ts and by scripts/check-content.mjs (Node).
+
+type Rec = Record<string, unknown>;
+
+const STEP_TYPES = ['hook', 'theory', 'predict', 'demo', 'worked', 'exercise', 'local', 'debugger', 'quiz', 'drill', 'review'];
+const PRACTICE = ['predict', 'demo', 'exercise', 'local', 'debugger', 'quiz', 'drill', 'review'];
+
+function isRec(v: unknown): v is Rec {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+function text(v: unknown): v is string {
+  return typeof v === 'string' && v.trim().length > 0;
+}
+
+function checkItem(item: unknown, where: string, objectives: Set<string>, out: string[]): void {
+  if (!isRec(item)) {
+    out.push(`${where}: item must be a mapping`);
+    return;
+  }
+  if (!text(item.id)) out.push(`${where}: item needs an id`);
+  if (item.objective !== undefined && !objectives.has(String(item.objective))) {
+    out.push(`${where}: unknown objective "${String(item.objective)}"`);
+  }
+  if (item.kind === 'mcq') {
+    const options = Array.isArray(item.options) ? item.options : [];
+    if (!text(item.prompt)) out.push(`${where}: mcq needs a prompt`);
+    if (options.length < 2) out.push(`${where}: mcq needs at least 2 options`);
+    if (options.filter((o) => isRec(o) && o.correct === true).length !== 1) {
+      out.push(`${where}: mcq needs exactly one correct option`);
+    }
+    options.forEach((o, i) => {
+      if (!isRec(o) || !text(o.text) || !text(o.why)) {
+        out.push(`${where}: option ${i + 1} needs "text" and "why"`);
+      }
+    });
+  } else if (item.kind === 'diagnose') {
+    if (!text(item.code)) out.push(`${where}: diagnose needs code`);
+    if (!text(item.explain)) out.push(`${where}: diagnose needs an explanation`);
+    if (item.mode !== 'read' && item.mode !== 'predict') out.push(`${where}: diagnose mode must be "read" or "predict"`);
+    if (item.fix !== undefined) {
+      const fix = Array.isArray(item.fix) ? item.fix : [];
+      if (fix.filter((o) => isRec(o) && o.correct === true).length !== 1) {
+        out.push(`${where}: diagnose fix needs exactly one correct option`);
+      }
+      fix.forEach((o, i) => {
+        if (!isRec(o) || !text(o.text) || !text(o.why)) out.push(`${where}: fix option ${i + 1} needs "text" and "why"`);
+      });
+    }
+  } else if (item.kind === 'predict') {
+    if (!text(item.code)) out.push(`${where}: predict needs code`);
+    if (!text(item.explain)) out.push(`${where}: predict needs an explanation`);
+  } else {
+    out.push(`${where}: item kind must be "mcq", "predict" or "diagnose"`);
+  }
+}
+
+/** Returns a list of problems. An empty list means the lesson is valid. */
+export function validateLesson(data: unknown): string[] {
+  const out: string[] = [];
+  if (!isRec(data)) return ['lesson must be a mapping'];
+  for (const key of ['id', 'title', 'summary']) {
+    if (!text(data[key])) out.push(`missing "${key}"`);
+  }
+  if (typeof data.order !== 'number') out.push('missing numeric "order"');
+
+  const objectives = new Set<string>();
+  if (!Array.isArray(data.objectives) || data.objectives.length === 0) {
+    out.push('a lesson needs objectives');
+  } else {
+    for (const o of data.objectives) {
+      if (!isRec(o) || !text(o.id) || !text(o.text)) out.push('each objective needs "id" and "text"');
+      else objectives.add(o.id as string);
+    }
+  }
+
+  const steps = Array.isArray(data.steps) ? data.steps : [];
+  if (steps.length === 0) out.push('a lesson needs steps');
+  const ids = new Set<string>();
+  const covered = new Set<string>();
+  let practice = 0;
+
+  steps.forEach((step, i) => {
+    const where = `step ${i + 1}`;
+    if (!isRec(step)) {
+      out.push(`${where}: must be a mapping`);
+      return;
+    }
+    const type = String(step.type);
+    if (!STEP_TYPES.includes(type)) out.push(`${where}: unknown type "${type}"`);
+    if (!text(step.id)) out.push(`${where}: missing id`);
+    else if (ids.has(step.id)) out.push(`${where}: duplicate id "${step.id}"`);
+    else ids.add(step.id);
+    if (!text(step.title)) out.push(`${where}: missing title`);
+    if (!text(step.objective) || !objectives.has(step.objective)) {
+      out.push(`${where}: every step must name one of the lesson objectives`);
+    } else if (PRACTICE.includes(type) || type === 'worked') {
+      covered.add(step.objective);
+    }
+    if (PRACTICE.includes(type)) practice += 1;
+
+    if (type === 'hook') {
+      if (!text(step.code) || !Array.isArray(step.beats) || step.beats.length === 0) {
+        out.push(`${where}: hook needs code and beats`);
+      }
+    }
+    if (type === 'theory' && !text(step.body)) out.push(`${where}: theory needs a body`);
+    if (type === 'predict') checkItem(step.item, where, objectives, out);
+    if (type === 'demo') {
+      if (!text(step.code)) out.push(`${where}: demo needs code`);
+      if (step.visual !== undefined && !['variables', 'output', 'none'].includes(String(step.visual))) {
+        out.push(`${where}: unknown visual "${String(step.visual)}"`);
+      }
+      if (!Array.isArray(step.experiments) || step.experiments.length === 0) {
+        out.push(`${where}: demo needs experiments (things to try)`);
+      }
+    }
+    if (type === 'worked') {
+      if (!Array.isArray(step.lines) || step.lines.length === 0) out.push(`${where}: worked needs lines`);
+      checkItem(step.check, `${where} check`, objectives, out);
+    }
+    if (type === 'exercise') {
+      if (!text(step.prompt)) out.push(`${where}: exercise needs a prompt`);
+      // A project step can start from the code of the step before it.
+      if (typeof step.starter !== 'string' && step.carry !== true) out.push(`${where}: exercise needs starter code`);
+      if (!text(step.solution)) out.push(`${where}: exercise needs a solution`);
+      const checks = Array.isArray(step.checks) ? step.checks : [];
+      if (checks.length === 0) out.push(`${where}: exercise needs checks`);
+      checks.forEach((c, j) => {
+        if (!isRec(c) || !text(c.expr) || !text(c.pass) || !text(c.hint)) {
+          out.push(`${where}: check ${j + 1} needs "expr", "pass" and "hint"`);
+        }
+      });
+      if (!Array.isArray(step.hints) || step.hints.length < 2) {
+        out.push(`${where}: exercise needs at least 2 hints`);
+      }
+    }
+    if (type === 'local') {
+      if (!text(step.prompt)) out.push(`${where}: local needs a prompt`);
+      if (!text(step.task) || !/^[a-z][a-z0-9-]*$/.test(step.task)) out.push(`${where}: local needs a task name`);
+      const checks = Array.isArray(step.checks) ? step.checks : [];
+      if (checks.length === 0) out.push(`${where}: local needs checks`);
+      checks.forEach((c, j) => {
+        if (!isRec(c) || !text(c.expr) || !text(c.pass) || !text(c.hint)) {
+          out.push(`${where}: check ${j + 1} needs "expr", "pass" and "hint"`);
+        }
+      });
+      if (!isRec(step.example)) out.push(`${where}: local needs an example report`);
+      if (!Array.isArray(step.hints) || step.hints.length < 2) out.push(`${where}: local needs at least 2 hints`);
+    }
+    if (type === 'debugger') {
+      if (!text(step.prompt)) out.push(`${where}: debugger needs a prompt`);
+      if (!text(step.code)) out.push(`${where}: debugger needs code`);
+      const tasks = Array.isArray(step.tasks) ? step.tasks : [];
+      if (tasks.length === 0) out.push(`${where}: debugger needs tasks`);
+      tasks.forEach((t, j) => {
+        if (!isRec(t) || !text(t.do)) out.push(`${where}: task ${j + 1} needs "do"`);
+        else if (t.name !== undefined && typeof t.line !== 'number') out.push(`${where}: task ${j + 1} asks for a value, so it needs a line`);
+        else if (t.name === undefined && t.frame === undefined && typeof t.line !== 'number') out.push(`${where}: task ${j + 1} needs a name, a frame or a line`);
+      });
+      if (!Array.isArray(step.hints) || step.hints.length < 2) out.push(`${where}: debugger needs at least 2 hints`);
+    }
+    if (type === 'quiz' || type === 'drill') {
+      const items = Array.isArray(step.items) ? step.items : [];
+      if (items.length === 0) out.push(`${where}: ${type} needs items`);
+      items.forEach((item, j) => {
+        checkItem(item, `${where} item ${j + 1}`, objectives, out);
+        if (isRec(item) && text(item.objective)) covered.add(item.objective);
+      });
+    }
+  });
+
+  for (const id of objectives) {
+    if (!covered.has(id)) out.push(`objective ${id} is never practiced or checked`);
+  }
+  if (steps.length > 0 && practice / steps.length < 0.6) {
+    out.push('less than 60% of the steps are practice');
+  }
+
+  const review = Array.isArray(data.review) ? data.review : [];
+  if (review.length < 3) out.push('a lesson needs at least 3 review cards');
+  review.forEach((item, j) => {
+    checkItem(item, `review card ${j + 1}`, objectives, out);
+    if (isRec(item) && !text(item.objective)) out.push(`review card ${j + 1}: missing objective`);
+  });
+  return out;
+}

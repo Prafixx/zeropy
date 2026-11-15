@@ -1,0 +1,401 @@
+id: first-program
+order: 1
+title: Your first program
+summary: Write instructions, run them, and read your first error message.
+minutes: 20
+outcomes: [A1, A2]
+
+objectives:
+  - id: O1
+    text: Say what a program is - a list of instructions that Python runs from top to bottom
+  - id: O2
+    text: Show text and numbers on the screen with print()
+  - id: O3
+    text: Predict the output of a short program, line by line
+  - id: O4
+    text: Read an error message and fix the line
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: Python reads, the screen shows
+    question: You write code. What does Python do with it?
+    legend: false
+    code: |
+      print("Hello")
+      print(2 + 3)
+      print("Bye")
+    beats:
+      - beat: load
+        caption: "A **program** is a list of instructions. Python is the reader. It starts at the top."
+      - beat: first
+        line: 1
+        caption: "Python reads line 1. The instruction `print` sends the text **Hello** to the screen."
+      - beat: second
+        line: 2
+        caption: "Line 2. Python computes `2 + 3` first. Then it prints the result: **5**."
+      - beat: third
+        line: 3
+        caption: "Line 3. Always one line at a time, from top to bottom."
+      - beat: end
+        caption: "No more lines, so the program ends. The screen keeps what was printed."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: print
+    type: theory
+    objective: O2
+    title: print() shows a value
+    body: |
+      ## `print(value)`
+
+      `print` is an instruction. It shows the value between the brackets on the screen.
+
+      There are two kinds of value in this lesson:
+
+      - **Text** is written in quotes. Python shows it exactly as you wrote it.
+      - **Numbers** have no quotes. Python can compute with them.
+
+      Write one instruction on each line.
+    keys:
+      - code: 'print("Hello")'
+        means: "Text, in quotes. Shows `Hello`."
+      - code: "print(7)"
+        means: "A number, no quotes. Shows `7`."
+      - code: "print(2 + 3)"
+        means: "Python computes first. Shows `5`."
+      - code: 'print("2 + 3")'
+        means: "Quotes make it text. Shows `2 + 3`."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-quotes
+    type: predict
+    objective: O3
+    title: With quotes and without
+    item:
+      kind: predict
+      id: p-quotes
+      prompt: "This program prints two lines. **Type both lines** before you check."
+      code: |
+        print("4 + 4")
+        print(4 + 4)
+      explain: >-
+        Line 1 has quotes, so it is text. Python shows it exactly as written.
+        Line 2 has no quotes, so Python computes the result first.
+      misconceptions:
+        - answer: "8\n8"
+          say: "Line 1 is inside quotes. Python does not compute inside quotes."
+        - answer: "4 + 4\n4 + 4"
+          say: "Line 2 has no quotes. Python computes it."
+        - answer: "\"4 + 4\"\n8"
+          say: "The quotes mark the start and end of the text. They are not printed."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    visual: output
+    objective: O2
+    title: Change the code and run it
+    intro: |
+      Press **Run**. Watch Python go down the lines.
+
+      Then change the code and run it again. You cannot break anything.
+    code: |
+      print("Hello")
+      print(10 * 2)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Change `Hello` to your name. Keep the quotes."
+        expr: "err is None and len(lines) >= 1 and lines[0] not in ('Hello', '')"
+      - text: "Add a third line that prints a number bigger than 100. Let Python compute it."
+        expr: "err is None and any(l.strip().isdigit() and int(l) > 100 for l in lines)"
+      - text: "Make an error on purpose: delete the last `)` of a line. Read the message."
+        expr: "err == 'SyntaxError'"
+
+  # 5. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-receipt
+    type: worked
+    objective: O3
+    title: A small receipt
+    problem: |
+      A shop sells 3 cups. One cup costs 4.
+
+      **Print the shop name, then the total price, then a thank-you line.**
+    lines:
+      - code: 'print("Corner Shop")'
+        note: "The name is text, so it needs quotes."
+      - code: "print(3 * 4)"
+        note: "No quotes: Python computes 12. The `*` sign means multiply."
+      - code: 'print("Thank you")'
+        note: "Three instructions give three lines on the screen, in the same order."
+    check:
+      kind: mcq
+      id: w-receipt
+      prompt: "You change line 2 to `print(\"3 * 4\")`. **What does line 2 show now?**"
+      options:
+        - text: "`3 * 4`"
+          correct: true
+          why: "With quotes it is text. Python shows it exactly as written and computes nothing."
+        - text: "`12`"
+          why: "Python computes only when there are no quotes."
+        - text: "An error"
+          why: "Text in quotes is always valid. There is no error, but also no result."
+
+  # 6. EXERCISE: completion --------------------------------------------------
+  - id: ex-hours
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Hours in a week
+    prompt: |
+      Line 1 prints the word `Week`.
+
+      **Replace `___`** so that line 2 prints the number of hours in 7 days.
+      One day has 24 hours. Let Python compute the result.
+    starter: |
+      print("Week")
+      print(___)
+    solution: |
+      print("Week")
+      print(7 * 24)
+    after: >-
+      You gave Python the calculation, not the result. This is the normal way
+      to work: you describe what to compute, and Python does it.
+    checks:
+      - expr: "err is None and lines[:1] == ['Week']"
+        pass: "Line 1 prints `Week`"
+        hint: "Do not change line 1."
+      - expr: "lines[1:2] == [str(7 * 24)]"
+        pass: "Line 2 prints the number of hours in 7 days"
+        hint: "Put the calculation between the brackets: days multiplied by hours."
+        misconceptions:
+          - when: "len(lines) > 1 and '*' in lines[1]"
+            say: "Python printed the calculation as text. Remove the quotes, so that Python computes it."
+          - when: "lines[1:2] == [str(7 + 24)]"
+            say: "The `+` sign adds. To multiply, use `*`."
+      - expr: "'168' not in src"
+        pass: "Python computes the result (you do not type it)"
+        hint: "Do not type the result. Type the calculation: `7 * 24`."
+    hints:
+      - "The sign for multiply is `*`."
+      - "No quotes, or Python will not compute."
+      - "Write `print(7 * 24)`."
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-bugs
+    type: exercise
+    fade: debug
+    objective: O4
+    title: Two broken lines
+    prompt: |
+      This program must print `Start`, `Loading` and `Done`, each on its own
+      line. It has two mistakes.
+
+      **Run it. Read the message. Fix one mistake. Run again.**
+
+      An error message is help from Python. It names the line and the problem.
+    starter: |
+      print("Start")
+      prnt("Loading")
+      print("Done)
+    solution: |
+      print("Start")
+      print("Loading")
+      print("Done")
+    after: >-
+      You met two kinds of error. A `SyntaxError` means Python cannot read the
+      code, so it runs nothing at all. A `NameError` means Python met a word it
+      does not know: it ran line 1, then stopped at line 2. Errors are normal.
+      Every programmer reads them every day.
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Read the last line of the message. It names the kind of error. The line number is above it."
+      - expr: "lines == ['Start', 'Loading', 'Done']"
+        pass: "It prints `Start`, `Loading`, `Done`"
+        hint: "Each line must print one word, in this order."
+    hints:
+      - "The first message is about line 3. Text must start and end with a quote."
+      - "After the first fix, run again. Now Python stops at line 2."
+      - "Line 2: the instruction is `print`. One letter is missing."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-three-lines
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Three lines of your own
+    prompt: |
+      **Write a program that prints three lines:**
+
+      1. The name of a city (any city).
+      2. The number of minutes in a day. One day has 24 hours of 60 minutes. Let Python compute it.
+      3. The text `24 * 60`, exactly like this.
+    starter: |
+      # Write three print lines below.
+    solution: |
+      print("Lima")
+      print(24 * 60)
+      print("24 * 60")
+    after: >-
+      The same characters, `24 * 60`, gave two different results. Without
+      quotes Python computes. With quotes Python copies.
+    checks:
+      - expr: "err is None and len(lines) == 3"
+        pass: "The program prints exactly three lines"
+        hint: "Use three `print` instructions, one on each line."
+      - expr: "len(lines) > 0 and lines[0].strip() != '' and not lines[0].strip().replace('.', '').isdigit()"
+        pass: "Line 1 is the name of a city"
+        hint: "A name is text. Put it in quotes."
+      - expr: "lines[1:2] == [str(24 * 60)] and '1440' not in src"
+        pass: "Line 2 is the number of minutes in a day, computed by Python"
+        hint: "No quotes on line 2: `print(24 * 60)`."
+        misconceptions:
+          - when: "'1440' in src"
+            say: "You typed the result. Type the calculation and let Python compute it."
+          - when: "lines[1:2] == ['24 * 60']"
+            say: "Line 2 is text because of the quotes. Remove the quotes on line 2."
+      - expr: "lines[2:3] == ['24 * 60']"
+        pass: "Line 3 is the text `24 * 60`"
+        hint: "Quotes on line 3: `print(\"24 * 60\")`."
+        misconceptions:
+          - when: "lines[2:3] == ['1440']"
+            say: "Python computed line 3. Put the text in quotes."
+    hints:
+      - "Line 1: `print(\"Lima\")`, with any city you like."
+      - "Line 2 has no quotes, so Python computes. Line 3 has quotes."
+      - "Lines 2 and 3 use the same characters. Only the quotes are different."
+
+  # 9. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-order
+        objective: O1
+        prompt: "In which order does Python run the lines of a program?"
+        options:
+          - text: "From top to bottom, one line at a time"
+            correct: true
+            why: "Python finishes one line, then goes to the next line."
+          - text: "All lines at the same moment"
+            why: "Python runs one instruction at a time. The order of the lines is the order of the results."
+          - text: "The shortest line first"
+            why: "The length does not matter. Only the position matters: top first."
+      - kind: predict
+        id: q-mix
+        objective: O3
+        code: |
+          print(10 - 3)
+          print("Done")
+        explain: "Line 1 has no quotes, so Python computes 7. Line 2 is text, so Python shows it as written."
+        misconceptions:
+          - answer: "10 - 3\nDone"
+            say: "Line 1 has no quotes. Python computes it."
+      - kind: mcq
+        id: q-twelve
+        objective: O2
+        prompt: "Which line shows the number 12?"
+        options:
+          - text: "`print(3 * 4)`"
+            correct: true
+            why: "No quotes, so Python computes 3 * 4."
+          - text: "`print(\"3 * 4\")`"
+            why: "With quotes it is text. The screen shows `3 * 4`."
+          - text: "`Print(12)`"
+            why: "Python treats `Print` and `print` as different words. This gives a `NameError`."
+      - kind: mcq
+        id: q-stop
+        objective: O4
+        prompt: "Line 2 has a wrong name. **What appears on the screen?**"
+        code: |
+          print("one")
+          prin("two")
+          print("three")
+        options:
+          - text: "`one`, then an error message"
+            correct: true
+            why: "Python runs line 1, stops at line 2, and never reaches line 3."
+          - text: "`one` and `three`, with an error message between them"
+            why: "An error stops the program. Lines after the error do not run."
+          - text: "Only an error message"
+            why: "The error is on line 2. Line 1 ran before Python reached it."
+      - kind: mcq
+        id: q-syntax
+        objective: O4
+        prompt: "You see `SyntaxError: unterminated string literal (detected at line 2)`. What do you look for on line 2?"
+        options:
+          - text: "A missing quote at the end of the text"
+            correct: true
+            why: "The words \"unterminated string\" mean: a text was started but not ended. Text is also called a string."
+          - text: "A wrong number"
+            why: "A number cannot cause this message. It is about a text without an end."
+          - text: "A missing line"
+            why: "The message names line 2 and a text (string) that does not end."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 4
+
+review:
+  - kind: predict
+    id: r-quotes
+    objective: O3
+    code: |
+      print("5 * 5")
+      print(5 * 5)
+    explain: "With quotes Python shows the text as written. Without quotes Python computes."
+    misconceptions:
+      - answer: "25\n25"
+        say: "Line 1 is inside quotes. Python does not compute inside quotes."
+  - kind: mcq
+    id: r-text
+    objective: O2
+    prompt: "What do the quotes do in `print(\"Hello\")`?"
+    options:
+      - text: "They mark where the text starts and ends"
+        correct: true
+        why: "Python shows everything between the quotes exactly as written. The quotes are not shown."
+      - text: "They are printed on the screen"
+        why: "The quotes are only marks for Python. The screen shows `Hello`."
+      - text: "They make Python compute the value"
+        why: "It is the opposite. Python computes only what is outside quotes."
+  - kind: mcq
+    id: r-stop
+    objective: O4
+    prompt: "A program has 5 lines. Line 3 has a `NameError`. Which lines run?"
+    options:
+      - text: "Lines 1 and 2"
+        correct: true
+        why: "Python runs from the top and stops at the first error."
+      - text: "Lines 1, 2, 4 and 5"
+        why: "Python does not jump over an error. It stops there."
+      - text: "No line"
+        why: "That is true for a `SyntaxError`. With a `NameError`, the lines before it run."
+  - kind: mcq
+    id: r-nameerror
+    objective: O4
+    prompt: "You see `NameError: name 'pritn' is not defined`. What is the problem?"
+    options:
+      - text: "The word `print` has a typing mistake"
+        correct: true
+        why: "Python does not know the word `pritn`. Two letters are in the wrong order."
+      - text: "A quote is missing"
+        why: "A missing quote gives a `SyntaxError`. This message is about an unknown name."
+      - text: "The number is too big"
+        why: "The message names a word, `pritn`. It is not about a number."
+  - kind: predict
+    id: r-order
+    objective: O1
+    code: |
+      print("b")
+      print("a")
+      print(1 + 1)
+    explain: "Python runs the lines from top to bottom. The order on the screen is the order of the lines."

@@ -1,0 +1,577 @@
+id: loop-patterns
+order: 12
+title: Loop patterns
+summary: Walk through a list once and collect an answer - a total, a count, the biggest value, a new list.
+minutes: 30
+outcomes: [A1, A4, A8]
+
+objectives:
+  - id: O1
+    text: Collect a total or a count with a variable that starts before the loop
+  - id: O2
+    text: Find the biggest or the smallest value with a best-so-far variable
+  - id: O3
+    text: Build a new list in a loop - keep some values, or change every value
+  - id: O4
+    text: Use sum, max and min, and know when you still need your own loop
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O2
+    title: The best so far
+    question: How does a program find the biggest value in a long list?
+    code: |
+      prices = [4, 9, 2, 7]
+      biggest = prices[0]
+      for p in prices:
+          if p > biggest:
+              biggest = p
+    beats:
+      - beat: empty
+        caption: "A program cannot look at the whole list at once, as you do. It looks at **one value at a time**. So it needs a plan."
+      - beat: list
+        line: 1
+        caption: "Four prices. Which one is the biggest?"
+      - beat: start
+        line: 2
+        caption: "Start with the first value. Before the loop, it is the biggest value **so far**."
+      - beat: first
+        line: 3
+        caption: "The loop reads the places in turn. First `p` is 4. Is 4 bigger than 4? No. `biggest` stays."
+      - beat: second
+        line: 3
+        caption: "Next place: `p` is 9. Is 9 bigger than 4?"
+      - beat: better
+        line: 5
+        caption: "Yes. Now `biggest` remembers 9. The old best value is replaced."
+      - beat: third
+        line: 3
+        caption: "`p` is 2. Not bigger than 9."
+      - beat: fourth
+        line: 3
+        caption: "`p` is 7. Not bigger than 9."
+      - beat: end
+        caption: "After the loop, `biggest` holds 9: the biggest value of the whole list. Each value was compared **one** time."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: plan
+    type: theory
+    objective: O1
+    title: One plan, many answers
+    body: |
+      ## Three parts
+
+      Most loops over a list follow the same plan:
+
+      - **Before** the loop, a variable gets a start value.
+      - **Inside** the loop, the variable is updated with the value of this round.
+      - **After** the loop, the variable holds the answer.
+
+      The cards show the most common patterns. Only the start value and
+      the update are different.
+
+      The start value must be before the loop. Inside the loop, it would
+      start again in every round.
+    keys:
+      - code: "total = 0"
+        means: "**Total**. In the loop: `total = total + x`."
+      - code: "count = 0"
+        means: "**Count**. In the loop: `if x > 10:` then `count = count + 1`."
+      - code: "best = items[0]"
+        means: "**Biggest**. In the loop: `if x > best:` then `best = x`."
+      - code: "big = []"
+        means: "**Keep some values**. In the loop: `if x > 10:` then `big.append(x)`."
+      - code: "doubled = []"
+        means: "**Change every value**. In the loop: `doubled.append(x * 2)`."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-count
+    type: predict
+    objective: O1
+    title: Count with a condition
+    item:
+      kind: predict
+      id: p-count
+      code: |
+        scores = [12, 5, 18, 9, 10]
+        count = 0
+        for s in scores:
+            if s >= 10:
+                count = count + 1
+        print(count)
+      explain: >-
+        12, 18 and 10 are 10 or more, so `count` grows three times. The
+        `print` is after the loop: it runs one time, with the final count.
+      misconceptions:
+        - answer: "2"
+          say: "`>=` includes 10. The score 10 is counted too."
+        - answer: "5"
+          say: "`count` grows only when the condition is True, not in every round."
+        - answer: "1\n2\n3"
+          say: "`print` has no spaces at the start, so it is after the loop. It runs one time."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O3
+    title: Keep the hot days
+    intro: |
+      This program makes a **new** list with the hot days only. The list
+      `temps` does not change.
+
+      Press **Run**. Watch the loop read the places of `temps` one by one,
+      and watch `hot` grow.
+    code: |
+      temps = [18, 25, 31, 22, 29]
+      hot = []
+      for t in temps:
+          if t > 24:
+              hot.append(t)
+      print(hot)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Change the limit `24`, so that `hot` has exactly 2 values."
+        expr: "err is None and len(ns.get('hot', [])) == 2"
+      - text: "Add a variable `count` that counts the hot days in the same loop."
+        expr: "err is None and ns.get('count') == len(ns.get('hot', [])) and assigned('count') >= 2"
+      - text: "Add a second new list `cool` with the other days. Use `else`."
+        expr: "err is None and isinstance(ns.get('cool'), list) and len(ns['cool']) > 0 and len(ns['cool']) + len(ns.get('hot', [])) == len(ns.get('temps', []))"
+
+  # 5. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-lowest
+    type: worked
+    objective: O2
+    title: The lowest price
+    problem: |
+      **Find the lowest price in a list.** It is the same plan as for the
+      biggest value, with one sign changed.
+    lines:
+      - code: "prices = [7, 3, 9, 4]"
+        note: "The values. The program must work for any prices."
+      - code: "lowest = prices[0]"
+        note: "Start with the first value, **not** with 0. No price is lower than 0, so with 0 the answer would always be 0."
+      - code: |
+          for p in prices:
+              if p < lowest:
+                  lowest = p
+        note: "The sign is `<` now. `lowest` changes only when a smaller value comes."
+      - code: "print(lowest)"
+        note: "After the loop: 3."
+    check:
+      kind: mcq
+      id: w-lowest
+      prompt: "The first line in the loop reads `prices[0]` again, and compares it with itself. **Is that a problem?**"
+      options:
+        - text: "No. The answer is False, so nothing changes. It is one extra round, and the code stays simple"
+          correct: true
+          why: "`7 < 7` is False. The result is right, and the loop has no special case."
+        - text: "Yes. The first value is counted two times"
+          why: "Nothing is counted here. `lowest` only changes when a value is smaller."
+        - text: "Yes. Python gives an error when a value is compared with itself"
+          why: "Python can compare any two numbers, also two equal ones."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O1
+    title: Where does each part go
+    items:
+      - kind: predict
+        id: d-reset
+        objective: O1
+        prompt: "The start value is in the wrong place. **What does this program print?**"
+        code: |
+          nums = [3, 5, 2]
+          for n in nums:
+              total = 0
+              total = total + n
+          print(total)
+        explain: >-
+          `total = 0` is inside the loop, so it runs in every round. Each
+          round starts again from 0, and the last round leaves 0 + 2. The
+          start value belongs before the loop.
+        misconceptions:
+          - answer: "10"
+            say: "`total = 0` is inside the loop. In every round, `total` starts again at 0."
+      - kind: predict
+        id: d-change
+        objective: O3
+        code: |
+          prices = [10, 20, 5]
+          doubled = []
+          for p in prices:
+              doubled.append(p * 2)
+          print(doubled)
+          print(prices)
+        explain: "The loop builds a new list. `prices` itself does not change."
+        misconceptions:
+          - answer: "[20, 40, 10]\n[20, 40, 10]"
+            say: "`append` changes `doubled`, not `prices`. The old list stays as it was."
+      - kind: mcq
+        id: d-where-print
+        objective: O1
+        prompt: "A program must print the total **one time**, at the end. Where does the `print` go?"
+        options:
+          - text: "After the loop, with no spaces at the start"
+            correct: true
+            why: "Lines after the block run one time, when the loop is over."
+          - text: "Inside the loop, with 4 spaces"
+            why: "Then it prints in every round: a total that is not finished yet."
+          - text: "Before the loop"
+            why: "Then it prints the start value, before anything was added."
+      - kind: diagnose
+        id: d-empty
+        objective: O2
+        mode: predict
+        code: |
+          names = []
+          longest = names[0]
+          for n in names:
+              if len(n) > len(longest):
+                  longest = n
+          print(longest)
+        explain: >-
+          An empty list has no place 0. The best-so-far plan needs a first
+          value. Ask first: `if len(names) > 0:`.
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: builtins
+    type: theory
+    objective: O4
+    title: Shortcuts that Python has
+    body: |
+      ## `sum`, `max`, `min`
+
+      The total, the biggest and the smallest value are so common that
+      Python has them ready. Use them: they are shorter, and they cannot
+      have a mistake in the start value.
+
+      You still need your own loop when the rule is your own: count only
+      some values, keep only some values, or find the "best" value by a
+      rule that is not "biggest", like the longest word.
+
+      Knowing the pattern helps you also with the shortcuts: `max([])` of
+      an empty list gives an error for the same reason as `names[0]` did.
+    keys:
+      - code: "sum([3, 5, 2])"
+        means: "The total: `10`."
+      - code: "max([3, 5, 2])"
+        means: "The biggest value: `5`."
+      - code: "min([3, 5, 2])"
+        means: "The smallest value: `2`."
+      - code: "sum(nums) / len(nums)"
+        means: "The average."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-total
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Minutes of practice
+    prompt: |
+      A learner writes down the minutes of practice for each day.
+
+      **Replace `___` with one line**, so that `total` is the sum of all
+      minutes. Then the program prints the total and the average.
+    starter: |
+      minutes = [30, 45, 20, 60]
+      total = 0
+      for m in minutes:
+          ___
+      average = total / len(minutes)
+      print(total)
+      print(average)
+    solution: |
+      minutes = [30, 45, 20, 60]
+      total = 0
+      for m in minutes:
+          total = total + m
+      average = total / len(minutes)
+      print(total)
+      print(average)
+    after: >-
+      `total = total + m` reads the old total and adds the value of this
+      round. You can also write it as `total += m`, or use `sum(minutes)`.
+    cases:
+      - {}
+      - label: "`minutes` is `10, 15`"
+        set: { minutes: [10, 15] }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "The line must have 8 spaces at the start: it is inside the block of the loop."
+      - expr: "total == sum(minutes)"
+        pass: "`total` is the sum of all minutes"
+        hint: "In each round, add `m` to the old total."
+        misconceptions:
+          - when: "ns.get('total') == minutes[-1]"
+            say: "`total = m` replaces the total with the value of this round. Add it: `total = total + m`."
+          - when: "ns.get('total') == len(minutes)"
+            say: "This counts the rounds. Add the value `m`, not 1."
+      - expr: "lines == [str(total), str(average)]"
+        pass: "It prints the total and the average"
+        hint: "Keep the last two lines."
+    hints:
+      - "The plan: read the old total, add the value of this round."
+      - "The value of this round is in `m`."
+      - "Write `total = total + m`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-longest
+    type: exercise
+    fade: debug
+    objective: O2
+    title: The longest word
+    prompt: |
+      This program must print the longest word. When two words have the
+      same length, it must print the **first** of them. For this list the
+      answer is `planet`.
+
+      It prints `star` and gives no error. **It has two mistakes.**
+    starter: |
+      words = ["sun", "planet", "moon", "galaxy", "star"]
+      longest = words[0]
+      for w in words:
+          longest = ""
+          if len(w) >= len(longest):
+              longest = w
+      print(longest)
+    solution: |
+      words = ["sun", "planet", "moon", "galaxy", "star"]
+      longest = words[0]
+      for w in words:
+          if len(w) > len(longest):
+              longest = w
+      print(longest)
+    after: >-
+      The first mistake erased the best value in every round. The second
+      one let a later word of the same length win. Both gave a result that
+      looked possible: test with values where you know the answer.
+    cases:
+      - {}
+      - label: "`words` is `hi`, `hello`, `world`, `ok`"
+        set: { words: ["hi", "hello", "world", "ok"] }
+    checks:
+      - expr: "err is None and longest == max(words, key=len)"
+        pass: "`longest` is the first of the longest words"
+        hint: "Follow `longest` round by round. When does it change?"
+        misconceptions:
+          - when: "ns.get('longest') == words[-1]"
+            say: "`longest` gets a new start value in every round, so only the last word counts. The start value belongs before the loop."
+          - when: "ns.get('longest') == [w for w in words if len(w) == max(len(x) for x in words)][-1]"
+            say: "With `>=`, a later word of the same length replaces the first one. Use `>`."
+      - expr: "lines[-1:] == [str(longest)]"
+        pass: "It prints the longest word"
+        hint: "Keep the last line."
+    hints:
+      - "Look at line 4. Does it belong inside the loop?"
+      - "After that fix, the program prints `galaxy`. Which sign lets a word of the same length win?"
+      - "Delete line 4, and change `>=` to `>`."
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-cheap
+    type: exercise
+    fade: independent
+    objective: O3
+    title: The cheap items
+    prompt: |
+      **Make a new list with the name `cheap`. It holds every price that is
+      below 10, in the same order.** The list `prices` must not change.
+
+      Then print `cheap`, and on the last line its total. For the prices
+      below, the output is:
+
+      ```text
+      [4, 8.5, 3]
+      15.5
+      ```
+    given: |
+      prices = [12, 4, 8.5, 20, 3]
+    starter: |
+      # prices already exists.
+    solution: |
+      cheap = []
+      for p in prices:
+          if p < 10:
+              cheap.append(p)
+      print(cheap)
+      print(sum(cheap))
+    after: >-
+      A filter: a new empty list before the loop, and `append` inside an
+      `if`. The old list stays complete, so you can still use it for other
+      questions.
+    cases:
+      - {}
+      - label: "`prices` is `9, 10, 11, 1`"
+        setup: |
+          prices = [9, 10, 11, 1]
+      - label: "no price is below 10"
+        setup: |
+          prices = [10, 50]
+    checks:
+      - expr: "err is None and isinstance(ns.get('cheap'), list)"
+        pass: "There is a list with the name `cheap`"
+        hint: "Before the loop: `cheap = []`."
+      - expr: "cheap == [p for p in pre['prices'] if p < 10]"
+        pass: "`cheap` holds every price below 10, in order"
+        hint: "In the loop, `append` a price only when it is below 10."
+        misconceptions:
+          - when: "cheap == [p for p in pre['prices'] if p <= 10]"
+            say: "A price of exactly 10 is not below 10. Use `<`."
+          - when: "cheap == pre['prices']"
+            say: "Every price was added. Put the `append` inside an `if`."
+      - expr: "prices == pre['prices']"
+        pass: "`prices` did not change"
+        hint: "Do not remove values from `prices`. Build the new list `cheap` instead."
+      - expr: "len(lines) >= 2 and lines[-2] == str(cheap) and lines[-1] == str(sum(cheap))"
+        pass: "It prints `cheap`, then its total"
+        hint: "After the loop: `print(cheap)`, then `print(sum(cheap))`."
+    hints:
+      - "Start with an empty list: `cheap = []`."
+      - "The loop: `for p in prices:` and inside it `if p < 10:`."
+      - "Inside the `if`: `cheap.append(p)`. After the loop, two `print` lines."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: predict
+        id: q-zero-start
+        objective: O2
+        prompt: "All temperatures are below zero. **What does this program print?**"
+        code: |
+          temps = [-5, -2, -8]
+          highest = 0
+          for t in temps:
+              if t > highest:
+                  highest = t
+          print(highest)
+        explain: >-
+          No temperature is bigger than the start value 0, so `highest`
+          never changes. That is why the start value is the first value of
+          the list: `highest = temps[0]` gives the right answer, -2.
+        misconceptions:
+          - answer: "-2"
+            say: "That is the right answer, but not what this code prints. The start value 0 is bigger than every value in the list."
+      - kind: mcq
+        id: q-builtin
+        objective: O4
+        prompt: "Which task needs your **own** loop, because no shortcut does it?"
+        options:
+          - text: "Count the scores that are 50 or more"
+            correct: true
+            why: "The rule \"50 or more\" is yours. A loop with a count and an `if` does it."
+          - text: "Add up all scores"
+            why: "`sum(scores)` does it."
+          - text: "Find the highest score"
+            why: "`max(scores)` does it."
+      - kind: predict
+        id: q-build
+        objective: O3
+        code: |
+          words = ["a", "bb", "ccc"]
+          lengths = []
+          for w in words:
+              lengths.append(len(w))
+          print(lengths)
+        explain: "The loop changes every value into its length and builds a new list."
+      - kind: mcq
+        id: q-start
+        objective: O1
+        prompt: "Which start value is right for a variable that **counts**?"
+        options:
+          - text: "`0`, before the loop"
+            correct: true
+            why: "Before the first round nothing is counted."
+          - text: "`1`, before the loop"
+            why: "Then the count is one too big at the end."
+          - text: "`0`, inside the loop"
+            why: "Then the count starts again in every round."
+      - kind: diagnose
+        id: q-max-empty
+        objective: O4
+        mode: predict
+        code: |
+          scores = []
+          print("Results")
+          print(max(scores))
+        explain: "`max` needs at least one value. An empty list has no biggest value, so Python stops with a `ValueError`."
+        distractors: [IndexError, TypeError, NameError, ZeroDivisionError]
+      - kind: predict
+        id: q-sum
+        objective: O4
+        code: |
+          nums = [4, 6, 5]
+          print(sum(nums))
+          print(max(nums) - min(nums))
+        explain: "The total is 15. The biggest value is 6, the smallest is 4, so the difference is 2."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-count
+    objective: O1
+    code: |
+      count = 0
+      for n in [7, 2, 9, 4]:
+          if n > 5:
+              count = count + 1
+      print(count)
+    explain: "7 and 9 are bigger than 5, so `count` grows two times."
+  - kind: mcq
+    id: r-best-start
+    objective: O2
+    prompt: "To find the smallest value of `nums`, what is a good start value?"
+    options:
+      - text: "`smallest = nums[0]`"
+        correct: true
+        why: "The first value is a real value of the list, so the answer is always one of them."
+      - text: "`smallest = 0`"
+        why: "If every value is bigger than 0, the answer stays 0, and that is wrong."
+      - text: "`smallest = []`"
+        why: "That is an empty list. A number cannot be compared with a list."
+  - kind: predict
+    id: r-filter
+    objective: O3
+    code: |
+      big = []
+      for n in [3, 12, 8, 15]:
+          if n > 10:
+              big.append(n)
+      print(big)
+    explain: "Only 12 and 15 are bigger than 10, so the new list holds those two."
+  - kind: mcq
+    id: r-reset
+    objective: O1
+    prompt: "A loop gives a total that is always only the last value. What is the most likely mistake?"
+    options:
+      - text: "The start value `total = 0` is inside the loop"
+        correct: true
+        why: "Then the total starts again in every round, and only the last round counts."
+      - text: "The loop has too many rounds"
+        why: "More rounds would make the total bigger, not equal to the last value."
+      - text: "`print` is after the loop"
+        why: "That is the right place for a total that is printed one time."
+  - kind: mcq
+    id: r-sum
+    objective: O4
+    prompt: "What does `sum([2, 3, 5]) / len([2, 3, 5])` give?"
+    options:
+      - text: "`3.3333333333333335`, the average"
+        correct: true
+        why: "The total 10 divided by the count 3."
+      - text: "`10`"
+        why: "That is the total. The division by the length makes it the average."
+      - text: "`5`"
+        why: "That is `max`. Here the total is divided by the number of values."

@@ -1,0 +1,499 @@
+id: booleans
+order: 5
+title: True and False
+summary: Ask questions about values. The answers let a program decide.
+minutes: 25
+outcomes: [A1, A2]
+
+objectives:
+  - id: O1
+    text: Say what a bool is - a value that is True or False
+  - id: O2
+    text: Compare values with == != < > <= and >=
+  - id: O3
+    text: Combine conditions with and, or and not
+  - id: O4
+    text: Tell = (store) from == (compare) and fix the mistake
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: A question with two answers
+    question: Can a program answer yes or no?
+    code: |
+      age = 16
+      is_adult = age >= 18
+      age = 21
+      is_adult = age >= 18
+    beats:
+      - beat: empty
+        caption: "Programs must decide. Is the password right? Is the cart empty? Every decision starts with a question that has **two** possible answers."
+      - beat: age
+        line: 1
+        caption: "A variable with a number. You know this."
+      - beat: ask
+        line: 2
+        caption: "`age >= 18` is a question: is `age` at least 18? Python answers **False**. This value has its own type, `bool`, and its own color."
+      - beat: change
+        line: 3
+        caption: "`age` changes to 21. Look at `is_adult`: it is still False. Python answered the question once, with the value at that moment."
+      - beat: again
+        line: 4
+        caption: "Ask again, and the answer is **True**. A `bool` has only these two values."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: compare
+    type: theory
+    objective: O2
+    title: Six ways to compare
+    body: |
+      ## Comparisons
+
+      A comparison puts a sign between two values. The result is always
+      `True` or `False`, written with a capital letter and without quotes.
+
+      Be careful with the equal sign:
+
+      - One sign, `=`, **stores** a value.
+      - Two signs, `==`, **ask** if two values are equal.
+
+      Text is equal only when every character is the same. Capital letters
+      matter.
+    keys:
+      - code: "a == b"
+        means: "Is `a` equal to `b`?"
+      - code: "a != b"
+        means: "Is `a` different from `b`?"
+      - code: "a < b    a > b"
+        means: "Is `a` smaller than `b`? Is `a` bigger than `b`?"
+      - code: "a <= b   a >= b"
+        means: "Smaller or equal? Bigger or equal? The `=` is always second."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-compare
+    type: predict
+    objective: O2
+    title: Equal or not
+    item:
+      kind: predict
+      id: p-compare
+      prompt: "This program prints four lines. **Type all four** before you check."
+      code: |
+        print(3 > 2)
+        print(3 == 3.0)
+        print("a" == "A")
+        print("5" == 5)
+      explain: >-
+        Numbers are compared by value, so the `int` 3 and the `float` 3.0 are
+        equal. Text must match exactly, and `a` is not `A`. Text and a number
+        are never equal, also when they look the same.
+      misconceptions:
+        - answer: "True\nFalse\nFalse\nFalse"
+          say: "`3` and `3.0` have the same value. For numbers, only the value counts."
+        - answer: "True\nTrue\nTrue\nFalse"
+          say: "A small `a` and a capital `A` are different characters."
+        - answer: "True\nTrue\nFalse\nTrue"
+          say: "`\"5\"` is text and `5` is a number. They are never equal."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O2
+    title: Change the answer
+    intro: |
+      This program asks two questions about a temperature.
+
+      Press **Run**. Then change `temperature` and watch the green cards.
+    code: |
+      temperature = 31
+      is_hot = temperature > 30
+      is_freezing = temperature <= 0
+      print(is_hot)
+      print(is_freezing)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Change `temperature` so that both answers are `False`."
+        expr: "ns.get('is_hot') is False and ns.get('is_freezing') is False"
+      - text: "Change `temperature` so that `is_freezing` is `True`."
+        expr: "ns.get('is_freezing') is True"
+      - text: "Add `is_mild = temperature == 20` and make it `True`."
+        expr: "ns.get('is_mild') is True and ns.get('temperature') == 20"
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: combine
+    type: theory
+    objective: O3
+    title: Two questions in one
+    body: |
+      ## `and`, `or`, `not`
+
+      Real rules often have more than one condition: "at least 18 **and**
+      with a ticket", "a member **or** a big order".
+
+      These three words combine `True` and `False` values. They are normal
+      English words, and they mean the same in Python.
+
+      Python computes the comparisons first, then `not`, then `and`, then `or`.
+    keys:
+      - code: "a and b"
+        means: "`True` only when **both** are `True`."
+      - code: "a or b"
+        means: "`True` when **at least one** is `True`."
+      - code: "not a"
+        means: "The opposite: `True` becomes `False`."
+      - code: "age >= 18 and has_ticket"
+        means: "First the comparison, then `and`."
+
+  # 6. PREDICT ---------------------------------------------------------------
+  - id: predict-logic
+    type: predict
+    objective: O3
+    title: and, or, not
+    item:
+      kind: predict
+      id: p-logic
+      prompt: "This program prints three lines. **Type all three** before you check."
+      code: |
+        age = 20
+        has_ticket = False
+        print(age >= 18 and has_ticket)
+        print(age >= 18 or has_ticket)
+        print(not has_ticket)
+      explain: >-
+        `age >= 18` is True and `has_ticket` is False. With `and`, both must
+        be True, so the result is False. With `or`, one is enough, so the
+        result is True. `not False` is True.
+      misconceptions:
+        - answer: "True\nTrue\nTrue"
+          say: "`and` needs both sides to be True. `has_ticket` is False."
+        - answer: "False\nFalse\nTrue"
+          say: "`or` needs only one side to be True. `age >= 18` is True."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-delivery
+    type: worked
+    objective: O3
+    title: Free delivery
+    problem: |
+      A shop has this rule: delivery is free when the total is at least 50,
+      or when the customer is a member.
+
+      **Compute if the delivery is free. Print the answer.**
+    lines:
+      - code: "total = 35"
+        note: "The first fact: a number."
+      - code: "is_member = True"
+        note: "The second fact is already a yes or no value, so it is a `bool`. No quotes."
+      - code: "free_delivery = total >= 50 or is_member"
+        note: "The rule, word for word. `total >= 50` is False, `is_member` is True, and `or` needs only one."
+      - code: "print(free_delivery)"
+        note: "Shows `True`. A name that starts with `is_` or reads like a question helps the reader."
+    check:
+      kind: mcq
+      id: w-delivery
+      prompt: "The rule changes: delivery is free only for **members who spend at least 50**. Which line 3 is right?"
+      options:
+        - text: "`free_delivery = total >= 50 and is_member`"
+          correct: true
+          why: "Now both conditions must be true, so the word is `and`."
+        - text: "`free_delivery = total >= 50 or is_member`"
+          why: "With `or`, a member with a total of 35 still gets free delivery. The new rule needs both."
+        - text: "`free_delivery = total and is_member >= 50`"
+          why: "This compares `is_member` with 50. The comparison belongs to `total`."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-passed
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Passed or not
+    prompt: |
+      A student passes an exam with a score of 50 or more.
+
+      **Replace `___` with a comparison**, so that `passed` is `True` when
+      the student passes and `False` when not.
+    starter: |
+      score = 62
+      passed = ___
+      print(passed)
+    solution: |
+      score = 62
+      passed = score >= 50
+      print(passed)
+    after: >-
+      The check tried a score of exactly 50. Limits are where most mistakes
+      happen, so always test the limit value itself.
+    cases:
+      - {}
+      - label: "`score` is 50"
+        set: { score: 50 }
+      - label: "`score` is 49"
+        set: { score: 49 }
+    checks:
+      - expr: "isinstance(passed, bool)"
+        pass: "`passed` is `True` or `False`"
+        hint: "A comparison gives `True` or `False` by itself. Write the comparison after `=`."
+        misconceptions:
+          - when: "isinstance(ns.get('passed'), str)"
+            say: "`passed` is text. Remove the quotes and write a comparison with `score`."
+      - expr: "passed == (score >= 50)"
+        pass: "`passed` is right for every score"
+        hint: "Compare `score` with 50."
+        misconceptions:
+          - when: "score == 50 and ns.get('passed') is False"
+            say: "With exactly 50 the student passes. The sign `>` does not include 50. Use `>=`."
+          - when: "score < 50 and ns.get('passed') is True"
+            say: "`passed` is `True` also for a low score. It must come from a comparison with `score`."
+      - expr: "lines[-1:] == [str(passed)]"
+        pass: "The program prints `passed`"
+        hint: "Keep the last line."
+    hints:
+      - "\"50 or more\" means: bigger than 50, or equal to 50."
+      - "The sign for bigger or equal is `>=`."
+      - "Write `passed = score >= 50`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-guess
+    type: exercise
+    fade: debug
+    objective: O4
+    title: One sign is missing
+    prompt: |
+      This program must print `True` when the guess is equal to the secret
+      number, and `False` when it is not.
+
+      **Run it.** It gives no error, but it prints `7`. Find the mistake on
+      line 3 and fix it.
+    starter: |
+      secret = 7
+      guess = 5
+      correct = guess = secret
+      print(correct)
+    solution: |
+      secret = 7
+      guess = 5
+      correct = guess == secret
+      print(correct)
+    after: >-
+      `correct = guess = secret` stored 7 in `guess` and also in `correct`.
+      Python gave no error, because storing one value under two names is
+      allowed. One `=` stores. Two `==` ask.
+    cases:
+      - {}
+      - label: "`guess` is 7"
+        set: { guess: 7 }
+    checks:
+      - expr: "err is None and isinstance(correct, bool)"
+        pass: "`correct` is `True` or `False`"
+        hint: "Line 3 must ask a question. Which sign asks if two values are equal?"
+      - expr: "correct == (guess == secret) and secret == 7"
+        pass: "`correct` says if the guess is equal to the secret number"
+        hint: "Compare `guess` with `secret` using `==`."
+        misconceptions:
+          - when: "ns.get('correct') is False and ns.get('guess') == ns.get('secret')"
+            say: "`correct` is always False. Let Python compare `guess` and `secret`."
+    hints:
+      - "Line 3 has two signs `=`. What does one `=` do?"
+      - "The second `=` must be a comparison."
+      - "Write `correct = guess == secret`."
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-ride
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Who can take the ride
+    prompt: |
+      A ride in a park is for people who are **at least 120 cm tall and at
+      least 8 years old**.
+
+      **Write a program that asks for the height first, then for the age.**
+      Both are whole numbers. On the last line, print `True` if the person
+      can take the ride and `False` if not.
+    starter: |
+      # Ask for the height, then for the age.
+      # Print True or False.
+    solution: |
+      height = int(input("Height in cm: "))
+      age = int(input("Age: "))
+      allowed = height >= 120 and age >= 8
+      print(allowed)
+    after: >-
+      You joined three lessons: input, conversion and conditions. The check
+      tried a person of exactly 120 cm and 8 years, and people who meet only
+      one of the two conditions.
+    cases:
+      - {}
+      - label: "the height is `119` and the age is `30`"
+        stdin: ["119", "30"]
+      - label: "the height is `120` and the age is `8`"
+        stdin: ["120", "8"]
+      - label: "the height is `150` and the age is `7`"
+        stdin: ["150", "7"]
+      - label: "the height is `130` and the age is `9`"
+        stdin: ["130", "9"]
+    checks:
+      - expr: "len(inputs) == 2"
+        pass: "The program asks two questions"
+        hint: "Use `input()` two times: first the height, then the age."
+      - expr: "err is None"
+        pass: "It runs without an error"
+        hint: "Read the message under the editor."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "The answers of `input()` are text. Change them with `int()` before you compare."
+          - when: "err == 'ValueError'"
+            say: "The answers must be whole numbers, like `130`. Run again and type numbers."
+      - expr: "lines[-1:] == [str(int(inputs[0]) >= 120 and int(inputs[1]) >= 8)]"
+        pass: "The last line is `True` or `False`, and it follows the rule"
+        hint: "Write two comparisons and join them with one word."
+        misconceptions:
+          - when: "lines[-1:] == [str(int(inputs[0]) >= 120 or int(inputs[1]) >= 8)]"
+            say: "Both conditions must be true. The word for that is `and`, not `or`."
+          - when: "lines[-1:] == [str(int(inputs[0]) > 120 and int(inputs[1]) > 8)]"
+            say: "A person of exactly 120 cm and 8 years can take the ride. Use `>=`."
+          - when: "lines[-1:] == [str(int(inputs[1]) >= 120 and int(inputs[0]) >= 8)]"
+            say: "Ask for the height first, then for the age."
+    hints:
+      - "Start like in the last lesson: `height = int(input(...))`."
+      - "\"At least 120\" is `height >= 120`."
+      - "Write `allowed = height >= 120 and age >= 8`, then print it."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-bool
+        objective: O1
+        prompt: "Which values can a `bool` have?"
+        options:
+          - text: "`True` and `False`"
+            correct: true
+            why: "Only these two, written with a capital letter and no quotes."
+          - text: '`"yes"` and `"no"`'
+            why: "These are text values, because of the quotes. A `bool` is not text."
+          - text: "Any whole number"
+            why: "Whole numbers have the type `int`."
+      - kind: mcq
+        id: q-signs
+        objective: O4
+        prompt: "What is the difference between `x = 5` and `x == 5`?"
+        options:
+          - text: "The first stores 5 in `x`. The second asks if `x` is equal to 5."
+            correct: true
+            why: "One sign stores. Two signs compare and give `True` or `False`."
+          - text: "The first asks if `x` is equal to 5. The second stores 5 in `x`."
+            why: "It is the other way. One `=` stores, as in every lesson before."
+          - text: "There is no difference"
+            why: "`x = 5` changes `x`. `x == 5` changes nothing and gives an answer."
+      - kind: predict
+        id: q-limits
+        objective: O2
+        code: |
+          x = 10
+          print(x != 10)
+          print(x <= 10)
+        explain: "`x` is 10, so it is not different from 10: False. `<=` includes the equal case: True."
+        misconceptions:
+          - answer: "False\nFalse"
+            say: "`<=` means smaller **or equal**. 10 is equal to 10."
+      - kind: mcq
+        id: q-mixed
+        objective: O2
+        prompt: 'What does `"10" == 10` give?'
+        options:
+          - text: "`False`"
+            correct: true
+            why: "Text and a number are never equal. Convert first: `int(\"10\") == 10` is `True`."
+          - text: "`True`"
+            why: "They look the same, but one is text and one is a number."
+          - text: "A `TypeError`"
+            why: "`==` is allowed between all types and gives `False`. The signs `<` and `>` give a `TypeError` here."
+      - kind: predict
+        id: q-logic
+        objective: O3
+        code: |
+          a = True
+          b = False
+          print(a and b)
+          print(a or b)
+          print(not a)
+        explain: "`and` needs both: False. `or` needs one: True. `not True` is False."
+      - kind: mcq
+        id: q-open
+        objective: O3
+        prompt: "A shop opens at 9 and closes at 17. At 17 it is closed. Which expression is `True` when the shop is open?"
+        options:
+          - text: "`hour >= 9 and hour < 17`"
+            correct: true
+            why: "Both conditions must hold: not before 9, and before 17."
+          - text: "`hour >= 9 or hour < 17`"
+            why: "With `or`, this is `True` for every hour. For example 20 is bigger than 9."
+          - text: "`hour > 9 and hour <= 17`"
+            why: "This is `False` at 9, when the shop is open, and `True` at 17, when it is closed."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-equal
+    objective: O2
+    code: |
+      print(2 == 2.0)
+      print("yes" == "Yes")
+    explain: "Numbers are compared by value. Text must match exactly, and capital letters matter."
+  - kind: mcq
+    id: r-and
+    objective: O3
+    prompt: "When is `a and b` `True`?"
+    options:
+      - text: "Only when both `a` and `b` are `True`"
+        correct: true
+        why: "One `False` is enough to make `and` give `False`."
+      - text: "When at least one of them is `True`"
+        why: "That is `or`."
+      - text: "When `a` and `b` have the same value"
+        why: "That is `a == b`. With `and`, two `False` values give `False`."
+  - kind: mcq
+    id: r-store
+    objective: O4
+    prompt: "A program has the line `done = count = 10`. What does it do?"
+    options:
+      - text: "It stores 10 in `count` and in `done`"
+        correct: true
+        why: "One `=` always stores. To compare, the line needs `==`: `done = count == 10`."
+      - text: "It stores `True` or `False` in `done`"
+        why: "That needs a comparison with `==`. Here both signs are `=`, so both store."
+      - text: "It gives a `SyntaxError`"
+        why: "Python allows this line. That is why the mistake is hard to see."
+  - kind: predict
+    id: r-limit
+    objective: O2
+    code: |
+      n = 5
+      print(n > 5)
+      print(n >= 5)
+    explain: "5 is not bigger than 5: False. `>=` includes the equal case: True."
+  - kind: mcq
+    id: r-not
+    objective: O3
+    prompt: "What does `not (3 > 1)` give?"
+    options:
+      - text: "`False`"
+        correct: true
+        why: "`3 > 1` is `True`, and `not` gives the opposite."
+      - text: "`True`"
+        why: "`3 > 1` is `True`. `not` changes it to `False`."
+      - text: "`2`"
+        why: "A comparison never gives a number. The result is `True` or `False`."

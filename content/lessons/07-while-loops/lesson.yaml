@@ -1,0 +1,514 @@
+id: while-loops
+order: 7
+title: while loops
+summary: Repeat a block as long as a condition is true.
+minutes: 25
+outcomes: [A1, A2]
+
+objectives:
+  - id: O1
+    text: Explain how while repeats - the block runs again as long as the condition is True
+  - id: O2
+    text: Write a loop that counts with a variable
+  - id: O3
+    text: Predict how many times a loop runs
+  - id: O4
+    text: Find why a loop never stops and fix it
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: Back to the question
+    question: How can three lines of code do the work of a hundred?
+    legend: false
+    code: |
+      count = 3
+      while count > 0:
+          print(count)
+          count = count - 1
+      print("Go!")
+    beats:
+      - beat: load
+        caption: "A countdown: 3, 2, 1, Go! You could write one `print` for each number. A **loop** does it with one."
+      - beat: start
+        line: 1
+        caption: "The start value: `count` is 3."
+      - beat: ask
+        line: 2
+        caption: "`while` asks a question, like `if`. Is 3 bigger than 0? **True**, so the block runs."
+      - beat: print
+        line: 3
+        caption: "The first line of the block prints `count`."
+      - beat: change
+        line: 4
+        caption: "The second line makes `count` one smaller. Now `count` is 2."
+      - beat: back
+        line: 2
+        caption: "Here is the difference from `if`: after the block, Python goes **back up** and asks the question again. 2 > 0 is True."
+      - beat: rounds
+        line: 3
+        caption: "The block runs again, and again. Each round, `count` gets smaller."
+      - beat: stop
+        line: 2
+        caption: "Now `count` is 0. Is 0 bigger than 0? **False**. This ends the loop."
+      - beat: after
+        line: 5
+        caption: "Python continues with the first line after the block."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: form
+    type: theory
+    objective: O2
+    title: Three parts of a counting loop
+    body: |
+      ## `while`
+
+      `while` has the same form as `if`: a condition, a colon, and a block
+      with 4 spaces. The difference: after the block, Python asks the
+      condition **again**.
+
+      A loop that counts needs three parts:
+
+      - a **start value** before the loop,
+      - a **condition** that is True while the work is not done,
+      - a **change** inside the block, so that the condition becomes False
+        one day.
+
+      Without the change, the loop never stops.
+    keys:
+      - code: "n = 1"
+        means: "The start value. One time, before the loop."
+      - code: "while n <= 5:"
+        means: "The condition. Asked before every round."
+      - code: "n = n + 1"
+        means: "The change. Inside the block."
+      - code: "n += 1"
+        means: "A short form of `n = n + 1`. You will see it often."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-count
+    type: predict
+    objective: O3
+    title: Where does it stop
+    item:
+      kind: predict
+      id: p-count
+      prompt: "**Type every line that this program prints.**"
+      code: |
+        n = 1
+        while n < 4:
+            print(n)
+            n = n + 1
+      explain: >-
+        The block runs for 1, 2 and 3. After the third round `n` is 4. The
+        question `4 < 4` is False, so the loop ends before it prints 4.
+      misconceptions:
+        - answer: "1\n2\n3\n4"
+          say: "When `n` is 4, the question `4 < 4` is False. The block does not run for 4."
+        - answer: "2\n3\n4"
+          say: "`print(n)` comes before the change. The first round prints 1."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    visual: output
+    objective: O1
+    title: Change the loop
+    intro: |
+      Press **Run**. Watch the arrow jump back to the `while` line after
+      each round, and the answer at the end of that line.
+
+      Then change the three parts of the loop.
+    code: |
+      count = 3
+      while count > 0:
+          print(count)
+          count = count - 1
+      print("Go!")
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Change the start value, so that the countdown starts at 5."
+        expr: "err is None and lines == ['5', '4', '3', '2', '1', 'Go!']"
+      - text: "Count down from 10 in steps of 2: `10 8 6 4 2`, then `Go!`."
+        expr: "err is None and lines == ['10', '8', '6', '4', '2', 'Go!']"
+      - text: "Delete the line `count = count - 1` and run. Python stops the program for you. Read the message, then put the line back."
+        expr: "err == 'Timeout'"
+
+  # 5. PREDICT ---------------------------------------------------------------
+  - id: predict-total
+    type: predict
+    objective: O3
+    title: A loop that collects
+    item:
+      kind: predict
+      id: p-total
+      prompt: "This program prints one line. **What is it?** Follow `total` round by round."
+      code: |
+        total = 0
+        n = 1
+        while n <= 3:
+            total = total + n
+            n = n + 1
+        print(total)
+      explain: >-
+        Round 1: total is 0 + 1 = 1. Round 2: 1 + 2 = 3. Round 3: 3 + 3 = 6.
+        Then `n` is 4 and the loop ends. A variable that collects a result
+        in a loop is a very common pattern.
+      misconceptions:
+        - answer: "3"
+          say: "`total` keeps its value between the rounds. It collects 1, then 2, then 3."
+        - answer: "10"
+          say: "The loop stops when `n` is 4. The number 4 is not added."
+        - answer: "1\n3\n6"
+          say: "`print` has no spaces at the start. It is after the loop and runs one time."
+
+  # 6. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-password
+    type: worked
+    objective: O1
+    title: Ask until it is right
+    problem: |
+      A program must ask for a password again and again, until the user
+      types `python`.
+
+      You do not know how many times the user will be wrong. This is the
+      real job of `while`: **repeat until something happens.**
+    lines:
+      - code: 'answer = input("Password: ")'
+        note: "The start value: the first answer of the user."
+      - code: 'while answer != "python":'
+        note: "The condition is True while the answer is wrong."
+      - code: |2
+              print("Wrong. Try again.")
+              answer = input("Password: ")
+        note: "The change: a new answer. Without this line, a wrong answer would stay wrong for ever."
+      - code: 'print("Welcome!")'
+        note: "After the loop. Python arrives here only when the condition is False, so the answer is right."
+    check:
+      kind: mcq
+      id: w-password
+      prompt: "The user types `python` at the first question. **How many times does the block run?**"
+      options:
+        - text: "0 times"
+          correct: true
+          why: "Python asks the condition before the first round. It is False at once, so the block is skipped."
+        - text: "1 time"
+          why: "The condition is asked before every round, also before the first one."
+        - text: "It never stops"
+          why: "The loop repeats only while the answer is wrong. Here it is right at the start."
+
+  # 7. EXERCISE: completion --------------------------------------------------
+  - id: ex-one-to-five
+    type: exercise
+    fade: completion
+    objective: O2
+    title: From 1 to 5
+    prompt: |
+      This program has a start value and a change. The condition is missing.
+
+      **Replace `___`**, so that the program prints the numbers 1, 2, 3, 4
+      and 5, each on its own line.
+    starter: |
+      n = 1
+      while ___:
+          print(n)
+          n = n + 1
+    solution: |
+      n = 1
+      while n <= 5:
+          print(n)
+          n = n + 1
+    after: >-
+      The condition says when the loop goes on, not when it stops. `n <= 5`
+      and `n < 6` both work. Choose the one that is easier to read.
+    checks:
+      - expr: "err is None"
+        pass: "The program runs and stops"
+        hint: "The condition must be a comparison with `n`."
+        misconceptions:
+          - when: "err == 'Timeout'"
+            say: "The loop did not stop. The condition must become False when `n` is bigger than 5."
+      - expr: "lines == ['1', '2', '3', '4', '5']"
+        pass: "It prints 1, 2, 3, 4, 5"
+        hint: "The loop must go on while `n` is 5 or smaller."
+        misconceptions:
+          - when: "lines == ['1', '2', '3', '4']"
+            say: "The loop stops one round too early. With `<`, the 5 is not included."
+          - when: "lines == ['1', '2', '3', '4', '5', '6']"
+            say: "The loop runs one round too many. It must stop after 5."
+          - when: "lines == []"
+            say: "The block did not run. The condition is False at the start, when `n` is 1."
+    hints:
+      - "Ask: for which values of `n` must the block run?"
+      - "The block must run while `n` is smaller than 5 or equal to 5."
+      - "Write `while n <= 5:`."
+
+  # 8. EXERCISE: debug -------------------------------------------------------
+  - id: ex-energy
+    type: exercise
+    fade: debug
+    objective: O4
+    title: A loop that never stops
+    prompt: |
+      A robot starts with 10 units of energy and loses 3 units in each
+      round. The program must print `10`, `7`, `4`, `1` and then `Rest`.
+
+      **Run it.** Python stops the program after a short time. Look at the
+      numbers in the output and find the mistake.
+    starter: |
+      energy = 10
+      while energy > 0:
+          print(energy)
+          energy = energy + 3
+      print("Rest")
+    solution: |
+      energy = 10
+      while energy > 0:
+          print(energy)
+          energy = energy - 3
+      print("Rest")
+    after: >-
+      The numbers went up, so `energy > 0` stayed True for ever. When a loop
+      does not stop, look at the change inside the block: does it move the
+      variable towards the end?
+    cases:
+      - {}
+      - label: "`energy` starts at 6"
+        set: { energy: 6 }
+    checks:
+      - expr: "err is None"
+        pass: "The program stops by itself"
+        hint: "Which line changes `energy`? In which direction?"
+      - expr: "len(lines) >= 2 and lines[0] in ('10', '6') and lines[:-1] == [str(v) for v in range(int(lines[0]), 0, -3)]"
+        pass: "The energy goes down by 3 in each round"
+        hint: "The robot loses energy. The change must make the number smaller."
+      - expr: "lines[-1:] == ['Rest']"
+        pass: "The last line is `Rest`"
+        hint: "Keep the last line. It must be outside the block."
+    hints:
+      - "Look at the output: 10, 13, 16. The numbers go up."
+      - "The condition `energy > 0` becomes False only when `energy` goes down."
+      - "Line 4: write `energy = energy - 3`."
+
+  # 9. EXERCISE: independent -------------------------------------------------
+  - id: ex-sum
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Add the numbers up to n
+    prompt: |
+      **Ask the user for a whole number `n`. Print the sum of all numbers
+      from 1 to `n`.** For example, for `4` the program prints `10`,
+      because 1 + 2 + 3 + 4 is 10.
+
+      Use a `while` loop and a variable that collects the sum. Print the
+      result on the last line.
+    starter: |
+      # Ask for n.
+      # Add 1 + 2 + ... + n with a while loop.
+      # Print the sum.
+    solution: |
+      n = int(input("n: "))
+      total = 0
+      number = 1
+      while number <= n:
+          total = total + number
+          number = number + 1
+      print(total)
+    after: >-
+      Your loop has all three parts, and a fourth variable that collects.
+      The check ran it up to 100: the loop did 100 rounds, and you wrote
+      it once.
+    cases:
+      - {}
+      - label: "the user types `4`"
+        stdin: ["4"]
+      - label: "the user types `1`"
+        stdin: ["1"]
+      - label: "the user types `100`"
+        stdin: ["100"]
+    checks:
+      - expr: "len(inputs) == 1 and 'while ' in src"
+        pass: "The program asks one question and uses a `while` loop"
+        hint: "Use `input()` one time, before the loop."
+      - expr: "err is None"
+        pass: "It runs and stops"
+        hint: "Read the message under the editor."
+        misconceptions:
+          - when: "err == 'Timeout'"
+            say: "The loop did not stop. Check the change inside the block: the counting variable must grow by 1 in each round."
+          - when: "err == 'TypeError'"
+            say: "The answer of `input()` is text. Change it with `int()` before you compare."
+      - expr: "lines[-1:] == [str(sum(range(1, int(inputs[0]) + 1)))]"
+        pass: "The last line is the sum of 1 to `n`"
+        hint: "Start `total` at 0. In each round, add the counting variable to `total`."
+        misconceptions:
+          - when: "lines[-1:] == [str(sum(range(1, int(inputs[0]))))]"
+            say: "The last number, `n` itself, is missing in the sum. Check the condition: use `<=`."
+          - when: "len(lines) > 1 and lines[-1:] != [str(sum(range(1, int(inputs[0]) + 1)))]"
+            say: "Check what the last printed line is. The `print` of the sum must be after the loop, without spaces at the start."
+    hints:
+      - "You need three variables: `n`, a counter that starts at 1, and `total` that starts at 0."
+      - "The loop: `while number <= n:`. In the block, add `number` to `total`, then make `number` one bigger."
+      - "After the loop, without spaces at the start: `print(total)`."
+
+  # 10. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-difference
+        objective: O1
+        prompt: "What is the difference between `if` and `while`?"
+        options:
+          - text: "After the block, `while` asks its condition again"
+            correct: true
+            why: "`if` runs its block one time at most. `while` repeats it as long as the answer is True."
+          - text: "`while` runs its block also when the condition is False"
+            why: "Both run the block only when the condition is True."
+          - text: "`while` does not need a colon"
+            why: "Both have the same form: condition, colon, block with 4 spaces."
+      - kind: predict
+        id: q-after
+        objective: O3
+        code: |
+          x = 10
+          while x > 7:
+              x = x - 1
+          print(x)
+        explain: "`x` goes 10, 9, 8, 7. When `x` is 7, the question `7 > 7` is False. The loop ends and 7 is printed."
+        misconceptions:
+          - answer: "8"
+            say: "With `x` at 8, the question `8 > 7` is True, so one more round runs."
+          - answer: "9\n8\n7"
+            say: "`print` is after the loop. It runs one time."
+      - kind: mcq
+        id: q-forever
+        objective: O4
+        prompt: "This loop never stops. **Why?**"
+        code: |
+          n = 0
+          while n < 3:
+              print(n)
+        options:
+          - text: "`n` never changes, so `n < 3` stays True"
+            correct: true
+            why: "The block has no line that changes `n`. It needs `n = n + 1`."
+          - text: "The condition is False at the start"
+            why: "Then the block would never run. Here `0 < 3` is True."
+          - text: "`print` is not allowed inside a loop"
+            why: "`print` in a loop is normal. The problem is the missing change."
+      - kind: predict
+        id: q-zero-rounds
+        objective: O3
+        code: |
+          k = 5
+          while k < 5:
+              print("in")
+              k = k + 1
+          print("out")
+        explain: "`5 < 5` is False at the first question. The block runs zero times."
+        misconceptions:
+          - answer: "in\nout"
+            say: "Python asks the condition before the first round. It is False at once."
+      - kind: mcq
+        id: q-rounds
+        objective: O3
+        prompt: "How many times does the block run?"
+        code: |
+          i = 0
+          while i < 4:
+              i = i + 2
+        options:
+          - text: "2 times"
+            correct: true
+            why: "`i` goes 0, 2, 4. The rounds start with 0 and with 2. Then `4 < 4` is False."
+          - text: "4 times"
+            why: "`i` grows by 2 in each round, not by 1."
+          - text: "3 times"
+            why: "The values at the question are 0, 2 and 4. For 4 the answer is False, so there is no third round."
+      - kind: mcq
+        id: q-parts
+        objective: O2
+        prompt: "Which three parts does a counting loop need?"
+        options:
+          - text: "A start value, a condition, and a change in the block"
+            correct: true
+            why: "The start is before the loop. The change makes the condition False at some point."
+          - text: "A start value, a condition, and an `else`"
+            why: "A loop does not need `else`. Without a change in the block it never stops."
+          - text: "A condition, a `print`, and an `input`"
+            why: "`print` and `input` are useful, but not needed. Without start and change the loop cannot count."
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-count
+    objective: O3
+    code: |
+      n = 0
+      while n < 3:
+          print(n)
+          n = n + 1
+    explain: "The rounds run for 0, 1 and 2. Then `3 < 3` is False."
+    misconceptions:
+      - answer: "1\n2\n3"
+        say: "`print(n)` comes before the change, so the first number is 0. The loop ends before 3."
+  - kind: mcq
+    id: r-back
+    objective: O1
+    prompt: "What does Python do after the last line of a `while` block?"
+    options:
+      - text: "It goes back to the `while` line and asks the condition again"
+        correct: true
+        why: "If the answer is True, the block runs again. If it is False, Python continues after the block."
+      - text: "It continues with the line after the block"
+        why: "That is what `if` does. `while` goes back and asks again."
+      - text: "It starts the program again from line 1"
+        why: "Only the loop repeats. The lines before it run one time."
+  - kind: mcq
+    id: r-endless
+    objective: O4
+    prompt: "A loop never stops. What do you check first?"
+    options:
+      - text: "The line in the block that changes the variable of the condition"
+        correct: true
+        why: "Most endless loops have no change, or a change in the wrong direction."
+      - text: "The `print` lines"
+        why: "`print` does not change any value, so it cannot stop or keep a loop."
+      - text: "The lines after the loop"
+        why: "Python never reaches them. The cause is inside the loop."
+  - kind: predict
+    id: r-collect
+    objective: O3
+    code: |
+      total = 0
+      n = 2
+      while n <= 4:
+          total = total + n
+          n = n + 1
+      print(total)
+    explain: "`total` collects 2, then 3, then 4. The sum is 9."
+  - kind: mcq
+    id: r-short
+    objective: O2
+    prompt: "What does `score += 5` do?"
+    options:
+      - text: "It adds 5 to `score` and stores the result in `score`"
+        correct: true
+        why: "It is a short form of `score = score + 5`."
+      - text: "It asks if `score` is equal to 5"
+        why: "A comparison uses `==`."
+      - text: "It stores 5 in `score`"
+        why: "That is `score = 5`. The `+` before the `=` adds to the old value."

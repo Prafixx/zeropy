@@ -1,0 +1,556 @@
+id: dictionaries
+order: 14
+title: Dictionaries
+summary: Find a value by its name, not by its position. Count things with a dictionary.
+minutes: 30
+outcomes: [A1, A6, A8]
+
+objectives:
+  - id: O1
+    text: Create a dictionary and read a value by its key
+  - id: O2
+    text: Add, change and delete a pair, and ask with in if a key exists
+  - id: O3
+    text: Walk through a dictionary with for, and count things with a dictionary
+  - id: O4
+    text: Read a KeyError and avoid it with in or get
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: Places with names
+    question: What is the price of cake? Which index is that?
+    code: |
+      prices = {"tea": 2, "cake": 4}
+      cost = prices["cake"]
+      prices["tea"] = 3
+      prices["milk"] = 1
+    beats:
+      - beat: empty
+        caption: "A list finds a value by its **position**. But often you know a name, not a position: the price of cake, the phone number of Ana."
+      - beat: create
+        line: 1
+        caption: "A **dictionary** gives each place a **key**. Here the keys are texts: `\"tea\"` and `\"cake\"`. Each key has one value."
+      - beat: read
+        line: 2
+        caption: "`prices[\"cake\"]` reads the value of the key `\"cake\"`. You do not need to know where it is."
+      - beat: change
+        line: 3
+        caption: "A new value for a key that exists: the key stays, its value is replaced."
+      - beat: add
+        line: 4
+        caption: "A key that does not exist yet: Python adds a new pair at the end."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: syntax
+    type: theory
+    objective: O1
+    title: Keys and values
+    body: |
+      ## A dictionary
+
+      Write the pairs between curly brackets `{ }`. Each pair is a **key**,
+      a colon, and a **value**. Commas go between the pairs.
+
+      To read a value, write its key in square brackets, like an index.
+
+      - Each key appears **one** time. A dictionary cannot have the same
+        key twice.
+      - Keys are usually texts. The values can be anything.
+      - The pairs stay in the order in which they were added.
+    keys:
+      - code: '{"tea": 2, "cake": 4}'
+        means: "A dictionary with two pairs."
+      - code: 'prices["tea"]'
+        means: "The value of the key `\"tea\"`: `2`."
+      - code: "{}"
+        means: "An empty dictionary."
+      - code: "len(prices)"
+        means: "The number of pairs."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-stock
+    type: predict
+    objective: O2
+    title: Change or add
+    item:
+      kind: predict
+      id: p-stock
+      prompt: "This program prints two lines. **Type both lines.**"
+      code: |
+        stock = {"apples": 5, "pears": 0}
+        stock["pears"] = 8
+        stock["kiwis"] = 2
+        print(stock["pears"])
+        print(len(stock))
+      explain: >-
+        Line 2 gives the key `"pears"`, which exists, a new value. Line 3
+        uses a new key, so Python adds a third pair.
+      misconceptions:
+        - answer: "0\n3"
+          say: "Line 2 replaced the value of `\"pears\"`. It is 8 now."
+        - answer: "8\n2"
+          say: "`\"kiwis\"` was a new key, so a new pair was added. There are three pairs."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O2
+    title: A phone book
+    intro: |
+      Press **Run**. Under each value you see its key. Watch which pair
+      each line reads or changes.
+
+      Then change the phone book.
+    code: |
+      phone = {"Ana": "555-01", "Ben": "555-02"}
+      phone["Cleo"] = "555-03"
+      number = phone["Ben"]
+      print(number)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Give Ben a new number. Ben must stay in the phone book."
+        expr: "err is None and 'Ben' in ns.get('phone', {}) and ns['phone']['Ben'] != '555-02'"
+      - text: "Take Ana out with `del phone[\"Ana\"]`."
+        expr: "err is None and 'Ana' not in ns.get('phone', {'Ana': 0})"
+      - text: "Read the number of `Zoe`, who is not in the book. Read the message."
+        expr: "err == 'KeyError'"
+      - text: "Now use `phone.get(\"Zoe\", \"unknown\")` and print the result."
+        expr: "err is None and called('get') and 'unknown' in lines"
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: change
+    type: theory
+    objective: O4
+    title: Change, ask, and loop
+    body: |
+      ## Working with a dictionary
+
+      To read a key that does not exist is an error: a `KeyError`. There
+      are two ways to avoid it:
+
+      - Ask first with `in`. It looks at the **keys**, not at the values.
+      - Use `get`. It gives a default value when the key does not exist.
+
+      A `for` loop over a dictionary gives the **keys**, in order. Use each
+      key to read its value.
+    keys:
+      - code: 'd["tea"] = 3'
+        means: "Adds the pair, or changes the value if the key exists."
+      - code: 'del d["tea"]'
+        means: "Takes the pair out."
+      - code: '"tea" in d'
+        means: "`True` when the key exists."
+      - code: 'd.get("tea", 0)'
+        means: "The value, or `0` when the key does not exist."
+      - code: "for key in d:"
+        means: "One round for each key. The value is `d[key]`."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O4
+    title: Keys, not values
+    items:
+      - kind: diagnose
+        id: d-keyerror
+        objective: O4
+        mode: read
+        code: |
+          ages = {"Ana": 30, "Ben": 25}
+          print(ages["Ana"])
+          print(ages["ana"])
+        distractors: [IndexError, NameError, TypeError, ValueError]
+        explain: >-
+          A `KeyError` shows the key that was not found: `'ana'`. Keys are
+          compared exactly, so a small `a` is a different key.
+        fix:
+          - text: 'Use the key exactly as it is in the dictionary: `ages["Ana"]`'
+            correct: true
+            why: "Keys must match character by character."
+          - text: "Use an index: `ages[0]`"
+            why: "A dictionary has no index numbers. `0` would be looked for as a key."
+          - text: "Delete the quotes: `ages[ana]`"
+            why: "Then `ana` is a variable name that does not exist: a `NameError`."
+      - kind: predict
+        id: d-in
+        objective: O2
+        code: |
+          phone = {"Ana": "555-01"}
+          print("Ana" in phone)
+          print("555-01" in phone)
+        explain: "`in` looks only at the keys. `\"555-01\"` is a value, not a key."
+        misconceptions:
+          - answer: "True\nTrue"
+            say: "`in` asks about the keys of a dictionary. `\"555-01\"` is a value."
+      - kind: predict
+        id: d-loop
+        objective: O3
+        code: |
+          scores = {"Ana": 7, "Ben": 9}
+          for name in scores:
+              print(name)
+        explain: "A loop over a dictionary gives its keys, in the order in which they were added."
+        misconceptions:
+          - answer: "7\n9"
+            say: "The loop gives the keys. To get the values, write `scores[name]`."
+      - kind: mcq
+        id: d-unique
+        objective: O1
+        prompt: 'What is `{"a": 1, "a": 2}`?'
+        options:
+          - text: "`{'a': 2}`"
+            correct: true
+            why: "A key appears only once. The second value replaces the first."
+          - text: "`{'a': 1, 'a': 2}`"
+            why: "A dictionary cannot have the same key twice."
+          - text: "A `KeyError`"
+            why: "There is no error. The later value wins."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-votes
+    type: worked
+    objective: O3
+    title: Count the votes
+    problem: |
+      People vote for a drink. **Count how many votes each drink gets.**
+
+      You do not know the drinks before the program runs. A dictionary can
+      grow a new key for each new drink.
+    lines:
+      - code: 'votes = ["tea", "coffee", "tea", "tea", "juice"]'
+        note: "The data."
+      - code: "counts = {}"
+        note: "An empty dictionary. Each drink will become a key, and its count the value."
+      - code: |
+          for v in votes:
+              if v in counts:
+                  counts[v] = counts[v] + 1
+              else:
+                  counts[v] = 1
+        note: "A drink that has a key gets one more vote. A new drink gets a new key with the count 1."
+      - code: "print(counts)"
+        note: "`{'tea': 3, 'coffee': 1, 'juice': 1}`. This is a very common pattern: count things by name."
+    check:
+      kind: mcq
+      id: w-votes
+      prompt: "Why does the loop need `if v in counts:`?"
+      options:
+        - text: "The first time a drink comes, it has no key yet. `counts[v] + 1` would give a `KeyError`"
+          correct: true
+          why: "A new key must be created with a start value, 1."
+        - text: "Without it, every drink is counted two times"
+          why: "Without it, the program stops at the first new drink with a `KeyError`."
+        - text: "It is not needed. It only makes the program faster"
+          why: "It is needed: reading a key that does not exist is an error."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-order
+    type: exercise
+    fade: completion
+    objective: O1
+    title: The price of an order
+    prompt: |
+      A café has a menu with prices. A customer orders some items. The same
+      item can come more than once.
+
+      **Replace `___`**, so that `total` is the price of the whole order.
+    starter: |
+      menu = {"tea": 2, "cake": 4, "soup": 5}
+      order = ["tea", "cake", "tea"]
+      total = 0
+      for item in order:
+          total = total + ___
+      print(total)
+    solution: |
+      menu = {"tea": 2, "cake": 4, "soup": 5}
+      order = ["tea", "cake", "tea"]
+      total = 0
+      for item in order:
+          total = total + menu[item]
+      print(total)
+    after: >-
+      `item` is a key, the name of the food. `menu[item]` looks up its
+      price. The list gives the order, the dictionary gives the prices.
+    cases:
+      - {}
+      - label: "the order is `soup`, `soup`"
+        set: { order: ["soup", "soup"] }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Read the message under the editor."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "`item` is the name of the food, a text. A number cannot be added to a text. Look up the price: `menu[item]`."
+      - expr: "total == sum(menu[i] for i in order)"
+        pass: "`total` is the price of the order"
+        hint: "For each item, add its price from the menu."
+        misconceptions:
+          - when: "ns.get('total') == len(order)"
+            say: "This counts the items. Add their prices from `menu`."
+      - expr: "lines == [str(total)]"
+        pass: "It prints the total"
+        hint: "Keep the last line."
+    hints:
+      - "The price of one item is in `menu`."
+      - "The key is the name of the item, so it is in `item`."
+      - "Write `menu[item]`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-stock
+    type: exercise
+    fade: debug
+    objective: O4
+    title: Sold items
+    prompt: |
+      A shop takes the sold items out of its stock. An item that the shop
+      does not have is not counted. For such an item, the program prints a
+      line like `Unknown: kiwis`.
+
+      For the data below the program must print `Unknown: kiwis`, and then
+      `{'apples': 3, 'pears': 2}`.
+
+      **Run it.** It stops with an error. Fix it, and add the missing line.
+    starter: |
+      stock = {"apples": 5, "pears": 2}
+      sold = ["apples", "kiwis", "apples"]
+      for item in sold:
+          stock[item] = stock[item] - 1
+      print(stock)
+    solution: |
+      stock = {"apples": 5, "pears": 2}
+      sold = ["apples", "kiwis", "apples"]
+      for item in sold:
+          if item in stock:
+              stock[item] = stock[item] - 1
+          else:
+              print(f"Unknown: {item}")
+      print(stock)
+    after: >-
+      `in` protected the program from the `KeyError`, and `else` handled
+      the other case. When data comes from outside, always ask first if a
+      key exists.
+    cases:
+      - {}
+      - label: "the sold items are `pears`, `figs`, `limes`"
+        set: { sold: ["pears", "figs", "limes"] }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Read the message. Which key does not exist?"
+        misconceptions:
+          - when: "err == 'KeyError'"
+            say: "A sold item is not a key in `stock`. Ask first: `if item in stock:`."
+      - expr: "stock == {k: v - sold.count(k) for k, v in {'apples': 5, 'pears': 2}.items()}"
+        pass: "Every known item is taken out of the stock"
+        hint: "Take 1 away only for an item that is a key in `stock`."
+        misconceptions:
+          - when: "any(k not in ('apples', 'pears') for k in ns.get('stock', {}))"
+            say: "An unknown item was added to the stock. Only change items that are already keys."
+      - expr: "[line for line in lines if line.startswith('Unknown')] == [f'Unknown: {i}' for i in sold if i not in ('apples', 'pears')] and lines[-1:] == [str(stock)]"
+        pass: "It prints `Unknown: ...` for each unknown item, then the stock"
+        hint: "Add an `else:` that prints the unknown item."
+    hints:
+      - "The error is a `KeyError`: `'kiwis'` is not a key."
+      - "Put the line that changes the stock inside `if item in stock:`."
+      - 'Add `else:` with `print(f"Unknown: {item}")`.'
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-colors
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Count the colors
+    prompt: |
+      **Ask for colors again and again, until the user types `done`.
+      Count how many times each color was typed.** At the end, print the
+      dictionary of counts.
+
+      For `red`, `blue`, `red`, `done` the last line is:
+
+      ```text
+      {'red': 2, 'blue': 1}
+      ```
+    starter: |
+      # Ask for colors until done. Count each color.
+    solution: |
+      counts = {}
+      color = input("Color: ")
+      while color != "done":
+          if color in counts:
+              counts[color] = counts[color] + 1
+          else:
+              counts[color] = 1
+          color = input("Color: ")
+      print(counts)
+    after: >-
+      Two patterns together: a `while` loop that asks until `done`, and a
+      dictionary that counts by name. The next project, the word counter,
+      uses the same counting pattern.
+    cases:
+      - {}
+      - label: "the user types `red`, `blue`, `red`, `done`"
+        stdin: ["red", "blue", "red", "done"]
+      - label: "the user types `done` at once"
+        stdin: ["done"]
+      - label: "the user types `a`, `a`, `a`, `b`, `done`"
+        stdin: ["a", "a", "a", "b", "done"]
+    checks:
+      - expr: "err is None and asked == len(inputs) and inputs[-1:] == ['done']"
+        pass: "The program asks until `done`, then stops"
+        hint: "Use a `while` loop that runs as long as the answer is not `done`."
+        misconceptions:
+          - when: "err == 'KeyError'"
+            say: "A new color has no key yet. Ask first with `in`, and start a new color at 1."
+          - when: "err == 'EOFError'"
+            say: "The program asks again after `done`. The loop must stop when the answer is `done`."
+      - expr: "any(isinstance(v, dict) and v == {c: inputs[:-1].count(c) for c in inputs[:-1]} for v in ns.values())"
+        pass: "A dictionary holds the count of each color, without `done`"
+        hint: "Start with an empty dictionary. For each color: one more, or a new key with 1."
+        misconceptions:
+          - when: "any(isinstance(v, dict) and 'done' in v for v in ns.values())"
+            say: "`done` was counted as a color. Count an answer only when it is not `done`."
+      - expr: "lines[-1:] == [str({c: inputs[:-1].count(c) for c in inputs[:-1]})]"
+        pass: "The last line is the dictionary of counts"
+        hint: "After the loop: `print(counts)`."
+    hints:
+      - "Before the loop: `counts = {}` and the first question."
+      - "In the loop, the counting pattern of the solved example: `if color in counts:` ... `else:` ..."
+      - "Ask the next question at the end of the loop. After the loop, print the dictionary."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-read
+        objective: O1
+        prompt: '`ages = {"Ana": 30, "Ben": 25}`. How do you read the age of Ben?'
+        options:
+          - text: '`ages["Ben"]`'
+            correct: true
+            why: "The key goes in square brackets."
+          - text: "`ages[1]`"
+            why: "A dictionary has no index numbers. `1` would be looked for as a key."
+          - text: '`ages.Ben`'
+            why: "A dot is for instructions like `get`. The key goes in square brackets."
+      - kind: predict
+        id: q-change
+        objective: O2
+        prompt: "Python prints a dictionary like this: `{'a': 1}`. **What does this program print?**"
+        code: |
+          d = {"x": 1, "y": 2}
+          d["x"] = 10
+          del d["y"]
+          d["z"] = 3
+          print(d)
+        explain: "The value of `x` is replaced, the pair with `y` is taken out, and `z` is added at the end."
+      - kind: diagnose
+        id: q-missing
+        objective: O4
+        mode: predict
+        code: |
+          menu = {"tea": 2}
+          print(menu["tea"])
+          print(menu["coffee"])
+        explain: "`\"coffee\"` is not a key of `menu`. Reading it is a `KeyError`."
+        distractors: [IndexError, NameError, TypeError, ValueError]
+      - kind: predict
+        id: q-get
+        objective: O4
+        code: |
+          menu = {"tea": 2}
+          print(menu.get("tea", 0))
+          print(menu.get("coffee", 0))
+        explain: "`get` gives the value when the key exists, and the default value `0` when it does not."
+      - kind: mcq
+        id: q-loop
+        objective: O3
+        prompt: "What does `for k in d:` give `k` in each round?"
+        options:
+          - text: "One key of `d`, in order"
+            correct: true
+            why: "To read the value, write `d[k]`."
+          - text: "One value of `d`"
+            why: "A loop over a dictionary gives the keys."
+          - text: "A number: 0, 1, 2 ..."
+            why: "That is `range`. A dictionary gives its keys."
+      - kind: mcq
+        id: q-when
+        objective: O1
+        prompt: "Which data fits a dictionary better than a list?"
+        options:
+          - text: "The capital city of each country"
+            correct: true
+            why: "You look up a value by a name: the country is the key."
+          - text: "The temperatures of the last seven days, in order"
+            why: "Here the position matters: day 1, day 2. A list fits."
+          - text: "The names of people in a queue"
+            why: "A queue has an order and no keys. A list fits."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-read
+    objective: O1
+    code: |
+      colors = {"sky": "blue", "grass": "green"}
+      print(colors["grass"])
+    explain: "The key `\"grass\"` has the value `\"green\"`."
+  - kind: mcq
+    id: r-add
+    objective: O2
+    prompt: 'What does `d["new"] = 5` do when `"new"` is not a key of `d`?'
+    options:
+      - text: "It adds the pair `\"new\": 5`"
+        correct: true
+        why: "Storing a value under a new key adds a pair."
+      - text: "It gives a `KeyError`"
+        why: "Only **reading** a key that does not exist is an error. Storing creates it."
+      - text: "It changes the first value to 5"
+        why: "A dictionary has no first value to change. The key decides the place."
+  - kind: mcq
+    id: r-in
+    objective: O2
+    prompt: 'What does `"Ana" in phone` check, when `phone` is a dictionary?'
+    options:
+      - text: "If `\"Ana\"` is one of the keys"
+        correct: true
+        why: "`in` looks at the keys of a dictionary."
+      - text: "If `\"Ana\"` is one of the values"
+        why: "`in` looks only at the keys."
+      - text: "If `phone` has more than one pair"
+        why: "That would be `len(phone) > 1`."
+  - kind: diagnose
+    id: r-keyerror
+    objective: O4
+    mode: read
+    code: |
+      days = {"mon": 1, "tue": 2}
+      print(days["wed"])
+    distractors: [IndexError, NameError, TypeError, ValueError]
+    explain: "The message shows the key that was not found: `'wed'`."
+  - kind: predict
+    id: r-count
+    objective: O3
+    code: |
+      counts = {}
+      for w in ["a", "b", "a"]:
+          if w in counts:
+              counts[w] = counts[w] + 1
+          else:
+              counts[w] = 1
+      print(counts["a"])
+    explain: "The first `a` creates the key with 1, the second `a` makes it 2."

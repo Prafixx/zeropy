@@ -1,0 +1,567 @@
+id: venv-and-pip
+order: 30
+title: Packages with venv and pip
+summary: Give each project its own Python and packages. Install a package, use it, and write down what the project needs.
+minutes: 40
+outcomes: [A5]
+
+objectives:
+  - id: O1
+    text: Say what a package and a virtual environment (venv) are, and why each project gets its own venv
+  - id: O2
+    text: Make a venv, activate it, and see that it is active
+  - id: O3
+    text: Install a package with pip and use it in a program
+  - id: O4
+    text: Write the packages of a project into requirements.txt, and install them from it
+  - id: O5
+    text: Read the usual problems - a module not found after an install, activation blocked, externally-managed-environment
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: packages
+    type: theory
+    objective: O1
+    title: A Python for each project
+    body: |
+      The standard library is large, but other people write much more:
+      **packages**. There are more than 600,000 of them on
+      [pypi.org](https://pypi.org), for example `requests` for the web or
+      `rich` for colors in the terminal. The program **pip** downloads and
+      installs them.
+
+      If every project installs into the one Python of your computer, the
+      projects share all packages. One project needs version 1 of a
+      package, another needs version 2, and one of them breaks.
+
+      So each project gets a **virtual environment** (a **venv**): a folder
+      `.venv` inside the project, with its own Python and its own packages.
+
+      ```
+      python-course/
+        colors/
+          .venv/      venv of colors
+          colors.py
+        weather/
+          .venv/      venv of weather
+          weather.py
+      ```
+
+      - One `.venv` for each project, in the folder of the project.
+      - Your own files go next to `.venv`, never inside it.
+      - You can delete `.venv` and make it again at any time.
+    keys:
+      - code: "package"
+        means: "Code that other people wrote, to install with pip."
+      - code: ".venv"
+        means: "The venv of one project: its own Python and packages."
+      - code: "pip"
+        means: "The program that installs packages from pypi.org."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: make-venv
+    type: theory
+    objective: O2
+    title: Make and activate a venv
+    body: |
+      Work in the terminal, in the folder of the project.
+
+      | Job | Windows | macOS, Linux |
+      | --- | --- | --- |
+      | Make (once) | `python -m venv .venv` | `python3 -m venv .venv` |
+      | Activate | `.venv\Scripts\activate` | `source .venv/bin/activate` |
+      | Leave | `deactivate` | `deactivate` |
+
+      When a venv is **active**, the prompt starts with `(.venv)`. Then
+      `python` and `pip` are the ones of the venv, on every system.
+
+      A **new terminal is never active**. Activate the venv again in each
+      new terminal. (VS Code can do it for you: choose the Python of `.venv`
+      when it asks for an interpreter.)
+
+      ## Two known problems
+
+      **Windows:** activation says that "running scripts is disabled on
+      this system". Run this once, then activate again. It allows script
+      files that were made on your own computer.
+
+      ```
+      Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+      ```
+
+      **Linux (Debian, Ubuntu):** `python3 -m venv` says that `ensurepip`
+      is not available. Install the venv part of Python first:
+
+      ```
+      sudo apt install python3-venv
+      ```
+    keys:
+      - code: "python -m venv .venv"
+        means: "Make a venv in the folder `.venv`. `-m venv` runs the module `venv`."
+      - code: "(.venv)"
+        means: "At the start of the prompt: this venv is active."
+      - code: "deactivate"
+        means: "Leave the venv. The prompt loses `(.venv)`."
+
+  # 3. LOCAL: VENV -----------------------------------------------------------
+  - id: check-venv
+    type: local
+    objective: O2
+    title: Your first venv
+    prompt: |
+      **Make a project `colors` with its own venv.**
+
+      1. In the terminal, in `python-course`: `mkdir colors`, then
+         `cd colors`.
+      2. Make the venv: `python -m venv .venv`. It takes a few seconds.
+      3. Activate it. The prompt starts with `(.venv)`.
+      4. Download `check.py` **again**, into `colors`: this task needs the
+         new version. Then run the check, with the venv active.
+    task: venv
+    needs: 2
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      venv_exists: "yes"
+      in_venv: "yes"
+      venv_here: "yes"
+      packages: "0"
+      rich: "no"
+      reqs_exists: "no"
+      colors_exists: "no"
+    checks:
+      - expr: "report.get('venv_exists') == 'yes'"
+        pass: "There is a `.venv` in the folder"
+        hint: "In the folder `colors`, run `python -m venv .venv`."
+        misconceptions:
+          - when: "report.get('venv_exists') == 'no'"
+            say: "`check.py` found no `.venv` in its folder. Make the venv in `colors`, and run the check in `colors` too."
+      - expr: "report.get('in_venv') == 'yes'"
+        pass: "The Python that runs is the Python of a venv"
+        hint: "Activate the venv, then run the check again."
+        misconceptions:
+          - when: "report.get('in_venv') == 'no'"
+            say: "`.venv` is there, but it is not active. Activate it: `.venv\\Scripts\\activate` on Windows, `source .venv/bin/activate` on macOS and Linux. Then the prompt starts with `(.venv)`."
+      - expr: "report.get('venv_here') == 'yes'"
+        pass: "It is the `.venv` of this folder"
+        hint: "Type `deactivate`, then activate the `.venv` of `colors`."
+        misconceptions:
+          - when: "report.get('in_venv') == 'yes' and report.get('venv_here') == 'no'"
+            say: "A venv is active, but it is the venv of another folder. Type `deactivate`, then activate the `.venv` of `colors`."
+    hints:
+      - "When you run the check, the prompt must start with `(.venv)`. If it does not, activate again: a new terminal is never active."
+      - "Windows: if activation says that running scripts is disabled, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then activate again."
+      - "Run the check with `python`, not `py`: in an active venv, `python` is the Python of the venv."
+    after: >-
+      `colors` has its own Python now. Everything that you install while
+      `(.venv)` is in the prompt goes into `colors/.venv`, and nowhere
+      else.
+
+  # 4. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O5
+    title: Which Python?
+    items:
+      - kind: mcq
+        id: d-no-prompt
+        objective: O2
+        prompt: "The prompt has no `(.venv)` at the start. You run `pip install rich`. Where does `rich` go?"
+        options:
+          - text: "Into the Python of the computer, not into `.venv`"
+            correct: true
+            why: "Without an active venv, `pip` is the pip of the computer's Python. Activate first."
+          - text: "Into the `.venv` of the folder"
+            why: "A venv that is not active is not used, even in its own folder."
+          - text: "Nowhere: pip only works in a venv"
+            why: "pip works outside too. That is why you must look at the prompt."
+      - kind: mcq
+        id: d-not-found
+        objective: O5
+        prompt: "Yesterday you installed `rich` in the venv. Today, in a new terminal, `python colors.py` says `ModuleNotFoundError: No module named 'rich'`. Why?"
+        options:
+          - text: "The new terminal has no active venv. Activate `.venv` again"
+            correct: true
+            why: "`rich` is still in `.venv`. But the Python that runs now is the computer's Python."
+          - text: "`rich` was deleted overnight"
+            why: "Packages stay in `.venv` until you remove them."
+          - text: "`rich` must be installed again every day"
+            why: "Once is enough. Only the activation is needed in each new terminal."
+      - kind: mcq
+        id: d-policy
+        objective: O5
+        prompt: "On Windows, `.venv\\Scripts\\activate` says `running scripts is disabled on this system`. What do you do?"
+        options:
+          - text: "Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then activate again"
+            correct: true
+            why: "PowerShell blocks script files at first. This allows the ones made on your own computer, for your user only."
+          - text: "Make the venv again"
+            why: "The venv is fine. PowerShell blocks the script that activates it."
+          - text: "Run `pip install activate`"
+            why: "Activation is part of the venv. There is nothing to install."
+      - kind: mcq
+        id: d-managed
+        objective: O5
+        prompt: "On a Mac or on Linux, `pip install rich` without a venv says `error: externally-managed-environment`. What does it want?"
+        options:
+          - text: "Make and activate a venv, then install there"
+            correct: true
+            why: "The computer's Python belongs to the system. pip asks you to keep your packages in a venv."
+          - text: "Run it again with `sudo`"
+            why: "That can break programs of the system that use this Python. Use a venv."
+          - text: "pip is broken: install it again"
+            why: "pip works. It protects the Python of the system."
+      - kind: mcq
+        id: d-where
+        objective: O1
+        prompt: "Where do you make the venv of the project `colors`?"
+        options:
+          - text: "In the folder `colors`, so it is `colors/.venv`"
+            correct: true
+            why: "One venv in the folder of each project."
+          - text: "Inside `.venv` of another project"
+            why: "A venv never goes inside another venv."
+          - text: "One venv in your home folder, for all projects"
+            why: "It works, but then the projects share packages again. One venv for each project."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: pip
+    type: theory
+    objective: O3
+    title: Install, use, write down
+    body: |
+      Always with `(.venv)` in the prompt:
+
+      | Job | Command |
+      | --- | --- |
+      | Install a package | `pip install rich` |
+      | See what is installed | `pip list` |
+      | Remove a package | `pip uninstall rich` |
+      | Write the list into a file | `pip freeze > requirements.txt` |
+      | Install everything in the file | `pip install -r requirements.txt` |
+
+      `pip install rich` also installs the packages that `rich` needs, for
+      example `Pygments`. pip may say that a new version of pip is
+      available: you can ignore that.
+
+      A package is used like a module of the standard library:
+
+      ```python
+      import rich
+
+      rich.print("[bold green]It works![/bold green]")
+      rich.print("Now in [blue]color[/blue].")
+      ```
+
+      ## requirements.txt
+
+      `pip freeze` writes one line for each package: the name, `==`, and
+      the exact version.
+
+      ```
+      markdown-it-py==4.0.0
+      mdurl==0.1.2
+      Pygments==2.19.2
+      rich==14.2.0
+      ```
+
+      With this file, anyone gets the same packages, also you on a new
+      computer: make a venv, activate it, `pip install -r
+      requirements.txt`. So you never copy or share `.venv` itself: the
+      small file is enough.
+    keys:
+      - code: "pip install rich"
+        means: "Download `rich` from pypi.org and install it into the active venv."
+      - code: "pip freeze > requirements.txt"
+        means: "Write the installed packages and versions into a file. `>` sends the output into the file."
+      - code: "pip install -r requirements.txt"
+        means: "Install every package in the file, at its version."
+
+  # 6. LOCAL: PACKAGES -------------------------------------------------------
+  - id: check-packages
+    type: local
+    objective: O3
+    title: Install, use, write down
+    prompt: |
+      **In `colors`, with `(.venv)` in the prompt:**
+
+      1. Install `rich`: `pip install rich`.
+      2. Write `colors.py`. It imports `rich` and prints at least one line
+         in color with `rich.print`. Run it: `python colors.py`.
+      3. Write the packages into a file: `pip freeze > requirements.txt`.
+      4. Run the check again.
+    task: venv
+    needs: 2
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      venv_exists: "yes"
+      in_venv: "yes"
+      venv_here: "yes"
+      packages: "4"
+      rich: "15.0.0"
+      reqs_exists: "yes"
+      reqs_count: "4"
+      reqs_rich: "yes"
+      reqs_missing: "0"
+      colors_exists: "yes"
+      colors_ok: "yes"
+      colors_rich: "yes"
+    checks:
+      - expr: "report.get('in_venv') == 'yes' and report.get('venv_here') == 'yes'"
+        pass: "The `.venv` of `colors` is active"
+        hint: "Activate the venv of `colors`, then run the check again."
+        misconceptions:
+          - when: "report.get('in_venv') == 'no'"
+            say: "No venv is active. In a new terminal, activate `.venv` again: the prompt must start with `(.venv)`."
+      - expr: "report.get('rich', 'no') != 'no'"
+        pass: "`rich` is installed in the venv"
+        hint: "With `(.venv)` in the prompt, run `pip install rich`."
+      - expr: "report.get('colors_ok') == 'yes' and report.get('colors_rich') == 'yes'"
+        pass: "`colors.py` runs and uses `rich`"
+        hint: "`colors.py` needs `import rich` and a line like `rich.print(\"[green]Hello[/green]\")`."
+        misconceptions:
+          - when: "report.get('colors_exists') == 'no'"
+            say: "There is no `colors.py` in the folder. Save it in `colors`, next to `check.py`."
+          - when: "report.get('colors_ok') == 'no'"
+            say: "`colors.py` stops with an error. Run `python colors.py` and read the last line of the message."
+          - when: "report.get('colors_rich') == 'no'"
+            say: "`colors.py` runs, but it does not import `rich`. Add `import rich`, and print with `rich.print(...)`."
+      - expr: "report.get('reqs_exists') == 'yes' and report.get('reqs_rich') == 'yes' and report.get('reqs_missing') == '0'"
+        pass: "`requirements.txt` names `rich`, and everything in it is installed"
+        hint: "Run `pip freeze > requirements.txt` with the venv active."
+        misconceptions:
+          - when: "report.get('reqs_exists') == 'no'"
+            say: "There is no `requirements.txt` in the folder. Run `pip freeze > requirements.txt` in `colors`."
+          - when: "report.get('reqs_rich') == 'no'"
+            say: "`requirements.txt` does not name `rich`. Maybe it was written before the install. Run `pip freeze > requirements.txt` again."
+          - when: "report.get('reqs_missing', '0') != '0'"
+            say: "Some packages in `requirements.txt` are not in this venv. Run `pip install -r requirements.txt`."
+    hints:
+      - "Look at the prompt first: `(.venv)` must be at the start, also when you run `pip`."
+      - "A small `colors.py`: `import rich`, then `rich.print(\"[bold green]It works![/bold green]\")`."
+      - "Run `pip freeze > requirements.txt` after `pip install rich`, not before."
+    after: >-
+      `colors` is now a real project: code, a venv, and a list of what it
+      needs. Delete `.venv`, make it again, run `pip install -r
+      requirements.txt`, and everything is back.
+
+  # 7. EXERCISE: completion ---------------------------------------------------
+  - id: ex-reqs
+    type: exercise
+    fade: completion
+    objective: O4
+    title: Read requirements.txt
+    prompt: |
+      `requirements.txt` is a normal text file, so a program can read it
+      too.
+
+      **Replace the two `___`**, so that `read_requirements` returns a
+      dictionary from each package name to its version. Skip empty lines
+      and comments (lines that start with `#`).
+    files:
+      requirements.txt: |
+        # packages of colors
+        markdown-it-py==4.0.0
+        mdurl==0.1.2
+
+        Pygments==2.19.2
+        rich==14.2.0
+    starter: |
+      from pathlib import Path
+
+      def read_requirements(name):
+          packages = {}
+          for line in Path(name).read_text().splitlines():
+              line = line.strip()
+              if ___:
+                  continue
+              package, version = ___
+              packages[package] = version
+          return packages
+
+      packages = read_requirements("requirements.txt")
+      print(packages["rich"])
+    solution: |
+      from pathlib import Path
+
+      def read_requirements(name):
+          packages = {}
+          for line in Path(name).read_text().splitlines():
+              line = line.strip()
+              if not line or line.startswith("#"):
+                  continue
+              package, version = line.split("==")
+              packages[package] = version
+          return packages
+
+      packages = read_requirements("requirements.txt")
+      print(packages["rich"])
+    after: >-
+      `split("==")` cuts each line into two parts. The `continue` before it
+      keeps empty lines and comments away, because they have no `==` to
+      cut at.
+    cases:
+      - {}
+      - label: "other packages, a comment at the end"
+        files:
+          requirements.txt: "requests==2.32.5\nrich==13.9.4\n\n# end of the list\n"
+      - label: "spaces around the lines"
+        files:
+          requirements.txt: "  # top\n  rich==15.0.0  \n\ncertifi==2025.10.5\n"
+    checks:
+      - expr: "callable(ns.get('read_requirements')) and read_requirements('requirements.txt') == dict(l.strip().split('==') for l in start_files['requirements.txt'].splitlines() if l.strip() and not l.strip().startswith('#'))"
+        pass: "`read_requirements` gives every package with its version"
+        hint: "Skip a line with `if not line or line.startswith(\"#\"):`, and cut the others with `line.split(\"==\")`."
+        misconceptions:
+          - when: "err == 'ValueError' and ('split(\"=\")' in src or \"split('=')\" in src)"
+            say: "`split(\"=\")` cuts at each `=`, and `==` has two, so you get three parts. Cut at `\"==\"`."
+          - when: "err == 'ValueError'"
+            say: "One line could not be cut into a name and a version: an empty line or a comment has no `==`. Skip them first: `if not line or line.startswith(\"#\"):`."
+          - when: "err == 'IndexError'"
+            say: "An empty line has no first character. `not line` is safe for empty lines: test it first."
+      - expr: "err is None and lines == [dict(l.strip().split('==') for l in start_files['requirements.txt'].splitlines() if l.strip() and not l.strip().startswith('#'))['rich']]"
+        pass: "It prints the version of `rich`"
+        hint: "Keep the last line as it is."
+    hints:
+      - "An empty line: `not line`. A comment: `line.startswith(\"#\")`. Join them with `or`."
+      - "`\"rich==14.2.0\".split(\"==\")` gives `[\"rich\", \"14.2.0\"]`."
+      - "`package, version = line.split(\"==\")`."
+
+  # 8. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-why
+        objective: O1
+        prompt: "Why does each project get its own venv?"
+        options:
+          - text: "So that projects do not share packages: each one has the versions it needs"
+            correct: true
+            why: "A change for one project cannot break another."
+          - text: "Because Python runs faster in a venv"
+            why: "The speed is the same. A venv only keeps packages apart."
+          - text: "Because pip works only in a venv"
+            why: "pip works outside too. The venv keeps the projects apart."
+      - kind: mcq
+        id: q-active
+        objective: O2
+        prompt: "How do you see that a venv is active?"
+        options:
+          - text: "The prompt starts with `(.venv)`"
+            correct: true
+            why: "`deactivate` removes it again."
+          - text: "There is a folder `.venv` in the project"
+            why: "The folder can be there while the venv is not active."
+          - text: "VS Code is open"
+            why: "VS Code can activate it, but the prompt tells you for sure."
+      - kind: mcq
+        id: q-freeze
+        objective: O4
+        prompt: "What does `pip freeze > requirements.txt` do?"
+        options:
+          - text: "It writes the installed packages and their versions into the file"
+            correct: true
+            why: "`>` sends the output of `pip freeze` into the file instead of the screen."
+          - text: "It stops pip from installing more packages"
+            why: "\"Freeze\" means: write down the exact state, now."
+          - text: "It installs the packages in the file"
+            why: "That is `pip install -r requirements.txt`."
+      - kind: mcq
+        id: q-friend
+        objective: O4
+        prompt: "A friend gets your project with `requirements.txt`, but without `.venv`. What do they run?"
+        options:
+          - text: "`python -m venv .venv`, then activate it, then `pip install -r requirements.txt`"
+            correct: true
+            why: "Make the venv, use it, fill it from the file."
+          - text: "Only `python colors.py`"
+            why: "Their Python does not have `rich` yet: `ModuleNotFoundError`."
+          - text: "`pip install requirements.txt`"
+            why: "Without `-r`, pip looks for a package with the name `requirements.txt`."
+      - kind: mcq
+        id: q-delete
+        objective: O1
+        prompt: "You deleted `.venv` by mistake. What is lost?"
+        options:
+          - text: "Nothing important: make it again and install from `requirements.txt`"
+            correct: true
+            why: "`.venv` only holds Python and packages, and the file says which ones."
+          - text: "All your code"
+            why: "Your code is in your own files, next to `.venv`, not inside it."
+          - text: "Python itself, on the whole computer"
+            why: "The computer's Python stays. Only the copy of the project is gone."
+
+  # 9. REVIEW ----------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-venv
+    objective: O1
+    prompt: "What is in the folder `.venv` of a project?"
+    options:
+      - text: "A Python and the packages of this one project"
+        correct: true
+        why: "Each project has its own, so they do not share packages."
+      - text: "The code of the project"
+        why: "Your code goes next to `.venv`, never inside it."
+      - text: "A copy of all packages of pypi.org"
+        why: "Only the packages that you installed."
+  - kind: mcq
+    id: r-activate
+    objective: O2
+    prompt: "On macOS or Linux, which command activates `.venv`?"
+    options:
+      - text: "`source .venv/bin/activate`"
+        correct: true
+        why: "On Windows: `.venv\\Scripts\\activate`."
+      - text: "`python -m venv .venv`"
+        why: "That makes the venv. It does not activate it."
+      - text: "`pip activate`"
+        why: "pip installs packages. It does not activate venvs."
+  - kind: mcq
+    id: r-not-found
+    objective: O5
+    prompt: "You installed `rich`, but `import rich` gives `ModuleNotFoundError`. What do you check first?"
+    options:
+      - text: "Is the venv active? Look for `(.venv)` in the prompt"
+        correct: true
+        why: "The package is in the venv. Without activation, another Python runs."
+      - text: "Is the internet slow?"
+        why: "`import` never uses the internet."
+      - text: "Is `rich` spelled with a capital letter?"
+        why: "Possible, but first check which Python runs: the prompt tells you."
+  - kind: mcq
+    id: r-install-r
+    objective: O4
+    prompt: "Which command installs every package that `requirements.txt` names?"
+    options:
+      - text: "`pip install -r requirements.txt`"
+        correct: true
+        why: "`-r` means: read the names from this file."
+      - text: "`pip freeze > requirements.txt`"
+        why: "That writes the file. It does not install from it."
+      - text: "`python requirements.txt`"
+        why: "The file is a list, not a program."
+  - kind: mcq
+    id: r-deactivate
+    objective: O2
+    prompt: "How do you leave an active venv?"
+    options:
+      - text: "`deactivate`"
+        correct: true
+        why: "The prompt loses `(.venv)`. Closing the terminal works too."
+      - text: "Delete `.venv`"
+        why: "That removes the venv for good. `deactivate` only leaves it."
+      - text: "`exit()`"
+        why: "`exit()` leaves the `>>>` prompt of Python, not a venv."

@@ -1,0 +1,568 @@
+id: standard-library
+order: 22
+title: Modules and the standard library
+summary: Load ready-made tools with import - random numbers, math, dates - and find the right module for a job.
+minutes: 30
+outcomes: [A3, A4]
+
+objectives:
+  - id: O1
+    text: Load a module with import or from ... import, and use its names
+  - id: O2
+    text: Use random, math and datetime for common jobs
+  - id: O3
+    text: Find the module for a job in the library index, and learn it from its page
+  - id: O4
+    text: Read the errors of a missing import, a wrong module name and a wrong attribute
+
+steps:
+  # 1. USE READY-MADE TOOLS ----------------------------------------------------
+  - id: tools
+    type: demo
+    visual: none
+    objective: O2
+    title: Tools that come with Python
+    intro: |
+      Python comes with hundreds of **modules**: files of ready-made
+      functions. This program uses three of them. Press **Run** two or
+      three times.
+    code: |
+      import random
+      import math
+      from datetime import date
+
+      print(random.choice(["rock", "paper", "scissors"]))
+      print(math.sqrt(2))
+      days = date(2026, 12, 25) - date(2026, 11, 12)
+      print(days.days, "days until December 25")
+    experiments:
+      - text: "Run it two or three times. Which line changes?"
+        expr: "True"
+      - text: "Change one of the dates, for example to your birthday."
+        expr: "err is None and ns.get('days') is not None and days.days != 43"
+      - text: "Add `print(math.pi)`."
+        expr: "err is None and '3.141592653589793' in lines"
+      - text: "Delete the line `import math`. Read the message."
+        expr: "err == 'NameError' and 'import math' not in src"
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: import
+    type: theory
+    objective: O1
+    title: import
+    body: |
+      ## Load a module
+
+      ```
+      import math
+      print(math.sqrt(16))      # 4.0
+      ```
+
+      `import math` makes **one** name: `math`. Its tools are inside: you
+      reach them with a dot, `math.sqrt`, `math.pi`.
+
+      ## Load some names directly
+
+      ```
+      from math import sqrt, pi
+      print(sqrt(16), pi)
+      ```
+
+      `from ... import` makes the names `sqrt` and `pi` directly. Then the
+      name `math` does not exist.
+
+      Put the imports at the **top** of a program, so a reader sees at once
+      which modules it uses.
+
+      These modules are the **standard library**: they come with Python.
+      One rule: do not call your own file `random.py` or `math.py`. Then
+      `import random` loads your file instead of the real module.
+    keys:
+      - code: "import random"
+        means: "One name `random`. Use `random.randint(1, 6)`."
+      - code: "from datetime import date"
+        means: "The name `date` directly. Use `date(2026, 12, 25)`."
+      - code: "math.sqrt(16)"
+        means: "The dot reaches a tool inside the module."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-math
+    type: predict
+    objective: O1
+    title: Two ways to import
+    item:
+      kind: predict
+      id: p-math
+      prompt: |
+        The docs: `math.ceil(x)` is the smallest whole number that is `>= x`.
+        `math.floor(x)` is the largest whole number that is `<= x`.
+
+        **What does this program print?**
+      code: |
+        import math
+        from math import floor
+
+        print(math.ceil(2.1), floor(2.9))
+        print(math.pi > 3)
+      explain: >-
+        `ceil` goes up to 3, `floor` goes down to 2. The first is reached
+        with `math.`, the second directly, because of `from math import
+        floor`. `pi` is 3.14159..., more than 3.
+      misconceptions:
+        - answer: "2 3\nTrue"
+          say: "`ceil` goes up and `floor` goes down, also for 2.1 and 2.9. They do not round to the nearest number."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: tour
+    type: theory
+    objective: O2
+    title: Three useful modules
+    body: |
+      ## random
+
+      ```
+      random.randint(1, 6)          # 1 to 6, both ends included
+      random.choice(["a", "b"])     # one value of a list
+      random.shuffle(cards)         # changes the list, gives back None
+      ```
+
+      ## math
+
+      ```
+      math.sqrt(2)    math.pi    math.ceil(2.1)    math.floor(2.9)
+      ```
+
+      ## datetime
+
+      ```
+      from datetime import date, timedelta
+
+      d = date(2026, 11, 12)          # year, month, day
+      d + timedelta(days=7)           # one week later: 2026-11-19
+      (date(2026, 12, 25) - d).days   # 43
+      d.weekday()                     # 0 is Monday ... 6 is Sunday
+      ```
+
+      `date.today()` gives the date of today. Its result changes every
+      day, so tests use fixed dates.
+    keys:
+      - code: "random.randint(1, 6)"
+        means: "Both ends are included: 6 is possible (not like `range`)."
+      - code: "random.shuffle(cards)"
+        means: "Changes the list in place. It gives back `None`."
+      - code: "(later - earlier).days"
+        means: "The number of days between two dates."
+
+  # 5. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O4
+    title: Modules and their errors
+    items:
+      - kind: mcq
+        id: d-randint
+        objective: O2
+        prompt: "Which values can `random.randint(1, 3)` give?"
+        options:
+          - text: "1, 2 and 3"
+            correct: true
+            why: "`randint` includes both ends."
+          - text: "1 and 2"
+            why: "That is `range(1, 3)`. `randint` includes the end."
+          - text: "0, 1, 2 and 3"
+            why: "It starts at the first value, 1."
+      - kind: predict
+        id: d-shuffle
+        objective: O2
+        code: |
+          import random
+
+          cards = [1, 2, 3]
+          result = random.shuffle(cards)
+          print(result)
+          print(len(cards))
+        explain: >-
+          `shuffle` changes the list itself, like `append`, and gives back
+          `None`. The list still has its 3 values, in a new order.
+        misconceptions:
+          - answer: "[1, 2, 3]\n3"
+            say: "`shuffle` gives back `None`. The new order is in `cards`, not in `result`."
+      - kind: diagnose
+        id: d-attr
+        objective: O4
+        mode: read
+        code: |
+          import math
+
+          print(math.squareroot(9))
+        explain: "The module exists, but it has no tool with this name. `help(math)` or the docs page list all names."
+        fix:
+          - text: "`math.sqrt(9)`"
+            correct: true
+            why: "The name in the module is `sqrt`."
+          - text: "`import squareroot`"
+            why: "`squareroot` is not a module. The tool is `sqrt` in `math`."
+          - text: "`from math import squareroot`"
+            why: "The name does not exist in `math`, so this fails, too."
+      - kind: diagnose
+        id: d-module
+        objective: O4
+        mode: read
+        code: |
+          import maths
+
+          print(maths.pi)
+        explain: "There is no module `maths`. The name is `math`. Python stops at the import line."
+      - kind: predict
+        id: d-date
+        objective: O2
+        code: |
+          from datetime import date, timedelta
+
+          d = date(2026, 1, 30)
+          print(d + timedelta(days=3))
+        explain: "January has 31 days. Three days after January 30 is February 2. `date` knows the length of each month."
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: find
+    type: theory
+    objective: O3
+    title: Find the right module
+    body: |
+      You need a tool, and you do not know its module. Three ways:
+
+      1. The [library index](https://docs.python.org/3/library/index.html)
+         lists all modules of the standard library with one line each. Use
+         the search of your browser on that page.
+      2. A web search: "python median of a list". Prefer answers that link
+         to docs.python.org.
+      3. In Python: `help(math)` lists the tools of a module.
+
+      Then read the module page like any entry: signature, first sentence,
+      a small try.
+
+      Some modules that you will meet: `statistics` (mean, median),
+      `collections` (`Counter` counts things), `json` and `pathlib` (files,
+      module 5).
+    keys:
+      - code: "help(math)"
+        means: "Lists the tools of `math`, with their help."
+      - code: "import statistics"
+        means: "Mean, median and more, ready to use."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-median
+    type: worked
+    objective: O3
+    title: From a job to a module
+    problem: |
+      A program needs the **median** of some scores: the middle value. Do
+      not write it yourself. Find it.
+    lines:
+      - code: "# Library index: 'statistics - Mathematical statistics functions'"
+        note: "The library index has a module for statistics. Its page lists `median`."
+      - code: "# statistics.median(data): the middle value of the data"
+        note: "The signature and the first sentence of its entry."
+      - code: |
+          import statistics
+
+          print(statistics.median([3, 9, 4]))      # 4
+          print(statistics.median([3, 9, 4, 1]))   # 3.5
+        note: "A small try. With an even count, the docs say that the median is the mean of the two middle values: 3.5."
+      - code: |
+          def middle_score(scores):
+              return statistics.median(scores)
+        note: "Now use it. One line, tested by the module authors."
+    check:
+      kind: mcq
+      id: w-median
+      prompt: "Which module would you look for first, to pick a random winner from a list of names?"
+      options:
+        - text: "`random`, with `random.choice(names)`"
+          correct: true
+          why: "`random` has tools for random choices."
+        - text: "`statistics`"
+          why: "`statistics` computes values like the mean. It does not choose."
+        - text: "`math`"
+          why: "`math` has number tools like `sqrt`, but no random choice."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-dice
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Roll the dice
+    prompt: |
+      `roll_dice(count)` gives back a list of `count` dice rolls. A die
+      shows 1 to 6.
+
+      **Replace the two `___`.** The check rolls many dice.
+    starter: |
+      import random
+
+      def roll_dice(count):
+          rolls = []
+          for i in range(count):
+              rolls.append(random.randint(___, ___))
+          return rolls
+
+      print(roll_dice(5))
+    solution: |
+      import random
+
+      def roll_dice(count):
+          rolls = []
+          for i in range(count):
+              rolls.append(random.randint(1, 6))
+          return rolls
+
+      print(roll_dice(5))
+    after: >-
+      `randint(1, 6)` includes both ends. With `range` it would be
+      `range(1, 7)`; `randint` is different, and its docs say so.
+    checks:
+      - expr: "callable(ns.get('roll_dice')) and len(roll_dice(5)) == 5 and set(roll_dice(400)) == {1, 2, 3, 4, 5, 6}"
+        pass: "Each roll is 1 to 6, and every face can come"
+        hint: "The smallest face is 1, the largest is 6."
+        misconceptions:
+          - when: "callable(ns.get('roll_dice')) and 0 in roll_dice(400)"
+            say: "A die has no 0. The first value of `randint` is the smallest roll."
+          - when: "callable(ns.get('roll_dice')) and 6 not in roll_dice(400) and 5 in roll_dice(400)"
+            say: "6 never comes. `randint` includes its end, so the second value must be 6, not 5."
+          - when: "callable(ns.get('roll_dice')) and 7 in roll_dice(400)"
+            say: "7 comes, too. `randint` includes its end: write 6, not 7."
+    hints:
+      - "`randint(a, b)` gives a whole number from `a` to `b`."
+      - "Both ends are included."
+      - "Write `random.randint(1, 6)`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-distance
+    type: exercise
+    fade: debug
+    objective: O4
+    title: A name that was never loaded
+    prompt: |
+      `distance` computes the distance between two points. From (0, 0) to
+      (3, 4) it is 5.0.
+
+      **Run it.** Read the message and fix the import or the call.
+    starter: |
+      from math import sqrt
+
+      def distance(x1, y1, x2, y2):
+          return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+      print(distance(0, 0, 3, 4))
+    solution: |
+      import math
+
+      def distance(x1, y1, x2, y2):
+          return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+      print(distance(0, 0, 3, 4))
+    after: >-
+      `from math import sqrt` makes only the name `sqrt`. Both fixes work:
+      `import math` with `math.sqrt`, or `from math import sqrt` with
+      `sqrt` alone.
+    checks:
+      - expr: "callable(ns.get('distance')) and distance(0, 0, 3, 4) == 5.0 and distance(1, 1, 1, 1) == 0.0 and distance(-1, 0, 2, 4) == 5.0"
+        pass: "`distance` gives the right distance"
+        hint: "The message names the name that does not exist."
+      - expr: "err is None and lines == ['5.0']"
+        pass: "The program prints `5.0`"
+        hint: "Which names does `from math import sqrt` make?"
+    hints:
+      - "The message is a `NameError` for `math`."
+      - "`from math import sqrt` makes the name `sqrt`, not `math`."
+      - "Change the first line to `import math`, or write `sqrt(...)` without `math.`."
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-dates
+    type: exercise
+    fade: independent
+    objective: O3
+    title: How many days, which day
+    prompt: |
+      **Write two functions** with the `datetime` module:
+
+      1. `days_until(today, event)` gives back the number of days from the
+         date `today` to the date `event`.
+      2. `weekday_name(d)` gives back the name of the weekday of a date:
+         `"Monday"`, `"Tuesday"`, and so on. Use the method `weekday()` of
+         a date: read what it gives back in the
+         [docs](https://docs.python.org/3/library/datetime.html#datetime.date.weekday).
+
+      Then print how many days there are from `date(2026, 11, 12)` to
+      `date(2026, 12, 25)`, and the weekday of December 25, 2026.
+    starter: |
+      from datetime import date
+
+    solution: |
+      from datetime import date
+
+      NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+      def days_until(today, event):
+          return (event - today).days
+
+      def weekday_name(d):
+          return NAMES[d.weekday()]
+
+      christmas = date(2026, 12, 25)
+      print(days_until(date(2026, 11, 12), christmas))
+      print(weekday_name(christmas))
+    after: >-
+      `weekday()` gives a number, 0 for Monday. A list of names turns the
+      number into a word. The docs told you which number is which day.
+    checks:
+      - expr: "callable(ns.get('days_until')) and (lambda D: days_until(D(2026, 11, 12), D(2026, 12, 25)) == 43 and days_until(D(2026, 1, 1), D(2026, 1, 1)) == 0 and days_until(D(2026, 2, 27), D(2026, 3, 2)) == 3)(__import__('datetime').date)"
+        pass: "`days_until` gives back the number of days"
+        hint: "Subtract the dates: `event - today`. The result has `.days`."
+        misconceptions:
+          - when: "callable(ns.get('days_until')) and (lambda D: days_until(D(2026, 11, 12), D(2026, 12, 25)) == -43)(__import__('datetime').date)"
+            say: "The number is negative: the order is wrong. Use `event - today`."
+          - when: "callable(ns.get('days_until')) and (lambda D: str(days_until(D(2026, 11, 12), D(2026, 12, 25))).startswith('43 days'))(__import__('datetime').date)"
+            say: "This is a `timedelta`, not a number. Give back its `.days`."
+      - expr: "callable(ns.get('weekday_name')) and (lambda D: weekday_name(D(2026, 11, 12)) == 'Thursday' and weekday_name(D(2026, 11, 16)) == 'Monday' and weekday_name(D(2026, 11, 15)) == 'Sunday')(__import__('datetime').date)"
+        pass: "`weekday_name` gives back the name of the day"
+        hint: "`d.weekday()` is 0 for Monday and 6 for Sunday. Use it as a position in a list of names."
+        misconceptions:
+          - when: "callable(ns.get('weekday_name')) and (lambda D: weekday_name(D(2026, 11, 16)) == 'Sunday')(__import__('datetime').date)"
+            say: "The names are one day off. `weekday()` is 0 for **Monday**, so the list starts with Monday."
+      - expr: "err is None and '43' in lines and 'Friday' in lines"
+        pass: "The program prints 43 and `Friday`"
+        hint: "Print `days_until(date(2026, 11, 12), date(2026, 12, 25))` and `weekday_name(date(2026, 12, 25))`."
+    hints:
+      - "`(event - today).days` is the number of days."
+      - "Make a list: `[\"Monday\", \"Tuesday\", ..., \"Sunday\"]`."
+      - "`weekday_name` is one line: `return NAMES[d.weekday()]`."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-from
+        objective: O1
+        prompt: "After `from random import choice`, which call is right?"
+        options:
+          - text: "`choice([1, 2, 3])`"
+            correct: true
+            why: "`from ... import` makes the name `choice` directly."
+          - text: "`random.choice([1, 2, 3])`"
+            why: "The name `random` does not exist after `from random import choice`."
+          - text: "`random(choice, [1, 2, 3])`"
+            why: "This is not how modules work."
+      - kind: diagnose
+        id: q-forgot
+        objective: O4
+        mode: predict
+        code: |
+          print(math.sqrt(25))
+        explain: "The program never imports `math`, so the name does not exist."
+        distractors: [TypeError, ValueError, ModuleNotFoundError]
+      - kind: predict
+        id: q-floor
+        objective: O2
+        code: |
+          import math
+
+          print(math.floor(7.9), math.ceil(7.1))
+          print(math.sqrt(81))
+        explain: "`floor` goes down to 7, `ceil` up to 8. `sqrt` always gives back a float: 9.0."
+      - kind: mcq
+        id: q-today
+        objective: O2
+        prompt: "Why do tests use `date(2026, 11, 12)` and not `date.today()`?"
+        options:
+          - text: "The result of `date.today()` changes every day, so a test with it is not repeatable"
+            correct: true
+            why: "A test must give the same answer every time it runs."
+          - text: "`date.today()` does not exist"
+            why: "It exists. It gives the date of the day when the program runs."
+          - text: "Fixed dates are faster"
+            why: "Speed is not the reason. Repeatable results are."
+      - kind: mcq
+        id: q-file
+        objective: O1
+        prompt: "Your file is called `random.py`. `import random` then `random.randint(1, 6)` fails. Why?"
+        options:
+          - text: "Python imports your own file, not the module"
+            correct: true
+            why: "Rename your file, for example to `dice.py`."
+          - text: "`randint` was removed from Python"
+            why: "It exists. Python loaded the wrong file."
+          - text: "A file cannot use import"
+            why: "Any file can import modules."
+      - kind: predict
+        id: q-days
+        objective: O2
+        code: |
+          from datetime import date
+
+          start = date(2026, 3, 1)
+          end = date(2026, 3, 15)
+          print((end - start).days)
+        explain: "From March 1 to March 15 is 14 days."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-import
+    objective: O1
+    prompt: "After `import math`, how do you call `sqrt`?"
+    options:
+      - text: "`math.sqrt(16)`"
+        correct: true
+        why: "`import math` makes the name `math`. Its tools are inside."
+      - text: "`sqrt(16)`"
+        why: "That works only after `from math import sqrt`."
+      - text: "`import sqrt(16)`"
+        why: "`import` loads a module. It does not call a function."
+  - kind: mcq
+    id: r-randint
+    objective: O2
+    prompt: "Can `random.randint(1, 10)` give 10?"
+    options:
+      - text: "Yes. Both ends are included"
+        correct: true
+        why: "`randint` is different from `range` here."
+      - text: "No. The end is not included"
+        why: "That is true for `range`, not for `randint`."
+      - text: "Only one time in 100"
+        why: "Every value from 1 to 10 has the same chance."
+  - kind: predict
+    id: r-shuffle
+    objective: O2
+    code: |
+      import random
+
+      names = ["Ana", "Ben"]
+      print(random.shuffle(names))
+    explain: "`shuffle` changes the list and gives back `None`."
+  - kind: diagnose
+    id: r-attr
+    objective: O4
+    mode: predict
+    code: |
+      import random
+
+      print(random.pick([1, 2, 3]))
+    explain: "`random` has no tool `pick`. The name is `choice`."
+  - kind: predict
+    id: r-week
+    objective: O2
+    code: |
+      from datetime import date, timedelta
+
+      print(date(2026, 12, 28) + timedelta(days=7))
+    explain: "One week after December 28 is January 4 of the next year."

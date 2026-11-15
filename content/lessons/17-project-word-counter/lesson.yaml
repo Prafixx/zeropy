@@ -1,0 +1,505 @@
+id: project-word-counter
+order: 17
+title: "Project: word counter"
+summary: Build a tool that finds the most common words in any text.
+minutes: 60
+outcomes: [A1, A4, A8]
+
+objectives:
+  - id: O1
+    text: Plan a program as a pipeline - each step makes the data for the next step
+  - id: O2
+    text: Clean real text - split it, take away signs, make all letters small
+  - id: O3
+    text: Count words with a dictionary and find the most common ones
+  - id: O4
+    text: Make a program safe for unusual input, like an empty text
+
+steps:
+  # 1. USE THE FINISHED TOOL --------------------------------------------------
+  - id: play
+    type: demo
+    visual: none
+    sealed: true
+    objective: O1
+    title: Use the finished tool
+    intro: |
+      This project builds a small **word counter**. Writers, teachers and
+      search engines use tools like this: which words does a text use the
+      most?
+
+      Press **Play** and type a sentence. The code is hidden: at the end of
+      this project you will have written it yourself.
+    code: &tool |
+      text = input("Text: ")
+      words = text.split()
+
+      clean = []
+      for w in words:
+          w = w.strip('.,!?;:"').lower()
+          if w != "":
+              clean.append(w)
+
+      counts = {}
+      for w in clean:
+          if w in counts:
+              counts[w] = counts[w] + 1
+          else:
+              counts[w] = 1
+
+      if len(clean) == 0:
+          print("No words.")
+      else:
+          print(f"{len(clean)} words, {len(counts)} different")
+          remaining = counts.copy()
+          for i in range(min(3, len(remaining))):
+              best_word = ""
+              best_count = 0
+              for word, count in remaining.items():
+                  if count > best_count:
+                      best_word, best_count = word, count
+              print(f"{best_word}: {best_count}")
+              del remaining[best_word]
+    experiments:
+      - text: "Type a sentence of your own."
+        expr: "err is None and asked == 1 and len(clean) > 0"
+      - text: "Type a text in which one word comes three times or more. Try capital letters and signs, like `Yes, yes! YES.`"
+        expr: "err is None and len(counts) > 0 and max(counts.values()) >= 3"
+      - text: "Press **Play** and only press Enter, with no text. What does the tool say?"
+        expr: "err is None and inputs[-1:] == [''] and 'No words.' in lines"
+
+  # 2. THE PLAN ---------------------------------------------------------------
+  - id: plan
+    type: theory
+    objective: O1
+    title: A pipeline in five steps
+    body: |
+      ## Data flows through the steps
+
+      This program is a **pipeline**. Each step takes the result of the
+      step before it and makes something new:
+
+      text → words → clean words → counts → top three
+
+      This plan makes every step small and easy to test. When a result is
+      wrong, you look at the data between the steps and find the step that
+      broke it.
+
+      The checks need the names `text`, `words`, `clean` and `counts`.
+      Steps 1 to 4 work on a text that is given. In step 5, the user types
+      the text.
+    keys:
+      - code: "1  Words"
+        means: "Split the text into a list of words."
+      - code: "2  Clean"
+        means: "Small letters, no signs like `.` or `!` at the ends."
+      - code: "3  Count"
+        means: "A dictionary: each word and how often it comes."
+      - code: "4  Top three"
+        means: "The three most common words, with their counts."
+      - code: "5  Users"
+        means: "The user types the text. An empty text must not break it."
+
+  # 3. STEP 1 -----------------------------------------------------------------
+  - id: m1-words
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O1
+    title: "Step 1: the words"
+    prompt: |
+      The text is given. **Split it into a list of words with the name
+      `words`, and print the number of words.**
+    given: &text |
+      text = "The cat sat. The dog sat too! A cat, a dog, and the bird."
+    starter: |
+      # Step 1: split the text into words.
+    solution: |
+      words = text.split()
+      print(len(words))
+    after: >-
+      Look at the words: `sat.` and `cat,` still have signs, and `The` and
+      `the` are written in two ways. For the counter they must be the same
+      word. That is the next step.
+    cases:
+      - {}
+      - label: "the text is `Red, red, RED! Blue blue. Green.`"
+        setup: |
+          text = "Red, red, RED! Blue blue. Green."
+    checks:
+      - &c-words
+        expr: "err is None and isinstance(ns.get('words'), list) and words == text.split()"
+        pass: "`words` is the list of the words of `text`"
+        hint: "`split()` cuts a text at the spaces."
+        misconceptions:
+          - when: "isinstance(ns.get('words'), str)"
+            say: "`words` is a text. `split()` gives a list: `words = text.split()`."
+      - expr: "str(len(text.split())) in lines"
+        pass: "It prints the number of words"
+        hint: "`len(words)` counts the words."
+    hints:
+      - "`text.split()` gives a list of the words."
+      - "Store it: `words = text.split()`."
+      - "Then `print(len(words))`."
+
+  # 4. STEP 2 -----------------------------------------------------------------
+  - id: m2-clean
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 2: clean the words"
+    prompt: |
+      **Make a new list `clean`.** For each word:
+
+      - take away the signs `.,!?;:"` at the start and at the end,
+      - make all letters small,
+      - add it to `clean`, but only if it is not empty after the cleaning.
+
+      `strip` can take the signs to remove: `w.strip('.,!?;:"')`. Note the
+      quotes: the signs are inside `'...'`, so the `"` can be one of them.
+    given: *text
+    solution: |
+      words = text.split()
+      print(len(words))
+
+      clean = []
+      for w in words:
+          w = w.strip('.,!?;:"').lower()
+          if w != "":
+              clean.append(w)
+      print(clean)
+    after: >-
+      `The` and `the` are the same word now, and `sat.` is `sat`. A word
+      that was only a sign, like a lonely `!`, is empty after the cleaning,
+      so it is not added.
+    cases:
+      - {}
+      - label: "the text is `Red, red, RED! Blue blue. Green.`"
+        setup: |
+          text = "Red, red, RED! Blue blue. Green."
+      - label: "the text is `Hi ! hi`"
+        setup: |
+          text = "Hi ! hi"
+    checks:
+      - *c-words
+      - &c-clean
+        expr: >-
+          isinstance(ns.get('clean'), list)
+          and clean == [w.strip('.,!?;:"').lower() for w in text.split() if w.strip('.,!?;:"')]
+        pass: "`clean` holds every word in small letters, without signs at the ends"
+        hint: "For each word: `strip` the signs, then `lower()`. Add it only if it is not empty."
+        misconceptions:
+          - when: "isinstance(ns.get('clean'), list) and clean == [w.lower() for w in text.split()]"
+            say: "The letters are small, but the signs are still there. Use `strip('.,!?;:\"')` too."
+          - when: "isinstance(ns.get('clean'), list) and clean == [w.strip('.,!?;:\"') for w in text.split() if w.strip('.,!?;:\"')]"
+            say: "The signs are gone, but capital letters stay. Add `.lower()`."
+          - when: "isinstance(ns.get('clean'), list) and '' in clean"
+            say: "`clean` holds an empty text. A word that was only a sign is empty after `strip`: do not add it."
+    hints:
+      - "Start with `clean = []` and loop: `for w in words:`."
+      - "In the loop: `w = w.strip('.,!?;:\"').lower()`. Methods give a new text, so keep it with `=`."
+      - "Then `if w != \"\":` and `clean.append(w)`."
+
+  # 5. STEP 3 -----------------------------------------------------------------
+  - id: m3-count
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O3
+    title: "Step 3: count"
+    prompt: |
+      **Make a dictionary `counts`.** Each clean word is a key, and its value
+      is how often the word comes in `clean`.
+
+      This is the counting pattern of lesson 14. Print `counts` to test it.
+    given: *text
+    solution: |
+      words = text.split()
+      print(len(words))
+
+      clean = []
+      for w in words:
+          w = w.strip('.,!?;:"').lower()
+          if w != "":
+              clean.append(w)
+      print(clean)
+
+      counts = {}
+      for w in clean:
+          if w in counts:
+              counts[w] = counts[w] + 1
+          else:
+              counts[w] = 1
+      print(counts)
+    after: >-
+      The dictionary is the heart of the tool: one key for each different
+      word. The keys come in the order of the first time each word appears.
+    cases:
+      - {}
+      - label: "the text is `Red, red, RED! Blue blue. Green.`"
+        setup: |
+          text = "Red, red, RED! Blue blue. Green."
+    checks:
+      - *c-clean
+      - &c-counts
+        expr: "isinstance(ns.get('counts'), dict) and counts == {w: clean.count(w) for w in clean}"
+        pass: "`counts` holds each clean word and how often it comes"
+        hint: "Loop over `clean`. One more for a word that is a key, or a new key with 1."
+        misconceptions:
+          - when: "err == 'KeyError'"
+            say: "A new word has no key yet. Ask first with `in`, and start a new word at 1."
+          - when: "isinstance(ns.get('counts'), dict) and len(counts) < len(set(clean))"
+            say: "Some words are missing in `counts`. If a later step deletes keys, it must work on a copy: `remaining = counts.copy()`."
+          - when: "isinstance(ns.get('counts'), dict) and counts == {w: 1 for w in clean}"
+            say: "Every count is 1. For a word that is already a key, add 1 to its value."
+    hints:
+      - "Before the loop: `counts = {}`."
+      - "In the loop: `if w in counts:` add 1, `else:` start with 1."
+      - "The code is the same as the vote counter in lesson 14, with `clean` and `w`."
+
+  # 6. STEP 4 -----------------------------------------------------------------
+  - id: m4-top
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O3
+    title: "Step 4: the top three"
+    prompt: |
+      **Print the three most common words**, one line each, like `the: 3`.
+      The most common word comes first. When two words have the same
+      count, the one that came first in the text wins. These three lines
+      must be the last lines of the output.
+
+      A plan that uses only what you know:
+
+      1. Make a copy: `remaining = counts.copy()`. The real `counts` must
+         stay complete.
+      2. Three times: find the best word in `remaining` with the
+         best-so-far pattern, print it, then `del` it from `remaining`.
+    given: *text
+    solution: |
+      words = text.split()
+      print(len(words))
+
+      clean = []
+      for w in words:
+          w = w.strip('.,!?;:"').lower()
+          if w != "":
+              clean.append(w)
+      print(clean)
+
+      counts = {}
+      for w in clean:
+          if w in counts:
+              counts[w] = counts[w] + 1
+          else:
+              counts[w] = 1
+      print(counts)
+
+      remaining = counts.copy()
+      for i in range(3):
+          best_word = ""
+          best_count = 0
+          for word, count in remaining.items():
+              if count > best_count:
+                  best_word, best_count = word, count
+          print(f"{best_word}: {best_count}")
+          del remaining[best_word]
+    after: >-
+      A loop inside a loop: the outer loop runs three times, and each time
+      the inner loop looks at every word that is left. Deleting the winner
+      lets the next round find the second best.
+    cases:
+      - {}
+      - label: "the text is `Red, red, RED! Blue blue. Green.`"
+        setup: |
+          text = "Red, red, RED! Blue blue. Green."
+      - label: "the text is `a b c b c c d`"
+        setup: |
+          text = "a b c b c c d"
+    checks:
+      - *c-counts
+      - &c-top
+        expr: >-
+          len(counts) == 0
+          or lines[-min(3, len(counts)):] == [f"{w}: {c}" for w, c in sorted(counts.items(), key=lambda p: -p[1])[:3]]
+        pass: "The last lines are the three most common words, the most common first"
+        hint: "Three rounds. In each: the best-so-far pattern over `remaining.items()`, then `print`, then `del`."
+        misconceptions:
+          - when: "err == 'KeyError'"
+            say: "`del` wants a key that exists. Check that `best_word` was found in this round: the best-so-far start values must be reset at the start of each round."
+          - when: "len(lines) >= 2 and lines[-1] == lines[-2]"
+            say: "The same word is printed again. Delete the winner from `remaining` at the end of each round."
+    hints:
+      - "Start with `remaining = counts.copy()` and `for i in range(3):`."
+      - "In each round: `best_word = \"\"`, `best_count = 0`, then `for word, count in remaining.items():` with `if count > best_count:`."
+      - "After the inner loop: `print(f\"{best_word}: {best_count}\")` and `del remaining[best_word]`."
+
+  # 7. STEP 5 -----------------------------------------------------------------
+  - id: m5-users
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O4
+    title: "Step 5: ready for users"
+    prompt: |
+      Now the user types the text. **Make the tool ready for real people.**
+
+      - Replace the given text: the first line is `text = input("Text: ")`.
+        No text is given in this step.
+      - If there are no clean words, print only `No words.`
+      - Otherwise, print one summary line like `14 words, 8 different`,
+        and then the top words.
+      - A text can have fewer than three different words. Then print only
+        the words that exist. `min(3, len(remaining))` helps.
+
+      You can delete your test lines with `print` from steps 1 to 3.
+    solution: *tool
+    after: >-
+      This is the complete tool. Real users do strange things: they press
+      Enter without a text, or type one word only. A program that is ready
+      for users thinks about these cases first.
+    cases:
+      - {}
+      - label: "the user types `The cat sat. The dog sat too!`"
+        stdin: ["The cat sat. The dog sat too!"]
+      - label: "the user types nothing"
+        stdin: [""]
+      - label: "the user types `yes Yes YES! no`"
+        stdin: ["yes Yes YES! no"]
+      - label: "the user types `!!!`"
+        stdin: ["!!!"]
+    checks:
+      - expr: "err is None and asked == 1"
+        pass: "The program asks for the text and runs without an error"
+        hint: "The first line: `text = input(\"Text: \")`."
+        misconceptions:
+          - when: "err == 'NameError'"
+            say: "No text is given in this step. Ask for it: `text = input(\"Text: \")`."
+          - when: "err == 'KeyError'"
+            say: "There are fewer than three different words, so a round finds nothing to delete. Loop `range(min(3, len(remaining)))` times."
+          - when: "err is None and asked == 0"
+            say: "The program does not ask the user. Add `text = input(\"Text: \")` at the top."
+      - *c-clean
+      - *c-counts
+      - expr: "(len(clean) == 0 and lines[-1:] == ['No words.']) or (len(clean) > 0 and f'{len(clean)} words, {len(counts)} different' in lines)"
+        pass: "It prints `No words.`, or a summary line like `14 words, 8 different`"
+        hint: "Use `if len(clean) == 0:` for the empty case. Otherwise print the summary with an f-string."
+      - *c-top
+    hints:
+      - "Line 1: `text = input(\"Text: \")`. The rest of your code stays."
+      - "Put the summary and the top three inside `if len(clean) == 0: ... else:`."
+      - "The top loop: `for i in range(min(3, len(remaining))):`."
+
+  # 8. LOOK BACK --------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Look back at your work
+    items:
+      - kind: mcq
+        id: q-pipeline
+        objective: O1
+        prompt: "The top three shows `dog.: 2` with a dot. In which step of the pipeline is the mistake?"
+        options:
+          - text: "Step 2, the cleaning"
+            correct: true
+            why: "The dot should be gone before the counting. Print `clean` to see it."
+          - text: "Step 3, the counting"
+            why: "The counting only counts what it gets. It got `dog.` from the step before."
+          - text: "Step 4, the top three"
+            why: "Step 4 shows the counts. The dot was already in the data."
+      - kind: predict
+        id: q-strip
+        objective: O2
+        code: |
+          w = '"Hello!"'
+          print(w.strip('.,!?;:"').lower())
+        explain: "`strip` takes away every sign of the list at both ends, until it meets a letter. Then `lower` makes the letters small."
+      - kind: mcq
+        id: q-copy
+        objective: O3
+        prompt: "Why does step 4 work on `remaining = counts.copy()` and not on `counts`?"
+        options:
+          - text: "Step 4 deletes keys, and `counts` must stay complete"
+            correct: true
+            why: "Without the copy, `del` would delete words from `counts` itself: two names, one dictionary."
+          - text: "`del` does not work on `counts`"
+            why: "`del` works on any dictionary. That is exactly why a copy is needed."
+          - text: "A copy makes the program faster"
+            why: "A copy is a little slower. It is needed to keep `counts` complete."
+      - kind: predict
+        id: q-min
+        objective: O4
+        code: |
+          remaining = {"yes": 3, "no": 1}
+          print(min(3, len(remaining)))
+        explain: "Only two different words exist, so the loop must run two times, not three."
+      - kind: mcq
+        id: q-users
+        objective: O4
+        prompt: "Which input is the most important one to test before you give a tool to users?"
+        options:
+          - text: "Unusual input, like an empty text or only signs"
+            correct: true
+            why: "A normal sentence works in most programs. Unusual input is where programs break."
+          - text: "A very long, normal text"
+            why: "Good to test too, but it uses the same paths as a short text."
+          - text: "The example text from the project"
+            why: "That text was already tested in every step."
+
+  # 9. REVIEW -----------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 6
+
+review:
+  - kind: predict
+    id: r-clean
+    objective: O2
+    code: |
+      words = "Go, go GO!".split()
+      clean = []
+      for w in words:
+          clean.append(w.strip(",!").lower())
+      print(clean)
+    explain: "Each word loses its signs and its capital letters, so all three are `go`."
+  - kind: mcq
+    id: r-pipeline
+    objective: O1
+    prompt: "What is a pipeline in a program?"
+    options:
+      - text: "Steps where each one uses the result of the step before"
+        correct: true
+        why: "text → words → clean → counts → top. You can test the data between the steps."
+      - text: "A loop that runs forever"
+        why: "That is an endless loop, a mistake."
+      - text: "A program that uses only one variable"
+        why: "A pipeline usually has one variable for the result of each step."
+  - kind: predict
+    id: r-count
+    objective: O3
+    code: |
+      counts = {}
+      for w in ["a", "b", "a"]:
+          if w in counts:
+              counts[w] = counts[w] + 1
+          else:
+              counts[w] = 1
+      print(counts)
+    explain: "`a` comes twice, `b` once. The keys keep the order of their first appearance."
+  - kind: mcq
+    id: r-empty
+    objective: O4
+    prompt: "A user presses Enter with no text. What is `\"\".split()`?"
+    options:
+      - text: "`[]`, an empty list"
+        correct: true
+        why: "No words, so the list is empty. A program must handle this case."
+      - text: "`['']`, a list with one empty text"
+        why: "`split()` with no argument gives no empty words."
+      - text: "An error"
+        why: "There is no error. The danger comes later, for example from `clean[0]`."

@@ -1,0 +1,525 @@
+id: if-else
+order: 6
+title: if, elif, else
+summary: Let the program choose which lines to run.
+minutes: 25
+outcomes: [A1, A2]
+
+objectives:
+  - id: O1
+    text: Explain how if chooses - a block runs only when its condition is True
+  - id: O2
+    text: Write if, elif and else with the colon and 4 spaces
+  - id: O3
+    text: Predict which block runs
+  - id: O4
+    text: Read an IndentationError and fix the spaces
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: Some lines do not run
+    question: Until now Python ran every line. How can a program choose?
+    legend: false
+    code: |
+      score = 72
+      if score >= 90:
+          print("gold")
+      elif score >= 50:
+          print("silver")
+      else:
+          print("try again")
+    beats:
+      - beat: load
+        caption: "This program gives a medal for a score. It has three possible endings, and only **one** will run."
+      - beat: value
+        line: 1
+        caption: "First a value: a score of 72."
+      - beat: first
+        line: 2
+        caption: "`if` asks a question. Is 72 at least 90? **False**. Python skips the line under it."
+      - beat: second
+        line: 4
+        caption: "`elif` means \"else, if\". It is a second question, asked only because the first answer was False. **True**."
+      - beat: block
+        line: 5
+        caption: "True opens the **block**: the lines under the question that start with 4 spaces. Python runs them."
+      - beat: end
+        caption: "One block ran, so Python skips the rest. The `else` block runs only when every answer is False."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: form
+    type: theory
+    objective: O2
+    title: A colon and four spaces
+    body: |
+      ## The form of `if`
+
+      ```
+      if temperature > 30:
+          print("hot")
+          print("drink water")
+      print("goodbye")
+      ```
+
+      Two details matter:
+
+      - The line with the question ends with a **colon** `:`.
+      - The lines of the block start with **4 spaces**. The editor adds them
+        after a colon when you press Enter.
+
+      The block ends where the spaces end. Here `goodbye` is printed in
+      every case, because that line is not in the block.
+    keys:
+      - code: "if x > 0:"
+        means: "The first question. Always the start."
+      - code: "elif x == 0:"
+        means: "Another question. Asked only when all answers before were False. You can have many."
+      - code: "else:"
+        means: "No question. Its block runs when every answer was False. Always the end."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-skip
+    type: predict
+    objective: O3
+    title: Inside the block or not
+    item:
+      kind: predict
+      id: p-skip
+      code: |
+        n = 2
+        if n > 3:
+            print("big")
+        print("done")
+      explain: >-
+        `2 > 3` is False, so Python skips the block and `big` is not printed.
+        The last line has no spaces at the start. It is not part of the
+        block, so it always runs.
+      misconceptions:
+        - answer: "big\ndone"
+          say: "`2 > 3` is False. The block under the `if` is skipped."
+        - answer: "big"
+          say: "`2 > 3` is False, so `big` is skipped. The last line is outside the block and always runs."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    visual: output
+    objective: O1
+    title: Choose the path
+    intro: |
+      Press **Run**. Each question gets a `True` or `False` mark. Lines that
+      did not run turn pale.
+
+      Then change `temperature` to make the program take another path.
+    code: |
+      temperature = 25
+      if temperature > 30:
+          print("hot")
+      elif temperature > 15:
+          print("nice")
+      else:
+          print("cold")
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Change `temperature` so that the program prints `hot`."
+        expr: "err is None and lines == ['hot']"
+      - text: "Change `temperature` so that the program prints `cold`."
+        expr: "err is None and lines == ['cold']"
+      - text: "Set `temperature` to exactly `30`. Decide first: which word will it print?"
+        expr: "err is None and ns.get('temperature') == 30 and lines == ['nice']"
+      - text: "Add a second line to the `else` block that prints `wear a coat`. Make the program reach it."
+        expr: "err is None and lines == ['cold', 'wear a coat']"
+
+  # 5. PREDICT ---------------------------------------------------------------
+  - id: predict-first
+    type: predict
+    objective: O3
+    title: The first True wins
+    item:
+      kind: predict
+      id: p-first
+      prompt: "Both conditions are true for 70. **What does the program print?**"
+      code: |
+        age = 70
+        if age >= 18:
+            print("adult")
+        elif age >= 65:
+            print("senior")
+        print("end")
+      explain: >-
+        Python asks the questions from the top. The first one is True, so
+        its block runs. After that, Python does not ask the `elif` at all.
+        To get `senior`, the question `age >= 65` must come first.
+      misconceptions:
+        - answer: "adult\nsenior\nend"
+          say: "In one chain, only one block runs: the first one with a True answer."
+        - answer: "senior\nend"
+          say: "Python starts at the top. `70 >= 18` is True, so it never reaches the `elif`."
+
+  # 6. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-ticket
+    type: worked
+    objective: O2
+    title: The price of a ticket
+    problem: |
+      A museum has three prices: children under 12 pay 5, people of 65 or
+      older pay 7, and all others pay 10.
+
+      **Ask for the age and print the price.**
+    lines:
+      - code: 'age = int(input("Age: "))'
+        note: "Ask and convert, as in lesson 4."
+      - code: |
+          if age < 12:
+              price = 5
+        note: "The first rule. The block does not print. It stores the price."
+      - code: |
+          elif age >= 65:
+              price = 7
+        note: "The second rule. Python arrives here only when the age is 12 or more."
+      - code: |
+          else:
+              price = 10
+        note: "Everyone else. No question is needed."
+      - code: 'print(f"Price: {price}")'
+        note: "No spaces at the start: this line is after the chain and runs for every age."
+    check:
+      kind: mcq
+      id: w-ticket
+      prompt: "The `print` line is written **one time**, after the chain. Why is that better than a `print` in each block?"
+      options:
+        - text: "The text is written in one place, so a change is made in one place"
+          correct: true
+          why: "The blocks only decide the value. What is the same for all cases comes after the chain."
+        - text: "`print` is not allowed inside a block"
+          why: "`print` works in a block. You saw it in the examples before."
+        - text: "Python runs faster with fewer lines"
+          why: "The speed is the same. The reason is that the code is easier to change."
+
+  # 7. EXERCISE: completion --------------------------------------------------
+  - id: ex-even
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Even or odd
+    prompt: |
+      A number is even when you can divide it by 2 with nothing left.
+
+      **Replace `___` with a condition**, so that the program prints `even`
+      for an even number and `odd` for all other numbers.
+    starter: |
+      number = 7
+      if ___:
+          print("even")
+      else:
+          print("odd")
+    solution: |
+      number = 7
+      if number % 2 == 0:
+          print("even")
+      else:
+          print("odd")
+    after: >-
+      `%` gives the remainder, and `== 0` asks if nothing is left. This test
+      is used very often: every second row, every tenth item.
+    cases:
+      - {}
+      - label: "`number` is 10"
+        set: { number: 10 }
+      - label: "`number` is 7"
+        set: { number: 7 }
+      - label: "`number` is 0"
+        set: { number: 0 }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "The condition must be a comparison, for example with `==`."
+      - expr: "lines == ['even' if number % 2 == 0 else 'odd']"
+        pass: "It prints `even` or `odd`, and the answer is right"
+        hint: "What is left when you divide `number` by 2? Compare that with 0."
+        misconceptions:
+          - when: "lines == ['even'] and number % 2 != 0"
+            say: "The program says `even` for an odd number. The condition must test the remainder of the division by 2."
+          - when: "lines == ['odd'] and number % 2 == 0"
+            say: "The program says `odd` for an even number. An even number has the remainder 0."
+    hints:
+      - "The sign `%` gives the remainder of a division."
+      - "For an even number, `number % 2` is 0."
+      - "Write `if number % 2 == 0:`."
+
+  # 8. EXERCISE: debug -------------------------------------------------------
+  - id: ex-indent
+    type: exercise
+    fade: debug
+    objective: O4
+    title: Spaces and a colon
+    prompt: |
+      This program must print `in stock` or `sold out`, and then always
+      `thank you`. It has two mistakes in its form.
+
+      **Run it. Read the message. Fix one mistake. Run again.**
+    starter: |
+      stock = 0
+      if stock > 0:
+      print("in stock")
+      else
+          print("sold out")
+      print("thank you")
+    solution: |
+      stock = 0
+      if stock > 0:
+          print("in stock")
+      else:
+          print("sold out")
+      print("thank you")
+    after: >-
+      An `IndentationError` is about the spaces at the start of a line. In
+      Python the spaces are part of the code: they say which lines belong
+      to a block. A missing colon gives a `SyntaxError`.
+    cases:
+      - {}
+      - label: "`stock` is 3"
+        set: { stock: 3 }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "The message names a line. Look at the start and at the end of that line."
+      - expr: "lines == (['in stock'] if stock > 0 else ['sold out']) + ['thank you']"
+        pass: "It prints the right stock line, then `thank you`"
+        hint: "`thank you` must be printed in every case, so that line has no spaces at the start."
+        misconceptions:
+          - when: "err is None and 'thank you' not in lines"
+            say: "`thank you` is missing for this value. The last line must be outside the blocks: no spaces at the start."
+    hints:
+      - "A block needs 4 spaces at the start of each of its lines."
+      - "`else` is the start of a block too. What comes at the end of such a line?"
+      - "Line 3 needs 4 spaces. Line 4 needs a colon: `else:`."
+
+  # 9. EXERCISE: independent -------------------------------------------------
+  - id: ex-parcel
+    type: exercise
+    fade: independent
+    objective: O3
+    title: The size of a parcel
+    prompt: |
+      A post office has three sizes:
+
+      - up to 1 kg (1 is included): `small`
+      - more than 1 kg and up to 10 kg (10 is included): `medium`
+      - more than 10 kg: `large`
+
+      **Ask for the weight in kg. Print the size on the last line.** The
+      weight can have decimals.
+    starter: |
+      # Ask for the weight.
+      # Print small, medium or large.
+    solution: |
+      weight = float(input("Weight in kg: "))
+      if weight <= 1:
+          size = "small"
+      elif weight <= 10:
+          size = "medium"
+      else:
+          size = "large"
+      print(size)
+    after: >-
+      Look at the second question in the model solution: it does not test
+      "more than 1". Python reaches the `elif` only when the weight is more
+      than 1, so the chain already knows it.
+    cases:
+      - {}
+      - label: "the weight is `0.5`"
+        stdin: ["0.5"]
+      - label: "the weight is `1`"
+        stdin: ["1"]
+      - label: "the weight is `1.5`"
+        stdin: ["1.5"]
+      - label: "the weight is `10`"
+        stdin: ["10"]
+      - label: "the weight is `25`"
+        stdin: ["25"]
+    checks:
+      - expr: "len(inputs) == 1"
+        pass: "The program asks one question"
+        hint: "Use `input()` one time."
+      - expr: "err is None"
+        pass: "It runs without an error"
+        hint: "Read the message under the editor."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "The answer of `input()` is text. Change it with `float()` before you compare."
+          - when: "err == 'ValueError' and any('.' in text for text in inputs)"
+            say: "`int()` cannot read a number with a decimal point. Use `float()`."
+          - when: "err == 'ValueError'"
+            say: "The answer must be a number, like `2.5`. Run again and type a number."
+          - when: "err == 'NameError'"
+            say: "A name has no value for this weight. Check that every path of the chain stores or prints a size."
+      - expr: "lines[-1:] == ['small' if float(inputs[0]) <= 1 else 'medium' if float(inputs[0]) <= 10 else 'large']"
+        pass: "The last line is the right size"
+        hint: "Use a chain: `if`, `elif`, `else`. Test the smallest size first."
+        misconceptions:
+          - when: "float(inputs[0]) in (1.0, 10.0)"
+            say: "Check the limits. Exactly 1 kg is `small` and exactly 10 kg is `medium`. Use `<=`."
+    hints:
+      - "Start with `weight = float(input(...))`."
+      - "The first question: `if weight <= 1:`."
+      - "Then `elif weight <= 10:` and `else:`. Print the size after the chain."
+
+  # 10. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-when
+        objective: O1
+        prompt: "When does the block under an `if` run?"
+        options:
+          - text: "Only when the condition is `True`"
+            correct: true
+            why: "When the condition is `False`, Python jumps over the whole block."
+          - text: "Always, but the output is hidden when the condition is `False`"
+            why: "A skipped block does not run at all. Nothing in it happens."
+          - text: "Only when the condition is `False`"
+            why: "That is the `else` block."
+      - kind: predict
+        id: q-two-ifs
+        objective: O3
+        code: |
+          x = 10
+          if x > 5:
+              print("a")
+          if x > 8:
+              print("b")
+          else:
+              print("c")
+        explain: >-
+          There are two chains here, because the second question starts with
+          `if`, not `elif`. Python asks both. Both answers are True.
+        misconceptions:
+          - answer: "a"
+            say: "The second `if` starts a new chain. Python asks it also when the first answer was True."
+          - answer: "a\nc"
+            say: "`10 > 8` is True, so the second chain prints `b`. The `else` belongs to the second `if`."
+      - kind: mcq
+        id: q-form
+        objective: O2
+        prompt: "Which line is written correctly?"
+        options:
+          - text: "`if age >= 18:`"
+            correct: true
+            why: "A condition, then a colon."
+          - text: "`if age >= 18`"
+            why: "The colon at the end is missing. Python gives a `SyntaxError`."
+          - text: "`if age => 18:`"
+            why: "The sign is `>=`. The `=` is always second."
+      - kind: mcq
+        id: q-indent
+        objective: O4
+        prompt: "You see `IndentationError: expected an indented block after 'if' statement on line 2`. What do you fix?"
+        options:
+          - text: "Add 4 spaces at the start of the line under the `if`"
+            correct: true
+            why: "\"Indented\" means: moved to the right with spaces. The block under line 2 has no spaces."
+          - text: "Remove the colon on line 2"
+            why: "The colon is needed. The message is about the line after it."
+          - text: "Change the condition on line 2"
+            why: "The condition is fine. Python cannot find the block that belongs to it."
+      - kind: predict
+        id: q-zero
+        objective: O3
+        code: |
+          n = 0
+          if n > 0:
+              print("positive")
+          elif n < 0:
+              print("negative")
+          else:
+              print("zero")
+        explain: "0 is not bigger than 0 and not smaller than 0. Both answers are False, so the `else` block runs."
+      - kind: mcq
+        id: q-one
+        objective: O1
+        prompt: "A chain has `if`, two `elif` and `else`. How many of its blocks run?"
+        options:
+          - text: "Exactly one"
+            correct: true
+            why: "The first block with a True answer runs. If no answer is True, the `else` block runs."
+          - text: "All blocks with a True condition"
+            why: "After the first True, Python does not ask the other questions."
+          - text: "At most one, and sometimes none"
+            why: "That is right for a chain without `else`. With `else`, one block always runs."
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-outside
+    objective: O3
+    code: |
+      n = 1
+      if n > 5:
+          print("high")
+      print("end")
+    explain: "The condition is False, so the block is skipped. The last line is outside the block and always runs."
+  - kind: mcq
+    id: r-block
+    objective: O2
+    prompt: "How does Python know which lines belong to the block of an `if`?"
+    options:
+      - text: "They start with 4 spaces"
+        correct: true
+        why: "The block ends at the first line that starts without these spaces."
+      - text: "They are between brackets"
+        why: "Python uses spaces at the start of the line, not brackets."
+      - text: "The block is always exactly one line"
+        why: "A block can have many lines. All of them start with 4 spaces."
+  - kind: predict
+    id: r-first
+    objective: O3
+    code: |
+      p = 80
+      if p > 50:
+          print("A")
+      elif p > 70:
+          print("B")
+      else:
+          print("C")
+    explain: "The first question is True, so `A` is printed. Python does not ask the `elif`."
+    misconceptions:
+      - answer: "A\nB"
+        say: "In one chain only the first block with a True answer runs."
+  - kind: mcq
+    id: r-else
+    objective: O1
+    prompt: "When does the `else` block of a chain run?"
+    options:
+      - text: "When every condition before it was `False`"
+        correct: true
+        why: "`else` has no question. It catches all cases that are left."
+      - text: "After every other block"
+        why: "Only one block of a chain runs. `else` is one of the choices."
+      - text: "When the last condition was `True`"
+        why: "Then the block of that condition runs, and `else` is skipped."
+  - kind: mcq
+    id: r-colon
+    objective: O4
+    prompt: "Python shows `SyntaxError: expected ':'` for the line `else`. What is missing?"
+    options:
+      - text: "The colon at the end: `else:`"
+        correct: true
+        why: "Every line that starts a block ends with a colon: `if`, `elif` and `else`."
+      - text: "A condition after `else`"
+        why: "`else` never has a condition."
+      - text: "Four spaces before `else`"
+        why: "`else` starts at the same position as its `if`. The message asks for a colon."

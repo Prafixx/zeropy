@@ -1,0 +1,536 @@
+id: functions
+order: 18
+title: Define and call
+summary: Give a block of code a name, call it many times, give it values and get a result back.
+minutes: 30
+outcomes: [A1, A2, A8]
+
+objectives:
+  - id: O1
+    text: Define a function with def, and call it by its name
+  - id: O2
+    text: Give a function values with parameters, and get a result with return
+  - id: O3
+    text: Explain that the names inside a call belong to that call, and are gone when it ends
+  - id: O4
+    text: Tell return from print, and read the errors of a wrong call
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: A desk for each call
+    question: You use print, len and input. Can you make your own?
+    code: |
+      def area(width, height):
+          result = width * height
+          return result
+
+      w = 3
+      a = area(w, 4)
+    beats:
+      - beat: empty
+        caption: "`print`, `len` and `input` are **functions**: named blocks of code that someone wrote. You can write your own."
+      - beat: define
+        line: 1
+        caption: "`def` gives a name to the block under it. Python **remembers** the block. It does not run it yet."
+      - beat: global
+        line: 5
+        caption: "The program continues after the block. A normal variable."
+      - beat: call
+        line: 6
+        caption: "`area(w, 4)` **calls** the function. A call opens its own desk with its own boxes, the **parameters**. The value of `w` is copied into `width`."
+      - beat: inside
+        line: 2
+        caption: "Now the block runs, on its desk. `result` is a box of this call."
+      - beat: back
+        line: 3
+        caption: "`return` gives the value back to the line that called. The desk **closes**, and its boxes are gone. `a` gets 12."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: define
+    type: theory
+    objective: O1
+    title: def and a call
+    body: |
+      ## Make a function
+
+      ```
+      def greet(name):
+          print(f"Hello, {name}!")
+
+      greet("Ana")
+      greet("Ben")
+      ```
+
+      - `def`, a name, brackets with the parameters, and a colon.
+      - The block has 4 spaces, like the block of an `if`.
+      - Defining runs nothing. A **call** runs the block: the name and
+        brackets with the values, the **arguments**.
+
+      Python must see the `def` before the first call, so functions are
+      usually at the top of a program.
+
+      Why functions? You write a block once and use it many times. And a
+      good name, like `area`, says what the block does.
+    keys:
+      - code: "def greet(name):"
+        means: "Defines the function `greet` with one parameter."
+      - code: 'greet("Ana")'
+        means: "Calls it. `name` gets `\"Ana\"`."
+      - code: "greet"
+        means: "Only the name, no brackets: nothing runs."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-order
+    type: predict
+    objective: O1
+    title: When does the block run?
+    item:
+      kind: predict
+      id: p-order
+      prompt: "**Type every line that this program prints.**"
+      code: |
+        def greet():
+            print("Hello")
+
+        print("Start")
+        greet()
+        greet()
+      explain: >-
+        The `def` only remembers the block. `Start` is the first line that
+        prints. Then each call runs the block one time: two calls, two
+        `Hello`.
+      misconceptions:
+        - answer: "Hello\nStart\nHello\nHello"
+          say: "`def` does not run the block. Only a call does."
+        - answer: "Start\nHello"
+          say: "There are two calls, so the block runs two times."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O3
+    title: Watch a call
+    intro: |
+      Press **Run**. Watch the desk of the call open and close. The boxes
+      on the desk exist only while the call runs.
+    code: |
+      def area(width, height):
+          result = width * height
+          return result
+
+      w = 3
+      a = area(w, 4)
+      print(a)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Add a second call: `b = area(5, 2)`. Two calls, two desks, one after the other."
+        expr: "err is None and ns.get('b') == 10"
+      - text: "At the end, add `print(result)`. Read the message: whose box was `result`?"
+        expr: "err == 'NameError' and 'result' in src.splitlines()[-1]"
+      - text: "Call `area(3)` with only one value. Read the message."
+        expr: "err == 'TypeError'"
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: params
+    type: theory
+    objective: O2
+    title: Values in, a value out
+    body: |
+      ## Parameters and return
+
+      **Parameters** are names for the values that a call gets. The
+      arguments go to the parameters in order: the first to the first, the
+      second to the second. The number must be the same.
+
+      **`return`** ends the call and gives one value back. The value takes
+      the place of the call: in `a = area(3, 4)`, the call becomes 12.
+
+      `print` and `return` are different:
+
+      - `print` shows a value on the screen, for the user.
+      - `return` gives a value back to the code, so the code can use it.
+
+      A function with no `return` gives back `None`: "nothing".
+    keys:
+      - code: "def area(width, height):"
+        means: "Two parameters."
+      - code: "return width * height"
+        means: "Ends the call, gives the result back."
+      - code: "a = area(3, 4)"
+        means: "`a` gets the value that the call gives back: 12."
+      - code: "print(area(3, 4) + 1)"
+        means: "A call can be used like a value: 13."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O4
+    title: Calls and their results
+    items:
+      - kind: predict
+        id: d-use
+        objective: O2
+        code: |
+          def double(n):
+              return n * 2
+
+          print(double(3) + 1)
+          print(double(double(5)))
+        explain: "`double(3)` becomes 6, and 6 + 1 is 7. In the second line the inner call runs first: 10, then `double(10)` is 20."
+      - kind: predict
+        id: d-print-return
+        objective: O4
+        prompt: "This function prints, but it does not return. **What does the program print?**"
+        code: |
+          def shout(text):
+              print(text.upper())
+
+          x = shout("hi")
+          print(x)
+        explain: >-
+          The call prints `HI`, then ends without `return`, so it gives back
+          `None`. `x` gets `None`, and `print(x)` shows it.
+        misconceptions:
+          - answer: "HI\nHI"
+            say: "`print` inside the function only shows the text. It does not give it back. `x` is `None`."
+      - kind: diagnose
+        id: d-missing
+        objective: O4
+        mode: read
+        code: |
+          def area(width, height):
+              return width * height
+
+          print(area(3))
+        explain: "The message names the missing parameter: `height`. A call needs one argument for each parameter."
+        fix:
+          - text: "Give both values: `area(3, 4)`"
+            correct: true
+            why: "Two parameters, two arguments."
+          - text: "Delete `height` from the `def` line"
+            why: "Then the line `width * height` fails. The function needs both values."
+          - text: "Write `area[3]`"
+            why: "A call uses round brackets. Square brackets are for lists and dictionaries."
+      - kind: diagnose
+        id: d-local
+        objective: O3
+        mode: predict
+        code: |
+          def total(a, b):
+              result = a + b
+              return result
+
+          t = total(2, 3)
+          print(t)
+          print(result)
+        explain: "`result` was a box of the call. When the call ended, its desk closed. Outside, the name does not exist. Use the value that the call gave back: `t`."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-tax
+    type: worked
+    objective: O2
+    title: One rule, used three times
+    problem: |
+      A shop adds 20% tax to every price. The program shows three prices
+      with tax.
+
+      **Write the rule once, as a function, and call it three times.**
+    lines:
+      - code: |
+          def with_tax(price):
+              return price * 1.2
+        note: "The rule, with a name that says what it does. `price` is the parameter."
+      - code: |
+          print(with_tax(10))
+          print(with_tax(25))
+          print(with_tax(4))
+        note: "Three calls. Each call has its own `price`: 10, then 25, then 4."
+      - code: "total = with_tax(10) + with_tax(25)"
+        note: "A call gives back a number, so you can compute with it."
+    check:
+      kind: mcq
+      id: w-tax
+      prompt: "The tax changes to 10%. **How many lines must you change?**"
+      options:
+        - text: "One line: the `return` line of the function"
+          correct: true
+          why: "The rule is in one place. Every call uses it."
+        - text: "Three lines: one for each call"
+          why: "The calls only give the price. The rule is inside the function."
+        - text: "Every line with a price"
+          why: "The prices stay the same. Only the rule changes, and it is in one place."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-square
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A square number
+    prompt: |
+      **Replace `___`**, so that `square(n)` gives back `n` times `n`.
+
+      The check calls your function with other numbers too.
+    starter: |
+      def square(n):
+          return ___
+
+      print(square(4))
+    solution: |
+      def square(n):
+          return n * n
+
+      print(square(4))
+    after: >-
+      The function works for any number, because it uses its parameter
+      `n`. The check called `square(3)` and `square(-2)`.
+    checks:
+      - expr: "callable(ns.get('square')) and square(3) == 9 and square(-2) == 4 and square(0) == 0"
+        pass: "`square(n)` gives back `n * n` for every number"
+        hint: "Use the parameter `n` in the `return` line."
+        misconceptions:
+          - when: "callable(ns.get('square')) and square(3) is None"
+            say: "The call gives back `None`. The value must come after `return`."
+          - when: "callable(ns.get('square')) and square(3) == 16"
+            say: "The function always gives 16. Use the parameter `n`, not the number 4."
+          - when: "callable(ns.get('square')) and square(3) == 6"
+            say: "This is `n * 2` or `n + n`. A square is `n * n`."
+      - expr: "err is None and lines == ['16']"
+        pass: "It prints the square of 4"
+        hint: "Keep the last line."
+    hints:
+      - "The parameter is `n`."
+      - "Multiply it by itself."
+      - "Write `return n * n`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-average
+    type: exercise
+    fade: debug
+    objective: O4
+    title: An average that is None
+    prompt: |
+      This function must give back the average of two numbers. The program
+      must print `The average is 6.0`.
+
+      **Run it.** It prints `6.0`, and then `The average is None`.
+    starter: |
+      def average(a, b):
+          print((a + b) / 2)
+
+      result = average(4, 8)
+      print(f"The average is {result}")
+    solution: |
+      def average(a, b):
+          return (a + b) / 2
+
+      result = average(4, 8)
+      print(f"The average is {result}")
+    after: >-
+      `print` showed the number but gave nothing back, so `result` got
+      `None`. A function that computes a value for the code must `return`
+      it. Use `print` for what the user must see.
+    checks:
+      - expr: "callable(ns.get('average')) and average(4, 8) == 6.0 and average(1, 2) == 1.5"
+        pass: "`average(a, b)` gives back the average"
+        hint: "The function shows the value, but does it give it back?"
+        misconceptions:
+          - when: "callable(ns.get('average')) and average(4, 8) is None"
+            say: "The function gives back `None`, because it has no `return`. Change `print` to `return`."
+      - expr: "lines == ['The average is 6.0']"
+        pass: "It prints only `The average is 6.0`"
+        hint: "The function must not print anything itself."
+    hints:
+      - "Compare the two lines of the output. Where does `None` come from?"
+      - "A function without `return` gives back `None`."
+      - "Line 2: `return (a + b) / 2`."
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-initials
+    type: exercise
+    fade: independent
+    objective: O1
+    title: A function for initials
+    prompt: |
+      **Write a function `initials(full)` that gives back the first letter
+      of each word in the name, in capital letters.**
+
+      - `initials("Ada Lovelace")` gives back `"AL"`.
+      - `initials("grace brewster hopper")` gives back `"GBH"`.
+
+      Then call it one time and print the result.
+    starter: |
+      # Define initials(full) here.
+    solution: |
+      def initials(full):
+          result = ""
+          for word in full.split():
+              result = result + word[0]
+          return result.upper()
+
+      print(initials("Ada Lovelace"))
+    after: >-
+      Lesson 16 had a version for exactly two words. Your function works for
+      any number of words, and any other program can now use it with one
+      line.
+    checks:
+      - expr: "callable(ns.get('initials'))"
+        pass: "There is a function with the name `initials`"
+        hint: "Start with `def initials(full):`."
+      - expr: "callable(ns.get('initials')) and initials('Ada Lovelace') == 'AL' and initials('grace brewster hopper') == 'GBH' and initials('Zoe') == 'Z'"
+        pass: "It gives back the initials in capital letters, for any number of words"
+        hint: "Loop over `full.split()` and collect `word[0]`. Give back the result in capital letters."
+        misconceptions:
+          - when: "callable(ns.get('initials')) and initials('Ada Lovelace') is None"
+            say: "The function gives back `None`. Use `return` at the end."
+          - when: "callable(ns.get('initials')) and initials('grace brewster hopper') == 'gbh'"
+            say: "The letters must be capital letters. Use `.upper()`."
+      - expr: "err is None and called('initials') and len(lines) >= 1"
+        pass: "The program calls the function and prints the result"
+        hint: "After the `def`, call it: `print(initials(\"Ada Lovelace\"))`."
+    hints:
+      - "Start with an empty text: `result = \"\"`."
+      - "Loop: `for word in full.split():` and add `word[0]` to `result`."
+      - "At the end: `return result.upper()`. Then call the function and print the result."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-def
+        objective: O1
+        prompt: "What happens when Python runs a `def` line and its block?"
+        options:
+          - text: "Python remembers the block under the name. It runs nothing yet"
+            correct: true
+            why: "The block runs only when the function is called."
+          - text: "Python runs the block one time"
+            why: "A `def` only defines. A call runs the block."
+          - text: "Python asks for the values of the parameters"
+            why: "The values come from each call, later."
+      - kind: predict
+        id: q-two-calls
+        objective: O2
+        code: |
+          def plus_one(x):
+              return x + 1
+
+          a = plus_one(1)
+          b = plus_one(a)
+          print(a, b)
+        explain: "The first call gives back 2. The second call gets `a`, which is 2, and gives back 3."
+      - kind: mcq
+        id: q-return
+        objective: O4
+        prompt: "What is the difference between `print(x)` and `return x` inside a function?"
+        options:
+          - text: "`print` shows `x` on the screen. `return` gives `x` back to the code that called"
+            correct: true
+            why: "Only `return` lets the caller store or use the value."
+          - text: "There is no difference"
+            why: "A function that only prints gives back `None`."
+          - text: "`return` shows `x` on the screen, `print` gives it back"
+            why: "It is the other way round."
+      - kind: mcq
+        id: q-local
+        objective: O3
+        prompt: "A function has the line `count = 0` inside it. What happens to `count` when the call ends?"
+        options:
+          - text: "It is gone. It was a box of that call"
+            correct: true
+            why: "Each call has its own desk, and the desk closes when the call ends."
+          - text: "It becomes a normal variable of the program"
+            why: "The names of a call stay inside the call."
+          - text: "It keeps its value for the next call"
+            why: "The next call opens a new desk with new boxes."
+      - kind: diagnose
+        id: q-too-many
+        objective: O4
+        mode: predict
+        code: |
+          def greet(name):
+              print(f"Hi {name}")
+
+          greet("Ana")
+          greet("Ben", "Cleo")
+        explain: "`greet` has one parameter, but the second call gives two values."
+      - kind: predict
+        id: q-none
+        objective: O4
+        code: |
+          def hello():
+              print("hello")
+
+          print(hello())
+        explain: "The call prints `hello`, then gives back `None`, and the outer `print` shows `None`."
+        misconceptions:
+          - answer: "hello"
+            say: "The outer `print` shows what the call gives back. With no `return`, that is `None`."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-call
+    objective: O2
+    code: |
+      def triple(n):
+          return n * 3
+
+      print(triple(4))
+    explain: "The call gives back 12, and `print` shows it."
+  - kind: mcq
+    id: r-run
+    objective: O1
+    prompt: "When does the block of a function run?"
+    options:
+      - text: "Each time the function is called"
+        correct: true
+        why: "A `def` only defines. Every call runs the block again."
+      - text: "When Python reads the `def` line"
+        why: "Then Python only remembers the block."
+      - text: "Only one time, at the end of the program"
+        why: "It runs at every call, as many times as you call it."
+  - kind: predict
+    id: r-none
+    objective: O4
+    code: |
+      def say(text):
+          print(text)
+
+      result = say("ok")
+      print(result)
+    explain: "`say` prints `ok` and gives back `None`, because it has no `return`."
+  - kind: mcq
+    id: r-local
+    objective: O3
+    prompt: "Why does `print(result)` fail after a call, when `result` was made inside the function?"
+    options:
+      - text: "`result` belonged to the call, and it is gone after the call"
+        correct: true
+        why: "Use the value that the call gave back instead."
+      - text: "`print` cannot show values of functions"
+        why: "`print` can show any value. The name does not exist outside."
+      - text: "The call did not run"
+        why: "It ran. Its names were removed when it ended."
+  - kind: diagnose
+    id: r-args
+    objective: O4
+    mode: read
+    code: |
+      def area(w, h):
+          return w * h
+
+      print(area(5))
+    explain: "The message names the missing parameter. Give one argument for each parameter."

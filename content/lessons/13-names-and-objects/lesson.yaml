@@ -1,0 +1,543 @@
+id: names-and-objects
+order: 13
+title: Names and objects
+summary: A name is a label on an object. Two names can share one list.
+minutes: 25
+outcomes: [A1, A2, A8]
+
+objectives:
+  - id: O1
+    text: Explain that = puts a name on an object, and does not copy a list
+  - id: O2
+    text: Predict what you see through a second name after a list changes
+  - id: O3
+    text: Make a real copy of a list with copy()
+  - id: O4
+    text: Tell a change in place from a new object, and use is to ask which one it is
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: Two names, one list
+    question: You change b. Why does a change too?
+    code: |
+      a = [1, 2]
+      b = a
+      b.append(3)
+      print(a)
+      c = a.copy()
+    beats:
+      - beat: empty
+        caption: "Until now, a variable looked like a box with its own value. For numbers and text, that picture works. For lists, it gives a **wrong** answer. Watch."
+      - beat: create
+        line: 1
+        caption: "Python makes a list, and puts the name `a` on it, like a label."
+      - beat: alias
+        line: 2
+        caption: "`b = a` does **not** copy the list. It puts a second label on the **same** list. There is still only one list."
+      - beat: change
+        line: 3
+        caption: "`b.append(3)` changes that one list."
+      - beat: read
+        line: 4
+        caption: "So `print(a)` shows `[1, 2, 3]`. `a` and `b` are two names for one object."
+      - beat: copy
+        line: 5
+        caption: "`copy()` makes a **new** list with the same values, with its own name. Now a change to `c` does not touch `a`."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: labels
+    type: theory
+    objective: O1
+    title: Labels, not boxes
+    body: |
+      ## Names point at objects
+
+      Every value in Python is an **object**: a number, a text, a list.
+      A variable is a **name** that points at an object. The `=` sign puts
+      the name on an object. It never copies.
+
+      For numbers and text this changes nothing that you can see, because
+      they cannot change. `x = x + 1` makes a new number, and the name moves
+      to it.
+
+      A list can change in place. When two names point at it, both see
+      every change. This is useful, but you must know when it happens.
+    keys:
+      - code: "b = a"
+        means: "One list, two names."
+      - code: "b = a.copy()"
+        means: "A new list with the same values. Two lists."
+      - code: "b.append(4)"
+        means: "Changes the list. Every name of it sees the change."
+      - code: "b = [4]"
+        means: "A new list. Only the name `b` moves to it."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-alias
+    type: predict
+    objective: O2
+    title: Through the other name
+    item:
+      kind: predict
+      id: p-alias
+      prompt: "Python prints a list like this: `[5, 6]`. **What does this program print?**"
+      code: |
+        x = [5, 6]
+        y = x
+        y[0] = 9
+        print(x)
+      explain: >-
+        `y = x` put a second name on the same list. `y[0] = 9` changes that
+        list, so `x` shows the change too.
+      misconceptions:
+        - answer: "[5, 6]"
+          say: "`y = x` did not copy the list. Both names point at one list, and that list changed."
+        - answer: "[9]"
+          say: "`y[0] = 9` replaces one value. The list keeps its two places."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O1
+    title: Move the labels
+    intro: |
+      Press **Run**. Count the lists in the picture, and count the names.
+
+      Then change the program and watch the labels.
+    code: |
+      team = ["Ana", "Ben"]
+      other = team
+      other.append("Cleo")
+      print(team)
+    experiments:
+      - text: "Run the code as it is. How many lists are there?"
+        expr: "True"
+      - text: "Change line 2, so that `team` keeps 2 names and `other` has 3. Use `copy()`."
+        expr: "err is None and len(ns.get('team', [])) == 2 and len(ns.get('other', [])) == 3"
+      - text: "Go back to `other = team`. At the end, add `other = [\"Zoe\"]`. Watch the label of `other` move."
+        expr: "err is None and ns.get('other') == ['Zoe'] and len(ns.get('team', [])) == 3"
+      - text: "Add `print(team is other)` at the end. `is` asks: one object, or two?"
+        expr: "err is None and ' is ' in src and any(line in ('True', 'False') for line in lines)"
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: in-place
+    type: theory
+    objective: O4
+    title: Change it, or make a new one
+    body: |
+      ## Two kinds of line
+
+      Some lines **change** a list in place. Other lines **make a new**
+      list and put the name on it. Only the first kind is seen through
+      other names.
+
+      To ask about the objects themselves, Python has `is`. It is not the
+      same as `==`:
+
+      - `==` asks: are the **values** equal?
+      - `is` asks: is it the **same object**?
+
+      A copy has the same values, so `==` is `True`. But it is another
+      object, so `is` is `False`.
+    keys:
+      - code: "a.append(x)    a[0] = x"
+        means: "Change in place. Every name sees it."
+      - code: "a.pop()    a.remove(x)"
+        means: "Change in place too."
+      - code: "a = a + [x]"
+        means: "A **new** list. Only `a` moves to it."
+      - code: "a == b"
+        means: "Equal values?"
+      - code: "a is b"
+        means: "One object with two names?"
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O2
+    title: One list or two
+    items:
+      - kind: predict
+        id: d-new
+        objective: O4
+        code: |
+          a = [1]
+          b = a
+          a = a + [2]
+          print(b)
+        explain: >-
+          `a + [2]` makes a new list, and `a =` moves the name `a` to it.
+          `b` still points at the old list, which did not change.
+        misconceptions:
+          - answer: "[1, 2]"
+            say: "`a = a + [2]` makes a new list. It does not change the old one, and `b` still points at the old one."
+      - kind: predict
+        id: d-numbers
+        objective: O1
+        code: |
+          x = 5
+          y = x
+          x = x + 1
+          print(y)
+        explain: "Numbers cannot change. `x + 1` makes a new number, 6, and only `x` moves to it. `y` still points at 5."
+        misconceptions:
+          - answer: "6"
+            say: "A number cannot change in place. `x = x + 1` moves the name `x` to a new number. `y` stays on 5."
+      - kind: mcq
+        id: d-is
+        objective: O4
+        prompt: "`a = [1, 2]` and `b = a.copy()`. What are `a == b` and `a is b`?"
+        options:
+          - text: "`a == b` is `True`, `a is b` is `False`"
+            correct: true
+            why: "Same values, so `==` is True. Two objects, so `is` is False."
+          - text: "Both are `True`"
+            why: "`copy()` makes a new object. `is` asks about the object, not the values."
+          - text: "Both are `False`"
+            why: "The copy has the same values, so `==` is True."
+      - kind: predict
+        id: d-remove
+        objective: O2
+        code: |
+          today = ["eggs", "milk", "tea"]
+          shopping = today
+          shopping.remove("milk")
+          print(len(today))
+        explain: "`remove` changes the one list that both names point at. It has 2 values now."
+        misconceptions:
+          - answer: "3"
+            say: "`shopping = today` did not copy. `remove` changed the list that `today` also points at."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-backup
+    type: worked
+    objective: O3
+    title: Keep the start position
+    problem: |
+      A game has a board of three fields. Each round changes the board.
+      The game must be able to go back to the start.
+
+      **Keep the start board unchanged while the game changes its board.**
+    lines:
+      - code: "start = [0, 0, 0]"
+        note: "The board at the start of the game."
+      - code: "board = start.copy()"
+        note: "A new list with the same values. With `board = start`, the game would change the start board too."
+      - code: "board[1] = 5"
+        note: "The game changes **its** board."
+      - code: |
+          print(start)
+          print(board)
+        note: "`start` is still `[0, 0, 0]`. `board` is `[0, 5, 0]`."
+    check:
+      kind: mcq
+      id: w-backup
+      prompt: "Line 2 is changed to `board = start`. **What does `print(start)` show now?**"
+      options:
+        - text: "`[0, 5, 0]`"
+          correct: true
+          why: "Then `board` and `start` are two names for one list, and `board[1] = 5` changed it."
+        - text: "`[0, 0, 0]`"
+          why: "Without `copy()`, there is only one list. The change on line 3 is seen through both names."
+        - text: "An error"
+          why: "Two names for one list is allowed. It is a mistake in the plan, not in the grammar."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-backup
+    type: exercise
+    fade: completion
+    objective: O3
+    title: A backup of the scores
+    prompt: |
+      The program keeps a backup of the scores, and then changes the
+      scores.
+
+      **Replace `___`**, so that `backup` keeps the values that `scores`
+      had at the start. The changes must not reach the backup.
+    given: |
+      scores = [10, 20, 30]
+    starter: |
+      backup = ___
+      scores.append(40)
+      scores[0] = 0
+      print(backup)
+      print(scores)
+    solution: |
+      backup = scores.copy()
+      scores.append(40)
+      scores[0] = 0
+      print(backup)
+      print(scores)
+    after: >-
+      `copy()` made a second list. That is why the two changes stayed in
+      `scores`. The check also asked `backup is scores`: the answer must be
+      `False`.
+    cases:
+      - {}
+      - label: "`scores` is `5, 7` at the start"
+        setup: |
+          scores = [5, 7]
+    checks:
+      - expr: "err is None and isinstance(ns.get('backup'), list)"
+        pass: "`backup` is a list"
+        hint: "The right side must give a list."
+      - expr: "backup == pre['scores'] and backup is not scores"
+        pass: "`backup` keeps the values from the start"
+        hint: "Make a new list with the same values."
+        misconceptions:
+          - when: "ns.get('backup') is ns.get('scores')"
+            say: "`backup` is a second name for the same list, so it got both changes. Make a new list: `scores.copy()`."
+          - when: "ns.get('backup') == [10, 20, 30] and pre['scores'] != [10, 20, 30]"
+            say: "You typed the values. Copy the list, so the code works for any scores."
+    hints:
+      - "`backup = scores` gives one list two names."
+      - "A list has an instruction that makes a new list with the same values."
+      - "Write `backup = scores.copy()`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-teams
+    type: exercise
+    fade: debug
+    objective: O2
+    title: Two teams
+    prompt: |
+      Team B starts with the same players as team A. Then Cleo joins team
+      B, and Ana leaves team B. Team A must not change.
+
+      The program must print `['Ana', 'Ben']` and then `['Ben', 'Cleo']`.
+
+      **Run it.** It gives no error, but team A is wrong. Fix one line.
+    starter: |
+      team_a = ["Ana", "Ben"]
+      team_b = team_a
+      team_b.append("Cleo")
+      team_b.remove("Ana")
+      print(team_a)
+      print(team_b)
+    solution: |
+      team_a = ["Ana", "Ben"]
+      team_b = team_a.copy()
+      team_b.append("Cleo")
+      team_b.remove("Ana")
+      print(team_a)
+      print(team_b)
+    after: >-
+      Two teams need two lists. The program had two names for one list, so
+      every change to team B was also a change to team A.
+    checks:
+      - expr: "err is None and team_a == ['Ana', 'Ben']"
+        pass: "Team A did not change"
+        hint: "How many lists are there after line 2?"
+        misconceptions:
+          - when: "ns.get('team_a') is ns.get('team_b')"
+            say: "`team_a` and `team_b` are two names for one list. Line 2 must make a new list."
+      - expr: "team_b == ['Ben', 'Cleo'] and team_a is not team_b"
+        pass: "Team B has Ben and Cleo"
+        hint: "Keep lines 3 and 4."
+      - expr: "lines == [str(team_a), str(team_b)]"
+        pass: "It prints both teams"
+        hint: "Keep the two `print` lines."
+    hints:
+      - "Run the program and look at team A. Which lines changed it?"
+      - "No line changes `team_a` by its name. So `team_a` must share its list with another name."
+      - "Line 2: `team_b = team_a.copy()`."
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-sale
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Two new lists
+    prompt: |
+      A shop has a list `prices`. **Make two new lists. Do not change
+      `prices`.**
+
+      - `sale`: every price minus 1, in the same order.
+      - `extra`: all prices, and then the price `15` at the end.
+
+      Print `prices`, `sale` and `extra`, each on its own line.
+    given: |
+      prices = [4, 10, 7]
+    starter: |
+      # prices already exists. Do not change it.
+    solution: |
+      sale = []
+      for p in prices:
+          sale.append(p - 1)
+      extra = prices.copy()
+      extra.append(15)
+      print(prices)
+      print(sale)
+      print(extra)
+    after: >-
+      Each new list got its own object: `sale` was built from an empty
+      list, and `extra` started as a copy. The check asked `is` for every
+      pair of lists.
+    cases:
+      - {}
+      - label: "`prices` is `2, 3`"
+        setup: |
+          prices = [2, 3]
+    checks:
+      - expr: "err is None and prices == pre['prices']"
+        pass: "`prices` did not change"
+        hint: "Do not use `append` on `prices`, and do not give `prices` a second name that you change."
+        misconceptions:
+          - when: "err is None and ns.get('extra') is ns.get('prices')"
+            say: "`extra` is a second name for `prices`, so `append` changed `prices`. Start `extra` with a copy."
+      - expr: "isinstance(ns.get('sale'), list) and sale == [p - 1 for p in pre['prices']] and sale is not prices"
+        pass: "`sale` holds every price minus 1"
+        hint: "Start with `sale = []`, and append `p - 1` for each price."
+      - expr: "isinstance(ns.get('extra'), list) and extra == pre['prices'] + [15] and extra is not prices"
+        pass: "`extra` holds all prices and then 15"
+        hint: "Start with a copy of `prices`, then append 15."
+      - expr: "lines[-3:] == [str(prices), str(sale), str(extra)]"
+        pass: "It prints `prices`, `sale` and `extra`"
+        hint: "Three `print` lines at the end, in this order."
+    hints:
+      - "`sale` is a loop pattern from lesson 12: an empty list, and `append` in the loop."
+      - "`extra` starts as `prices.copy()`."
+      - "Then `extra.append(15)`, and three `print` lines."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-equals
+        objective: O1
+        prompt: "What does `b = a` do when `a` is a list?"
+        options:
+          - text: "It puts the name `b` on the same list"
+            correct: true
+            why: "`=` never copies. There is still one list, now with two names."
+          - text: "It makes a copy of the list with the name `b`"
+            why: "That is `b = a.copy()`. `=` alone gives a second name."
+          - text: "It moves the list from `a` to `b`"
+            why: "`a` still points at the list. Both names point at it."
+      - kind: predict
+        id: q-pop
+        objective: O2
+        code: |
+          stack = [1, 2, 3]
+          view = stack
+          stack.pop()
+          print(view)
+        explain: "`pop` changes the one list. `view` points at it too."
+        misconceptions:
+          - answer: "[1, 2, 3]"
+            say: "`view = stack` did not copy. `pop` changed the list that `view` points at."
+      - kind: predict
+        id: q-copy
+        objective: O3
+        code: |
+          a = [1, 2]
+          b = a.copy()
+          b.append(3)
+          print(a)
+          print(a == [1, 2])
+        explain: "`b` is a new list, so `append` changed only `b`. `a` still has the values 1 and 2."
+      - kind: mcq
+        id: q-new
+        objective: O4
+        prompt: "Which line makes a **new** list, so that other names do not see the change?"
+        options:
+          - text: "`nums = nums + [4]`"
+            correct: true
+            why: "`+` builds a new list, and `=` moves the name `nums` to it."
+          - text: "`nums.append(4)`"
+            why: "`append` changes the list in place. Every name of it sees the 4."
+          - text: "`nums[0] = 4`"
+            why: "This changes one place of the same list."
+      - kind: mcq
+        id: q-is
+        objective: O4
+        prompt: "`a = [1]` and `b = [1]`. What is `a is b`?"
+        options:
+          - text: "`False`"
+            correct: true
+            why: "Each line makes its own list. The values are equal, but there are two objects."
+          - text: "`True`"
+            why: "`is` asks about the object, not the values. These are two lists."
+          - text: "An error"
+            why: "`is` works with any two objects and gives `True` or `False`."
+      - kind: predict
+        id: q-text
+        objective: O1
+        code: |
+          s = "hi"
+          t = s
+          s = s + "!"
+          print(t)
+        explain: "Text cannot change. `s + \"!\"` makes a new text, and only `s` moves to it."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-alias
+    objective: O2
+    code: |
+      p = [1, 2]
+      q = p
+      q.append(9)
+      print(p)
+    explain: "`q = p` gave the list a second name. `append` changed that list."
+    misconceptions:
+      - answer: "[1, 2]"
+        say: "`q = p` did not copy. There is one list, and it changed."
+  - kind: mcq
+    id: r-copy
+    objective: O3
+    prompt: "How do you make a second list with the same values as `items`?"
+    options:
+      - text: "`items.copy()`"
+        correct: true
+        why: "It makes a new object, so a change to it does not reach `items`."
+      - text: "`new = items`"
+        why: "That gives the same list a second name."
+      - text: "`items.append(items)`"
+        why: "This puts the list inside itself. It does not make a copy."
+  - kind: mcq
+    id: r-is
+    objective: O4
+    prompt: "What is the difference between `==` and `is`?"
+    options:
+      - text: "`==` compares the values. `is` asks if it is the same object."
+        correct: true
+        why: "A copy is `==` to the original, but it is not the same object."
+      - text: "There is no difference"
+        why: "A copy shows the difference: `==` is True, `is` is False."
+      - text: "`is` compares the values. `==` asks if it is the same object."
+        why: "It is the other way round."
+  - kind: predict
+    id: r-new
+    objective: O4
+    code: |
+      a = [1]
+      b = a
+      a = [5]
+      print(b)
+    explain: "`a = [5]` makes a new list and moves only the name `a` to it. `b` still points at the first list."
+  - kind: mcq
+    id: r-numbers
+    objective: O1
+    prompt: "`x = 3`, `y = x`, then `x = 4`. What is `y`?"
+    options:
+      - text: "`3`"
+        correct: true
+        why: "`x = 4` moves only the name `x`. A number cannot change in place."
+      - text: "`4`"
+        why: "That would need a change in place. Numbers cannot change; `x = 4` only moves the name `x`."
+      - text: "An error"
+        why: "Moving a name is always allowed."

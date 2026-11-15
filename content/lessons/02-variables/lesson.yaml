@@ -1,0 +1,441 @@
+id: variables
+order: 2
+title: Variables
+summary: Give a value a name, change it, and use it again.
+minutes: 25
+outcomes: [A1, A2]
+
+objectives:
+  - id: O1
+    text: Say what a variable is - a name that holds one value
+  - id: O2
+    text: Create a variable and change its value with the = sign
+  - id: O3
+    text: Predict the values after several assignments
+  - id: O4
+    text: Read a NameError and fix the name
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: A place with a name
+    question: A program must remember things. Where does it keep them?
+    code: |
+      age = 25
+      name = "Mia"
+      age = 26
+      next_age = age + 1
+    beats:
+      - beat: empty
+        caption: "Python starts with nothing. To remember a value, you give it a **name**."
+      - beat: create
+        line: 1
+        caption: "This line makes a box with the label `age` and puts **25** in it. The box is a **variable**."
+      - beat: second
+        line: 2
+        caption: "Each variable has its own name. Text is written in quotes."
+      - beat: replace
+        line: 3
+        caption: "A new value **replaces** the old one. A variable holds one value at a time."
+      - beat: compute
+        line: 4
+        caption: "Python **reads** `age` (26), adds 1, and stores 27 in a new variable. `age` does not change."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: assign
+    type: theory
+    objective: O2
+    title: The = sign stores a value
+    body: |
+      ## `name = value`
+
+      Read `=` as "**gets**", not as "equals".
+
+      `age = 25` means: the name `age` gets the value 25.
+
+      Python always works in this order:
+
+      - First it computes the **right** side.
+      - Then it stores the result under the name on the **left**.
+
+      To use the value later, write the name. `print(age)` shows the value on the screen.
+    keys:
+      - code: "age = 25"
+        means: "Create `age`. Store 25 in it."
+      - code: "age = 26"
+        means: "`age` exists already. The old value is replaced."
+      - code: "age + 1"
+        means: "Read the value. `age` itself does not change."
+      - code: "print(age)"
+        means: "Show the value on the screen."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-score
+    type: predict
+    objective: O3
+    title: Right side first
+    item:
+      kind: predict
+      id: p-score
+      code: |
+        score = 10
+        score = score + 5
+        print(score)
+      explain: >-
+        Line 2 is wrong in mathematics, but normal in Python. First the right
+        side: `score + 5` is 15. Then 15 is stored in `score`. The old value 10
+        is gone.
+      misconceptions:
+        - answer: "10"
+          say: "Line 2 replaced the value of `score`."
+        - answer: "105"
+          say: "10 and 5 are numbers, so `+` adds them."
+        - answer: "score"
+          say: "`print(score)` shows the value in the variable, not its name."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O2
+    title: Change the code and watch
+    intro: |
+      Press **Run**. Each line plays in the picture, one after the other.
+
+      Then change the code and run it again. You cannot break anything.
+    code: |
+      price = 4
+      quantity = 3
+      total = price * quantity
+      print(total)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Change `quantity` to `10`. Run again. What is `total` now?"
+        expr: "ns.get('quantity') == 10 and ns.get('total') == ns.get('price') * 10"
+      - text: "Add a variable `city` that holds text, for example `\"Lima\"`."
+        expr: "isinstance(ns.get('city'), str)"
+      - text: "Make an error on purpose: on a new last line, print a name that does not exist. Read the message."
+        expr: "err == 'NameError'"
+
+  # 5. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-tax
+    type: worked
+    objective: O3
+    title: Price with tax
+    problem: |
+      A book costs 20. The tax is 10% of the price.
+
+      **Compute the final price and print it.**
+    lines:
+      - code: "price = 20"
+        note: "Store the known value. A clear name says what the number means."
+      - code: "tax = price * 0.10"
+        note: "Python reads `price` (20) and computes 2.0. The `*` sign means multiply."
+      - code: "final_price = price + tax"
+        note: "Use both variables. No number is typed twice."
+      - code: "print(final_price)"
+        note: "Shows 22.0. The point shows that this number can have decimals."
+    check:
+      kind: mcq
+      id: w-tax
+      prompt: "The shop changes the price to 30. **How many lines must you change?**"
+      options:
+        - text: "One line: `price = 30`"
+          correct: true
+          why: "The other lines use the name `price`, so they compute the new result. This is why variables are useful."
+        - text: "Three lines: every line that computes something"
+          why: "Only line 1 holds the number 20. Lines 2 and 3 use the name `price`, so they follow the change."
+        - text: "All four lines"
+          why: "Lines 2, 3 and 4 contain only names. They work for any price."
+
+  # 6. EXERCISE: completion --------------------------------------------------
+  - id: ex-pay
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Pay for the day
+    prompt: |
+      A worker is paid for each hour.
+
+      **Replace `___`** so that `pay` is the hours multiplied by the rate.
+    starter: |
+      hours = 8
+      rate = 12
+      pay = ___
+      print(pay)
+    solution: |
+      hours = 8
+      rate = 12
+      pay = hours * rate
+      print(pay)
+    after: >-
+      Your code uses names, so it works for any hours and any rate. The check
+      ran your program a second time with other numbers.
+    cases:
+      - {}
+      - label: "`hours` is 5 and `rate` is 20"
+        set: { hours: 5, rate: 20 }
+    checks:
+      - expr: "pay == hours * rate"
+        pass: "`pay` is `hours` multiplied by `rate`"
+        hint: "The right side must read the two names and multiply them."
+        misconceptions:
+          - when: "isinstance(ns.get('pay'), str)"
+            say: "`pay` is text because of the quotes. Remove the quotes."
+          - when: "ns.get('pay') == 96 and hours * rate != 96"
+            say: "`pay` is always 96. You typed the result as a number. Let Python compute it from `hours` and `rate`."
+          - when: "ns.get('pay') == hours + rate"
+            say: "The `+` sign adds. To multiply, use `*`."
+      - expr: "str(pay) in out"
+        pass: "The program prints `pay`"
+        hint: "Keep the last line: `print(pay)`."
+    hints:
+      - "The sign for multiply is `*`."
+      - "Use the names on the right side, not the numbers 8 and 12."
+      - "Write `pay = hours * rate`."
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-names
+    type: exercise
+    fade: debug
+    objective: O4
+    title: Two wrong names
+    prompt: |
+      This program must print the user name and the total. It stops with an error.
+
+      **Run it. Read the message. Fix the code.**
+
+      Rules for names: letters, digits and `_`. No spaces. A name cannot start
+      with a digit. `Bonus` and `bonus` are two different names.
+    starter: |
+      user_name = "Ada"
+      points = 40
+      bonus = 2
+      total = points * Bonus
+      print(user_nmae)
+      print(total)
+    solution: |
+      user_name = "Ada"
+      points = 40
+      bonus = 2
+      total = points * bonus
+      print(user_name)
+      print(total)
+    after: >-
+      A `NameError` means: Python does not know this name. Most of the time it
+      is a typing mistake. Python stops at the first error. So fix one error,
+      run again, and repeat.
+    cases:
+      - {}
+      - label: "`points` is 7"
+        set: { points: 7 }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Run the code and read the last line of the message. It names the unknown name."
+      - expr: "total == points * bonus"
+        pass: "`total` is `points` multiplied by `bonus`"
+        hint: "Line 4 must use the names `points` and `bonus`."
+      - expr: "str(user_name) in out and str(points * bonus) in out"
+        pass: "It prints the user name and the total"
+        hint: "The last two lines must print `user_name` and `total`."
+    hints:
+      - "Python reads names letter by letter. Compare the name on line 4 with the name on line 3."
+      - "After the first fix, run again. A second error appears: Python stops at the first error it finds."
+      - "Line 5: two letters in `user_nmae` are in the wrong order."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-swap
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Swap two values
+    prompt: |
+      Two cups hold the wrong drinks.
+
+      **Swap the values.** After your code, `left` must hold the old value of
+      `right`, and `right` must hold the old value of `left`.
+
+      Your code must work for any two values. Do not type the values again.
+    given: |
+      left = "tea"
+      right = "milk"
+    starter: |
+      # Swap the values of left and right.
+
+
+      print(left)
+      print(right)
+    solution: |
+      keep = left
+      left = right
+      right = keep
+      print(left)
+      print(right)
+    after: >-
+      A variable holds one value. So you saved the first value in a third
+      variable before you replaced it. Python also has a short form:
+      `left, right = right, left`. You will meet it in the lesson about tuples.
+    cases:
+      - {}
+      - label: "`left` is 1 and `right` is 2"
+        setup: |
+          left = 1
+          right = 2
+    checks:
+      - expr: "left == pre['right'] and right == pre['left']"
+        pass: "`left` and `right` have swapped values"
+        hint: "You need a third variable. Save one value there before you replace it."
+        misconceptions:
+          - when: "ns.get('left') == pre['left'] and ns.get('right') == pre['right']"
+            say: "The values did not change. Assign new values to `left` and `right`."
+          - when: "ns.get('left') == ns.get('right')"
+            say: "Now both names hold the same value. The first assignment replaced a value before you saved it. Save it in a third variable first."
+          - when: "ns.get('left') == 'milk' and pre['right'] != 'milk'"
+            say: "You typed the values again. Use the names, so the code works for any values."
+    hints:
+      - "If you write `left = right` first, the old value of `left` is lost. Where can you keep it?"
+      - "Make a third variable: `keep = left`. Now `left` can get a new value."
+      - "Three lines: `keep = left`, then `left = right`, then `right = keep`."
+
+  # 9. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-what
+        objective: O1
+        prompt: "What is a variable?"
+        options:
+          - text: "A name that holds one value"
+            correct: true
+            why: "The name lets you use the value again later."
+          - text: "A value that can never change"
+            why: "It is the opposite. You can replace the value at any time."
+          - text: "A command that shows text on the screen"
+            why: "That is `print()`. A variable stores a value. It does not show it."
+      - kind: predict
+        id: q-copy
+        objective: O3
+        code: |
+          a = 5
+          b = a
+          a = 9
+          print(b)
+        explain: >-
+          `b = a` put the value 5 in `b`. After that, the two variables are
+          independent. A new value in `a` does not change `b`.
+        misconceptions:
+          - answer: "9"
+            say: "`b = a` does not connect the two names. It uses the value that `a` has at that moment."
+      - kind: mcq
+        id: q-valid
+        objective: O2
+        prompt: "Which line gives an error?"
+        options:
+          - text: "`2nd_place = \"Lee\"`"
+            correct: true
+            why: "A name cannot start with a digit."
+          - text: "`second_place = \"Lee\"`"
+            why: "This name is valid. It has only letters and `_`."
+          - text: "`place2 = \"Lee\"`"
+            why: "This name is valid. A digit is allowed after the first character."
+      - kind: mcq
+        id: q-case
+        objective: O4
+        prompt: "This program stops with `NameError: name 'Total' is not defined`. **Why?**"
+        code: |
+          total = 10
+          print(Total)
+        options:
+          - text: "`Total` and `total` are different names"
+            correct: true
+            why: "Python treats capital letters and small letters as different."
+          - text: "`print` cannot show numbers"
+            why: "`print` can show any value. The problem is the name."
+          - text: "The variable `total` has no value"
+            why: "`total` holds 10. The problem is the spelling of the name on line 2."
+      - kind: predict
+        id: q-formula
+        objective: O3
+        code: |
+          x = 2
+          y = x * 3
+          x = 10
+          print(y)
+        explain: >-
+          Line 2 computed `2 * 3` and stored **6** in `y`. Python stores the
+          result, not the formula. A new value in `x` does not compute `y` again.
+        misconceptions:
+          - answer: "30"
+            say: "`y` holds the number 6. It does not hold the formula `x * 3`."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 4
+
+review:
+  - kind: predict
+    id: r-double
+    objective: O3
+    code: |
+      n = 3
+      n = n + n
+      print(n)
+    explain: "Right side first: 3 + 3 is 6. Then 6 replaces 3 in `n`."
+    misconceptions:
+      - answer: "33"
+        say: "3 is a number here, so `+` adds."
+  - kind: mcq
+    id: r-equals
+    objective: O2
+    prompt: "What does `=` do in `speed = 60`?"
+    options:
+      - text: "It stores 60 under the name `speed`"
+        correct: true
+        why: "One `=` always stores: the name on the left gets the value on the right."
+      - text: "It checks if `speed` is equal to 60"
+        why: "A check uses two signs: `==`. You will learn it later. One `=` stores a value."
+      - text: "It shows 60 on the screen"
+        why: "Only `print()` shows a value. An assignment is silent."
+  - kind: predict
+    id: r-independent
+    objective: O3
+    code: |
+      first = 1
+      second = first
+      first = 7
+      print(first)
+      print(second)
+    explain: "`second` got the value 1 on line 2. The new value of `first` on line 3 does not change `second`."
+  - kind: mcq
+    id: r-nameerror
+    objective: O4
+    prompt: "You see `NameError: name 'pirce' is not defined`. What do you check first?"
+    options:
+      - text: "The spelling of the name"
+        correct: true
+        why: "Most `NameError` messages come from a typing mistake. Here the letters of `price` are in the wrong order."
+      - text: "The value of the variable"
+        why: "The message is about a name that Python cannot find. It is not about a value."
+      - text: "The `print` command"
+        why: "The message names the problem: `pirce`. Start with the name in the message."
+  - kind: mcq
+    id: r-replace
+    objective: O1
+    prompt: "A variable holds 5. Then you assign 8 to it. What does it hold now?"
+    options:
+      - text: "Only 8"
+        correct: true
+        why: "A variable holds one value at a time. The new value replaces the old one."
+      - text: "5 and 8"
+        why: "A variable holds one value at a time. The old value is gone."
+      - text: "13"
+        why: "An assignment replaces. It adds only if you write that: `x = x + 8`."

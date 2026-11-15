@@ -1,0 +1,606 @@
+id: tkinter
+order: 39
+title: Windows and buttons
+summary: Make a program with a real window - labels, an entry and buttons - that waits for clicks and answers them.
+minutes: 40
+outcomes: [A11]
+
+objectives:
+  - id: O1
+    text: Make a window with widgets, place them with pack, and start it with mainloop
+  - id: O2
+    text: Run a function when a button is clicked - command=function, without parentheses
+  - id: O3
+    text: Read an Entry with get(), and change a Label with config(text=...)
+  - id: O4
+    text: Find the usual bugs of a window - a widget that is not packed, command=f(), label.text = ...
+  - id: O5
+    text: Run a window app on your own computer
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: events
+    type: theory
+    objective: O1
+    title: A program that waits
+    body: |
+      Until now, a program ran from the top to the bottom, and ended. A
+      program with a **window** works in another way:
+
+      1. It builds the window and its **widgets**: labels, entries,
+         buttons.
+      2. It calls `mainloop()`. Now it **waits**.
+      3. When the user clicks a button, tkinter calls the function of the
+         button. Then it waits again, until the window is closed.
+
+      ```python
+      import tkinter as tk
+
+      def hello():
+          label.config(text="Hello!")
+
+      root = tk.Tk()
+      root.title("First window")
+      label = tk.Label(root, text="Click the button")
+      label.pack()
+      tk.Button(root, text="Say hello", command=hello).pack()
+      root.mainloop()
+      ```
+
+      **tkinter** comes with Python. In this page, your window appears
+      under the code, and you can click it. On your computer it is a real
+      window, at the end of the lesson.
+    keys:
+      - code: "root = tk.Tk()"
+        means: "The window. Every widget goes into it."
+      - code: ".pack()"
+        means: "Put the widget into the window. Without it, it is not shown."
+      - code: "root.mainloop()"
+        means: "Show the window, and wait for clicks. It is the last line."
+
+  # 2. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    visual: none
+    objective: O1
+    title: Your first window
+    intro: |
+      Press **Run**. A window appears under the code: type a number, and
+      click **Convert**. Then change the program in the ways below.
+    code: |
+      import tkinter as tk
+
+      def convert():
+          celsius = float(entry.get())
+          fahrenheit = celsius * 9 / 5 + 32
+          result.config(text=f"{fahrenheit:.1f} °F")
+
+      root = tk.Tk()
+      root.title("Converter")
+      tk.Label(root, text="Degrees Celsius:").pack(padx=20, pady=(10, 0))
+      entry = tk.Entry(root, width=10)
+      entry.pack()
+      tk.Button(root, text="Convert", command=convert).pack(pady=5)
+      result = tk.Label(root, text="", font=("Arial", 16))
+      result.pack(pady=(0, 10))
+      root.mainloop()
+    experiments:
+      - text: "Run it. Type `20` in the window, and click **Convert**."
+        expr: "err is None and gui_window is not None"
+      - text: "Change the title of the window to `Temperature`."
+        expr: "err is None and gui_title == 'Temperature'"
+      - text: "Give the result a color: add `fg=\"blue\"` to the last `Label(...)`."
+        expr: "err is None and any(w.options.get('fg') or w.options.get('foreground') for w in gui_widgets('Label'))"
+      - text: "Write `command=convert()`, with parentheses. Run it. What happens, and when?"
+        expr: "err == 'ValueError'"
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: widgets
+    type: theory
+    objective: O2
+    title: Widgets, and what they do
+    body: |
+      | Widget | Makes | Use |
+      | --- | --- | --- |
+      | `tk.Label(root, text="Hi")` | a text | `label.config(text="New")` |
+      | `tk.Entry(root, width=20)` | a field to type in | `entry.get()` gives its text |
+      | `tk.Button(root, text="Go", command=go)` | a button | calls `go` on each click |
+
+      ## command=go, not go()
+
+      `command=go` gives the button the function itself, to call later.
+      `command=go()` calls `go` **at once**, while the window is built, and
+      gives the button what `go` returns: `None`. Then the button does
+      nothing.
+
+      ## Place the widgets
+
+      `pack()` puts the widgets under each other. Some options:
+
+      - `pack(pady=10)`: 10 pixels of room above and below.
+      - `pack(side="left")`: next to each other, from the left.
+      - `pack(fill="x")`: as wide as the window.
+
+      A widget is only shown after `pack()`. To change a label, use
+      `label.config(text=...)`: `label.text = ...` changes nothing on the
+      screen.
+    keys:
+      - code: "entry.get()"
+        means: "The text in the entry, always a `str`."
+      - code: "label.config(text=\"...\")"
+        means: "Change what the label shows."
+      - code: "command=go"
+        means: "Call `go` later, on each click. No parentheses."
+
+  # 4. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O4
+    title: Why does it not work?
+    items:
+      - kind: mcq
+        id: d-pack
+        objective: O4
+        prompt: "You made `info = tk.Label(root, text=\"Ready\")`, but the window does not show it. Why?"
+        options:
+          - text: "`info.pack()` is missing"
+            correct: true
+            why: "A widget is only shown after `pack()` (or `grid()`)."
+          - text: "The text is too short"
+            why: "Any text is shown once the label is packed."
+          - text: "Labels need a button"
+            why: "A label works alone."
+      - kind: mcq
+        id: d-parens
+        objective: O2
+        prompt: "`tk.Button(root, text=\"Save\", command=save())`: the window opens, and the button does nothing. Why?"
+        options:
+          - text: "`save()` ran once while the window was built. The button got `None`"
+            correct: true
+            why: "Write `command=save`, without parentheses."
+          - text: "Buttons need two clicks"
+            why: "One click calls the command, if there is one."
+          - text: "`save` must print something"
+            why: "The button never calls `save`: it got `None`."
+      - kind: mcq
+        id: d-text
+        objective: O3
+        prompt: "In a function, `result.text = \"Done\"` does not change the label. What changes it?"
+        options:
+          - text: "`result.config(text=\"Done\")`"
+            correct: true
+            why: "`config` changes an option of the widget, and the screen shows it."
+          - text: "`result = \"Done\"`"
+            why: "That makes `result` a name for a text. The label stays as it was."
+          - text: "`print(\"Done\")`"
+            why: "`print` writes to the terminal, not into the window."
+      - kind: mcq
+        id: d-mainloop
+        objective: O1
+        prompt: "On your computer, the window opens and closes at once. What is missing?"
+        options:
+          - text: "`root.mainloop()` at the end"
+            correct: true
+            why: "Without it, the program ends after the last line, and the window with it."
+          - text: "`root.pack()`"
+            why: "The window itself is not packed. Its widgets are."
+          - text: "`time.sleep(100)`"
+            why: "Then the window would not react to clicks. `mainloop` waits and answers."
+      - kind: mcq
+        id: d-get
+        objective: O3
+        prompt: "`entry.get()` gives `\"20\"`. What does `entry.get() + 5` do?"
+        options:
+          - text: "A `TypeError`: the text of an entry is a `str`. Use `float(entry.get())`"
+            correct: true
+            why: "Like `input()`, an entry gives text."
+          - text: "`25`"
+            why: "`\"20\"` is a text. Convert it first."
+          - text: "`\"205\"`"
+            why: "`\"20\" + 5` adds a text and a number: a `TypeError`."
+
+  # 5. EXERCISE: completion --------------------------------------------------
+  - id: ex-greeter
+    type: exercise
+    fade: completion
+    objective: O3
+    title: A window that greets
+    prompt: |
+      **Replace the three `___`**, so that a click on **Greet** shows
+      `Hello, Ana!` for the name in the entry (without spaces around it).
+      Run it, and try it in the window.
+    starter: |
+      import tkinter as tk
+
+      def greet():
+          name = ___
+          label.config(text=___)
+
+      root = tk.Tk()
+      root.title("Greeter")
+      tk.Label(root, text="Your name:").pack(pady=(10, 0))
+      entry = tk.Entry(root, width=20)
+      entry.pack(padx=10)
+      tk.Button(root, text="Greet", command=___).pack(pady=5)
+      label = tk.Label(root, text="")
+      label.pack(pady=(0, 10))
+      root.mainloop()
+    solution: |
+      import tkinter as tk
+
+      def greet():
+          name = entry.get().strip()
+          label.config(text=f"Hello, {name}!")
+
+      root = tk.Tk()
+      root.title("Greeter")
+      tk.Label(root, text="Your name:").pack(pady=(10, 0))
+      entry = tk.Entry(root, width=20)
+      entry.pack(padx=10)
+      tk.Button(root, text="Greet", command=greet).pack(pady=5)
+      label = tk.Label(root, text="")
+      label.pack(pady=(0, 10))
+      root.mainloop()
+    after: >-
+      The function runs only when the button is clicked, so `entry.get()`
+      reads what the user typed at that moment.
+    checks:
+      - expr: "err is None and gui_window is not None and gui_find('Greet') is not None"
+        pass: "The window opens with its button"
+        hint: "The last `___` is the name of the function: `greet`, without parentheses."
+        misconceptions:
+          - when: "err == 'NameError' and 'command=greet()' in src.replace(' ', '')"
+            say: "`command=greet()` calls `greet` at once, before `label` exists. Write `command=greet`, without parentheses."
+          - when: "err == 'NameError'"
+            say: "A `___` is still there. Replace all three."
+      - expr: "gui_find('Greet') is not None and (gui_type(0, 'Ana'), gui_click('Greet'), 'Hello, Ana!' in gui_texts())[2] and (gui_type(0, 'Ben'), gui_click('Greet'), 'Hello, Ben!' in gui_texts())[2]"
+        pass: "A click shows `Hello, ` and the name in the entry"
+        hint: "`name = entry.get()`, and `label.config(text=f\"Hello, {name}!\")`."
+        misconceptions:
+          - when: "gui_window is not None and any(w.manager is None for w in gui_window.winfo_children())"
+            say: "A widget is made but not packed, so it is not shown. Call `label.pack()`."
+          - when: "gui_find('Greet') is not None and (gui_type(0, 'Ana'), raises(gui_click, 'Greet'))[1] is None and 'Hello, Ana!' not in gui_texts() and any(t.startswith('Hello') for t in gui_texts())"
+            say: "The greeting does not use the name from the entry. Read it with `entry.get()`, and put it into the f-string."
+      - expr: "gui_find('Greet') is not None and (gui_type(0, '  Zoe  '), gui_click('Greet'), 'Hello, Zoe!' in gui_texts())[2]"
+        pass: "Spaces around the name are removed"
+        hint: "`entry.get().strip()`."
+    hints:
+      - "The first `___` reads the entry: `entry.get().strip()`."
+      - "The second `___` is the text of the label: `f\"Hello, {name}!\"`."
+      - "The last `___` is the function, without parentheses: `greet`."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-tip
+    type: exercise
+    fade: debug
+    objective: O4
+    title: A tip calculator with three bugs
+    prompt: |
+      A click on **Tip** should show 15 percent of the bill, like `Tip:
+      6.00` for 40. **Run it**, and fix the three bugs, one after the
+      other.
+    starter: |
+      import tkinter as tk
+
+      def show_tip():
+          bill = float(entry.get())
+          tip = bill * 0.15
+          result.text = f"Tip: {tip:.2f}"
+
+      root = tk.Tk()
+      root.title("Tip")
+      tk.Label(root, text="Bill:").pack()
+      entry = tk.Entry(root, width=10)
+      entry.pack()
+      tk.Button(root, text="Tip", command=show_tip()).pack()
+      result = tk.Label(root, text="")
+      root.mainloop()
+    solution: |
+      import tkinter as tk
+
+      def show_tip():
+          bill = float(entry.get())
+          tip = bill * 0.15
+          result.config(text=f"Tip: {tip:.2f}")
+
+      root = tk.Tk()
+      root.title("Tip")
+      tk.Label(root, text="Bill:").pack()
+      entry = tk.Entry(root, width=10)
+      entry.pack()
+      tk.Button(root, text="Tip", command=show_tip).pack()
+      result = tk.Label(root, text="")
+      result.pack()
+      root.mainloop()
+    after: >-
+      These three are the most common bugs of tkinter: a call where a
+      function is wanted, a widget that is never packed, and an attribute
+      that is not an option.
+    checks:
+      - expr: "err is None and gui_find('Tip') is not None"
+        pass: "The window opens"
+        hint: "Read the message: which line runs `show_tip` before anything was typed?"
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "`show_tip` ran while the window was built: `command=show_tip()` calls it at once, with an empty entry. Write `command=show_tip`."
+      - expr: "gui_window is not None and all(w.manager is not None for w in gui_window.winfo_children())"
+        pass: "Every widget is shown, also the label for the result"
+        hint: "`result` is made, but never packed: add `result.pack()`."
+      - expr: "gui_find('Tip') is not None and (gui_type(0, '40'), gui_click('Tip'), 'Tip: 6.00' in gui_texts())[2] and (gui_type(0, '10'), gui_click('Tip'), 'Tip: 1.50' in gui_texts())[2]"
+        pass: "A click shows the tip"
+        hint: "`result.config(text=f\"Tip: {tip:.2f}\")`."
+        misconceptions:
+          - when: "gui_window is not None and any(w._kind == 'Label' and w.manager is None for w in gui_window.winfo_children())"
+            say: "The result label is never packed, so it is not shown. Add `result.pack()`."
+          - when: "\"result.text\" in src"
+            say: "`result.text = ...` does not change the label. Use `result.config(text=...)`."
+    hints:
+      - "Run it: the first error happens before the window opens. Which function ran too early?"
+      - "`result = tk.Label(...)` is made, but where is its `pack()`?"
+      - "A label changes with `config`: `result.config(text=f\"Tip: {tip:.2f}\")`."
+
+  # 7. EXERCISE: independent -------------------------------------------------
+  - id: ex-miles
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Kilometers to miles
+    prompt: |
+      **Write a window** with the title `Km to miles`, an entry, a button
+      **Convert**, and a label for the result.
+
+      - For `5`, a click shows `5.0 km = 3.11 miles` (one decimal for km,
+        two for miles; 1 km is 0.621371 miles).
+      - Text that is not a number shows `Type a number.`, and the program
+        does not crash.
+    starter: |
+      import tkinter as tk
+
+    solution: |
+      import tkinter as tk
+
+      def convert():
+          try:
+              km = float(entry.get())
+          except ValueError:
+              result.config(text="Type a number.")
+              return
+          miles = km * 0.621371
+          result.config(text=f"{km:.1f} km = {miles:.2f} miles")
+
+      root = tk.Tk()
+      root.title("Km to miles")
+      entry = tk.Entry(root, width=10)
+      entry.pack(padx=20, pady=(10, 0))
+      tk.Button(root, text="Convert", command=convert).pack(pady=5)
+      result = tk.Label(root, text="")
+      result.pack(pady=(0, 10))
+      root.mainloop()
+    after: >-
+      `try` and `except` work in a callback like anywhere else. A window
+      must survive bad input: the user is still looking at it.
+    checks:
+      - expr: "err is None and gui_title == 'Km to miles' and gui_window.looping"
+        pass: "A window `Km to miles`, started with `mainloop()`"
+        hint: "`root.title(\"Km to miles\")`, and `root.mainloop()` as the last line."
+      - expr: "len(gui_widgets('Entry')) >= 1 and gui_find('Convert') is not None"
+        pass: "It has an entry and a button **Convert**"
+        hint: "`tk.Entry(root)` and `tk.Button(root, text=\"Convert\", command=convert)`, each with `.pack()`."
+        misconceptions:
+          - when: "gui_window is not None and any(w.manager is None for w in gui_window.winfo_children())"
+            say: "A widget is made but not packed, so it is not shown. Call `.pack()` on each one."
+      - expr: "gui_find('Convert') is not None and (gui_type(0, '5'), gui_click('Convert'), '5.0 km = 3.11 miles' in gui_texts())[2] and (gui_type(0, '10'), gui_click('Convert'), '10.0 km = 6.21 miles' in gui_texts())[2]"
+        pass: "A click shows the miles, like `5.0 km = 3.11 miles`"
+        hint: "`f\"{km:.1f} km = {miles:.2f} miles\"`, with `miles = km * 0.621371`."
+      - expr: "gui_find('Convert') is not None and (gui_type(0, 'abc'), raises(gui_click, 'Convert') is None and 'Type a number.' in gui_texts())[1]"
+        pass: "Text that is not a number shows `Type a number.`"
+        hint: "Put `float(entry.get())` into `try:`, and in `except ValueError:` show the message."
+        misconceptions:
+          - when: "gui_find('Convert') is not None and (gui_type(0, 'abc'), raises(gui_click, 'Convert'))[1] == 'ValueError'"
+            say: "`float('abc')` raises `ValueError`, and the click crashes. Catch it with `try` and `except ValueError:`."
+    hints:
+      - "Start like the converter of this lesson: a function `convert`, then the window and its widgets."
+      - "In `convert`: `km = float(entry.get())` inside `try:`, and `except ValueError:` shows `Type a number.`."
+      - "`result.config(text=f\"{km:.1f} km = {miles:.2f} miles\")`."
+
+  # 8. LOCAL -----------------------------------------------------------------
+  - id: check-greeter
+    type: local
+    objective: O5
+    title: A real window
+    prompt: |
+      **Run the greeter on your computer.**
+
+      1. Make a folder `greeter` in `python-course`, and in it
+         `greeter.py` with your code from the step **A window that
+         greets**.
+      2. Run `python greeter.py`. A real window opens: type a name, click
+         **Greet**. Close the window to end the program.
+      3. Download `check.py` **again** into `greeter`, and run the check.
+         It opens the window for a moment, types `Ana` and clicks your
+         button.
+
+      On Linux, if `import tkinter` fails: `sudo apt install python3-tk`.
+    task: greeter
+    needs: 8
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      tkinter: "yes"
+      greeter_exists: "yes"
+      greeter_ok: "yes"
+      window: "yes"
+      mainloop: "yes"
+      title_set: "yes"
+      labels: "2"
+      buttons: "1"
+      entries: "1"
+      greets: "yes"
+    checks:
+      - expr: "report.get('tkinter') == 'yes' and report.get('greeter_exists') == 'yes' and report.get('greeter_ok') == 'yes' and report.get('window') == 'yes'"
+        pass: "`greeter.py` opens a window"
+        hint: "Save `greeter.py` in `greeter`, and run `python greeter.py` first."
+        misconceptions:
+          - when: "report.get('tkinter') == 'no'"
+            say: "This Python has no tkinter. On Linux: `sudo apt install python3-tk`. On Windows and macOS, the Python from python.org has it."
+          - when: "report.get('greeter_exists') == 'no'"
+            say: "There is no `greeter.py` in this folder. Run the check in `greeter`."
+          - when: "report.get('greeter_ok') == 'no'"
+            say: "`greeter.py` stops with an error. Run it with `python greeter.py`, and read the last line."
+          - when: "report.get('window') == 'no'"
+            say: "`greeter.py` makes no window. It needs `root = tk.Tk()`."
+      - expr: "report.get('mainloop') == 'yes'"
+        pass: "It waits for clicks with `mainloop()`"
+        hint: "Add `root.mainloop()` as the last line."
+      - expr: "report.get('greets') == 'yes'"
+        pass: "Typing `Ana` and a click on the button show `Ana` in a label"
+        hint: "The button calls `greet`, which reads `entry.get()` and changes the label with `config`."
+        misconceptions:
+          - when: "report.get('greets') == 'error'"
+            say: "A click on the button crashes. Run it, click the button, and read the message in the terminal."
+          - when: "int(report.get('entries', '0')) == 0 or int(report.get('buttons', '0')) == 0"
+            say: "The check found no entry or no button in the window. Is each one packed?"
+    hints:
+      - "Copy your code of the step **A window that greets**: it runs the same on your computer."
+      - "While the window is open, the terminal waits. Close the window to get the prompt back."
+      - "Errors of a click are printed in the terminal, not in the window."
+    after: >-
+      A real program with a window, on your own computer. The next lesson
+      gives it a clean structure, so it can grow.
+
+  # 9. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-mainloop
+        objective: O1
+        prompt: "What does `root.mainloop()` do?"
+        options:
+          - text: "It shows the window and waits for clicks, until the window is closed"
+            correct: true
+            why: "While it waits, tkinter calls your functions when something happens."
+          - text: "It runs the program once more"
+            why: "It runs nothing again. It waits and answers events."
+          - text: "It closes the window"
+            why: "Closing the window ends `mainloop`."
+      - kind: mcq
+        id: q-command
+        objective: O2
+        prompt: "Which line makes a button that calls `add` on each click?"
+        options:
+          - text: "`tk.Button(root, text=\"Add\", command=add)`"
+            correct: true
+            why: "The function itself, without parentheses."
+          - text: "`tk.Button(root, text=\"Add\", command=add())`"
+            why: "That calls `add` at once, and gives the button `None`."
+          - text: "`tk.Button(root, text=\"Add\").add()`"
+            why: "A button has no method `add`."
+      - kind: mcq
+        id: q-get
+        objective: O3
+        prompt: "How do you read what the user typed into `entry`?"
+        options:
+          - text: "`entry.get()`"
+            correct: true
+            why: "It gives the text, always a `str`."
+          - text: "`input()`"
+            why: "`input()` reads the terminal, not the window."
+          - text: "`entry.text`"
+            why: "tkinter widgets have no attribute `text`. Use `get()`."
+      - kind: mcq
+        id: q-print
+        objective: O4
+        prompt: "A button function does `print(\"Saved\")`. Where does the text appear?"
+        options:
+          - text: "In the terminal, not in the window"
+            correct: true
+            why: "To show it in the window, change a label with `config`."
+          - text: "On the button"
+            why: "The button keeps its text. `print` writes to the terminal."
+          - text: "Nowhere"
+            why: "It appears in the terminal where the program runs."
+      - kind: mcq
+        id: q-pack
+        objective: O1
+        prompt: "`tk.Label(root, text=\"Hi\")` alone. What do you see?"
+        options:
+          - text: "Nothing: the label is made, but not packed"
+            correct: true
+            why: "Add `.pack()` to show it."
+          - text: "The label, at the top"
+            why: "Without `pack()`, tkinter does not place it."
+          - text: "An error"
+            why: "Making a widget is fine. It is only not shown."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-config
+    objective: O3
+    prompt: "How do you change the text of `label` to `Done`?"
+    options:
+      - text: "`label.config(text=\"Done\")`"
+        correct: true
+        why: "`config` changes an option, and the window shows it."
+      - text: "`label.text = \"Done\"`"
+        why: "That changes nothing on the screen."
+      - text: "`label = \"Done\"`"
+        why: "Then `label` is a text, and the widget is lost."
+  - kind: mcq
+    id: r-last
+    objective: O1
+    prompt: "Where does `root.mainloop()` go?"
+    options:
+      - text: "At the end, after all widgets"
+        correct: true
+        why: "It waits until the window is closed: lines after it run only then."
+      - text: "At the top, after `import tkinter`"
+        why: "Then it waits before any widget exists."
+      - text: "In every function"
+        why: "One call, at the end, is enough."
+  - kind: mcq
+    id: r-float
+    objective: O3
+    prompt: "An entry holds `3.5`. Which line gives the number 3.5?"
+    options:
+      - text: "`float(entry.get())`"
+        correct: true
+        why: "`get()` gives a text. `float` turns it into a number."
+      - text: "`entry.get()`"
+        why: "That is the text `\"3.5\"`."
+      - text: "`entry.number()`"
+        why: "There is no such method."
+  - kind: mcq
+    id: r-parens
+    objective: O2
+    prompt: "Why is `command=save()` a bug?"
+    options:
+      - text: "It calls `save` at once, and gives the button its result, `None`"
+        correct: true
+        why: "`command=save` gives the function, to call on each click."
+      - text: "`save` needs two parentheses"
+        why: "The parentheses are the problem: they call the function."
+      - text: "Buttons cannot save"
+        why: "A button can call any function."
+  - kind: mcq
+    id: r-pady
+    objective: O1
+    prompt: "What does `label.pack(pady=10)` do?"
+    options:
+      - text: "It shows the label, with 10 pixels of room above and below"
+        correct: true
+        why: "`padx` is the room left and right."
+      - text: "It moves the label 10 rows down"
+        why: "`pady` is room in pixels, not rows."
+      - text: "It makes the text 10 big"
+        why: "The size of the text is the `font`."

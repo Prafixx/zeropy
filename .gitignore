@@ -1,0 +1,8 @@
+node_modules/
+dist/
+public/pyodide/
+*.log
+.DS_Store
+Thumbs.db
+release/
+public/THIRD-PARTY-NOTICES.txt

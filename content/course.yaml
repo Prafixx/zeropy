@@ -1,0 +1,94 @@
+# Curriculum map. The home page renders this file. Reasoning: docs/curriculum.md
+title: Python from zero
+outcomes:
+  - Write, run and debug your own programs
+  - Read error messages and the official documentation
+  - Use the standard library and third-party packages
+  - Work with files, JSON and web APIs
+  - Model problems with functions and classes
+  - Write basic tests
+  - Use git to save and share your work
+  - Package a small desktop app
+
+modules:
+  - title: Start
+    goal: Run your first code. Store and use values.
+    hours: 1.7
+    lessons:
+      - { id: first-program, title: Your first program }
+      - { id: variables, title: Variables }
+      - { id: numbers-and-text, title: Numbers and text }
+      - { id: input-and-conversion, title: Input and conversion }
+
+  - title: Decisions and loops
+    goal: Make the program choose and repeat.
+    hours: 3.5
+    lessons:
+      - { id: booleans, title: True and False }
+      - { id: if-else, title: if, elif, else }
+      - { id: while-loops, title: while loops }
+      - { id: for-loops, title: for and range }
+      - { id: debugging-1, title: Reading error messages }
+      - { id: project-guessing-game, title: "Project: guessing game", kind: project }
+
+  - title: Collections
+    goal: Work with many values at once.
+    hours: 4
+    lessons:
+      - { id: lists, title: Lists }
+      - { id: loop-patterns, title: Loop patterns }
+      - { id: names-and-objects, title: Names and objects }
+      - { id: dictionaries, title: Dictionaries }
+      - { id: tuples-and-sets, title: Tuples and sets }
+      - { id: strings, title: Text in depth }
+      - { id: project-word-counter, title: "Project: word counter", kind: project }
+
+  - title: Functions
+    goal: Give names to actions. Split big problems.
+    hours: 4
+    lessons:
+      - { id: functions, title: Define and call }
+      - { id: parameters-and-return, title: "Parameters, return, scope" }
+      - { id: decomposition, title: Split a problem }
+      - { id: reading-docs, title: Reading the docs }
+      - { id: standard-library, title: Modules and the standard library }
+      - { id: project-text-adventure, title: "Project: text adventure", kind: project }
+
+  - title: Files, data and errors
+    goal: Keep data between runs. Handle things that fail.
+    hours: 3.5
+    lessons:
+      - { id: files, title: Files and paths }
+      - { id: json, title: JSON }
+      - { id: exceptions, title: Exceptions }
+      - { id: csv-and-comprehensions, title: CSV and comprehensions }
+      - { id: project-expense-tracker, title: "Project: expense tracker", kind: project }
+
+  - title: Your own machine
+    goal: Leave the browser. Work like a developer.
+    hours: 4.5
+    lessons:
+      - { id: local-setup, title: Install Python and an editor }
+      - { id: venv-and-pip, title: Packages with venv and pip }
+      - { id: git, title: Git }
+      - { id: web-apis, title: Web APIs }
+      - { id: project-weather-tool, title: "Project: weather tool", kind: project }
+
+  - title: Classes and tests
+    goal: Model things. Prove that your code works.
+    hours: 3
+    lessons:
+      - { id: classes-and-objects, title: Classes and objects }
+      - { id: methods-and-state, title: Methods and state }
+      - { id: composition-and-dataclasses, title: Composition and dataclasses }
+      - { id: pytest, title: Tests with pytest }
+      - { id: debugging-2, title: The debugger }
+
+  - title: Desktop app
+    goal: Build, test and package your own app.
+    hours: 7
+    lessons:
+      - { id: tkinter, title: Windows and buttons }
+      - { id: app-structure, title: Structure of an app }
+      - { id: packaging, title: Package with PyInstaller }
+      - { id: capstone, title: "Capstone: your own app", kind: project }

@@ -1,0 +1,604 @@
+id: debugging-1
+order: 9
+title: Reading error messages
+summary: Find mistakes with a method. Read the message, find the line, test one change.
+minutes: 30
+outcomes: [A1, A2]
+
+objectives:
+  - id: O1
+    text: Read an error message from the bottom - the kind of error, then the line
+  - id: O2
+    text: Name the cause of the six most common errors
+  - id: O3
+    text: Find a mistake that gives no error by printing values
+  - id: O4
+    text: Follow a method - read, locate, explain, test one change
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: Python stops and tells you why
+    question: Your program stops in the middle. What now?
+    legend: false
+    code: |
+      total = 25
+      people = 5
+      print("Start")
+      share = total / person
+      print(share)
+    beats:
+      - beat: load
+        caption: "Every programmer makes mistakes, every day. Good programmers are not people without mistakes. They are people who **find** them fast."
+      - beat: run
+        line: 3
+        caption: "This program starts well. Lines 1, 2 and 3 run."
+      - beat: stop
+        line: 4
+        caption: "On line 4, Python meets the name `person`. No variable has this name. Python does not guess what you mean. It **stops**."
+      - beat: rest
+        line: 4
+        caption: "The lines after the stop do not run. Line 5 never happens."
+      - beat: report
+        line: 4
+        caption: "At this moment Python writes a report, the **traceback**. It says **where** it stopped and **why**. In this lesson you learn to read it."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: anatomy
+    type: theory
+    objective: O1
+    title: Read from the bottom
+    body: |
+      ## The parts of a message
+
+      ```text
+      Traceback (most recent call last):
+        File "main.py", line 4, in <module>
+          share = total / person
+                          ^^^^^^
+      NameError: name 'person' is not defined
+      ```
+
+      - The **last line** says what happened: the kind of error, then a
+        short message. Start here.
+      - The line with `line 4` says **where** Python stopped.
+      - Under it is the code of that line. The `^` signs mark the exact place.
+
+      The first line is always the same. You can skip it.
+
+      The cards show the six kinds of error that you will meet most often.
+    keys:
+      - code: "SyntaxError"
+        means: "Python cannot read the code: a quote, a bracket or a colon is missing. Nothing runs."
+      - code: "IndentationError"
+        means: "The spaces at the start of a line are wrong."
+      - code: "NameError"
+        means: "A name that Python does not know. Very often a typing mistake."
+      - code: "TypeError"
+        means: "A sign or an instruction got the wrong type, like text + number."
+      - code: "ValueError"
+        means: "The type is right, but this value is not possible, like `int(\"ten\")`."
+      - code: "ZeroDivisionError"
+        means: "A division by zero. No number is the answer, so Python stops."
+
+  # 3. DRILL: read -----------------------------------------------------------
+  - id: read-messages
+    type: drill
+    objective: O2
+    title: Where and what
+    items:
+      - kind: diagnose
+        id: d-name
+        mode: read
+        code: |
+          city = "Lima"
+          print("Welcome to " + ctiy)
+        explain: "A `NameError` is almost always a typing mistake. Compare the name in the message, letter by letter, with the name that you created."
+        fix:
+          - text: "Correct the spelling on line 2: `city`"
+            correct: true
+            why: "Python compares names letter by letter. `ctiy` and `city` are different names."
+          - text: "Put `ctiy` in quotes"
+            why: "Then Python prints the word `ctiy`, not the value of the variable."
+          - text: "Delete line 1"
+            why: "Line 1 is right. It creates the variable that line 2 needs."
+      - kind: diagnose
+        id: d-type
+        mode: read
+        code: |
+          tickets = 3
+          print("Tickets: " + tickets)
+        explain: "A `TypeError` names the types that do not fit. Here: `str` and `int`. The word \"concatenate\" means: join."
+        fix:
+          - text: 'Use an f-string: `print(f"Tickets: {tickets}")`'
+            correct: true
+            why: "An f-string takes values of every type."
+          - text: "Delete the quotes around `Tickets: `"
+            why: "Then `Tickets` is a name that Python does not know, and the colon is in a wrong place."
+          - text: "Change `+` to `-`"
+            why: "Text minus a number is not possible. This gives a `TypeError` again."
+      - kind: diagnose
+        id: d-zero
+        mode: read
+        code: |
+          total = 90
+          groups = 0
+          print(total / groups)
+        explain: >-
+          Look at the two line numbers. Python **stopped** on line 3, but the
+          **cause** is on line 2. The message shows where Python could not
+          go on. The mistake can be on an earlier line.
+        fix:
+          - text: "Look at line 2: `groups` must not be 0"
+            correct: true
+            why: "Line 3 only uses the value. The wrong value comes from line 2."
+          - text: "Change `/` to `//` on line 3"
+            why: "A whole division by zero is not possible either. The error stays."
+          - text: "Delete line 3"
+            why: "Then the program does nothing. A deleted line is not a fixed line."
+      - kind: diagnose
+        id: d-value
+        mode: read
+        code: |
+          answer = "3.5"
+          number = int(answer)
+          print(number + 1)
+        explain: "The message of a `ValueError` shows the value that did not fit: `'3.5'`. The type was right (text), but `int()` cannot read this text."
+        fix:
+          - text: "Use `float(answer)` on line 2"
+            correct: true
+            why: "`float()` reads numbers with a decimal point. `int()` reads only whole numbers."
+          - text: "Use `str(answer)` on line 2"
+            why: "Then `number` is text, and line 3 stops with a `TypeError`."
+          - text: "Delete the quotes on line 3"
+            why: "Line 3 has no quotes. Python stopped on line 2."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: break-it
+    type: demo
+    visual: output
+    objective: O2
+    title: Break it on purpose
+    intro: |
+      This program works. Your job is to **break** it, in four different
+      ways. Read each message that you cause.
+
+      If you can make an error, you can recognize it later.
+    code: |
+      name = "Ada"
+      points = 40
+      rounds = 4
+      print(name)
+      print(points / rounds)
+    experiments:
+      - text: "Run the program. It works."
+        expr: "err is None"
+      - text: "Make a `NameError`. Change one letter of a name."
+        expr: "err == 'NameError'"
+      - text: "Make a `ZeroDivisionError`. Change one number."
+        expr: "err == 'ZeroDivisionError'"
+      - text: "Make a `TypeError`. Idea: use `+` between a text and a number."
+        expr: "err == 'TypeError'"
+      - text: "Make a `SyntaxError`. Delete one bracket or one quote."
+        expr: "err == 'SyntaxError'"
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: method
+    type: theory
+    objective: O4
+    title: A method for every mistake
+    body: |
+      ## Four steps
+
+      Do not change code by chance. Use the same four steps each time.
+      They are on the cards.
+
+      Some mistakes give **no message**: the program runs, but the result
+      is wrong. The method is the same. For step 2, let the program show
+      you its values: add a `print` in the middle and compare the value
+      with what you expect.
+
+      ```
+      print(f"total = {total}")
+      ```
+
+      A new error message after a change is good news: the first mistake
+      is gone.
+    keys:
+      - code: "1  Read"
+        means: "The last line of the message. Which kind of error?"
+      - code: "2  Locate"
+        means: "Go to the line. With no message: print values to find where they go wrong."
+      - code: "3  Explain"
+        means: "Say in words what you expected and what Python did."
+      - code: "4  Test"
+        means: "Change **one** thing. Run again."
+
+  # 6. DRILL: predict --------------------------------------------------------
+  - id: predict-errors
+    type: drill
+    objective: O2
+    title: Before Python tells you
+    items:
+      - kind: diagnose
+        id: d-predict-name
+        mode: predict
+        code: |
+          name = "Sam"
+          print(name)
+          print(nmae)
+          print("end")
+        explain: "Lines 1 and 2 are fine and run. On line 3 the letters of the name are in the wrong order, so Python does not know it."
+      - kind: diagnose
+        id: d-predict-late
+        mode: predict
+        code: |
+          count = "4"
+          double = count * 2
+          print(double + 1)
+        explain: >-
+          Line 2 gives no error: text times 2 repeats the text, so `double`
+          is `"44"`. Python stops one line later, when it must add text and
+          a number. The cause is on line 1: the quotes.
+      - kind: diagnose
+        id: d-predict-indent
+        mode: predict
+        code: |
+          x = 5
+          if x > 3:
+          print("big")
+        explain: "The block under the `if` has no spaces. Python finds this before it runs anything, so line 1 does not run either."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-average
+    type: worked
+    objective: O3
+    title: A wrong result without a message
+    problem: |
+      A program must print the average of three marks: 6, 7 and 8. The
+      right answer is `7.0`.
+
+      It prints `15.666666666666666`. There is **no error message**. Python
+      did exactly what the code says, so the code says something we do not
+      mean. Watch how `print` finds it.
+    lines:
+      - code: |
+          a = 6
+          b = 7
+          c = 8
+          average = a + b + c / 3
+          print(average)
+        note: "The program. The mistake is somewhere on line 4. We split that line in parts and test each part."
+      - code: 'print(f"sum = {a + b + c}")'
+        note: "A test line. It prints `sum = 21`. That is what we expect, so this part is right."
+      - code: 'print(f"last part = {c / 3}")'
+        note: "The next part. It prints `last part = 2.6666666666666665`. So Python divides only `c` by 3. Division comes before addition, as in mathematics."
+      - code: "average = (a + b + c) / 3"
+        note: "The fix: brackets. Now Python computes the sum first. The result is `7.0`. Then delete the test lines."
+    check:
+      kind: mcq
+      id: w-average
+      prompt: "The first test line showed `sum = 21`, which was right. **Why was this test useful?**"
+      options:
+        - text: "It showed that this part is right, so the mistake must be in another part"
+          correct: true
+          why: "Each test makes the place smaller where the mistake can be. A test that shows no mistake is progress too."
+        - text: "It was not useful, because it found no mistake"
+          why: "It was useful: after it, we knew where the mistake is **not**."
+        - text: "It made the program faster"
+          why: "A `print` does not change the speed in a way that matters. It shows a value."
+
+  # 8. EXERCISE --------------------------------------------------------------
+  - id: ex-three-messages
+    type: exercise
+    fade: debug
+    objective: O1
+    title: Three messages
+    prompt: |
+      Four friends share a bill of 120. The program must print
+      `Each person pays 30.0` and then `Done`.
+
+      It has three mistakes. Python shows them one at a time.
+
+      **Use the method:** run, read the last line of the message, go to the
+      line, fix that one thing, run again.
+    starter: |
+      total = 120
+      people = 0
+      share = total / people
+      print("Each person pays " + share)
+      print("Done"
+    solution: |
+      total = 120
+      people = 4
+      share = total / people
+      print(f"Each person pays {share}")
+      print("Done")
+    after: >-
+      Three runs, three messages, three small fixes. Notice the order:
+      Python reported the `SyntaxError` on the last line first, because it
+      reads the whole program before it runs the first line.
+    cases:
+      - {}
+      - label: "`total` is 200"
+        set: { total: 200 }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Read the last line of the message. Which kind of error is it, and on which line?"
+        misconceptions:
+          - when: "err == 'SyntaxError'"
+            say: "A `SyntaxError`: Python cannot read the code. Count the brackets on the line that the message names."
+          - when: "err == 'ZeroDivisionError'"
+            say: "A `ZeroDivisionError`: the program divides by `people`. Four friends share the bill."
+          - when: "err == 'TypeError'"
+            say: "A `TypeError`: `+` cannot join text and a number. Use an f-string on line 4."
+      - expr: "people == 4"
+        pass: "`people` is 4"
+        hint: "Four friends share the bill. Check line 2."
+      - expr: "lines == [f'Each person pays {total / people}', 'Done']"
+        pass: "It prints what each person pays, then `Done`"
+        hint: "Line 4 must print the text and the value of `share`."
+    hints:
+      - "The first message is about the last line. Look at its brackets."
+      - "The second message names line 3, but the wrong value is on line 2."
+      - 'The third message is a `TypeError` on line 4. Write `print(f"Each person pays {share}")`.'
+
+  # 9. EXERCISE --------------------------------------------------------------
+  - id: ex-discount
+    type: exercise
+    fade: debug
+    objective: O3
+    title: No message, wrong result
+    prompt: |
+      A shop gives a discount in percent. For a price of 80 and a discount
+      of 25 percent, the final price is `60.0`.
+
+      **Run the program.** It prints `-1920` and gives no error.
+
+      Add a test line that prints the part `price * discount`. Compare the
+      value with what you expect. Then fix line 3.
+    starter: |
+      price = 80
+      discount = 25
+      final = price - price * discount
+      print(final)
+    solution: |
+      price = 80
+      discount = 25
+      final = price - price * discount / 100
+      print(final)
+    after: >-
+      `price * discount` was 2000, but 25 percent of 80 is 20. A percent is
+      a part of 100, so the division was missing. No message could tell
+      you this: only a value that you compared with your own expectation.
+    cases:
+      - {}
+      - label: "`price` is 200 and `discount` is 10"
+        set: { price: 200, discount: 10 }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Read the message under the editor."
+      - expr: "abs(final - (price - price * discount / 100)) < 0.001"
+        pass: "`final` is the price minus the discount"
+        hint: "25 percent of 80 is 20. Which calculation gives 20 from 80 and 25?"
+        misconceptions:
+          - when: "ns.get('final') == price - price * discount"
+            say: "`price * discount` is far too big. A percent is a part of 100."
+          - when: "ns.get('final') == price - discount"
+            say: "This takes off the number 25, not 25 percent of the price."
+          - when: "ns.get('final') == 60 and price != 80"
+            say: "`final` is always 60. Compute it from `price` and `discount`."
+      - expr: "lines[-1:] == [str(final)]"
+        pass: "The last line of the output is `final`"
+        hint: "You can keep your test lines, but the last `print` must show `final`."
+    hints:
+      - 'Add this line before line 3: `print(f"part = {price * discount}")`.'
+      - "The part is 2000. You expect 20. The difference is a division by 100."
+      - "Write `final = price - price * discount / 100`."
+
+  # 10. EXERCISE -------------------------------------------------------------
+  - id: ex-even-sum
+    type: exercise
+    fade: debug
+    objective: O4
+    title: Three mistakes, two messages
+    prompt: |
+      This program must print the sum of the even numbers from 2 to
+      `last`, with `last` included. For 10 the answer is `30`, because
+      2 + 4 + 6 + 8 + 10 is 30.
+
+      It has three mistakes. Two give a message. **One gives no message**:
+      you find it only when you compare the result with 30.
+    starter: |
+      last = 10
+      total = 0
+      for n in range(2, last):
+          if n % 2 = 0:
+              total = total + n
+      print(Total)
+    solution: |
+      last = 10
+      total = 0
+      for n in range(2, last + 1):
+          if n % 2 == 0:
+              total = total + n
+      print(total)
+    after: >-
+      The last mistake was the hard one: the program ran and printed 20.
+      A result that looks possible is not always right. Always test a
+      program with a case where you know the answer.
+    cases:
+      - {}
+      - label: "`last` is 6"
+        set: { last: 6 }
+      - label: "`last` is 7"
+        set: { last: 7 }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Read the last line of the message, then go to the line it names."
+        misconceptions:
+          - when: "err == 'SyntaxError'"
+            say: "A `SyntaxError` on the `if` line. One `=` stores a value. Which sign compares?"
+          - when: "err == 'NameError'"
+            say: "A `NameError`. Python treats capital and small letters as different. Compare the name with line 2."
+      - expr: "total == sum(k for k in range(2, last + 1) if k % 2 == 0)"
+        pass: "`total` is the sum of the even numbers up to `last`, with `last` included"
+        hint: "For 10 the program must give 30. Which even number is missing in the sum?"
+        misconceptions:
+          - when: "ns.get('total') == sum(k for k in range(2, last) if k % 2 == 0)"
+            say: "The value of `last` itself is not added. Check the stop value of the range."
+      - expr: "lines[-1:] == [str(total)]"
+        pass: "The last line of the output is `total`"
+        hint: "Keep the `print` at the end."
+    hints:
+      - "First message: line 4 must compare, so it needs `==`."
+      - "Second message: `Total` is not `total`."
+      - "No message, but 20 is not 30: the 10 is missing. Write `range(2, last + 1)`."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-start
+        objective: O1
+        prompt: "Where do you start to read an error message?"
+        options:
+          - text: "At the last line"
+            correct: true
+            why: "It names the kind of error and gives a short explanation. Then look for the line number above it."
+          - text: "At the first line"
+            why: "The first line is always the same text. It tells you nothing about your mistake."
+          - text: "In the middle"
+            why: "The middle shows the place. First find out what happened: that is on the last line."
+      - kind: diagnose
+        id: q-predict-type
+        objective: O2
+        mode: predict
+        code: |
+          age = "20"
+          print(age)
+          print(age + 1)
+        explain: "Line 2 only prints the text. Line 3 tries to add a number to text, and that is a `TypeError`. The cause is on line 1: the quotes."
+      - kind: mcq
+        id: q-which
+        objective: O2
+        prompt: 'Which error does `int("abc")` give?'
+        options:
+          - text: "`ValueError`"
+            correct: true
+            why: "The type is right: `int()` accepts text. But this text is not a number, so the value is the problem."
+          - text: "`TypeError`"
+            why: "A `TypeError` is for a wrong type. Text is a type that `int()` accepts."
+          - text: "`NameError`"
+            why: "`\"abc\"` is in quotes, so it is a text value, not a name."
+      - kind: diagnose
+        id: q-read-loop
+        objective: O1
+        mode: read
+        code: |
+          for n in range(3):
+              print(10 / n)
+        explain: "`range(3)` starts at 0. So the first round computes `10 / 0`, and Python stops before it prints anything."
+        fix:
+          - text: "Start the row at 1: `range(1, 3)`"
+            correct: true
+            why: "Then `n` is 1 and 2, and both divisions are possible."
+          - text: "Change `range(3)` to `range(4)`"
+            why: "The row still starts at 0, so the first division is still by zero."
+          - text: "Add 4 more spaces before `print`"
+            why: "The spaces are right. The problem is the first value of `n`."
+      - kind: mcq
+        id: q-silent
+        objective: O3
+        prompt: "A program runs without an error, but the result is wrong. What is a good first step?"
+        options:
+          - text: "Print the values in the middle of the program and compare them with what you expect"
+            correct: true
+            why: "The first value that is not what you expect shows where the mistake is."
+          - text: "Run the program again a few times"
+            why: "The same code with the same values gives the same result every time."
+          - text: "Delete everything and write the program again"
+            why: "You will probably make the same mistake again, because you have not found it."
+      - kind: mcq
+        id: q-one-change
+        objective: O4
+        prompt: "Why do you change only **one** thing before you run the program again?"
+        options:
+          - text: "Then you know which change had which effect"
+            correct: true
+            why: "After three changes at once you cannot tell which one fixed the problem, or which one made a new problem."
+          - text: "Python allows only one change for each run"
+            why: "Python has no such rule. This is a rule for you, to keep control."
+          - text: "It makes the program run faster"
+            why: "The speed is the same. The reason is that you learn something from each run."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: diagnose
+    id: r-read-name
+    objective: O1
+    mode: read
+    code: |
+      price = 12
+      print(price)
+      print(pirce * 2)
+    explain: "The last line of the message names the kind of error. The line above it gives the line number."
+  - kind: mcq
+    id: r-last-line
+    objective: O1
+    prompt: "What does the **last line** of an error message tell you?"
+    options:
+      - text: "The kind of error and a short explanation"
+        correct: true
+        why: "For example `NameError: name 'x' is not defined`. Read it first."
+      - text: "The line number where Python stopped"
+        why: "The line number is above the last line, after the word `line`."
+      - text: "How to fix the mistake"
+        why: "Python describes the problem. The fix is your job."
+  - kind: diagnose
+    id: r-predict-zero
+    objective: O2
+    mode: predict
+    code: |
+      a = 10
+      b = a - 10
+      print(a / b)
+    explain: "`b` is 0, so line 3 divides by zero. Python stops on line 3, but the value comes from line 2."
+  - kind: mcq
+    id: r-print
+    objective: O3
+    prompt: "A program gives a wrong result and no error message. How do you find the mistake?"
+    options:
+      - text: "Add `print` lines that show values, and compare them with what you expect"
+        correct: true
+        why: "The first value that surprises you shows where the mistake is."
+      - text: "Read the last line of the error message"
+        why: "There is no message in this case. You must make the program show its values."
+      - text: "Change several lines and see what happens"
+        why: "Changes by chance hide the mistake or add new ones. First find out where it is."
+  - kind: mcq
+    id: r-cause
+    objective: O4
+    prompt: "An error message names line 8. Where can the cause of the mistake be?"
+    options:
+      - text: "On line 8 or on a line before it"
+        correct: true
+        why: "Line 8 is where Python could not go on. A wrong value can come from an earlier line."
+      - text: "Only on line 8"
+        why: "Often, but not always. A value from line 3 can make line 8 fail."
+      - text: "On a line after line 8"
+        why: "Those lines did not run yet. They cannot be the cause of this stop."

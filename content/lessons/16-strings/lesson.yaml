@@ -1,0 +1,542 @@
+id: strings
+order: 16
+title: Text in depth
+summary: Read parts of a text, change its form with methods, split it into words.
+minutes: 30
+outcomes: [A1, A3, A4]
+
+objectives:
+  - id: O1
+    text: Read one character and a slice of a text, counting from 0
+  - id: O2
+    text: Use text methods - lower, upper, strip, replace, startswith - and keep their result
+  - id: O3
+    text: Split a sentence into words and join words into one text
+  - id: O4
+    text: Format numbers in an f-string, for example with two decimals
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: A row of characters
+    question: How can a program take the first three letters of a word?
+    code: |
+      word = "Python"
+      first = word[0]
+      last = word[-1]
+      part = word[0:3]
+    beats:
+      - beat: empty
+        caption: "Until now, a text was one value on one card. Inside, a text is a **row of characters**, and each character has a place."
+      - beat: row
+        line: 1
+        caption: "Six characters, six places, numbered from **0**, like a list."
+      - beat: first
+        line: 2
+        caption: "`word[0]` reads the first character. The result is a text too: `'P'`."
+      - beat: last
+        line: 3
+        caption: "`-1` counts from the end, as with lists."
+      - beat: slice
+        line: 4
+        caption: "`word[0:3]` is a **slice**: the places 0, 1 and 2. The stop place 3 is **not** included, as with `range`."
+      - beat: sealed
+        caption: "A text is sealed, like a tuple. `word[0] = \"J\"` gives a `TypeError`. To change a text, you make a new one."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: slices
+    type: theory
+    objective: O1
+    title: Places and slices
+    body: |
+      ## Reading a text
+
+      A text has places like a list. `len` counts the characters, also the
+      spaces.
+
+      A **slice** `text[start:stop]` gives a new text with the places from
+      `start` up to `stop`, without `stop`. You can leave out a number:
+
+      - no start means "from the beginning",
+      - no stop means "to the end".
+
+      Slices work the same way on lists.
+
+      `in` works on texts too: it asks if one text is a part of another.
+    keys:
+      - code: 's = "banana"'
+        means: "Six characters: places 0 to 5."
+      - code: "s[1:4]"
+        means: "Places 1, 2, 3: `'ana'`."
+      - code: "s[:2]"
+        means: "The first two: `'ba'`."
+      - code: "s[-3:]"
+        means: "The last three: `'ana'`."
+      - code: '"nan" in s'
+        means: "`True`: it is a part of the text."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-slices
+    type: predict
+    objective: O1
+    title: Cut a word
+    item:
+      kind: predict
+      id: p-slices
+      prompt: "This program prints three lines. **Type all three.**"
+      code: |
+        s = "summer"
+        print(s[0:3])
+        print(s[3:])
+        print(s[-1])
+      explain: >-
+        `s[0:3]` is places 0, 1, 2: `sum`. `s[3:]` starts at place 3 and goes
+        to the end: `mer`. `-1` is the last character.
+      misconceptions:
+        - answer: "summ\nmer\nr"
+          say: "The stop place 3 is not included. `s[0:3]` has three characters."
+        - answer: "sum\nmmer\nr"
+          say: "`s[3:]` starts at place 3, the fourth character: `m`, `e`, `r`."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O2
+    title: Methods make new texts
+    intro: |
+      Text methods change the **form** of a text: capital letters, spaces,
+      parts. Press **Run** and look at the boxes: `name` does not change.
+      Each method gives a **new** text.
+    code: |
+      name = "  Ada Lovelace  "
+      clean = name.strip()
+      upper = clean.upper()
+      print(upper)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Print `len(name)` and `len(clean)`. How many spaces did `strip` take away?"
+        expr: "err is None and src.count('len(') >= 2 and str(len(ns.get('name', ''))) in lines"
+      - text: "Make a variable `nick` with `clean.replace(\"Ada\", \"Ida\")` and print it."
+        expr: "err is None and ns.get('nick') == 'Ida Lovelace' and 'Ida Lovelace' in lines"
+      - text: "Add the line `name.upper()` with no `=`, then `print(name)`. Did `name` change?"
+        expr: "err is None and 'name.upper()' in src and ns.get('name') in lines"
+      - text: "Ask `clean.startswith(\"Ada\")` and print the answer."
+        expr: "err is None and called('startswith') and 'True' in lines"
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: methods
+    type: theory
+    objective: O2
+    title: Text methods
+    body: |
+      ## Methods give a new text
+
+      A text cannot change. So every method **gives back a new text**, and
+      the old one stays as it was. Keep the result with `=`:
+
+      ```
+      name = name.strip()
+      ```
+
+      Without the `=`, the new text is made and then lost. Python gives no
+      error, so this mistake is easy to miss.
+
+      Methods can follow each other: `name.strip().lower()`.
+
+      In an f-string, a format after a colon controls how a number looks:
+      `f"{price:.2f}"` shows two decimals.
+    keys:
+      - code: "s.lower()    s.upper()"
+        means: "Small letters, capital letters."
+      - code: "s.strip()"
+        means: "Takes away spaces at the start and at the end."
+      - code: 's.replace("a", "o")'
+        means: "Every `a` becomes `o`."
+      - code: 's.startswith("Py")'
+        means: "`True` if the text starts with `Py`."
+      - code: 'f"{3.5:.2f}"'
+        means: "`'3.50'`: a number with two decimals."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O3
+    title: Split, join, keep
+    items:
+      - kind: predict
+        id: d-split
+        objective: O3
+        prompt: "Python prints a list like `['a', 'b']`. **What does this program print?**"
+        code: |
+          sentence = "the cat sat"
+          words = sentence.split()
+          print(words)
+          print(len(words))
+        explain: "`split()` cuts the text at the spaces and gives a list of words."
+      - kind: predict
+        id: d-join
+        objective: O3
+        code: |
+          words = ["red", "green", "blue"]
+          print("-".join(words))
+          print(", ".join(words))
+        explain: "`join` is the opposite of `split`: the text before the dot goes between the words."
+        misconceptions:
+          - answer: "red-green-blue-\nred, green, blue, "
+            say: "`join` puts the text only **between** the words, not after the last one."
+      - kind: predict
+        id: d-lost
+        objective: O2
+        prompt: "There is a common mistake in this program. **What does it print?**"
+        code: |
+          city = "paris"
+          city.upper()
+          print(city)
+        explain: >-
+          `city.upper()` made a new text, `'PARIS'`, but nothing kept it. A
+          text cannot change, so `city` is still `'paris'`. Write
+          `city = city.upper()`.
+        misconceptions:
+          - answer: "PARIS"
+            say: "`upper()` gives a new text. Without `city = ...`, the new text is lost."
+      - kind: diagnose
+        id: d-sealed
+        objective: O1
+        mode: read
+        code: |
+          word = "cat"
+          print(word[0])
+          word[0] = "b"
+        explain: "A text cannot change in place. \"Does not support item assignment\" means: you cannot put a new value in one of its places."
+        fix:
+          - text: 'Make a new text: `word = "b" + word[1:]`'
+            correct: true
+            why: "The slice `word[1:]` is `'at'`. The name `word` moves to the new text `'bat'`."
+          - text: 'Use `word.append("b")`'
+            why: "A text has no `append`. It cannot change at all."
+          - text: 'Use `word[0] == "b"`'
+            why: "`==` only compares. It changes nothing."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-answer
+    type: worked
+    objective: O2
+    title: Understand what the user means
+    problem: |
+      A program asks "Continue? (yes/no)". Users type `yes`, `Yes`, ` YES `
+      or `yes ` with a space.
+
+      **Accept all of these as a yes.**
+    lines:
+      - code: 'answer = input("Continue? (yes/no) ")'
+        note: "The text exactly as the user typed it."
+      - code: "answer = answer.strip().lower()"
+        note: "Two methods in a row: first take away the spaces, then make small letters. The `=` keeps the result."
+      - code: |
+          if answer == "yes":
+              print("OK, we continue.")
+          else:
+              print("Stop.")
+        note: "Now one comparison is enough for every form of yes."
+    check:
+      kind: mcq
+      id: w-answer
+      prompt: "What happens if line 2 is only `answer.strip().lower()`, without `answer =`?"
+      options:
+        - text: "` YES ` is not accepted, because `answer` did not change"
+          correct: true
+          why: "The new text is made and lost. `answer` is still ` YES `, and that is not equal to `yes`."
+        - text: "Nothing changes: the program still works"
+          why: "A method gives a new text. Without `=`, nothing keeps it."
+        - text: "Python gives an error"
+          why: "There is no error. That is why this mistake is easy to miss."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-initials
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Initials
+    prompt: |
+      **Replace `___`**, so that `initials` is the first letter of the first
+      name followed by the first letter of the last name. For `Ada
+      Lovelace` it is `AL`.
+    starter: |
+      full = "Ada Lovelace"
+      first, last = full.split()
+      initials = ___
+      print(initials)
+    solution: |
+      full = "Ada Lovelace"
+      first, last = full.split()
+      initials = first[0] + last[0]
+      print(initials)
+    after: >-
+      `split()` gave a list of two words, and unpacking gave them names.
+      Then `[0]` read the first character of each word, and `+` joined them.
+    cases:
+      - {}
+      - label: "the name is `Grace Hopper`"
+        set: { full: "Grace Hopper" }
+    checks:
+      - expr: "err is None and initials == full.split()[0][0] + full.split()[1][0]"
+        pass: "`initials` holds the two first letters"
+        hint: "The first letter of a word is at place 0."
+        misconceptions:
+          - when: "ns.get('initials') == 'AL' and full != 'Ada Lovelace'"
+            say: "You typed the letters. Read them from `first` and `last`."
+          - when: "ns.get('initials') == first + last"
+            say: "This joins the whole words. Take only place 0 of each word."
+      - expr: "lines == [str(initials)]"
+        pass: "It prints the initials"
+        hint: "Keep the last line."
+    hints:
+      - "The first letter of `first` is `first[0]`."
+      - "Two texts are joined with `+`."
+      - "Write `first[0] + last[0]`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-username
+    type: exercise
+    fade: debug
+    objective: O2
+    title: A user name
+    prompt: |
+      A program makes a user name from a full name: no spaces at the start
+      or at the end, small letters, and a dot instead of the space in the
+      middle. For `"  Grace Hopper "` the user name is `grace.hopper`.
+
+      **Run it.** It gives no error, but the result is wrong.
+    given: |
+      name = "  Grace Hopper "
+    starter: |
+      name.strip()
+      name.lower()
+      user = name.replace(" ", ".")
+      print(user)
+    solution: |
+      name = name.strip()
+      name = name.lower()
+      user = name.replace(" ", ".")
+      print(user)
+    after: >-
+      The first two lines made new texts and lost them. Only the third line
+      kept its result, because it has an `=`. You can also write it in one
+      line: `user = name.strip().lower().replace(" ", ".")`.
+    cases:
+      - {}
+      - label: "the name is ` Ada Lovelace`"
+        setup: |
+          name = " Ada Lovelace"
+    checks:
+      - expr: "err is None and user == pre['name'].strip().lower().replace(' ', '.')"
+        pass: "`user` is the clean user name"
+        hint: "Look at the first two lines. Where do their results go?"
+        misconceptions:
+          - when: "ns.get('user') == pre['name'].replace(' ', '.')"
+            say: "Nothing was taken away and nothing became small. `strip()` and `lower()` give new texts: keep them with `name = ...`."
+          - when: "ns.get('user') == pre['name'].strip().replace(' ', '.')"
+            say: "The spaces are gone, but the capital letters stay. Keep the result of `lower()` too."
+      - expr: "lines[-1:] == [str(user)]"
+        pass: "It prints the user name"
+        hint: "Keep the last line."
+    hints:
+      - "Run the program and look at the dots at the start and the end of the result."
+      - "`name.strip()` alone changes nothing. The result needs a name."
+      - "Write `name = name.strip()` and `name = name.lower()`."
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-words
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Words in a sentence
+    prompt: |
+      **Ask for a sentence. Print three lines:**
+
+      1. The number of words.
+      2. The words joined with `-` between them.
+      3. The longest word. If two words have the same length, the first one.
+
+      For `the quick fox` the output is:
+
+      ```text
+      3
+      the-quick-fox
+      quick
+      ```
+    starter: |
+      # Ask for a sentence.
+    solution: |
+      sentence = input("Sentence: ")
+      words = sentence.split()
+      print(len(words))
+      print("-".join(words))
+      longest = words[0]
+      for w in words:
+          if len(w) > len(longest):
+              longest = w
+      print(longest)
+    after: >-
+      `split` turned the text into a list, and then the tools of lists did
+      the rest: `len`, `join` and the best-so-far pattern of lesson 12.
+    cases:
+      - {}
+      - label: "the sentence is `the quick fox`"
+        stdin: ["the quick fox"]
+      - label: "the sentence is `one`"
+        stdin: ["one"]
+      - label: "the sentence is `ab cd ef`"
+        stdin: ["ab cd ef"]
+    checks:
+      - expr: "err is None and asked == 1 and len(inputs[0].split()) > 0"
+        pass: "The program asks one question and runs without an error"
+        hint: "Use `input()` one time. Type a sentence with at least one word."
+      - expr: "lines[-3:-2] == [str(len(inputs[0].split()))]"
+        pass: "Line 1 is the number of words"
+        hint: "`split()` gives a list of the words. `len` counts them."
+      - expr: "lines[-2:-1] == ['-'.join(inputs[0].split())]"
+        pass: "Line 2 is the words joined with `-`"
+        hint: "Use `\"-\".join(words)`."
+      - expr: "lines[-1:] == [max(inputs[0].split(), key=len)]"
+        pass: "Line 3 is the first longest word"
+        hint: "Use the best-so-far pattern with `len(w)`."
+        misconceptions:
+          - when: "lines[-1:] == [[w for w in inputs[0].split() if len(w) == max(len(x) for x in inputs[0].split())][-1]]"
+            say: "With `>=`, a later word of the same length wins. Use `>`."
+          - when: "lines[-1:] == [max(inputs[0].split())]"
+            say: "`max` of texts gives the last one in the alphabet, not the longest. Compare the lengths."
+    hints:
+      - "`words = sentence.split()`."
+      - "Line 2: `\"-\".join(words)`."
+      - "Line 3: start with `longest = words[0]` and keep a word only when `len(w) > len(longest)`."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: predict
+        id: q-slice
+        objective: O1
+        code: |
+          code = "AB-1234"
+          print(code[:2])
+          print(code[3:])
+        explain: "`[:2]` takes places 0 and 1. `[3:]` starts after the `-`, at place 3."
+      - kind: mcq
+        id: q-len
+        objective: O1
+        prompt: 'What is `len("a b")`?'
+        options:
+          - text: "`3`"
+            correct: true
+            why: "The space is a character too."
+          - text: "`2`"
+            why: "`len` counts every character, also the space."
+          - text: "`1`"
+            why: "`len` counts characters, not words."
+      - kind: predict
+        id: q-replace
+        objective: O2
+        code: |
+          s = "a-b-c"
+          t = s.replace("-", "+")
+          print(s)
+          print(t)
+        explain: "`replace` gives a new text. `s` itself does not change."
+        misconceptions:
+          - answer: "a+b+c\na+b+c"
+            say: "A text cannot change. `replace` made a new text for `t`; `s` stays the same."
+      - kind: predict
+        id: q-format
+        objective: O4
+        code: |
+          price = 3.5
+          print(f"{price:.2f}")
+          print(f"{2 / 3:.1f}")
+        explain: "`.2f` shows exactly two decimals, `.1f` one decimal. The number is rounded."
+      - kind: mcq
+        id: q-split-join
+        objective: O3
+        prompt: 'What is `" ".join("a-b-c".split("-"))`?'
+        options:
+          - text: "`'a b c'`"
+            correct: true
+            why: "`split(\"-\")` cuts at each `-`, and `join` puts a space between the parts."
+          - text: "`'a-b-c'`"
+            why: "The `-` signs are taken away by `split` and replaced with spaces by `join`."
+          - text: "`['a', 'b', 'c']`"
+            why: "That is the result of `split`. `join` makes one text again."
+      - kind: mcq
+        id: q-in
+        objective: O1
+        prompt: 'What is `"cat" in "concatenate"`?'
+        options:
+          - text: "`True`"
+            correct: true
+            why: "`in` asks if the text is a part of the other: con-**cat**-enate."
+          - text: "`False`"
+            why: "Look again: the letters c, a, t follow each other inside the word."
+          - text: "A `TypeError`"
+            why: "`in` works with two texts."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-slice
+    objective: O1
+    code: |
+      w = "pencil"
+      print(w[1:3])
+    explain: "Places 1 and 2: `e` and `n`. The stop place 3 is not included."
+  - kind: mcq
+    id: r-keep
+    objective: O2
+    prompt: "`s = \"hi\"` and then `s.upper()`. What is `s`?"
+    options:
+      - text: "`'hi'`"
+        correct: true
+        why: "`upper()` gave a new text, but nothing kept it. Write `s = s.upper()`."
+      - text: "`'HI'`"
+        why: "A text cannot change. The new text was lost."
+      - text: "An error"
+        why: "There is no error, and that is why this mistake is easy to miss."
+  - kind: predict
+    id: r-split
+    objective: O3
+    code: |
+      parts = "2024-05-17".split("-")
+      print(parts[0])
+    explain: "`split(\"-\")` cuts at each `-`. The first part is `2024`, as a text."
+  - kind: mcq
+    id: r-format
+    objective: O4
+    prompt: 'What does `f"{7:.2f}"` give?'
+    options:
+      - text: "`'7.00'`"
+        correct: true
+        why: "`.2f` always shows two decimals."
+      - text: "`'7'`"
+        why: "The format asks for two decimals, so they are shown."
+      - text: "`'7.2'`"
+        why: "`.2f` means two decimals, not the number 2."
+  - kind: diagnose
+    id: r-sealed
+    objective: O1
+    mode: predict
+    code: |
+      s = "dog"
+      print(s.upper())
+      s[0] = "f"
+    explain: "A text cannot change in place. Line 3 gives a `TypeError`. Make a new text: `s = \"f\" + s[1:]`."

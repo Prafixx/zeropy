@@ -1,0 +1,481 @@
+id: numbers-and-text
+order: 3
+title: Numbers and text
+summary: Every value has a type. Compute with numbers and build text from values.
+minutes: 25
+outcomes: [A1, A2]
+
+objectives:
+  - id: O1
+    text: Name the type of a value - int, float or str
+  - id: O2
+    text: Compute with numbers using + - * / // % and **
+  - id: O3
+    text: Join text and put values into text with an f-string
+  - id: O4
+    text: Read a TypeError and fix a mix of text and number
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O1
+    title: Two kinds of 5
+    question: 'Is "5" the same as 5?'
+    code: |
+      a = 5
+      b = "5"
+      c = a + a
+      d = b + b
+    beats:
+      - beat: empty
+        caption: "Every value has a **type**. The type decides what Python can do with the value."
+      - beat: number
+        line: 1
+        caption: "No quotes: `a` holds a **number**. Its type is `int`, a whole number."
+      - beat: text
+        line: 2
+        caption: "With quotes: `b` holds **text**. Its type is `str`. It looks the same, but the color is different."
+      - beat: add
+        line: 3
+        caption: "With numbers, `+` **adds**. 5 + 5 is 10."
+      - beat: join
+        line: 4
+        caption: "With text, `+` **joins**. The result is the text `55`. Same sign, different type, different result."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: types
+    type: theory
+    objective: O2
+    title: Three types and six signs
+    body: |
+      ## Three types
+
+      - `int`: a whole number, like `7` or `-2`.
+      - `float`: a number with a decimal point, like `2.5`.
+      - `str`: text in quotes, like `"tea"`. The name comes from "string".
+
+      You know `+`, `-` and `*`. Division has three signs, and each one
+      answers a different question. Look at the cards.
+
+      A result with a `float` in it is a `float`. The sign `/` always gives
+      a `float`.
+    keys:
+      - code: "7 / 2"
+        means: "Divide. Always a `float`: `3.5`."
+      - code: "7 // 2"
+        means: "How many whole times? `3`."
+      - code: "7 % 2"
+        means: "What is left? The remainder: `1`."
+      - code: "2 ** 3"
+        means: "Power: 2 * 2 * 2 is `8`."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-division
+    type: predict
+    objective: O2
+    title: Three ways to divide
+    item:
+      kind: predict
+      id: p-division
+      prompt: "This program prints three lines. **Type all three** before you check."
+      code: |
+        print(9 / 2)
+        print(9 // 2)
+        print(9 % 2)
+      explain: >-
+        `9 / 2` is 4.5. `9 // 2` asks how many whole times 2 fits in 9: 4 times.
+        `9 % 2` asks what is left after that: 1.
+      misconceptions:
+        - answer: "4.5\n4.5\n1"
+          say: "`//` gives only the whole part: 4."
+        - answer: "4.5\n4\n0.5"
+          say: "`%` gives the remainder as a whole number: 9 is 4 * 2 plus **1**."
+        - answer: "4.5\n5\n1"
+          say: "`//` does not round up. It cuts off the part after the point."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O1
+    title: Watch the types
+    intro: |
+      This program changes minutes into hours and minutes.
+
+      Press **Run**. Each card shows its type under the value.
+    code: |
+      minutes = 135
+      hours = minutes // 60
+      rest = minutes % 60
+      print(hours)
+      print(rest)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Change `minutes` to `200`. Check the result in your head first."
+        expr: "ns.get('minutes') == 200 and ns.get('hours') == 3 and ns.get('rest') == 20"
+      - text: "Add the line `half = minutes / 2`. Which type does the card show?"
+        expr: "isinstance(ns.get('half'), float)"
+      - text: 'Add `word = "la"` and then `song = word * 3`. What does `*` do with text?'
+        expr: "isinstance(ns.get('word'), str) and ns.get('song') == ns.get('word') * 3"
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: fstrings
+    type: theory
+    objective: O3
+    title: Put values into text
+    body: |
+      ## f-strings
+
+      Programs often print text with values inside: a name, a total, a score.
+
+      Put the letter `f` before the first quote. Then write a name or a
+      calculation inside braces `{ }`. Python replaces the braces with the value.
+
+      Without the `f`, the braces are only text.
+    keys:
+      - code: 'f"Hello, {name}"'
+        means: "Python puts the value of `name` in the text."
+      - code: 'f"Total: {price * 2}"'
+        means: "A calculation also works inside the braces."
+      - code: '"Hello, {name}"'
+        means: "No `f`. Python prints the braces as they are."
+      - code: '"tea" + "pot"'
+        means: "`+` joins two texts: `teapot`. Both sides must be text."
+
+  # 6. PREDICT ---------------------------------------------------------------
+  - id: predict-fstring
+    type: predict
+    objective: O3
+    title: With f and without
+    item:
+      kind: predict
+      id: p-fstring
+      prompt: "This program prints two lines. **Type both lines** before you check."
+      code: |
+        name = "Sam"
+        age = 30
+        print(f"{name} is {age}")
+        print("{name} is {age}")
+      explain: >-
+        Line 3 starts with `f`, so Python replaces `{name}` and `{age}` with
+        their values. Line 4 has no `f`, so it is normal text and Python
+        copies it.
+      misconceptions:
+        - answer: "Sam is 30\nSam is 30"
+          say: "Line 4 has no `f` before the quote. The braces stay."
+        - answer: "{name} is {age}\n{name} is {age}"
+          say: "Line 3 starts with `f`. Python fills in the values."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-receipt
+    type: worked
+    objective: O3
+    title: One line of a receipt
+    problem: |
+      A customer buys 3 notebooks. One notebook costs 2.5.
+
+      **Print one line like this:** `3 notebooks cost 7.5`
+    lines:
+      - code: "count = 3"
+        note: "A whole number: type `int`."
+      - code: "price = 2.5"
+        note: "A decimal point makes it a `float`."
+      - code: "total = count * price"
+        note: "`int` times `float` gives a `float`: 7.5."
+      - code: 'print(f"{count} notebooks cost {total}")'
+        note: "The f-string puts both values into the text. No `+` is needed."
+    check:
+      kind: mcq
+      id: w-receipt
+      prompt: "The price changes to `2`. **What does the program print now?**"
+      options:
+        - text: "`3 notebooks cost 6`"
+          correct: true
+          why: "Now both numbers are `int`, so the result is the `int` 6. No decimal point appears."
+        - text: "`3 notebooks cost 6.0`"
+          why: "A `.0` appears only when a `float` is part of the calculation. Here 3 and 2 are both `int`."
+        - text: "`3 notebooks cost {total}`"
+          why: "The text starts with `f`, so Python replaces `{total}` with the value."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-seconds
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Minutes and seconds
+    prompt: |
+      A video is 200 seconds long. A player must show it as minutes and
+      seconds.
+
+      **Replace each `___`.** `minutes` is the number of whole minutes.
+      `rest` is the number of seconds that are left.
+    starter: |
+      seconds = 200
+      minutes = ___
+      rest = ___
+      print(minutes)
+      print(rest)
+    solution: |
+      seconds = 200
+      minutes = seconds // 60
+      rest = seconds % 60
+      print(minutes)
+      print(rest)
+    after: >-
+      `//` and `%` work as a pair: one gives the whole part, the other gives
+      what is left. You will use this pair often, for time, money and pages.
+    cases:
+      - {}
+      - label: "`seconds` is 125"
+        set: { seconds: 125 }
+    checks:
+      - expr: "minutes == seconds // 60 and isinstance(minutes, int)"
+        pass: "`minutes` is the number of whole minutes"
+        hint: "How many whole times does 60 fit in `seconds`? Use `//`."
+        misconceptions:
+          - when: "isinstance(ns.get('minutes'), float)"
+            say: "`minutes` is a `float`. The sign `/` gives decimals. Use `//` for the whole part."
+          - when: "ns.get('minutes') == 3 and seconds // 60 != 3"
+            say: "`minutes` is always 3. Compute it from `seconds`."
+      - expr: "rest == seconds % 60"
+        pass: "`rest` is the number of seconds left"
+        hint: "What is left after the whole minutes? Use `%`."
+        misconceptions:
+          - when: "ns.get('rest') == 20 and seconds % 60 != 20"
+            say: "`rest` is always 20. Compute it from `seconds`."
+      - expr: "lines[-2:] == [str(minutes), str(rest)]"
+        pass: "The program prints `minutes`, then `rest`"
+        hint: "Keep the two `print` lines."
+    hints:
+      - "One minute has 60 seconds."
+      - "`//` gives the whole part. `%` gives the remainder."
+      - "Write `minutes = seconds // 60` and `rest = seconds % 60`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-typeerror
+    type: exercise
+    fade: debug
+    objective: O4
+    title: Text plus number
+    prompt: |
+      This program must print two lines: `Player: Rosa` and `Points: 12`.
+      It stops on line 4.
+
+      **Run it. Read the message. Fix line 4.**
+
+      The message uses the word `concatenate`. It means: join.
+    starter: |
+      name = "Rosa"
+      points = 12
+      print("Player: " + name)
+      print("Points: " + points)
+    solution: |
+      name = "Rosa"
+      points = 12
+      print("Player: " + name)
+      print(f"Points: {points}")
+    after: >-
+      A `TypeError` means: this sign does not work with these types. Line 3
+      worked because both sides were text. On line 4 one side was a number.
+      An f-string accepts any type, so it is the safe way to build text.
+    cases:
+      - {}
+      - label: "`points` is 7"
+        set: { points: 7 }
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Read the last line of the message. Which two types does it name?"
+      - expr: "lines == ['Player: ' + str(name), 'Points: ' + str(points)]"
+        pass: "It prints the player line and the points line"
+        hint: "Line 4 must print `Points: ` and then the value of `points`."
+        misconceptions:
+          - when: "err is None and len(lines) == 2 and '{' in lines[1]"
+            say: "The braces were printed. Put the letter `f` before the first quote."
+    hints:
+      - "`+` can join text with text. `points` is a number."
+      - "An f-string can hold a value of any type."
+      - 'Write `print(f"Points: {points}")`.'
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-price-tag
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A price tag
+    prompt: |
+      A shop prints a tag for each order.
+
+      **Print one line with the count, the item and the total price.** For
+      the values below, the line must be exactly: `3 x tea = 12`
+
+      Use the variables. Your code must work for any item, price and count.
+    given: |
+      item = "tea"
+      price = 4
+      count = 3
+    starter: |
+      # item, price and count already exist.
+    solution: |
+      total = count * price
+      print(f"{count} x {item} = {total}")
+    after: >-
+      You computed a value and put three values into one text. Most output
+      of real programs is built this way.
+    cases:
+      - {}
+      - label: "`item` is rice, `price` is 2.5 and `count` is 4"
+        setup: |
+          item = "rice"
+          price = 2.5
+          count = 4
+    checks:
+      - expr: "err is None and len(lines) >= 1"
+        pass: "The program prints a line without an error"
+        hint: "Use `print` with an f-string."
+      - expr: "lines[-1:] == [f\"{pre['count']} x {pre['item']} = {pre['count'] * pre['price']}\"]"
+        pass: "The line shows count, `x`, item, `=` and the total"
+        hint: "The total is `count * price`. Put the values in braces inside an f-string."
+        misconceptions:
+          - when: "len(lines) > 0 and '{' in lines[-1]"
+            say: "The braces were printed. Put the letter `f` before the first quote."
+          - when: "lines[-1:] == ['3 x tea = 12'] and pre['item'] != 'tea'"
+            say: "You typed the values. Use the names `count`, `item` and `price` inside braces."
+          - when: "len(lines) > 0 and lines[-1].replace(' ', '') == f\"{pre['count']}x{pre['item']}={pre['count'] * pre['price']}\""
+            say: "The values are right. Check the spaces: one space on each side of `x` and of `=`."
+    hints:
+      - "First compute the total: `total = count * price`."
+      - 'Start the text with `f"` and write each value as `{name}`.'
+      - 'Write `print(f"{count} x {item} = {total}")`.'
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-type
+        objective: O1
+        prompt: 'What is the type of `"42"`?'
+        options:
+          - text: "`str`"
+            correct: true
+            why: "The quotes make it text, also when the characters are digits."
+          - text: "`int`"
+            why: "`42` without quotes is an `int`. With quotes it is text."
+          - text: "`float`"
+            why: "A `float` is a number with a decimal point and no quotes, like `42.0`."
+      - kind: predict
+        id: q-float
+        objective: O2
+        code: |
+          print(10 / 5)
+          print(2 ** 3)
+        explain: "The sign `/` always gives a `float`, so Python shows `2.0`. `2 ** 3` is 2 * 2 * 2."
+        misconceptions:
+          - answer: "2\n8"
+            say: "`/` always gives a `float`. Python shows it with a point: `2.0`."
+          - answer: "2.0\n6"
+            say: "`**` is a power, not a multiplication: 2 * 2 * 2."
+      - kind: mcq
+        id: q-typeerror
+        objective: O4
+        prompt: "This program stops with a `TypeError`. **Why?**"
+        code: |
+          age = 20
+          print("Age: " + age)
+        options:
+          - text: "`+` cannot join text and a number"
+            correct: true
+            why: "Both sides of `+` must have the same kind of type: two numbers or two texts."
+          - text: "The variable `age` does not exist"
+            why: "`age` is created on line 1. An unknown name gives a `NameError`, not a `TypeError`."
+          - text: "The text has a colon in it"
+            why: "Text can hold any character. The problem is the number on the right side of `+`."
+      - kind: predict
+        id: q-fcalc
+        objective: O3
+        code: |
+          x = 4
+          print(f"{x} + {x} = {x + x}")
+        explain: "Each pair of braces is replaced by a value. The last pair holds a calculation, so Python computes 8."
+        misconceptions:
+          - answer: "8 = 8"
+            say: "Only the inside of each pair of braces is computed. The `+` between the braces is text."
+      - kind: mcq
+        id: q-remainder
+        objective: O2
+        prompt: "5 children share 17 sweets. Each child gets the same number. Which expression gives the number of sweets that are **left**?"
+        options:
+          - text: "`17 % 5`"
+            correct: true
+            why: "`%` gives the remainder: 17 is 3 * 5 plus 2, so 2 sweets are left."
+          - text: "`17 // 5`"
+            why: "This gives 3: the number of sweets for each child."
+          - text: "`17 / 5`"
+            why: "This gives 3.4. You cannot give 0.4 of a sweet."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-plus
+    objective: O1
+    code: |
+      print("3" + "3")
+      print(3 + 3)
+    explain: "With text, `+` joins. With numbers, `+` adds."
+    misconceptions:
+      - answer: "6\n6"
+        say: "Line 1 has two texts. `+` joins them."
+  - kind: mcq
+    id: r-slash
+    objective: O2
+    prompt: "What does `8 / 2` give?"
+    options:
+      - text: "`4.0`"
+        correct: true
+        why: "The sign `/` always gives a `float`."
+      - text: "`4`"
+        why: "For a whole number, use `//`. The sign `/` always gives a `float`."
+      - text: "`0`"
+        why: "That is the remainder, `8 % 2`."
+  - kind: predict
+    id: r-fstring
+    objective: O3
+    code: |
+      n = 2
+      print(f"{n} cups")
+      print("{n} cups")
+    explain: "With `f`, Python replaces `{n}` with the value. Without `f`, the braces are text."
+  - kind: mcq
+    id: r-typeerror
+    objective: O4
+    prompt: "What does a `TypeError` tell you?"
+    options:
+      - text: "A sign or instruction got a value of the wrong type"
+        correct: true
+        why: "For example `\"a\" + 1`: text and a number cannot be joined."
+      - text: "A name is spelled wrong"
+        why: "That is a `NameError`."
+      - text: "A quote or bracket is missing"
+        why: "That is a `SyntaxError`."
+  - kind: mcq
+    id: r-floor
+    objective: O2
+    prompt: "What does `20 // 6` give?"
+    options:
+      - text: "`3`"
+        correct: true
+        why: "6 fits 3 whole times in 20. `//` gives the whole part."
+      - text: "`2`"
+        why: "That is the remainder, `20 % 6`."
+      - text: "`3.33`"
+        why: "The sign `/` gives decimals. `//` cuts them off."

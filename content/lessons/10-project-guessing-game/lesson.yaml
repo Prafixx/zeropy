@@ -1,0 +1,551 @@
+id: project-guessing-game
+order: 10
+title: "Project: guessing game"
+summary: Build a complete game, step by step, from a plan.
+minutes: 60
+outcomes: [A1, A2, A8]
+
+objectives:
+  - id: O1
+    text: Build a program in small steps from a plan, and test after every step
+  - id: O2
+    text: Get a random whole number with random.randint
+  - id: O3
+    text: Combine input, conversion, if and while in one program
+  - id: O4
+    text: Count the rounds of a loop and stop it with two conditions
+
+steps:
+  # 1. PLAY THE FINISHED GAME -------------------------------------------------
+  - id: play
+    type: demo
+    visual: none
+    sealed: true
+    objective: O1
+    title: Play the game first
+    intro: |
+      This is your first **project**. You will not learn a new idea here.
+      You will join what you know into one complete program.
+
+      The program thinks of a number from 1 to 20. You have 5 tries to
+      find it. Press **Play** and try it. The code is hidden: at the end of
+      this project, you will have written it yourself.
+    code: &game |
+      import random
+
+      secret = random.randint(1, 20)
+      print("I am thinking of a number from 1 to 20.")
+
+      guess = 0
+      tries = 0
+      while guess != secret and tries < 5:
+          guess = int(input("Your guess: "))
+          tries = tries + 1
+          if guess < secret:
+              print("Too low")
+          elif guess > secret:
+              print("Too high")
+          else:
+              print("Correct!")
+
+      if guess == secret:
+          print(f"You needed {tries} tries.")
+      else:
+          print(f"You lose. The number was {secret}.")
+    experiments:
+      - text: "Play one game to the end."
+        expr: "err is None and asked >= 1"
+      - text: "Win a game. Idea: start in the middle, with `10`."
+        expr: "err is None and asked >= 1 and int(inputs[-1]) == ns.get('secret')"
+      - text: "Lose a game on purpose. What does the program tell you at the end?"
+        expr: "err is None and asked == 5 and int(inputs[-1]) != ns.get('secret')"
+
+  # 2. THE PLAN ---------------------------------------------------------------
+  - id: plan
+    type: theory
+    objective: O2
+    title: A plan in five steps
+    body: |
+      ## Small steps
+
+      Nobody writes a program like this from the first line to the last.
+      Programmers build a small part, run it, and then add the next part.
+      When something breaks, the mistake is in the few lines that are new.
+
+      The cards show your five steps. After each step the program runs.
+
+      You need one new tool, for the secret number:
+
+      ```
+      import random
+      secret = random.randint(1, 20)
+      ```
+
+      `import random` opens a toolbox that comes with Python.
+      `random.randint(1, 20)` gives a whole number from 1 to 20. **Both
+      ends are included**: this is different from `range`. You will learn
+      more about toolboxes in a later lesson.
+    keys:
+      - code: "1  Secret"
+        means: "The program picks a random number."
+      - code: "2  One guess"
+        means: "Ask, compare, answer: too low, too high or correct."
+      - code: "3  Again"
+        means: "Repeat until the guess is right."
+      - code: "4  Count"
+        means: "Count the tries and show them at the end."
+      - code: "5  Limit"
+        means: "Stop after 5 tries. The player can lose."
+
+  # 3. STEP 1 -----------------------------------------------------------------
+  - id: m1-secret
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 1: the secret number"
+    prompt: |
+      **Let the program pick a secret number from 1 to 20.**
+
+      - Store it in a variable with the name `secret`. The checks need
+        this name.
+      - Print one line of text that explains the game to the player.
+
+      To test your step, add a line that prints `secret`, and run the
+      program a few times. Does the number change? You will delete this
+      test line in the next step.
+    starter: |
+      # Step 1: the secret number
+    solution: |
+      import random
+
+      secret = random.randint(1, 20)
+      print("I am thinking of a number from 1 to 20.")
+    after: >-
+      Your program now does something different each time it runs. Keep
+      the test line with `print(secret)` for now if you like: it helps you
+      to test the next step.
+    cases:
+      - {}
+      - label: "the program runs a second time"
+        seed: 2
+      - label: "the program runs a third time"
+        seed: 3
+    checks:
+      - expr: "err is None"
+        pass: "The program runs without an error"
+        hint: "Read the message under the editor. Is `import random` the first line?"
+        misconceptions:
+          - when: "err == 'NameError'"
+            say: "Python does not know a name. The toolbox must be opened first: write `import random` at the top."
+      - expr: "isinstance(ns.get('secret'), int) and 1 <= ns['secret'] <= 20"
+        pass: "`secret` is a whole number from 1 to 20"
+        hint: "Store the result of `random.randint(1, 20)` in a variable with the name `secret`."
+      - expr: "called('randint') or called('randrange')"
+        pass: "The number comes from `random`, so it changes"
+        hint: "Do not type a number. Let Python choose: `random.randint(1, 20)`."
+      - expr: "any(line.strip() != '' and not line.strip().isdigit() for line in lines)"
+        pass: "It prints a line of text for the player"
+        hint: "Add a `print` with a sentence, for example that the number is from 1 to 20."
+    hints:
+      - "The first line of the program is `import random`."
+      - "Then: `secret = random.randint(1, 20)`."
+      - 'Then a `print` with a sentence, for example `print("I am thinking of a number from 1 to 20.")`.'
+
+  # 4. STEP 2 -----------------------------------------------------------------
+  - id: m2-one-guess
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O3
+    title: "Step 2: one guess"
+    prompt: |
+      Your code from step 1 is in the editor. **Add one guess:**
+
+      - Ask the player for a number. Remember: the answer of `input()` is
+        text.
+      - Compare it with `secret` and print one of three answers:
+        `Too low`, `Too high` or `Correct!`
+
+      `Too low` means: the guess is smaller than the secret number.
+
+      Test it: with your test line `print(secret)` you know the number, so
+      you can try a guess that is too low, one that is too high, and the
+      right one. Then delete the test line.
+    solution: |
+      import random
+
+      secret = random.randint(1, 20)
+      print("I am thinking of a number from 1 to 20.")
+
+      guess = int(input("Your guess: "))
+      if guess < secret:
+          print("Too low")
+      elif guess > secret:
+          print("Too high")
+      else:
+          print("Correct!")
+    after: >-
+      Three possible paths, and you tested each of them. The checks did
+      the same: they ran your program with a fixed secret number and three
+      different guesses.
+    cases:
+      - {}
+      - label: "the secret number is 7 and the guess is `3`"
+        set: { secret: 7 }
+        stdin: ["3"]
+      - label: "the secret number is 7 and the guess is `12`"
+        set: { secret: 7 }
+        stdin: ["12"]
+      - label: "the secret number is 7 and the guess is `7`"
+        set: { secret: 7 }
+        stdin: ["7"]
+    checks:
+      - expr: "err is None and asked == 1"
+        pass: "The program asks for one guess and runs without an error"
+        hint: "Use `input()` one time, after the lines of step 1."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "The answer of `input()` is text. Change it with `int()` before you compare it with `secret`."
+          - when: "err == 'ValueError'"
+            say: "The guess must be a whole number. Run again and type a number."
+          - when: "err is None and asked == 0"
+            say: "The program does not ask the player. Add a line with `input()`."
+      - &answers
+        expr: "asked == len(inputs) and [w for l in lines for w in ('correct', 'low', 'high') if w in l.lower()] == ['correct' if int(g) == secret else 'low' if int(g) < secret else 'high' for g in inputs]"
+        pass: "Every guess gets the right answer: `Too low`, `Too high` or `Correct!`"
+        hint: "Use `if`, `elif` and `else`. Only the answer lines may contain the words low, high or correct."
+        misconceptions:
+          - when: "asked == 1 and [w for l in lines for w in ('correct', 'low', 'high') if w in l.lower()] == ['high' if int(g) < secret else 'low' if int(g) > secret else 'correct' for g in inputs]"
+            say: "`Too low` and `Too high` are the wrong way round. A guess that is smaller than the secret number is too low."
+          - when: "asked == 1 and [w for l in lines for w in ('correct', 'low', 'high') if w in l.lower()] == []"
+            say: "The program gives no answer after the guess. Print `Too low`, `Too high` or `Correct!`."
+    hints:
+      - 'Ask and convert: `guess = int(input("Your guess: "))`.'
+      - "The first question: `if guess < secret:`. Its block prints `Too low`."
+      - "Then `elif guess > secret:` for `Too high`, and `else:` for `Correct!`."
+
+  # 5. STEP 3 -----------------------------------------------------------------
+  - id: m3-again
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O3
+    title: "Step 3: again and again"
+    prompt: |
+      One guess is not a game. **Let the player guess until the number is
+      found.**
+
+      - Put the question and the three answers inside a `while` loop.
+      - The loop runs as long as the guess is not equal to `secret`.
+      - After `Correct!` the program ends. It must not ask again.
+
+      Think about the start: the condition uses `guess` before the player
+      has typed anything. Which start value makes the loop run the first
+      time?
+    solution: |
+      import random
+
+      secret = random.randint(1, 20)
+      print("I am thinking of a number from 1 to 20.")
+
+      guess = 0
+      while guess != secret:
+          guess = int(input("Your guess: "))
+          if guess < secret:
+              print("Too low")
+          elif guess > secret:
+              print("Too high")
+          else:
+              print("Correct!")
+    after: >-
+      The start value 0 is a small trick: the secret number is never 0, so
+      the first question of the loop is always True. Now it is a real
+      game. Play it a few times.
+    cases:
+      - {}
+      - label: "the secret number is 7 and the guesses are `3`, `12`, `7`"
+        set: { secret: 7 }
+        stdin: ["3", "12", "7"]
+      - label: "the secret number is 15 and the first guess is `15`"
+        set: { secret: 15 }
+        stdin: ["15"]
+      - label: "the secret number is 1 and the guesses are `10`, `5`, `2`, `1`"
+        set: { secret: 1 }
+        stdin: ["10", "5", "2", "1"]
+    checks:
+      - &ends
+        expr: "err is None"
+        pass: "The game ends by itself, without an error"
+        hint: "Read the message under the editor."
+        misconceptions:
+          - when: "err == 'EOFError'"
+            say: "The program asks for another guess when the game is over. Check the condition of the loop."
+          - when: "err == 'Timeout'"
+            say: "The loop never stops. The line with `input()` must be inside the loop, so that `guess` gets a new value in each round."
+          - when: "err == 'NameError'"
+            say: "The condition of the loop uses a name that has no value yet. Give `guess` a start value before the loop."
+          - when: "err == 'TypeError'"
+            say: "The answer of `input()` is text. Change it with `int()`."
+      - *answers
+    hints:
+      - "Before the loop: `guess = 0`. The secret number is never 0."
+      - "The loop: `while guess != secret:`."
+      - "Move the `input` line and the whole `if` chain into the block of the loop: 4 more spaces for each line."
+
+  # 6. STEP 4 -----------------------------------------------------------------
+  - id: m4-count
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O4
+    title: "Step 4: count the tries"
+    prompt: |
+      A good player needs few tries. **Count the guesses and show the
+      number at the end.**
+
+      - Start a counter at 0 before the loop.
+      - Make it one bigger in every round.
+      - After the loop, print a line with the number of tries, for example
+        `You needed 4 tries.`
+
+      Where must the last `print` be: inside the block of the loop, or
+      after it?
+    solution: |
+      import random
+
+      secret = random.randint(1, 20)
+      print("I am thinking of a number from 1 to 20.")
+
+      guess = 0
+      tries = 0
+      while guess != secret:
+          guess = int(input("Your guess: "))
+          tries = tries + 1
+          if guess < secret:
+              print("Too low")
+          elif guess > secret:
+              print("Too high")
+          else:
+              print("Correct!")
+
+      print(f"You needed {tries} tries.")
+    after: >-
+      A start value before the loop and a change inside it: the counter
+      has the same form as the counting loops of lesson 7. Here it does
+      not control the loop. It only watches it.
+    cases:
+      - {}
+      - label: "the secret number is 7 and the guesses are `3`, `12`, `7`"
+        set: { secret: 7 }
+        stdin: ["3", "12", "7"]
+      - label: "the secret number is 15 and the first guess is `15`"
+        set: { secret: 15 }
+        stdin: ["15"]
+      - label: "the secret number is 2 and the guesses are `10`, `5`, `3`, `1`, `2`"
+        set: { secret: 2 }
+        stdin: ["10", "5", "3", "1", "2"]
+    checks:
+      - *ends
+      - *answers
+      - expr: "len(lines) > 0 and str(len(inputs)) in lines[-1] and 'correct' not in lines[-1].lower()"
+        pass: "After `Correct!`, the last line shows the number of tries"
+        hint: "Count the rounds in a variable. After the loop, print it with an f-string."
+        misconceptions:
+          - when: "len(lines) > 0 and str(len(inputs) - 1) in lines[-1] and 'correct' not in lines[-1].lower()"
+            say: "The count is one too small. Every guess is a try, also the right one."
+          - when: "len(lines) > 0 and 'correct' in lines[-1].lower()"
+            say: "The last line is still `Correct!`. Print the number of tries after the loop, on a line of its own."
+    hints:
+      - "Before the loop: `tries = 0`."
+      - "Inside the loop, after the `input` line: `tries = tries + 1`."
+      - 'After the loop, with no spaces at the start: `print(f"You needed {tries} tries.")`.'
+
+  # 7. STEP 5 -----------------------------------------------------------------
+  - id: m5-limit
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O4
+    title: "Step 5: only five tries"
+    prompt: |
+      The last step makes the game exciting. **The player has only 5
+      tries.**
+
+      - The loop must stop when the guess is right **or** when 5 tries are
+        used. So it runs as long as the guess is wrong **and** fewer than
+        5 tries are used.
+      - After the loop there are two endings. If the guess is right, show
+        the number of tries as before. If not, print a line like
+        `You lose. The number was 13.`
+
+      After the loop, how does the program know which ending it is?
+    solution: *game
+    after: >-
+      This is the complete game. You wrote about 20 lines, and every one
+      of them comes from the last nine lessons: variables, text, input,
+      conversion, conditions, two kinds of decisions and a loop.
+    cases:
+      - {}
+      - label: "the secret number is 7 and the guesses are `1`, `2`, `3`, `4`, `5`"
+        set: { secret: 7 }
+        stdin: ["1", "2", "3", "4", "5"]
+      - label: "the secret number is 7 and the guesses are `1`, `2`, `3`, `4`, `7`"
+        set: { secret: 7 }
+        stdin: ["1", "2", "3", "4", "7"]
+      - label: "the secret number is 7 and the guesses are `3`, `12`, `7`"
+        set: { secret: 7 }
+        stdin: ["3", "12", "7"]
+      - label: "the secret number is 15 and the first guess is `15`"
+        set: { secret: 15 }
+        stdin: ["15"]
+    checks:
+      - expr: "err is None"
+        pass: "The game ends by itself, without an error"
+        hint: "Read the message under the editor."
+        misconceptions:
+          - when: "err == 'EOFError'"
+            say: "The program asks for a guess when the game is over. The loop must stop after the right guess, and also after 5 tries."
+          - when: "err == 'Timeout'"
+            say: "The loop never stops. Check that the counter grows inside the loop."
+      - *answers
+      - expr: "len(lines) > 0 and ((int(inputs[-1]) == secret and str(len(inputs)) in lines[-1]) or (int(inputs[-1]) != secret and len(inputs) == 5 and str(secret) in lines[-1]))"
+        pass: "A win shows the number of tries. A loss after 5 tries shows the secret number."
+        hint: "After the loop, use `if guess == secret:` for the win, and `else:` for the loss."
+        misconceptions:
+          - when: "len(inputs) == 5 and int(inputs[-1]) == secret and str(secret) in lines[-1] and str(len(inputs)) not in lines[-1]"
+            say: "The player found the number with the fifth try, but the program says that the player lost. After the loop, test the guess, not the counter."
+          - when: "len(inputs) == 5 and int(inputs[-1]) != secret"
+            say: "After 5 wrong guesses, the last line must tell the player the secret number."
+    hints:
+      - "The condition of the loop gets a second part: `while guess != secret and tries < 5:`."
+      - "After the loop: `if guess == secret:` prints the tries."
+      - 'Then `else:` with `print(f"You lose. The number was {secret}.")`.'
+
+  # 8. LOOK BACK --------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Look back at your work
+    items:
+      - kind: mcq
+        id: q-steps
+        objective: O1
+        prompt: "You ran and tested the program after **every** step. Why is that better than writing everything first?"
+        options:
+          - text: "A mistake is then in the few lines that are new, so it is easy to find"
+            correct: true
+            why: "With 20 new lines, a mistake can be anywhere. With 3 new lines, you know where to look."
+          - text: "Python can only run short programs"
+            why: "Python runs programs of any length. The reason is about finding mistakes."
+          - text: "The program gets faster"
+            why: "The speed is the same. Small steps make the work of the programmer easier."
+      - kind: mcq
+        id: q-randint
+        objective: O2
+        prompt: "Which numbers can `random.randint(1, 6)` give?"
+        options:
+          - text: "1, 2, 3, 4, 5 or 6"
+            correct: true
+            why: "With `randint`, both ends are included. It works like a dice."
+          - text: "1, 2, 3, 4 or 5"
+            why: "That is the rule of `range`, where the stop value is left out. `randint` includes both ends."
+          - text: "0, 1, 2, 3, 4, 5 or 6"
+            why: "The first number is the smallest possible result. Here it is 1."
+      - kind: predict
+        id: q-text-number
+        objective: O3
+        prompt: "A player forgot `int()`. **What does this program print?**"
+        code: |
+          secret = 7
+          guess = "7"
+          if guess == secret:
+              print("Correct!")
+          else:
+              print("Wrong")
+        explain: >-
+          `"7"` is text and `7` is a number. They are never equal, so the
+          `else` block runs. Python gives no error for `==`, and that makes
+          this mistake hard to see. This is why your game changes the
+          answer with `int()`.
+        misconceptions:
+          - answer: "Correct!"
+            say: "Text and a number are never equal, also when they look the same."
+      - kind: mcq
+        id: q-two-conditions
+        objective: O4
+        prompt: "The loop of your game starts with `while guess != secret and tries < 5:`. When does it stop?"
+        options:
+          - text: "When the guess is right, or when 5 tries are used: one of the two is enough"
+            correct: true
+            why: "`and` is True only when both parts are True. When one part becomes False, the loop ends."
+          - text: "Only when the guess is right and 5 tries are used"
+            why: "Then a player who finds the number with the second try would have to go on guessing."
+          - text: "After 5 rounds, in every case"
+            why: "The first part of the condition ends the loop earlier, when the guess is right."
+      - kind: mcq
+        id: q-start
+        objective: O3
+        prompt: "Before the loop, the program sets `guess = 0`. Why?"
+        options:
+          - text: "The condition of the loop needs a value for `guess`, and 0 is never the secret number"
+            correct: true
+            why: "So the first answer of the condition is always True, and the block runs at least one time."
+          - text: "The first guess of every player is 0"
+            why: "The player has not typed anything at that moment. The 0 is only a start value."
+          - text: "Python gives every new variable the value 0"
+            why: "Python gives a variable no value by itself. Without this line you get a `NameError`."
+
+  # 9. REVIEW -----------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 6
+
+review:
+  - kind: mcq
+    id: r-randint
+    objective: O2
+    prompt: "What is the difference between `random.randint(1, 10)` and `range(1, 10)`?"
+    options:
+      - text: "`randint` can give 10. `range` stops at 9."
+        correct: true
+        why: "`randint` includes both ends. `range` leaves out its stop value."
+      - text: "There is no difference: both end at 9"
+        why: "`randint(1, 10)` can give 10. Only `range` leaves out the last number."
+      - text: "`randint` starts at 0"
+        why: "`randint(1, 10)` gives numbers from 1 to 10."
+  - kind: predict
+    id: r-compare
+    objective: O3
+    code: |
+      a = "5"
+      b = 5
+      print(a == b)
+      print(int(a) == b)
+    explain: "Text and a number are never equal. After `int()`, both are numbers and the comparison works."
+  - kind: mcq
+    id: r-and-loop
+    objective: O4
+    prompt: "A loop starts with `while lives > 0 and level < 10:`. When does it end?"
+    options:
+      - text: "When `lives` is 0, or when `level` is 10: one of the two is enough"
+        correct: true
+        why: "With `and`, the condition is False as soon as one part is False."
+      - text: "Only when `lives` is 0 and `level` is 10 at the same time"
+        why: "That would be the rule for `or`. With `and`, one False part ends the loop."
+      - text: "It never ends"
+        why: "It ends when one of the two parts becomes False."
+  - kind: mcq
+    id: r-small-steps
+    objective: O1
+    prompt: "You must write a program of 40 lines. What is a good way to work?"
+    options:
+      - text: "Write a small part, run it, test it, then add the next part"
+        correct: true
+        why: "When something breaks, the mistake is in the lines that are new."
+      - text: "Write all 40 lines, then run the program for the first time"
+        why: "Then several mistakes show up together, and they can be anywhere."
+      - text: "Write the last part first"
+        why: "The last part usually needs the parts before it, so you cannot run and test it."

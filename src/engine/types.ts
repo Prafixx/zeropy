@@ -1,0 +1,413 @@
+// Data model of a lesson. Lessons are YAML files that match these types.
+
+export interface Objective {
+  id: string;
+  text: string;
+}
+
+export interface McqOption {
+  text: string;
+  correct?: boolean;
+  /** Explains why this option is right or wrong. Always shown after a choice. */
+  why: string;
+}
+
+export interface McqItem {
+  kind: 'mcq';
+  id: string;
+  objective: string;
+  prompt: string;
+  code?: string;
+  options: McqOption[];
+}
+
+export interface PredictItem {
+  kind: 'predict';
+  id: string;
+  objective: string;
+  prompt?: string;
+  code: string;
+  /** Files in the folder before the code runs. */
+  files?: Record<string, string>;
+  /** Answers of the pretend web for `requests` (see harness.py). */
+  web?: Web;
+  /** Shown after the answer. Explains the real output. */
+  explain: string;
+  /** Targeted feedback for known wrong answers. */
+  misconceptions?: { answer: string; say: string }[];
+}
+
+/** Find the error: click the line, name the kind of error, choose the fix. */
+export interface DiagnoseItem {
+  kind: 'diagnose';
+  id: string;
+  objective: string;
+  /** read: the message of Python is shown. predict: decide before the run. */
+  mode: 'read' | 'predict';
+  prompt?: string;
+  /** A program that stops with an error. Python gives the answer key. */
+  code: string;
+  /** Files in the folder before the code runs. */
+  files?: Record<string, string>;
+  /** Answers of the pretend web for `requests` (see harness.py). */
+  web?: Web;
+  /** Wrong kinds of error to offer. Default: other common ones. */
+  distractors?: string[];
+  /** Optional last question: how to fix it. */
+  fix?: McqOption[];
+  explain: string;
+}
+
+export type Item = McqItem | PredictItem | DiagnoseItem;
+
+export interface Check {
+  /** Python expression. True means the requirement is met. */
+  expr: string;
+  /** The requirement in plain words (shown in the check list). */
+  pass: string;
+  /** What to try when the check fails. */
+  hint: string;
+  misconceptions?: { when: string; say: string }[];
+}
+
+/**
+ * One answer of the pretend web. `requests` in the page reaches no real
+ * server: each URL gets the answer that the lesson gives here.
+ */
+export interface WebRoute {
+  status?: number;
+  json?: unknown;
+  text?: string;
+  /** The request fails before an answer comes. */
+  error?: 'Timeout' | 'ConnectionError';
+}
+
+/** URL (with or without its query, for example "...?city=Oslo") → answer. */
+export type Web = Record<string, WebRoute>;
+
+export interface Case {
+  label?: string;
+  setup?: string;
+  set?: Record<string, unknown>;
+  stdin?: string[];
+  /** Makes random numbers repeat for this case. */
+  seed?: number;
+  /** Files in the folder before the run: {"notes.txt": "..."}. */
+  files?: Record<string, string>;
+  /** Answers of the pretend web for `requests` (see harness.py). */
+  web?: Web;
+}
+
+interface StepBase {
+  id: string;
+  objective: string;
+  title: string;
+}
+
+export interface HookStep extends StepBase {
+  type: 'hook';
+  question: string;
+  code: string;
+  beats: { beat: string; line?: number; caption: string }[];
+  /** Show the value color legend under the scene. Default: true. */
+  legend?: boolean;
+}
+
+export interface TheoryStep extends StepBase {
+  type: 'theory';
+  body: string;
+  /** Short facts shown as cards next to the text. */
+  keys?: { code: string; means: string }[];
+}
+
+export interface PredictStep extends StepBase {
+  type: 'predict';
+  item: PredictItem;
+}
+
+export interface DemoStep extends StepBase {
+  type: 'demo';
+  /** Which picture the run drives. Default: variables. "none": no picture. */
+  visual?: 'variables' | 'output' | 'none';
+  /** The code is hidden: the learner only plays the program. */
+  sealed?: boolean;
+  intro: string;
+  code: string;
+  /** Files in the folder before each run. */
+  files?: Record<string, string>;
+  /** Answers of the pretend web for `requests` (see harness.py). */
+  web?: Web;
+  /** Run the test functions after the program, like pytest, and print the report. */
+  pytest?: boolean;
+  experiments: { text: string; expr: string }[];
+}
+
+export interface WorkedStep extends StepBase {
+  type: 'worked';
+  problem: string;
+  lines: { code: string; note: string }[];
+  check: McqItem;
+}
+
+export interface ExerciseStep extends StepBase {
+  type: 'exercise';
+  fade: 'completion' | 'debug' | 'independent' | 'milestone';
+  /**
+   * Project step: the editor starts with the learner's own code from the
+   * step before, so one program grows over several steps.
+   */
+  carry?: boolean;
+  /** Set by the registry for carry steps: id and solution of the step before. */
+  prev?: string;
+  base?: string;
+  prompt: string;
+  /** Code that already ran before the learner's code. Shown read-only. */
+  given?: string;
+  /** Files in the folder before each run (a case can have its own). */
+  files?: Record<string, string>;
+  /** The pretend web for each run (a case can have its own). */
+  web?: Web;
+  /** Run the test functions after the program, like pytest, and print the report. */
+  pytest?: boolean;
+  starter: string;
+  solution: string;
+  /** Shown after success: why the solution works. */
+  after?: string;
+  cases?: Case[];
+  checks: Check[];
+  hints: string[];
+}
+
+export interface QuizStep extends StepBase {
+  type: 'quiz';
+  items: Item[];
+}
+
+/** A fast series of items in the middle of a lesson. */
+export interface DrillStep extends StepBase {
+  type: 'drill';
+  items: Item[];
+}
+
+/**
+ * Work on the learner's own computer. The learner runs public/check.py for
+ * a task and pastes its sealed output; the checks are Python expressions
+ * over `report` (the facts, all texts).
+ */
+export interface LocalStep extends StepBase {
+  type: 'local';
+  prompt: string;
+  /** The task name for `python check.py <task>`. */
+  task: string;
+  /** The lowest version of check.py that knows this task. Default 1. */
+  needs?: number;
+  checks: Check[];
+  hints: string[];
+  after?: string;
+  /** A passing report, for check-content: the checks must pass on it. */
+  example: Record<string, string>;
+}
+
+/**
+ * One task of a debugger step. With `name`: what is the value of `name` when
+ * the program stops on `line` for the `hit`-th time? With `frame`: stop
+ * inside a call of that function. With only `line`: stop on that line.
+ */
+export interface DebugTask {
+  do: string;
+  line?: number;
+  hit?: number;
+  name?: string;
+  frame?: string;
+}
+
+/** A debugger like the one of VS Code, over the real run of `code`. */
+export interface DebuggerStep extends StepBase {
+  type: 'debugger';
+  prompt: string;
+  code: string;
+  /** Answers for input(), typed by the debugger. */
+  stdin?: string[];
+  /** Breakpoints that are set at the start. */
+  breakpoints?: number[];
+  tasks: DebugTask[];
+  hints: string[];
+  after?: string;
+}
+
+export interface ReviewStep extends StepBase {
+  type: 'review';
+  count: number;
+}
+
+export type Step =
+  | DebuggerStep
+  | HookStep
+  | TheoryStep
+  | PredictStep
+  | DemoStep
+  | WorkedStep
+  | ExerciseStep
+  | QuizStep
+  | DrillStep
+  | LocalStep
+  | ReviewStep;
+
+export interface Lesson {
+  id: string;
+  order: number;
+  title: string;
+  summary: string;
+  minutes: number;
+  outcomes: string[];
+  objectives: Objective[];
+  steps: Step[];
+  /** Cards that enter spaced review when the lesson is finished. */
+  review: Item[];
+}
+
+export interface CourseLesson {
+  id: string;
+  title: string;
+  kind?: 'lesson' | 'project';
+}
+
+export interface CourseModule {
+  title: string;
+  goal: string;
+  hours: number;
+  lessons: CourseLesson[];
+}
+
+export interface Course {
+  title: string;
+  outcomes: string[];
+  modules: CourseModule[];
+}
+
+// ---- Python runner protocol -------------------------------------------------
+
+export interface VarState {
+  name: string;
+  type: string;
+  repr: string;
+  /** Only for lists: the first values and the full length. */
+  items?: { repr: string; type: string; key?: string }[];
+  size?: number;
+  /** Only for lists: the identity of the object. Equal refs mean one list. */
+  ref?: string;
+  /** An object of a class of the learner: `items` are its attributes. */
+  object?: boolean;
+}
+
+/** A function call that runs, with its own (local) names. */
+export interface CallFrame {
+  name: string;
+  vars: VarState[];
+  /** Number of the call: two calls of one function have different numbers. */
+  call?: number;
+  /** The line that made the call. */
+  at?: number | null;
+}
+
+export interface TraceStep {
+  line: number;
+  vars: VarState[];
+  /** Length of stdout after this line ran. */
+  out: number;
+  /** The function calls that run after this line, from the outside in. */
+  stack?: CallFrame[];
+  /** Set on the step where a function ends: the value it gives back. */
+  ret?: { repr: string; type: string } | null;
+}
+
+export interface PyError {
+  type: string;
+  message: string;
+  line: number | null;
+  traceback: string;
+  /** The program called input() and no answer was left. */
+  needsInput?: boolean;
+}
+
+export interface CheckResult {
+  pass: boolean;
+  /** Label of the case that failed, if it was not the code as written. */
+  case: string | null;
+  note: string | null;
+}
+
+/** A for-loop started. `values` are what its variable will get, in order. */
+export interface FeedEvent {
+  /** Number of trace steps recorded when the loop started. */
+  at: number;
+  line: number;
+  values: { repr: string; type: string }[];
+}
+
+export interface RunRequest {
+  code: string;
+  trace?: boolean;
+  /** Run the test functions after the program and print a report like pytest. */
+  pytest?: boolean;
+  cases?: Case[];
+  checks?: { expr: string; misconceptions?: { when: string; say: string }[] }[];
+}
+
+/** One widget of a window of the pretend tkinter (see harness.py). */
+export interface GuiNode {
+  id: number;
+  kind: 'Frame' | 'Label' | 'Button' | 'Entry' | 'Listbox' | 'Checkbutton' | string;
+  /** pack, grid or place; null: not placed, so not shown. */
+  manager: 'pack' | 'grid' | 'place' | null;
+  layout: Record<string, string | number | boolean | null>;
+  style: Record<string, string | number | boolean | null>;
+  /** Events with a handler, like "<Return>". */
+  keys: string[];
+  children: GuiNode[];
+  text?: string;
+  value?: string;
+  secret?: boolean;
+  checked?: boolean;
+  items?: string[];
+  selected?: number[];
+}
+
+export interface GuiTree {
+  title: string;
+  closed: boolean;
+  /** mainloop() was called. Without it, a real window closes at once. */
+  looping: boolean;
+  children: GuiNode[];
+  dialogs: { kind: string; title: string; message: string }[];
+}
+
+export interface GuiEvent {
+  action: 'click' | 'key' | 'select' | 'close';
+  id?: number;
+  key?: string;
+  /** The text of every Entry, by id: the learner may have typed. */
+  values?: Record<string, string>;
+  selections?: Record<string, number[]>;
+}
+
+export interface GuiResult {
+  gui: GuiTree | null;
+  stdout: string;
+  error: PyError | null;
+  files?: Record<string, string>;
+}
+
+export interface RunResult {
+  /** The window of the program (pretend tkinter), if it made one. */
+  gui?: GuiTree | null;
+  stdout: string;
+  error: PyError | null;
+  vars: VarState[];
+  steps: TraceStep[];
+  /** Only with trace: one event for each start of a for-loop. */
+  feeds?: FeedEvent[];
+  checks: CheckResult[];
+  /** The text files in the folder after the run (first case). */
+  files?: Record<string, string>;
+}
