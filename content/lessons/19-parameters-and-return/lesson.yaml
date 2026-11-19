@@ -136,6 +136,39 @@ steps:
         expr: "err is None and ns.get('t') == 101"
       - text: "At the end, add `print(n)`. Whose name was `n`?"
         expr: "err == 'NameError' and 'n' in src.splitlines()[-1]"
+    investigate:
+      - kind: spot
+        id: i-inner
+        prompt: "Which line calls `square`?"
+        code: |
+          def square(n):
+              return n * n
+
+          def total(a, b):
+              return square(a) + square(b)
+
+          t = total(2, 3)
+          print(t)
+        line: 5
+        wrong:
+          - line: 7
+            say: "This line calls `total`. `square` is called from inside `total`."
+          - line: 1
+            say: "This line defines `square`. It does not run it."
+        explain: >-
+          `total` calls `square` twice on line 5. While `square` runs, the
+          call of `total` waits for its result.
+      - kind: mcq
+        id: i-how-many
+        prompt: "How many times does `square` run in this program?"
+        options:
+          - text: "Two times: once for `a`, once for `b`"
+            correct: true
+            why: "Line 5 has two calls: `square(a)` and `square(b)`."
+          - text: "One time"
+            why: "There are two calls of `square` on line 5."
+          - text: "Three times"
+            why: "`def` does not run a function. Only the two calls on line 5 do."
 
   # 5. THEORY ----------------------------------------------------------------
   - id: results
@@ -311,6 +344,29 @@ steps:
           why: "Inside the loop, `return -1` runs in the first round, after the first number."
         - text: "Python shows an error"
           why: "It is correct Python. It is a logic error: the result is wrong."
+
+  # TRACE -----------------------------------------------------------------
+  - id: trace
+    type: drill
+    objective: O2
+    title: Be the computer
+    items:
+      - kind: trace
+        id: t-calls
+        objective: O2
+        code: |
+          def double(n):
+              return n * 2
+
+          x = 3
+          y = double(x)
+          x = double(y)
+          print(x, y)
+        names: [x, y]
+        explain: >-
+          The `def` only makes the function. Each call gives back twice its
+          argument: `double(3)` is 6, then `double(6)` is 12. The global `x`
+          changes only on line 6.
 
   # PUZZLE: put the lines in order (Parsons) ----------------------------
   - id: order

@@ -118,6 +118,35 @@ steps:
         expr: "isinstance(ns.get('city'), str)"
       - text: "Make an error on purpose: on a new last line, print a name that does not exist. Read the message."
         expr: "err == 'NameError'"
+    investigate:
+      - kind: spot
+        id: i-new-name
+        prompt: "Which line reads two variables and makes a new one from them?"
+        code: |
+          price = 4
+          quantity = 3
+          total = price * quantity
+          print(total)
+        line: 3
+        wrong:
+          - line: 4
+            say: "This line reads `total`, but it makes no new variable."
+          - line: 1
+            say: "This line makes a variable, but from a number, not from other variables."
+        explain: >-
+          `price * quantity` reads the two boxes, and `total =` puts the
+          result in a new box.
+      - kind: mcq
+        id: i-no-update
+        prompt: "After line 3 you add `quantity = 10`. What is `total` now?"
+        options:
+          - text: "`12`"
+            correct: true
+            why: "`total` was computed once, on line 3. A variable keeps its value until a line changes it."
+          - text: "`40`"
+            why: "`total` is not computed again. It holds the value from line 3."
+          - text: "An error"
+            why: "Changing `quantity` is fine. It does not touch `total`."
 
   # 5. WORKED EXAMPLE --------------------------------------------------------
   - id: example-tax
@@ -152,6 +181,46 @@ steps:
           why: "Only line 1 holds the number 20. Lines 2 and 3 use the name `price`, so they follow the change."
         - text: "All four lines"
           why: "Lines 2, 3 and 4 contain only names. They work for any price."
+
+  # TRACE -----------------------------------------------------------------
+  - id: trace-how
+    type: theory
+    objective: O2
+    title: Be the computer
+    body: |
+      Good programmers can run a program **in their head**. They go line
+      by line and write each new value on paper. This is called
+      **tracing**. It is the best way to find out what code really does.
+
+      A **trace table** has a row for each line that runs, and a column
+      for each variable. You write a value only when it changes. An empty
+      space means: no change.
+
+      | Line | `a` | `b` |
+      |---|---|---|
+      | 1 | 5 | |
+      | 2 | | 7 |
+      | 3 | 15 | |
+
+      Python is the judge: after you check, it compares your table with
+      the real run.
+  - id: trace
+    type: drill
+    objective: O2
+    title: Trace the code
+    items:
+      - kind: trace
+        id: t-assign
+        objective: O2
+        code: |
+          a = 5
+          b = a + 2
+          a = a * 3
+          print(a, b)
+        names: [a, b]
+        explain: >-
+          `b = a + 2` uses the value of `a` at that moment: 5. When `a`
+          changes later, `b` keeps 7.
 
   # PUZZLE: put the lines in order (Parsons) ----------------------------
   - id: order

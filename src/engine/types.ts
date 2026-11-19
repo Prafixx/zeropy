@@ -75,7 +75,40 @@ export interface OrderItem {
   explain: string;
 }
 
-export type Item = McqItem | PredictItem | DiagnoseItem | OrderItem;
+/**
+ * Trace the code by hand: one row for each line that changes a value of
+ * `names` or prints. The learner writes each new value. The real run is
+ * the answer key.
+ */
+export interface TraceItem {
+  kind: 'trace';
+  id: string;
+  objective: string;
+  prompt?: string;
+  code: string;
+  /** The variables to follow: the columns of the table. Global names only. */
+  names: string[];
+  /** Answers for input(). */
+  stdin?: string[];
+  /** Shown after the table is right. */
+  explain: string;
+}
+
+/** Click the line that does something ("Which line changes `total`?"). */
+export interface SpotItem {
+  kind: 'spot';
+  id: string;
+  objective: string;
+  prompt: string;
+  code: string;
+  /** The right line (1 is the first line). */
+  line: number;
+  /** Targeted feedback for wrong lines. */
+  wrong?: { line: number; say: string }[];
+  explain: string;
+}
+
+export type Item = McqItem | PredictItem | DiagnoseItem | OrderItem | TraceItem | SpotItem;
 
 export interface Check {
   /** Python expression. True means the requirement is met. */
@@ -157,6 +190,17 @@ export interface DemoStep extends StepBase {
   /** Run the test functions after the program, like pytest, and print the report. */
   pytest?: boolean;
   experiments: { text: string; expr: string }[];
+  /**
+   * Questions about how the code works. The registry turns them into an
+   * "investigate" step right after the demo.
+   */
+  investigate?: Item[];
+}
+
+/** Made by the registry from `DemoStep.investigate`. */
+export interface InvestigateStep extends StepBase {
+  type: 'investigate';
+  items: Item[];
 }
 
 export interface WorkedStep extends StepBase {
@@ -271,6 +315,7 @@ export type Step =
   | ExerciseStep
   | QuizStep
   | DrillStep
+  | InvestigateStep
   | LocalStep
   | ReviewStep;
 
@@ -296,7 +341,6 @@ export interface CourseLesson {
 export interface CourseModule {
   title: string;
   goal: string;
-  hours: number;
   lessons: CourseLesson[];
 }
 

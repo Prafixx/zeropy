@@ -123,6 +123,30 @@ steps:
         expr: "err is None and lines == ['5', '4', '3', '2', '1']"
       - text: "Replace `range(...)` by a text, for example `\"hello\"`. What does `n` get in each round?"
         expr: "err is None and isinstance(ns.get('n'), str) and len(lines) > 1 and all(len(line) == 1 for line in lines)"
+    investigate:
+      - kind: mcq
+        id: i-last
+        prompt: "What is the last value of `n` in this loop?"
+        code: |
+          for n in range(5):
+              print(n)
+        options:
+          - text: "`4`"
+            correct: true
+            why: "`range(5)` is 0, 1, 2, 3, 4: five values. The 5 itself is not in it."
+          - text: "`5`"
+            why: "The stop value is never part of the range."
+          - text: "`0`"
+            why: "0 is the first value. The loop counts up to 4."
+      - kind: predict
+        id: i-step
+        prompt: "**What does this loop print?**"
+        code: |
+          for n in range(2, 9, 3):
+              print(n)
+        explain: >-
+          Start at 2, add 3 each time, and stop before 9: 2, 5, 8. The next
+          one, 11, is past the stop.
 
   # 5. PREDICT ---------------------------------------------------------------
   - id: predict-sum
@@ -182,6 +206,26 @@ steps:
           why: "`while` can do it, with a start value, a condition and a change. `for` is shorter and safer here."
         - text: "`for` is needed when the block has a `print`"
           why: "Both loops can print. The choice depends on what you know about the rounds."
+
+  # TRACE -----------------------------------------------------------------
+  - id: trace
+    type: drill
+    objective: O2
+    title: Be the computer
+    items:
+      - kind: trace
+        id: t-sum
+        objective: O2
+        code: |
+          total = 0
+          for n in range(1, 4):
+              total = total + n
+          print(total)
+        names: [n, total]
+        explain: >-
+          The `for` line gives `n` its next value, then the block adds it to
+          `total`. After 3, `range(1, 4)` has no more values, and the loop
+          ends.
 
   # PUZZLE: put the lines in order (Parsons) ----------------------------
   - id: order

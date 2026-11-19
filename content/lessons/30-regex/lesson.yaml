@@ -1,0 +1,594 @@
+id: regex
+order: 30
+title: Patterns with regular expressions
+summary: Find, check and take apart text by its shape, like "four digits" or "two letters, then numbers".
+minutes: 35
+outcomes: [A1, A3, A4]
+
+objectives:
+  - id: O1
+    text: Find every part of a text that fits a pattern, with re.findall
+  - id: O2
+    text: Check that a whole text has the right shape, with re.fullmatch
+  - id: O3
+    text: Take parts out of a text with groups, and replace with re.sub
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: patterns
+    type: theory
+    objective: O1
+    title: A pattern describes a shape
+    body: |
+      Some searches are about a **shape**, not a fixed text: "every number",
+      "a time like 18:30", "two capital letters and three digits". A
+      **regular expression** (regex) describes such a shape. The module is
+      `re`.
+
+      ```python
+      import re
+
+      re.findall(r"\d+", "3 cats and 12 dogs")    # ['3', '12']
+      ```
+
+      `findall` gives back a list of every part that fits, as **texts**.
+
+      | Pattern | Fits |
+      |---|---|
+      | `\d` | one digit, 0 to 9 |
+      | `\w` | one letter, digit or `_` |
+      | `\s` | one space (also a tab or a new line) |
+      | `.` | any one character |
+      | `[aeiou]` | one of these characters; `[a-z]`: one from a to z |
+      | `+` | the thing before it, one or more times |
+      | `{4}` | the thing before it, exactly 4 times |
+      | `?` | the thing before it, or nothing |
+
+      So `\d+` is "one or more digits", and `\d{4}` is "exactly four
+      digits".
+
+      ## Why the r?
+
+      `r"..."` is a **raw** string: the backslash stays a backslash.
+      Without the `r`, Python reads some pairs like `\n` as special
+      characters before `re` sees them. Always write patterns as `r"..."`.
+    keys:
+      - code: 're.findall(r"\d+", text)'
+        means: "A list of every number in the text, as texts."
+      - code: '\d  \w  \s  .'
+        means: "A digit, a word character, a space, any character."
+      - code: '+  {4}  ?'
+        means: "One or more, exactly four, maybe."
+
+  # 2. PREDICT ---------------------------------------------------------------
+  - id: predict-findall
+    type: predict
+    objective: O1
+    title: Every number
+    item:
+      kind: predict
+      id: p-findall
+      prompt: "**What does this program print?**"
+      code: |
+        import re
+
+        text = "Room 12, floor 3, 40 seats"
+        print(re.findall(r"\d+", text))
+      explain: >-
+        `\d+` is one or more digits, so `12` is one match, not two. The
+        matches come back as texts in a list, in the order of the text.
+      misconceptions:
+        - answer: "[12, 3, 40]"
+          say: "`findall` gives back texts: `'12'`, with quotes. To compute with them, use `int()`."
+        - answer: "['1', '2', '3', '4', '0']"
+          say: "That would be `\\d` alone: one digit. The `+` takes as many digits in a row as it can."
+
+  # 3. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O1
+    title: Find by shape
+    visual: output
+    intro: |
+      Press **Run**. Then change the patterns, and see what they find.
+    code: |
+      import re
+
+      text = "Call 555-1234 or 555-9876 before 18:00."
+      numbers = re.findall(r"\d+", text)
+      phones = re.findall(r"\d{3}-\d{4}", text)
+      print(numbers)
+      print(phones)
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and \"'555-1234'\" in out"
+      - text: 'Change the first pattern to `r"\d"`, without the `+`. What does `numbers` hold now?'
+        expr: "err is None and isinstance(ns.get('numbers'), list) and len(numbers) > 10"
+      - text: 'Find the time: add `print(re.findall(r"\d\d:\d\d", text))`.'
+        expr: "err is None and \"'18:00'\" in out"
+      - text: 'Find the words that start with a capital letter: `print(re.findall(r"[A-Z]\w*", text))`.'
+        expr: "err is None and \"['Call']\" in out"
+    investigate:
+      - kind: spot
+        id: i-phones
+        prompt: "Which line finds only the phone numbers, and not the time?"
+        code: |
+          import re
+
+          text = "Call 555-1234 or 555-9876 before 18:00."
+          numbers = re.findall(r"\d+", text)
+          phones = re.findall(r"\d{3}-\d{4}", text)
+          print(numbers)
+          print(phones)
+        line: 5
+        wrong:
+          - line: 4
+            say: 'This pattern is any number of digits. It finds `18` and `00` too.'
+        explain: >-
+          Three digits, a dash, four digits: only a phone number has this
+          shape. The time `18:00` has a colon and only two digits in a row.
+      - kind: mcq
+        id: i-count
+        prompt: 'How many texts are in `numbers`?'
+        code: |
+          text = "Call 555-1234 or 555-9876 before 18:00."
+          numbers = re.findall(r"\d+", text)
+        options:
+          - text: "6: each group of digits in a row is one match"
+            correct: true
+            why: '`555`, `1234`, `555`, `9876`, `18` and `00`. The dash and the colon end a match.'
+          - text: "2: the two phone numbers"
+            why: '`\d+` knows nothing about phone numbers. A dash is not a digit, so it ends a match.'
+          - text: "18: one for each digit"
+            why: 'That would be `\d` alone. The `+` takes all digits in a row.'
+
+  # 4. DRILL -----------------------------------------------------------------
+  - id: read
+    type: drill
+    objective: O1
+    title: Read the pattern
+    items:
+      - kind: mcq
+        id: d-year
+        objective: O1
+        prompt: 'Which text fits `\d{4}` as a whole?'
+        options:
+          - text: '`2024`'
+            correct: true
+            why: "Exactly four digits."
+          - text: '`24`'
+            why: "Only two digits. `{4}` asks for exactly four."
+          - text: '`20-24`'
+            why: "The dash is not a digit."
+      - kind: mcq
+        id: d-word
+        objective: O1
+        prompt: 'What does `re.findall(r"[aeiou]", "banana")` give?'
+        options:
+          - text: "`['a', 'a', 'a']`"
+            correct: true
+            why: '`[aeiou]` is one vowel. Each vowel is one match.'
+          - text: "`['aaa']`"
+            why: "Without a `+`, each match is one character."
+          - text: "`3`"
+            why: '`findall` gives back a list of the matches. `len(...)` would give 3.'
+      - kind: mcq
+        id: d-optional
+        objective: O1
+        prompt: 'Which texts fit `colou?r` as a whole?'
+        options:
+          - text: '`color` and `colour`'
+            correct: true
+            why: 'The `?` makes the `u` optional: it can be there, or not.'
+          - text: 'Only `colour`'
+            why: '`?` means "the thing before me, or nothing". So `color` fits too.'
+          - text: '`color`, `colour` and `colouur`'
+            why: '`?` allows the `u` at most once. For more, it would be `u+`.'
+
+  # 5. EXERCISE: completion --------------------------------------------------
+  - id: ex-years
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Every year in a text
+    prompt: |
+      **Replace the `___` with a pattern** that finds every year: exactly
+      four digits. The program then turns the years into ints and prints
+      how many years lie between the first and the last.
+    starter: |
+      import re
+
+      text = "Python came in 1991, version 3 in 2008, and 3.12 in 2023."
+      found = re.findall(___, text)
+      years = [int(y) for y in found]
+      print(years)
+      print(max(years) - min(years))
+    solution: |
+      import re
+
+      text = "Python came in 1991, version 3 in 2008, and 3.12 in 2023."
+      found = re.findall(r"\d{4}", text)
+      years = [int(y) for y in found]
+      print(years)
+      print(max(years) - min(years))
+    after: >-
+      `\d+` would find every number: also `3` and `12`. The shape "exactly
+      four digits" picks only the years. Choosing the right shape is most
+      of the work with regular expressions.
+    cases:
+      - {}
+      - label: "another text"
+        set: { text: "From 1066 to 1492, then 7 ships in 1588." }
+    checks:
+      - expr: 'err is None and years == [int(x) for x in re.findall(r"\d{4}", text)]'
+        pass: "`years` holds every year of the text, and nothing else"
+        hint: 'Four digits: `r"\d{4}"`.'
+        misconceptions:
+          - when: 'isinstance(ns.get("years"), list) and len(years) > len(re.findall(r"\d{4}", text))'
+            say: '`\d+` finds every number, also `3` and `12`. A year has exactly four digits: `r"\d{4}"`.'
+          - when: 'isinstance(ns.get("found"), list) and found == []'
+            say: 'Nothing was found. Write the pattern as a raw string with a backslash: `r"\d{4}"`.'
+      - expr: 'err is None and lines[-1] == str(max(years) - min(years))'
+        pass: "It prints the years between the first and the last"
+        hint: "Keep the last lines as they are."
+    hints:
+      - 'A digit is `\d`. How do you say "exactly four times"?'
+      - '`{4}` after `\d` means exactly four digits.'
+      - '`found = re.findall(r"\d{4}", text)`.'
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: match
+    type: theory
+    objective: O2
+    title: Check, take apart, replace
+    body: |
+      ## The whole text: fullmatch
+
+      `re.fullmatch(pattern, text)` asks: does the **whole** text have this
+      shape? It gives back a match object (which counts as `True`), or
+      `None`.
+
+      ```python
+      re.fullmatch(r"[A-Z]{2}\d{3}", "AB123")    # a match
+      re.fullmatch(r"[A-Z]{2}\d{3}", "AB1234")   # None: one digit too many
+      ```
+
+      `re.search` finds the **first** place that fits, anywhere in the
+      text. For a check of a code or a date, `search` is a trap: it also
+      finds the shape inside a longer, wrong text.
+
+      ## Parts: groups
+
+      Round brackets make a **group**. After a match, `.group(1)` is the
+      text of the first group, `.group(2)` of the second:
+
+      ```python
+      m = re.search(r"(\d+):(\d+)", "Start at 18:30.")
+      if m:
+          print(m.group(1), m.group(2))    # 18 30
+      ```
+
+      Always check for `None` first: `search` gives `None` when the text
+      has no such place.
+
+      ## Replace: sub
+
+      `re.sub(pattern, new, text)` replaces every match.
+      `re.sub(r"\s+", " ", "a   lot    of space")` is `"a lot of space"`.
+    keys:
+      - code: 're.fullmatch(p, text)'
+        means: "A match only if the WHOLE text fits. Else `None`."
+      - code: 're.search(p, text)'
+        means: "The first place that fits, anywhere. Else `None`."
+      - code: 'm.group(1)'
+        means: "The text of the first ( ) group."
+      - code: 're.sub(p, new, text)'
+        means: "Every match replaced with `new`."
+
+  # 7. WORKED ----------------------------------------------------------------
+  - id: worked
+    type: worked
+    objective: O3
+    title: A time inside a sentence
+    problem: |
+      A text contains a time like `18:30`. Print the time in minutes after
+      midnight, or a message when there is no time.
+    lines:
+      - goal: Describe the shape
+        code: "import re"
+        note: "The module for regular expressions."
+      - code: 'pattern = r"(\d{1,2}):(\d{2})"'
+        note: '`{1,2}`: one or two digits for the hours. Two groups: the hours and the minutes.'
+      - goal: Find it
+        code: 'match = re.search(pattern, "The train leaves at 18:30.")'
+        note: '`search`, because the time is somewhere inside the sentence.'
+      - code: "if match:"
+        note: "`None` when the text has no time. A match counts as `True`."
+      - goal: Use the parts
+        code: "    hours = int(match.group(1))"
+        note: 'The first group is `"18"`. Groups are texts, so `int()`.'
+      - code: "    minutes = int(match.group(2))"
+        note: 'The second group is `"30"`.'
+      - code: "    print(hours * 60 + minutes)"
+        note: "It prints `1110`."
+      - code: "else:"
+        note: "The other case: no time in the text."
+      - code: '    print("No time found")'
+        note: "Without the `if`, `match.group(1)` would stop with an `AttributeError`."
+    check:
+      kind: mcq
+      id: w-why-search
+      prompt: "Why does the example use `re.search`, and not `re.fullmatch`?"
+      options:
+        - text: "The time is only one part of the sentence. `fullmatch` would need the whole sentence to be a time"
+          correct: true
+          why: "`fullmatch` is for checking a whole text. `search` finds the shape inside a longer text."
+        - text: "`fullmatch` cannot use groups"
+          why: "It can. The reason is the rest of the sentence around the time."
+        - text: "`search` is faster"
+          why: "Speed is not the reason. `fullmatch` would give `None` for this sentence."
+
+  # 8. EXERCISE: debug -------------------------------------------------------
+  - id: ex-valid
+    type: exercise
+    fade: debug
+    objective: O2
+    title: A check that is too kind
+    prompt: |
+      A product code is two capital letters and three digits, like
+      `AB123`, and nothing else. `valid_code` should print `True` and then
+      `False`, but it says `True` twice. **Find out why, and fix it.**
+    starter: |
+      import re
+
+      def valid_code(code):
+          return re.search(r"[A-Z]{2}\d{3}", code) is not None
+
+      print(valid_code("AB123"))
+      print(valid_code("xAB1234"))
+    solution: |
+      import re
+
+      def valid_code(code):
+          return re.fullmatch(r"[A-Z]{2}\d{3}", code) is not None
+
+      print(valid_code("AB123"))
+      print(valid_code("xAB1234"))
+    after: >-
+      `search` found `AB123` inside `xAB1234`. A check must look at the
+      whole text: `fullmatch`. This mistake is common in real programs, so
+      remember the trap.
+    checks:
+      - expr: "callable(ns.get('valid_code')) and raises(valid_code, 'AB123') is None and valid_code('AB123') is True and valid_code('ZZ000') is True"
+        pass: "A right code gives `True`"
+        hint: "Keep the pattern: two capital letters, then three digits."
+      - expr: "callable(ns.get('valid_code')) and raises(valid_code, 'x') is None and not any(valid_code(c) for c in ['xAB1234', 'AB1234', 'zAB123', 'AB12', 'ab123', 'AB123 '])"
+        pass: "A text with something before, after or missing gives `False`"
+        hint: "`search` finds the code inside a longer text. Check the whole text with `re.fullmatch`."
+        misconceptions:
+          - when: "callable(ns.get('valid_code')) and raises(valid_code, 'x') is None and valid_code('AB1234')"
+            say: "`AB1234` has one digit too many, but `search` finds `AB123` inside it. Use `re.fullmatch`: the whole text must fit."
+      - expr: "err is None and lines == ['True', 'False']"
+        pass: "It prints `True`, then `False`"
+        hint: "Keep the two lines at the end."
+    hints:
+      - "Which part of `xAB1234` fits the pattern?"
+      - "`re.search` finds the shape anywhere inside the text. Which function checks the whole text?"
+      - "Replace `re.search` with `re.fullmatch`."
+
+  # 9. EXERCISE: independent -------------------------------------------------
+  - id: ex-log
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Read a log
+    prompt: |
+      Programs often write a **log**: one line for each event. These lines
+      look like `2024-05-01 ERROR Disk full`: a date, a level (one word),
+      and a message.
+
+      **Write `parse(line)`.** It gives back a tuple `(date, level,
+      message)` for a line of this shape, or `None` for any other line.
+
+      Then the program prints the messages of the `ERROR` lines. It must
+      print:
+
+      ```
+      Disk full
+      No network
+      ```
+    starter: |
+      import re
+
+      # Write parse here.
+
+
+      log = [
+          "2024-05-01 INFO Started",
+          "2024-05-01 ERROR Disk full",
+          "this line is broken",
+          "2024-05-02 ERROR No network",
+      ]
+      for line in log:
+          entry = parse(line)
+          if entry and entry[1] == "ERROR":
+              print(entry[2])
+    solution: |
+      import re
+
+      def parse(line):
+          match = re.fullmatch(r"(\d{4}-\d{2}-\d{2}) (\w+) (.+)", line)
+          if match is None:
+              return None
+          return match.group(1), match.group(2), match.group(3)
+
+
+      log = [
+          "2024-05-01 INFO Started",
+          "2024-05-01 ERROR Disk full",
+          "this line is broken",
+          "2024-05-02 ERROR No network",
+      ]
+      for line in log:
+          entry = parse(line)
+          if entry and entry[1] == "ERROR":
+              print(entry[2])
+    after: >-
+      One pattern describes the whole line, and the groups take it apart.
+      The same idea reads the logs of a web server or of a Raspberry Pi.
+    checks:
+      - expr: "callable(ns.get('parse')) and raises(parse, '2024-05-01 ERROR Disk full') is None and parse('2024-05-01 ERROR Disk full') == ('2024-05-01', 'ERROR', 'Disk full')"
+        pass: "A line of the right shape gives `(date, level, message)`"
+        hint: 'Three groups: `(\d{4}-\d{2}-\d{2})`, then `(\w+)`, then `(.+)`, with a space between them.'
+        misconceptions:
+          - when: "callable(ns.get('parse')) and raises(parse, '2024-05-01 ERROR Disk full') is None and isinstance(parse('2024-05-01 ERROR Disk full'), tuple) and len(parse('2024-05-01 ERROR Disk full')) == 3 and parse('2024-05-01 ERROR Disk full')[2] == 'Disk'"
+            say: '`\w+` stops at the first space, so the message is cut. The message is the rest of the line: `(.+)`.'
+      - expr: "callable(ns.get('parse')) and raises(parse, '2031-12-24 WARN Low battery now') is None and parse('2031-12-24 WARN Low battery now') == ('2031-12-24', 'WARN', 'Low battery now')"
+        pass: "It works for other dates, levels and messages"
+        hint: "Use the shape of the line, not the words of one example."
+      - expr: "callable(ns.get('parse')) and all(raises(parse, t) is None and parse(t) is None for t in ['this line is broken', '', '24-05-01 ERROR x', 'ERROR 2024-05-01 x'])"
+        pass: "Any other line gives `None`"
+        hint: "Check the whole line with `re.fullmatch`, and give back `None` when there is no match."
+        misconceptions:
+          - when: "callable(ns.get('parse')) and raises(parse, 'this line is broken') == 'AttributeError'"
+            say: "For a line without a match, `match` is `None`, and `None.group(1)` stops with an `AttributeError`. Check `if match is None: return None` first."
+      - expr: "err is None and lines == ['Disk full', 'No network']"
+        pass: "It prints the messages of the two errors"
+        hint: "Keep the loop at the end as it is."
+    hints:
+      - "Describe the whole line: a date, a space, a word, a space, the rest."
+      - 'A date like `2024-05-01` is `\d{4}-\d{2}-\d{2}`. Put each part in round brackets.'
+      - 'Use `re.fullmatch(r"(\d{4}-\d{2}-\d{2}) (\w+) (.+)", line)`. If it is `None`, return `None`. Else return the three groups.'
+
+  # 10. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-plus
+        objective: O1
+        prompt: 'What does `\d+` mean?'
+        options:
+          - text: "One or more digits in a row"
+            correct: true
+            why: '`\d` is a digit, and `+` is "one or more of the thing before".'
+          - text: "A digit and a plus sign"
+            why: "In a pattern, `+` is a symbol for one or more."
+          - text: "Exactly one digit"
+            why: 'That is `\d` without the `+`.'
+      - kind: mcq
+        id: q-full
+        objective: O2
+        prompt: "You check that a user typed a valid postcode. Which function fits?"
+        options:
+          - text: "`re.fullmatch`: the whole text must have the shape"
+            correct: true
+            why: "A check is about the whole text. `search` would accept extra text around it."
+          - text: "`re.search`"
+            why: "`search` finds the shape anywhere, so `xx1234yy` would pass."
+          - text: "`re.findall`"
+            why: "`findall` lists the parts that fit. It does not check the whole text."
+      - kind: mcq
+        id: q-none
+        objective: O3
+        prompt: '`m = re.search(r"(\d+)", "no digits here")`. What is `m`?'
+        options:
+          - text: "`None`"
+            correct: true
+            why: "`search` gives `None` when nothing fits. That is why you check `if m:` before `m.group(1)`."
+          - text: "An empty text `''`"
+            why: "Without a match, there is no match object at all: `None`."
+          - text: "An error"
+            why: "No match is not an error. The error comes later, if you use `None` as a match."
+      - kind: mcq
+        id: q-group
+        objective: O3
+        prompt: '`m = re.search(r"(\w+)@(\w+)", "mail ana@home now")`. What is `m.group(2)`?'
+        options:
+          - text: "`'home'`"
+            correct: true
+            why: "The second pair of round brackets is the part after the `@`."
+          - text: "`'ana'`"
+            why: "That is the first group, `m.group(1)`."
+          - text: "`'ana@home'`"
+            why: "That is the whole match, `m.group(0)`."
+      - kind: mcq
+        id: q-raw
+        objective: O1
+        prompt: 'Why write patterns as `r"..."`?'
+        options:
+          - text: "So that each backslash reaches `re` as it is"
+            correct: true
+            why: 'In a normal string, Python reads pairs like `\n` as special characters first.'
+          - text: "The `r` makes the search faster"
+            why: "The `r` is about the backslash, not about speed."
+          - text: '`r` means "regular expression"'
+            why: '`r` means a raw string. Any string can be raw, also one that is not a pattern.'
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-findall
+    objective: O1
+    code: |
+      import re
+      print(re.findall(r"\d+", "7 days, 24 hours"))
+    explain: >-
+      Two groups of digits: `7` and `24`. `findall` gives them back as
+      texts in a list.
+  - kind: mcq
+    id: r-shape
+    objective: O1
+    prompt: 'Which pattern fits a time like `09:45`?'
+    options:
+      - text: '`\d{2}:\d{2}`'
+        correct: true
+        why: "Two digits, a colon, two digits."
+      - text: '`\d:\d`'
+        why: "That is one digit on each side: `9:4`."
+      - text: '`\w+`'
+        why: '`\w` has no colon, so it finds `09` and `45` apart.'
+  - kind: mcq
+    id: r-trap
+    objective: O2
+    prompt: '`re.search(r"\d{3}", "12345")` finds a match. Why is this a trap for a check of "exactly three digits"?'
+    options:
+      - text: "`search` finds three digits inside the longer text. Use `fullmatch` for a check"
+        correct: true
+        why: "`fullmatch` asks for the whole text, so `12345` gives `None`."
+      - text: "`\\d{3}` means at least three digits"
+        why: "It means exactly three in a row, but `search` finds them inside a longer text."
+      - text: "There is no trap"
+        why: "`12345` is not three digits, but it passes. That is the trap."
+  - kind: mcq
+    id: r-sub
+    objective: O3
+    prompt: 'What is `re.sub(r"\s+", " ", "a   b    c")`?'
+    options:
+      - text: "`'a b c'`"
+        correct: true
+        why: "Each run of spaces is replaced by one space."
+      - text: "`'abc'`"
+        why: "The new text is one space, not nothing."
+      - text: "`['a', 'b', 'c']`"
+        why: "`sub` gives back a text. `split` would give a list."
+  - kind: mcq
+    id: r-group-type
+    objective: O3
+    prompt: "What type is `m.group(1)`, even when it holds digits?"
+    options:
+      - text: "`str`: groups are always texts"
+        correct: true
+        why: "To compute, turn it into a number: `int(m.group(1))`."
+      - text: "`int` when it holds digits"
+        why: "`re` works on text and always gives back text."
+      - text: "`list`"
+        why: "A list comes from `findall`. One group is one text."

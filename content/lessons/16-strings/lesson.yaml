@@ -125,6 +125,29 @@ steps:
         expr: "err is None and 'name.upper()' in src and ns.get('name') in lines"
       - text: "Ask `clean.startswith(\"Ada\")` and print the answer."
         expr: "err is None and called('startswith') and 'True' in lines"
+    investigate:
+      - kind: trace
+        id: i-trace-text
+        code: |
+          name = "  Ada Lovelace  "
+          clean = name.strip()
+          upper = clean.upper()
+          print(upper)
+        names: [clean, upper]
+        explain: >-
+          Each method gives back a new text. `strip()` removes the spaces at
+          both ends, and `upper()` makes every letter a capital.
+      - kind: mcq
+        id: i-unchanged
+        prompt: "After line 3, what is `name`?"
+        options:
+          - text: "`\"  Ada Lovelace  \"`, with its spaces, as before"
+            correct: true
+            why: "Text never changes in place. `strip()` gives back a new text, and `name` keeps the old one."
+          - text: "`\"Ada Lovelace\"`"
+            why: "That is `clean`. `name.strip()` does not change `name`."
+          - text: "`\"ADA LOVELACE\"`"
+            why: "That is `upper`. Each method made a new text."
 
   # 5. THEORY ----------------------------------------------------------------
   - id: methods

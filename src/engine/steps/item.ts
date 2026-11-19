@@ -1,8 +1,11 @@
-// One retrieval item (multiple choice or predict-the-output). Used by the
-// predict step, worked examples, quizzes and spaced review.
+// One retrieval item: multiple choice, predict the output, find the error,
+// order the lines, trace table or click the line. Used by the predict step,
+// worked examples, quizzes, drills, investigate steps and spaced review.
 import { confetti, glide, place, shake, stamp } from '@/kit/motion';
 import { onPyStatus, runPython } from '@/py/runner';
-import type { DiagnoseItem, Item, McqItem, OrderItem, PredictItem, PyError } from '../types';
+import { samePrint, sameValue, traceRows } from '../trace-table';
+import type { TraceRow } from '../trace-table';
+import type { DiagnoseItem, Item, McqItem, OrderItem, PredictItem, PyError, SpotItem, TraceItem } from '../types';
 import { button, codeBlock, h, icon, md, mdInline, panel, shuffle } from '../ui';
 import type { PanelKind } from '../ui';
 
@@ -595,9 +598,228 @@ function renderOrder(item: OrderItem, onDone: OnDone): ItemView {
   };
 }
 
+/**
+ * Trace table: the learner is the computer. For each line that runs, they
+ * write the new values. Tracing by hand is a skill of its own: novices who
+ * learn it read code better (Xie, Nelson and Ko 2018).
+ */
+function renderTrace(item: TraceItem, onDone: OnDone): ItemView {
+  const code = codeBlock(item.code, { numbers: true });
+  const status = h('p', { class: 'muted' }, 'Python is starting…');
+  const tableSlot = h('div', { class: 'trace-slot' });
+  const feedback = h('div', { class: 'item-feedback', 'aria-live': 'polite' });
+  const check = button('Check the table', { kind: 'plain', onClick: () => submit() });
+  const giveUp = button('Show the answers', { kind: 'ghost', small: true, onClick: () => showAnswers() });
+  check.hidden = true;
+  giveUp.hidden = true;
+  let disposed = false;
+  let solved = false;
+  let wrongTries = 0;
+
+  interface Cell {
+    input: HTMLInputElement;
+    row: number;
+    name: string | null;
+    real: { repr: string; type: string } | string;
+  }
+  const cells: Cell[] = [];
+  let rows: TraceRow[] = [];
+
+  function say(kind: PanelKind, title: string, ...body: (Node | string | null)[]): void {
+    feedback.replaceChildren(panel(kind, title, ...body));
+    place(feedback.children);
+    feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  const right = (cell: Cell): boolean =>
+    typeof cell.real === 'string' ? samePrint(cell.input.value, cell.real) : sameValue(cell.input.value, cell.real);
+
+  function finish(firstTry: boolean): void {
+    solved = true;
+    check.hidden = true;
+    giveUp.hidden = true;
+    code.setActive(null);
+    cells.forEach((c) => (c.input.readOnly = true));
+    onDone(firstTry);
+  }
+
+  function submit(): void {
+    if (solved) return;
+    const wrong = cells.filter((c) => !right(c));
+    cells.forEach((c) => {
+      const ok = !wrong.includes(c);
+      c.input.classList.toggle('is-right', ok);
+      c.input.classList.toggle('is-wrong', !ok);
+      if (ok) c.input.readOnly = true;
+    });
+    if (wrong.length === 0) {
+      say('good', wrongTries === 0 ? 'Correct. You ran the program in your head.' : 'Correct. Now the table is right.', md(item.explain, 'prose prose-small'));
+      confetti(tableSlot, wrongTries === 0 ? 12 : 6);
+      finish(wrongTries === 0);
+      return;
+    }
+    wrongTries += 1;
+    const first = wrong[0];
+    const line = rows[first.row].line;
+    // A value that belongs to another row: the learner skipped or mixed up a line.
+    const elsewhere =
+      first.name !== null &&
+      rows.some((r, i) => i !== first.row && r.values[first.name!] && sameValue(first.input.value, r.values[first.name!]));
+    const where = `Line ${line} (row ${first.row + 1})`;
+    const tip = elsewhere
+      ? `${where}: this value of \`${first.name}\` comes from another row. Go one line at a time: what is \`${first.name}\` right after line ${line} runs?`
+      : first.name === null
+        ? `${where}: what does this line print? Use the values in the rows above.`
+        : `${where}: use the values in the rows above to work out the new \`${first.name}\`.`;
+    say('bad', `${cells.length - wrong.length} of ${cells.length} boxes are right. Fix the red ones.`, h('p', null, mdInline(tip)));
+    shake(first.input);
+    first.input.focus();
+    if (wrongTries >= 2) giveUp.hidden = false;
+  }
+
+  function showAnswers(): void {
+    if (solved) return;
+    cells.forEach((c) => {
+      if (right(c)) return;
+      c.input.value = typeof c.real === 'string' ? c.real : c.real.repr;
+      c.input.classList.remove('is-wrong');
+      c.input.classList.add('is-shown');
+    });
+    say('info', 'These are the values of the real run.', md(item.explain, 'prose prose-small'));
+    finish(false);
+  }
+
+  function build(found: TraceRow[]): void {
+    rows = found;
+    const prints = rows.some((r) => r.prints !== null);
+    const head = h(
+      'tr',
+      null,
+      h('th', { scope: 'col' }, 'Line'),
+      ...item.names.map((name) => h('th', { scope: 'col' }, h('code', null, name))),
+      prints ? h('th', { scope: 'col' }, 'Prints') : null,
+    );
+    const body = rows.map((row, r) => {
+      const cell = (name: string | null, real: Cell['real'] | undefined): HTMLElement => {
+        if (real === undefined) return h('td', { class: 'trace-same' });
+        const label = name === null ? `What line ${row.line} prints (row ${r + 1})` : `Value of ${name} after line ${row.line} (row ${r + 1})`;
+        const input = h('input', {
+          class: name === null ? 'trace-cell is-print' : 'trace-cell',
+          type: 'text',
+          spellcheck: 'false',
+          autocomplete: 'off',
+          autocapitalize: 'off',
+          'aria-label': label,
+        });
+        input.addEventListener('focus', () => {
+          if (!solved) code.setActive(row.line);
+        });
+        input.addEventListener('input', () => input.classList.remove('is-wrong'));
+        input.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          const at = cells.findIndex((c) => c.input === input);
+          const next = cells.slice(at + 1).find((c) => !c.input.readOnly);
+          if (next && !event.ctrlKey) next.input.focus();
+          else submit();
+        });
+        cells.push({ input, row: r, name, real });
+        return h('td', null, input);
+      };
+      return h(
+        'tr',
+        null,
+        h('th', { scope: 'row', class: 'trace-line' }, String(row.line)),
+        ...item.names.map((name) => cell(name, row.values[name])),
+        prints ? cell(null, row.prints ?? undefined) : null,
+      );
+    });
+    tableSlot.replaceChildren(
+      h(
+        'div',
+        { class: 'trace-scroll' },
+        h('table', { class: 'trace-table' }, h('thead', null, head), h('tbody', null, ...body)),
+      ),
+    );
+    check.hidden = false;
+    place(tableSlot);
+  }
+
+  void runPython({ code: item.code, trace: true, cases: [{ stdin: item.stdin ?? [] }] }).then((result) => {
+    if (disposed) return;
+    status.remove();
+    build(traceRows(result.steps, result.stdout, item.names));
+  });
+
+  const el = h(
+    'div',
+    { class: 'item' },
+    md(
+      item.prompt ??
+        '**Be the computer.** Each row is one line that runs, in order. Write the new value of each variable in the box. An empty space means: no change. Use the rows above to know the values so far.',
+      'prose item-prompt',
+    ),
+    h('div', { class: 'trace-grid' }, code.el, h('div', null, status, tableSlot)),
+    h('div', { class: 'order-actions' }, check, giveUp),
+    feedback,
+  );
+  return { el, dispose: () => (disposed = true) };
+}
+
+/** Click the line: a question about what one line of a program does. */
+function renderSpot(item: SpotItem, onDone: OnDone): ItemView {
+  const code = codeBlock(item.code, { numbers: true });
+  const feedback = h('div', { class: 'item-feedback', 'aria-live': 'polite' });
+  let wrongTries = 0;
+  let solved = false;
+
+  function pick(line: number): void {
+    if (solved) return;
+    const row = code.lines[line - 1];
+    if (line === item.line) {
+      solved = true;
+      code.lines.forEach((r) => r.classList.remove('is-wrong'));
+      row.classList.add('is-right');
+      code.el.classList.remove('is-pickable');
+      feedback.replaceChildren(panel('good', `Correct: line ${line}.`, md(item.explain, 'prose prose-small')));
+      if (wrongTries === 0) confetti(row, 10);
+      onDone(wrongTries === 0);
+    } else {
+      wrongTries += 1;
+      row.classList.add('is-wrong');
+      shake(row);
+      const known = item.wrong?.find((w) => w.line === line);
+      feedback.replaceChildren(
+        panel('bad', `Not line ${line}.`, known ? h('p', null, mdInline(known.say)) : null, h('p', { class: 'muted' }, 'Choose again.')),
+      );
+    }
+    place(feedback.children);
+    feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  code.el.classList.add('is-pickable');
+  code.lines.forEach((row, i) => {
+    row.setAttribute('role', 'button');
+    row.setAttribute('tabindex', '0');
+    row.setAttribute('aria-label', `Line ${i + 1}`);
+    row.addEventListener('click', () => pick(i + 1));
+    row.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        pick(i + 1);
+      }
+    });
+  });
+
+  const el = h('div', { class: 'item' }, md(`${item.prompt} *Click the line.*`, 'prose item-prompt'), code.el, feedback);
+  return { el, dispose: () => undefined };
+}
+
 export function renderItem(item: Item, onDone: OnDone): ItemView {
   if (item.kind === 'mcq') return renderMcq(item, onDone);
   if (item.kind === 'predict') return renderPredict(item, onDone);
   if (item.kind === 'order') return renderOrder(item, onDone);
+  if (item.kind === 'trace') return renderTrace(item, onDone);
+  if (item.kind === 'spot') return renderSpot(item, onDone);
   return renderDiagnose(item, onDone);
 }

@@ -116,6 +116,35 @@ steps:
         expr: "err is None and isinstance(ns.get('age'), int) and str(ns['age'] + 10) in lines[-1]"
       - text: "Add a third question, for example about a city, and print the answer."
         expr: "err is None and len(inputs) >= 3 and inputs[-1] != '' and any(inputs[-1] in line for line in lines[len(inputs):])"
+    investigate:
+      - kind: spot
+        id: i-int
+        prompt: "Which line turns an answer into a number?"
+        code: |
+          name = input("Your name: ")
+          age = int(input("Your age: "))
+          print(f"Hello, {name}!")
+          print(f"Next year you are {age + 1}.")
+        line: 2
+        wrong:
+          - line: 1
+            say: "This line keeps the answer as text, which is right for a name."
+          - line: 4
+            say: "This line computes `age + 1`, but `age` is already a number here. It became one on another line."
+        explain: >-
+          `input()` always gives text. `int(...)` around it turns the text
+          into a whole number, so `age + 1` can work.
+      - kind: mcq
+        id: i-no-int
+        prompt: "Line 2 becomes `age = input(\"Your age: \")`, without `int`. What happens on line 4?"
+        options:
+          - text: "A `TypeError`: Python cannot add the number 1 to text"
+            correct: true
+            why: "Without `int`, `age` is text like `\"30\"`, and text + number is not allowed."
+          - text: "It prints the age plus 1, as before"
+            why: "`age` is now text. Python never turns text into a number by itself."
+          - text: "It prints `301`"
+            why: "That would need two texts. Text and a number cannot be joined with `+`."
 
   # 5. WORKED EXAMPLE --------------------------------------------------------
   - id: example-total

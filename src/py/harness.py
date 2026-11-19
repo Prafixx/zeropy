@@ -36,6 +36,17 @@ class _ShortRepr(reprlib.Repr):
             return f"<{type(x).__name__} object>"
         return super().repr_instance(x, level)
 
+    def repr_dict(self, x, level):
+        """Like print: the keys in the order they were added (reprlib sorts them)."""
+        if not x:
+            return "{}"
+        if level <= 0:
+            return "{...}"
+        pieces = [f"{self.repr1(k, level - 1)}: {self.repr1(x[k], level - 1)}" for k in list(x)[: self.maxdict]]
+        if len(x) > self.maxdict:
+            pieces.append("...")
+        return "{" + ", ".join(pieces) + "}"
+
 
 _repr = _ShortRepr()
 _repr.maxstring = 28

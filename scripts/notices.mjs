@@ -23,6 +23,7 @@ const SHIPPED = [
   '@fontsource/atkinson-hyperlegible',
   '@fontsource-variable/bricolage-grotesque',
   '@fontsource-variable/jetbrains-mono',
+  'electron-updater',
 ];
 // Only used by Pyodide in Node.js, never shipped.
 const NOT_SHIPPED = new Set(['ws', '@types/emscripten']);
@@ -54,8 +55,26 @@ function section(title, body) {
   parts.push(line, title, line, '', body.trim(), '');
 }
 
+// A few MIT packages ship no license file. The MIT License asks for its
+// text and the copyright line, so they get the standard text here.
+function mitText(pkg) {
+  const author = typeof pkg.author === 'string' ? pkg.author : pkg.author?.name;
+  if (pkg.license !== 'MIT' || !author) return null;
+  return [
+    'MIT License',
+    '',
+    `Copyright (c) ${author.replace(/\s*[<(].*$/, '')}`,
+    '',
+    'Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:',
+    '',
+    'The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.',
+    '',
+    'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.',
+  ].join('\n');
+}
+
 for (const [name, pkg] of [...found].sort(([a], [b]) => a.localeCompare(b))) {
-  const text = licenseText(name);
+  const text = licenseText(name) ?? mitText(pkg);
   if (!text) throw new Error(`No license file for ${name}`);
   section(`${name} ${pkg.version} (${pkg.license})`, text);
 }

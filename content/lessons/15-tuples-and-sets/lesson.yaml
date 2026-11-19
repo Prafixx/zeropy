@@ -122,6 +122,34 @@ steps:
         expr: "err is None and ' in unique' in src and 'False' in lines"
       - text: "Try `unique[0]`. Read the message: a set has no places."
         expr: "err == 'TypeError'"
+    investigate:
+      - kind: spot
+        id: i-unique
+        prompt: "Which line removes the repeated names?"
+        code: |
+          visitors = ["Ana", "Ben", "Ana", "Cleo", "Ben"]
+          unique = set(visitors)
+          unique.add("Dan")
+          print(len(visitors))
+          print(len(unique))
+        line: 2
+        wrong:
+          - line: 3
+            say: "This line adds a new name. The repeats were gone before."
+        explain: >-
+          A set keeps each value once. `set(visitors)` keeps Ana, Ben and
+          Cleo, once each.
+      - kind: mcq
+        id: i-add-again
+        prompt: "Line 3 becomes `unique.add(\"Ana\")`. What does line 5 print?"
+        options:
+          - text: "`3`"
+            correct: true
+            why: "Ana is already in the set. Adding a value that is there changes nothing."
+          - text: "`4`"
+            why: "A set never holds a value twice."
+          - text: "`6`"
+            why: "`unique` is a set of the different names, not the list."
 
   # 5. THEORY ----------------------------------------------------------------
   - id: sets

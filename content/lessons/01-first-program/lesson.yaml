@@ -113,6 +113,31 @@ steps:
         expr: "err is None and any(l.strip().isdigit() and int(l) > 100 for l in lines)"
       - text: "Make an error on purpose: delete the last `)` of a line. Read the message."
         expr: "err == 'SyntaxError'"
+    investigate:
+      - kind: spot
+        id: i-compute
+        prompt: "Which line computes something before it prints?"
+        code: |
+          print("Hello")
+          print(10 * 2)
+        line: 2
+        wrong:
+          - line: 1
+            say: "This line prints the text between the quotes, as it is. Nothing is computed."
+        explain: >-
+          `10 * 2` has no quotes, so Python computes it first and prints the
+          result, `20`.
+      - kind: mcq
+        id: i-quotes
+        prompt: "Line 2 becomes `print(\"10 * 2\")`, with quotes. What does it print?"
+        options:
+          - text: "`10 * 2`"
+            correct: true
+            why: "In quotes, it is text. Python prints text exactly as it is."
+          - text: "`20`"
+            why: "Quotes make it text, so Python does not compute it."
+          - text: "An error"
+            why: "Printing any text is fine."
 
   # 5. WORKED EXAMPLE --------------------------------------------------------
   - id: example-receipt

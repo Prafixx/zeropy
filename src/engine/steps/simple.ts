@@ -3,7 +3,7 @@ import { place } from '@/kit/motion';
 import { warmPython } from '@/py/runner';
 import type { Card } from '../registry';
 import { describeWait, gradeCard, noteAnswer, pickReview } from '../store';
-import type { DrillStep, Item, PredictStep, QuizStep, ReviewStep, TheoryStep, WorkedStep } from '../types';
+import type { DrillStep, InvestigateStep, Item, PredictStep, QuizStep, ReviewStep, TheoryStep, WorkedStep } from '../types';
 import { codeBlock, h, md, mdInline, panel } from '../ui';
 import type { StepContext, StepView } from './context';
 import { renderItem } from './item';
@@ -138,7 +138,7 @@ function renderSequence(ctx: StepContext, options: SequenceOptions): StepView {
   return { el, entered: () => show(0), dispose: () => current?.dispose() };
 }
 
-export function renderQuiz(step: QuizStep | DrillStep, ctx: StepContext): StepView {
+export function renderQuiz(step: QuizStep | DrillStep | InvestigateStep, ctx: StepContext): StepView {
   void warmPython().catch(() => undefined);
   return renderSequence(ctx, { items: step.items });
 }

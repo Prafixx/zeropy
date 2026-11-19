@@ -1,0 +1,673 @@
+id: inheritance
+order: 40
+title: "Inheritance and super()"
+summary: Build a new class on top of another one, change only what is different, and know when not to.
+minutes: 35
+outcomes: [A1, A8]
+
+objectives:
+  - id: O1
+    text: Write a class that inherits from another class, and use the methods it gets for free
+  - id: O2
+    text: Override a method, and call the version of the parent with super()
+  - id: O3
+    text: Add attributes in a child class with super().__init__
+  - id: O4
+    text: Choose between inheritance ("is a") and composition ("has a")
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: inherit
+    type: theory
+    objective: O1
+    title: A class on top of a class
+    body: |
+      Some classes are a special kind of another class: a savings account
+      **is an** account, a circle **is a** shape. **Inheritance** says this
+      in code:
+
+      ```python
+      class Account:
+          def __init__(self, owner):
+              self.owner = owner
+              self.balance = 0
+
+          def deposit(self, amount):
+              self.balance += amount
+
+      class Savings(Account):
+          def add_interest(self):
+              self.deposit(self.balance * 0.02)
+      ```
+
+      `class Savings(Account):` means: a `Savings` object has everything of
+      `Account`, plus what is written in `Savings`. `Account` is the
+      **parent** (or base class), `Savings` the **child**.
+
+      When you call `s.deposit(50)`, Python looks for `deposit` in
+      `Savings` first. It is not there, so Python looks in the parent,
+      `Account`, and runs that method.
+
+      ## Why it matters for you
+
+      Big libraries are used this way. In PyTorch, a library for AI, every
+      model starts like `class MyModel(nn.Module):`. You write only what is
+      special about your model; the library class gives the rest.
+    keys:
+      - code: "class Savings(Account):"
+        means: "`Savings` gets everything of `Account`."
+      - code: "s.deposit(50)"
+        means: "Not in `Savings`? Python looks in `Account`."
+      - code: "isinstance(s, Account)"
+        means: "`True`: a savings account is an account."
+
+  # 2. PREDICT ---------------------------------------------------------------
+  - id: predict-lookup
+    type: predict
+    objective: O1
+    title: Which method runs?
+    item:
+      kind: predict
+      id: p-lookup
+      prompt: "**What does this program print?**"
+      code: |
+        class Animal:
+            def sound(self):
+                return "..."
+
+            def intro(self):
+                return "I say " + self.sound()
+
+        class Dog(Animal):
+            def sound(self):
+                return "Woof"
+
+        print(Animal().intro())
+        print(Dog().intro())
+      explain: >-
+        `Dog` has no `intro`, so `Dog().intro()` runs the `intro` of
+        `Animal`. But inside it, `self` is the dog, so `self.sound()` finds
+        the `sound` of `Dog` first. Python always starts the search at the
+        class of the object.
+      misconceptions:
+        - answer: "I say ...\nI say ..."
+          say: "`intro` is written in `Animal`, but `self` is a `Dog` object. `self.sound()` starts its search in `Dog`."
+
+  # 3. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O3
+    title: A savings account
+    intro: |
+      Press **Run**: `s` is a `Savings` object, but most of its methods
+      come from `Account`. Then try the changes below.
+    code: |
+      class Account:
+          def __init__(self, owner, balance=0):
+              self.owner = owner
+              self.balance = balance
+
+          def deposit(self, amount):
+              self.balance += amount
+
+          def describe(self):
+              return f"{self.owner}: {self.balance}"
+
+      class Savings(Account):
+          def __init__(self, owner, balance=0, rate=0.02):
+              super().__init__(owner, balance)
+              self.rate = rate
+
+          def add_interest(self):
+              self.deposit(self.balance * self.rate)
+
+      s = Savings("Ana", 100)
+      s.deposit(50)
+      s.add_interest()
+      print(s.describe())
+    experiments:
+      - text: "Run it as it is. Where does `describe` come from?"
+        expr: "err is None and 'Ana: 153.0' in lines"
+      - text: "At the end, add `print(isinstance(s, Account), isinstance(s, Savings))`."
+        expr: "err is None and 'True True' in lines"
+      - text: "Make a normal account too: `a = Account(\"Ben\")`, then try `a.add_interest()`. What happens?"
+        expr: "err == 'AttributeError' and 'Account(' in src"
+      - text: "Remove the line with `super().__init__`, and run. Which attribute is missing now?"
+        expr: "err == 'AttributeError' and 'super().__init__' not in src"
+    investigate:
+      - kind: spot
+        id: i-super-init
+        prompt: "Which line gives a new `Savings` object its `owner` and its `balance`?"
+        code: |
+          class Account:
+              def __init__(self, owner, balance=0):
+                  self.owner = owner
+                  self.balance = balance
+
+          class Savings(Account):
+              def __init__(self, owner, balance=0, rate=0.02):
+                  super().__init__(owner, balance)
+                  self.rate = rate
+
+          s = Savings("Ana", 100)
+        line: 8
+        wrong:
+          - line: 3
+            say: "This line sets `owner`, but it only runs when something calls the `__init__` of `Account`. For a `Savings` object, which line calls it?"
+          - line: 9
+            say: "This line adds the attribute that only savings accounts have: `rate`."
+        explain: >-
+          `Savings` has its own `__init__`, so Python does not run the one
+          of `Account` by itself. `super().__init__(owner, balance)` calls
+          it, and then `Savings` adds `rate`.
+      - kind: mcq
+        id: i-where
+        prompt: "`s.deposit(50)` runs, but `Savings` has no method `deposit`. Where does Python find it?"
+        options:
+          - text: "In the parent class `Account`"
+            correct: true
+            why: "Python looks in the class of the object first, then in its parent."
+          - text: "Python makes a copy of it in `Savings` when the class is created"
+            why: "There is no copy. Python looks it up in the parent at the moment of the call."
+          - text: "Nowhere: the call only works because `deposit` is written before `Savings`"
+            why: "The order in the file is not the reason. `class Savings(Account):` links the two classes."
+
+  # 4. ORDER -----------------------------------------------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-square
+        objective: O3
+        code: |
+          class Rectangle:
+              def __init__(self, width, height):
+                  self.width = width
+                  self.height = height
+          class Square(Rectangle):
+              def __init__(self, side):
+                  super().__init__(side, side)
+          box = Square(3)
+          print(box.width * box.height)
+        explain: >-
+          The parent class comes first: `Square(Rectangle)` needs `Rectangle`
+          to exist. A square is a rectangle with two equal sides, so its
+          `__init__` only passes `side` twice to the parent.
+
+  # 5. EXERCISE: completion --------------------------------------------------
+  - id: ex-ebook
+    type: exercise
+    fade: completion
+    objective: O3
+    title: A book and an e-book
+    prompt: |
+      An e-book is a book with a file size. **Replace the `___`**, so that
+      `Ebook` inherits from `Book`, and its `__init__` lets `Book` set the
+      title and the pages before it adds `size`.
+    starter: |
+      class Book:
+          def __init__(self, title, pages):
+              self.title = title
+              self.pages = pages
+
+          def describe(self):
+              return f"{self.title}, {self.pages} pages"
+
+      class Ebook(___):
+          def __init__(self, title, pages, size):
+              ___
+              self.size = size
+
+      e = Ebook("Dune", 412, 2.4)
+      print(e.describe())
+      print(e.size)
+    solution: |
+      class Book:
+          def __init__(self, title, pages):
+              self.title = title
+              self.pages = pages
+
+          def describe(self):
+              return f"{self.title}, {self.pages} pages"
+
+      class Ebook(Book):
+          def __init__(self, title, pages, size):
+              super().__init__(title, pages)
+              self.size = size
+
+      e = Ebook("Dune", 412, 2.4)
+      print(e.describe())
+      print(e.size)
+    after: >-
+      `Ebook` writes only what is new: the size. The title, the pages and
+      `describe` come from `Book`. A change to `describe` in `Book` now
+      reaches every e-book too.
+    checks:
+      - expr: "isinstance(ns.get('Ebook'), type) and isinstance(ns.get('Book'), type) and issubclass(Ebook, Book)"
+        pass: "`Ebook` inherits from `Book`"
+        hint: "`class Ebook(Book):`."
+      - expr: "isinstance(ns.get('Ebook'), type) and raises(Ebook, 'A', 10, 1.5) is None and (lambda b: b.title == 'A' and b.pages == 10 and b.size == 1.5)(Ebook('A', 10, 1.5))"
+        pass: "A new e-book has its title, its pages and its size"
+        hint: "Call the `__init__` of the parent: `super().__init__(title, pages)`."
+        misconceptions:
+          - when: "isinstance(ns.get('Ebook'), type) and raises(Ebook, 'A', 10, 1.5) is None and not hasattr(Ebook('A', 10, 1.5), 'title')"
+            say: "The `__init__` of `Book` never runs, so the e-book has no title. Call it: `super().__init__(title, pages)`."
+      - expr: "isinstance(ns.get('Ebook'), type) and 'describe' not in vars(Ebook) and 'self.title' not in src.split('class Ebook')[-1]"
+        pass: "`Ebook` lets `Book` do its part: it does not copy the code of `Book`"
+        hint: "Do not write `self.title = title` again in `Ebook`. `super().__init__(title, pages)` does it."
+      - expr: "err is None and lines == ['Dune, 412 pages', '2.4']"
+        pass: "It prints the description and the size"
+        hint: "Keep the last three lines as they are."
+    hints:
+      - "The first `___` is the name of the parent class."
+      - "The second `___` calls the `__init__` of the parent, with the title and the pages."
+      - "`class Ebook(Book):` and `super().__init__(title, pages)`."
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: override
+    type: theory
+    objective: O2
+    title: Change one method, keep the rest
+    body: |
+      ## Override
+
+      A child can write a method with the same name as the parent. Then
+      the child's version runs for the child's objects. This is called
+      **overriding**.
+
+      ## super(): use the parent's version too
+
+      Often the child wants to **add** to the parent's method, not replace
+      all of it. `super().name(...)` calls the version of the parent:
+
+      ```python
+      class Savings(Account):
+          def describe(self):
+              text = super().describe()     # "Ana: 150"
+              return text + " (savings)"    # "Ana: 150 (savings)"
+      ```
+
+      You already saw `super().__init__(...)`: it is the same idea for
+      `__init__`.
+
+      ## Is a, or has a?
+
+      - A circle **is a** shape → inheritance: `class Circle(Shape)`.
+      - A cart **has** items → composition: the cart keeps a list of items
+        (lesson 39).
+
+      When you are not sure, choose composition. Long chains of classes
+      that inherit from each other are hard to change. One level, like
+      `Savings(Account)`, is common and clear.
+    keys:
+      - code: "def describe(self):"
+        means: "In the child: replaces the parent's `describe` for the child."
+      - code: "super().describe()"
+        means: "Runs the parent's version, and gives back its result."
+      - code: "class Circle(Shape)"
+        means: "Is a: inheritance. Has a: composition."
+
+  # 7. WORKED ----------------------------------------------------------------
+  - id: worked
+    type: worked
+    objective: O2
+    title: A louder greeter
+    problem: |
+      `Greeter` says `Hello, Ana`. Write `LoudGreeter`: the same greeting,
+      but in capital letters and with `!`, without copying the text of the
+      greeting.
+    lines:
+      - goal: Start from the parent
+        code: "class Greeter:"
+        note: "The class that we build on."
+      - code: "    def greet(self, name):"
+        note: "One method, the greeting."
+      - code: '        return f"Hello, {name}"'
+        note: "The text of the greeting lives here, and only here."
+      - goal: Change only what is different
+        code: "class LoudGreeter(Greeter):"
+        note: "A loud greeter is a greeter."
+      - code: "    def greet(self, name):"
+        note: "Same name as in the parent: this overrides it."
+      - code: "        text = super().greet(name)"
+        note: "The parent's version gives `\"Hello, Ana\"`."
+      - code: '        return text.upper() + "!"'
+        note: "Then the child adds its part."
+      - goal: Use it
+        code: 'print(LoudGreeter().greet("Ana"))'
+        note: "It prints `HELLO, ANA!`."
+    check:
+      kind: mcq
+      id: w-why-super
+      prompt: "Why `super().greet(name)`, and not `return \"HELLO, \" + name.upper() + \"!\"`?"
+      options:
+        - text: "The greeting stays in one place. If `Greeter` changes it, the loud one follows"
+          correct: true
+          why: "No copy of the text, so no copy to forget when it changes."
+        - text: "`upper()` only works after `super()`"
+          why: "`upper()` works on any text. The reason is to avoid a copy."
+        - text: "Python requires `super()` in every method of a child class"
+          why: "A child method does not have to call the parent. Here, it saves a copy."
+
+  # 8. EXERCISE: debug -------------------------------------------------------
+  - id: ex-manager
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A manager without a name
+    prompt: |
+      A manager is an employee who leads a team. The program should print
+      `Cleo leads 2 people` and `60000`. **Run it**, read the message, and
+      fix `Manager`.
+    starter: |
+      class Employee:
+          def __init__(self, name, salary):
+              self.name = name
+              self.salary = salary
+
+          def yearly(self):
+              return self.salary * 12
+
+      class Manager(Employee):
+          def __init__(self, name, salary, team):
+              self.team = team
+
+          def describe(self):
+              return f"{self.name} leads {len(self.team)} people"
+
+      boss = Manager("Cleo", 5000, ["Ana", "Ben"])
+      print(boss.describe())
+      print(boss.yearly())
+    solution: |
+      class Employee:
+          def __init__(self, name, salary):
+              self.name = name
+              self.salary = salary
+
+          def yearly(self):
+              return self.salary * 12
+
+      class Manager(Employee):
+          def __init__(self, name, salary, team):
+              super().__init__(name, salary)
+              self.team = team
+
+          def describe(self):
+              return f"{self.name} leads {len(self.team)} people"
+
+      boss = Manager("Cleo", 5000, ["Ana", "Ben"])
+      print(boss.describe())
+      print(boss.yearly())
+    after: >-
+      A child with its own `__init__` replaces the parent's `__init__`.
+      Without `super().__init__`, the parent's part of the object is never
+      set up: here, the name and the salary.
+    checks:
+      - expr: "isinstance(ns.get('Manager'), type) and raises(Manager, 'X', 10, []) is None and (lambda m: m.name == 'X' and m.salary == 10 and m.team == [] and m.yearly() == 120)(Manager('X', 10, []))"
+        pass: "A manager has a name, a salary and a team"
+        hint: "In `Manager.__init__`, call `super().__init__(name, salary)`."
+        misconceptions:
+          - when: "isinstance(ns.get('Manager'), type) and raises(Manager, 'X', 10, []) is None and not hasattr(Manager('X', 10, []), 'name')"
+            say: "`Manager` has its own `__init__`, so the one of `Employee` does not run, and `name` is never set. Call it: `super().__init__(name, salary)`."
+      - expr: "isinstance(ns.get('Manager'), type) and isinstance(ns.get('Employee'), type) and issubclass(Manager, Employee) and 'yearly' not in vars(Manager)"
+        pass: "`Manager` still inherits from `Employee`, and `yearly` comes from `Employee`"
+        hint: "Keep `class Manager(Employee):`. Do not copy `yearly`."
+      - expr: "err is None and lines == ['Cleo leads 2 people', '60000']"
+        pass: "It prints the two lines"
+        hint: "Keep the last three lines as they are."
+        misconceptions:
+          - when: "err == 'AttributeError'"
+            say: "Read the message: the object has no attribute `name`. Which `__init__` sets `name`, and does it run for a manager?"
+    hints:
+      - "The message says that `Manager` has no attribute `name`. Which method sets `self.name`?"
+      - "`Manager` has its own `__init__`, so the `__init__` of `Employee` does not run."
+      - "Add `super().__init__(name, salary)` as the first line of `Manager.__init__`."
+
+  # 9. EXERCISE: independent -------------------------------------------------
+  - id: ex-shapes
+    type: exercise
+    fade: independent
+    objective: O1
+    title: Circles and rectangles
+    prompt: |
+      `Shape` is given. **Write two child classes.**
+
+      - `Circle(radius)`: its name is `"circle"`, its area is
+        `math.pi * radius ** 2`.
+      - `Rectangle(width, height)`: its name is `"rectangle"`, its area is
+        width times height.
+
+      Each one calls `super().__init__` with its name and overrides
+      `area`. Do not write `describe` again: it comes from `Shape`. The
+      loop at the end must print:
+
+      ```
+      circle: 3.1
+      rectangle: 6.0
+      circle: 12.6
+      ```
+    starter: |
+      import math
+
+      class Shape:
+          def __init__(self, name):
+              self.name = name
+
+          def area(self):
+              return 0
+
+          def describe(self):
+              return f"{self.name}: {self.area():.1f}"
+
+      # Write Circle and Rectangle here.
+
+
+      shapes = [Circle(1), Rectangle(2, 3), Circle(2)]
+      for shape in shapes:
+          print(shape.describe())
+    solution: |
+      import math
+
+      class Shape:
+          def __init__(self, name):
+              self.name = name
+
+          def area(self):
+              return 0
+
+          def describe(self):
+              return f"{self.name}: {self.area():.1f}"
+
+      class Circle(Shape):
+          def __init__(self, radius):
+              super().__init__("circle")
+              self.radius = radius
+
+          def area(self):
+              return math.pi * self.radius ** 2
+
+      class Rectangle(Shape):
+          def __init__(self, width, height):
+              super().__init__("rectangle")
+              self.width = width
+              self.height = height
+
+          def area(self):
+              return self.width * self.height
+
+
+      shapes = [Circle(1), Rectangle(2, 3), Circle(2)]
+      for shape in shapes:
+          print(shape.describe())
+    after: >-
+      The loop does not know or care which kind of shape it has: it calls
+      `describe`, and each object uses its own `area`. Many objects that
+      answer the same method in their own way is the main gift of
+      inheritance.
+    checks:
+      - expr: "all(isinstance(ns.get(n), type) and issubclass(ns[n], Shape) for n in ('Circle', 'Rectangle'))"
+        pass: "`Circle` and `Rectangle` inherit from `Shape`"
+        hint: "`class Circle(Shape):` and `class Rectangle(Shape):`."
+      - expr: "isinstance(ns.get('Circle'), type) and raises(Circle, 2) is None and abs(Circle(2).area() - math.pi * 4) < 1e-9 and Circle(2).name == 'circle'"
+        pass: "A circle has the name `circle` and the right area"
+        hint: "`super().__init__(\"circle\")`, keep `self.radius`, and return `math.pi * self.radius ** 2` in `area`."
+        misconceptions:
+          - when: "isinstance(ns.get('Circle'), type) and raises(Circle, 2) is None and Circle(2).area() == 0"
+            say: "The area is 0: it is still the `area` of `Shape`. Write an `area` method in `Circle` to override it."
+          - when: "isinstance(ns.get('Circle'), type) and raises(Circle, 2) is None and not hasattr(Circle(2), 'name')"
+            say: "The circle has no name: call `super().__init__(\"circle\")` in its `__init__`."
+      - expr: "isinstance(ns.get('Rectangle'), type) and raises(Rectangle, 2, 5) is None and Rectangle(2, 5).area() == 10 and Rectangle(2, 5).name == 'rectangle'"
+        pass: "A rectangle has the name `rectangle` and the right area"
+        hint: "`super().__init__(\"rectangle\")`, and `return self.width * self.height`."
+      - expr: "all(isinstance(ns.get(n), type) and 'describe' not in vars(ns[n]) for n in ('Circle', 'Rectangle'))"
+        pass: "`describe` comes from `Shape`: it is not written again"
+        hint: "Remove `describe` from the child classes. The one of `Shape` uses `self.area()`, so it already works."
+      - expr: "err is None and lines == ['circle: 3.1', 'rectangle: 6.0', 'circle: 12.6']"
+        pass: "The loop prints the three shapes"
+        hint: "Keep the lines at the end as they are."
+    hints:
+      - "Start with `class Circle(Shape):` and an `__init__(self, radius)`."
+      - "In `__init__`: `super().__init__(\"circle\")`, then `self.radius = radius`. Then `def area(self):`."
+      - "`Rectangle` is the same idea: `super().__init__(\"rectangle\")`, two attributes, and an `area` that multiplies them."
+
+  # 10. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-means
+        objective: O1
+        prompt: "What does `class Truck(Vehicle):` mean?"
+        options:
+          - text: "A `Truck` object has everything of `Vehicle`, plus what `Truck` adds"
+            correct: true
+            why: "`Vehicle` is the parent. Python looks there for what `Truck` does not have."
+          - text: "A `Truck` object holds a `Vehicle` object"
+            why: "That would be composition (has a). This is inheritance (is a)."
+          - text: "`Truck` is a function that takes a `Vehicle`"
+            why: "It is a class. The name in brackets is its parent."
+      - kind: mcq
+        id: q-override
+        objective: O2
+        prompt: "Parent and child both have a method `speak`. You call `speak` on a child object. Which one runs?"
+        options:
+          - text: "The child's `speak`"
+            correct: true
+            why: "Python starts its search in the class of the object."
+          - text: "The parent's `speak`"
+            why: "The parent's version only runs if the child calls `super().speak()`."
+          - text: "Both, the parent's first"
+            why: "Only one runs, the first that Python finds: the child's."
+      - kind: mcq
+        id: q-super
+        objective: O2
+        prompt: "What does `super().describe()` do inside a child method?"
+        options:
+          - text: "It runs the parent's `describe` and gives back its result"
+            correct: true
+            why: "So the child can add to it, instead of copying it."
+          - text: "It runs the child's own `describe` again"
+            why: "That would be `self.describe()`. `super()` skips to the parent."
+          - text: "It makes the object a parent object"
+            why: "The object stays a child object. Only this one call goes to the parent's version."
+      - kind: mcq
+        id: q-init
+        objective: O3
+        prompt: "A child class has its own `__init__`, without `super().__init__(...)`. What happens?"
+        options:
+          - text: "The parent's `__init__` does not run, so its attributes are missing"
+            correct: true
+            why: "The child's `__init__` replaces the parent's. You must call it with `super().__init__(...)`."
+          - text: "Python runs the parent's `__init__` first, by itself"
+            why: "It does not. Only the `__init__` of the child runs."
+          - text: "A SyntaxError"
+            why: "The code is valid. The problem shows later, as an `AttributeError`."
+      - kind: mcq
+        id: q-choose
+        objective: O4
+        prompt: "A `Library` keeps many `Book` objects. Which design fits?"
+        options:
+          - text: "Composition: a library has books, in a list"
+            correct: true
+            why: "A library is not a kind of book. It has books."
+          - text: "`class Library(Book):`"
+            why: "That says a library is a book. It is not."
+          - text: "`class Book(Library):`"
+            why: "A book is not a kind of library either. The link is \"has\"."
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O4
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-lookup
+    objective: O1
+    prompt: "A child class has no method `save`, its parent has one. What does `child_object.save()` do?"
+    options:
+      - text: "It runs the parent's `save`"
+        correct: true
+        why: "Not found in the child, so Python looks in the parent."
+      - text: "It stops with an `AttributeError`"
+        why: "The method exists in the parent, and the child inherits it."
+      - text: "Nothing"
+        why: "The parent's method runs, for the child object."
+  - kind: predict
+    id: r-override
+    objective: O2
+    code: |
+      class Base:
+          def name(self):
+              return "base"
+
+      class Child(Base):
+          def name(self):
+              return super().name() + "+child"
+
+      print(Child().name())
+    explain: >-
+      The child's `name` runs first. It calls the parent's version with
+      `super()`, which gives `"base"`, and then adds `"+child"`.
+  - kind: mcq
+    id: r-super-init
+    objective: O3
+    prompt: "Which line belongs at the start of `__init__` in `class Savings(Account)`?"
+    options:
+      - text: "`super().__init__(owner, balance)`"
+        correct: true
+        why: "It lets `Account` set up its part of the object."
+      - text: "`Account = super()`"
+        why: "This would change the name `Account`, not set up the object."
+      - text: "`self.__init__(owner, balance)`"
+        why: "That calls the `__init__` of `Savings` again, not of `Account`."
+  - kind: mcq
+    id: r-isinstance
+    objective: O1
+    prompt: "`class Circle(Shape)`, and `c = Circle(1)`. What is `isinstance(c, Shape)`?"
+    options:
+      - text: "`True`"
+        correct: true
+        why: "A circle is a shape: `isinstance` also counts the parent classes."
+      - text: "`False`"
+        why: "`isinstance` checks the class and all its parents."
+      - text: "An error"
+        why: "`isinstance` works with any class."
+  - kind: mcq
+    id: r-is-has
+    objective: O4
+    prompt: "\"A car has an engine.\" Inheritance or composition?"
+    options:
+      - text: "Composition: the car keeps an `Engine` object as an attribute"
+        correct: true
+        why: "\"Has a\" is composition. A car is not a kind of engine."
+      - text: "Inheritance: `class Car(Engine)`"
+        why: "That would say that a car is an engine."
+      - text: "Neither: it needs one class"
+        why: "Two classes are fine here: `Car` holds an `Engine`."

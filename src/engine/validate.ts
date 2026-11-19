@@ -60,8 +60,32 @@ function checkItem(item: unknown, where: string, objectives: Set<string>, out: s
     if (item.stdin !== undefined && (!Array.isArray(item.stdin) || !item.stdin.every(Array.isArray))) {
       out.push(`${where}: order stdin must be a list of answer lists`);
     }
+  } else if (item.kind === 'trace') {
+    if (!text(item.code)) out.push(`${where}: trace needs code`);
+    if (!text(item.explain)) out.push(`${where}: trace needs an explanation`);
+    const names = Array.isArray(item.names) ? item.names : [];
+    if (names.length === 0 || names.length > 4 || !names.every((n) => typeof n === 'string' && /^[A-Za-z_]\w*$/.test(n))) {
+      out.push(`${where}: trace needs 1 to 4 variable names`);
+    }
+    if (item.stdin !== undefined && (!Array.isArray(item.stdin) || !item.stdin.every((a) => typeof a === 'string'))) {
+      out.push(`${where}: trace stdin must be a list of answers`);
+    }
+  } else if (item.kind === 'spot') {
+    const lines = text(item.code) ? item.code.replace(/\n+$/, '').split('\n').length : 0;
+    if (!text(item.prompt)) out.push(`${where}: spot needs a prompt`);
+    if (lines < 2) out.push(`${where}: spot needs code with at least 2 lines`);
+    if (typeof item.line !== 'number' || item.line < 1 || item.line > lines) out.push(`${where}: spot line must be a line of the code`);
+    if (!text(item.explain)) out.push(`${where}: spot needs an explanation`);
+    if (item.wrong !== undefined) {
+      const wrong = Array.isArray(item.wrong) ? item.wrong : [];
+      wrong.forEach((w, i) => {
+        if (!isRec(w) || typeof w.line !== 'number' || w.line === item.line || !text(w.say)) {
+          out.push(`${where}: spot wrong ${i + 1} needs another "line" and "say"`);
+        }
+      });
+    }
   } else {
-    out.push(`${where}: item kind must be "mcq", "predict", "diagnose" or "order"`);
+    out.push(`${where}: item kind must be "mcq", "predict", "diagnose", "order", "trace" or "spot"`);
   }
 }
 
@@ -123,6 +147,14 @@ export function validateLesson(data: unknown): string[] {
       }
       if (!Array.isArray(step.experiments) || step.experiments.length === 0) {
         out.push(`${where}: demo needs experiments (things to try)`);
+      }
+      if (step.investigate !== undefined) {
+        const items = Array.isArray(step.investigate) ? step.investigate : [];
+        if (items.length === 0) out.push(`${where}: investigate needs items`);
+        items.forEach((item, j) => {
+          checkItem(item, `${where} investigate ${j + 1}`, objectives, out);
+          if (isRec(item) && text(item.objective)) covered.add(item.objective);
+        });
       }
     }
     if (type === 'worked') {

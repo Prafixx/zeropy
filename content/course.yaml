@@ -13,7 +13,6 @@ outcomes:
 modules:
   - title: Start
     goal: Run your first code. Store and use values.
-    hours: 1.7
     lessons:
       - { id: first-program, title: Your first program }
       - { id: variables, title: Variables }
@@ -22,10 +21,9 @@ modules:
 
   - title: Decisions and loops
     goal: Make the program choose and repeat.
-    hours: 3.5
     lessons:
       - { id: booleans, title: True and False }
-      - { id: if-else, title: if, elif, else }
+      - { id: if-else, title: "if, elif, else" }
       - { id: while-loops, title: while loops }
       - { id: for-loops, title: for and range }
       - { id: debugging-1, title: Reading error messages }
@@ -33,7 +31,6 @@ modules:
 
   - title: Collections
     goal: Work with many values at once.
-    hours: 4
     lessons:
       - { id: lists, title: Lists }
       - { id: loop-patterns, title: Loop patterns }
@@ -45,28 +42,28 @@ modules:
 
   - title: Functions
     goal: Give names to actions. Split big problems.
-    hours: 4
     lessons:
       - { id: functions, title: Define and call }
       - { id: parameters-and-return, title: "Parameters, return, scope" }
+      - { id: flexible-calls, title: "zip, *args and **kwargs" }
       - { id: decomposition, title: Split a problem }
+      - { id: type-hints, title: Type hints }
       - { id: reading-docs, title: Reading the docs }
       - { id: standard-library, title: Modules and the standard library }
       - { id: project-text-adventure, title: "Project: text adventure", kind: project }
 
   - title: Files, data and errors
     goal: Keep data between runs. Handle things that fail.
-    hours: 3.5
     lessons:
       - { id: files, title: Files and paths }
       - { id: json, title: JSON }
       - { id: exceptions, title: Exceptions }
       - { id: csv-and-comprehensions, title: CSV and comprehensions }
+      - { id: regex, title: Patterns with regular expressions }
       - { id: project-expense-tracker, title: "Project: expense tracker", kind: project }
 
   - title: Your own machine
     goal: Leave the browser. Work like a developer.
-    hours: 4.5
     lessons:
       - { id: local-setup, title: Install Python and an editor }
       - { id: venv-and-pip, title: Packages with venv and pip }
@@ -76,17 +73,16 @@ modules:
 
   - title: Classes and tests
     goal: Model things. Prove that your code works.
-    hours: 3
     lessons:
       - { id: classes-and-objects, title: Classes and objects }
       - { id: methods-and-state, title: Methods and state }
       - { id: composition-and-dataclasses, title: Composition and dataclasses }
+      - { id: inheritance, title: "Inheritance and super()" }
       - { id: pytest, title: Tests with pytest }
       - { id: debugging-2, title: The debugger }
 
   - title: Desktop app
     goal: Build, test and package your own app.
-    hours: 7
     lessons:
       - { id: tkinter, title: Windows and buttons }
       - { id: app-structure, title: Structure of an app }

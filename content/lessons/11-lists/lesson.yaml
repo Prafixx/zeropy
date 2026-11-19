@@ -125,6 +125,31 @@ steps:
         expr: "err is None and ns.get('last') == ns.get('basket', [None])[-1] and '-1' in src"
       - text: "Read an index that does not exist, for example `basket[10]`. Read the message."
         expr: "err == 'IndexError'"
+    investigate:
+      - kind: trace
+        id: i-trace-list
+        code: |
+          basket = ["bread", "milk"]
+          basket.append("eggs")
+          basket[0] = "rice"
+          first = basket[0]
+          print(basket)
+        names: [basket, first]
+        prompt: "**Be the computer.** Write the whole list each time it changes, like `['bread', 'milk']`. An empty space means: no change."
+        explain: >-
+          `append` adds at the end. `basket[0] = "rice"` replaces the first
+          item; the list keeps its length. Then `first` reads place 0.
+      - kind: mcq
+        id: i-index
+        prompt: "Line 3 becomes `basket[3] = \"rice\"`. What happens?"
+        options:
+          - text: "An `IndexError`: the places are 0, 1 and 2"
+            correct: true
+            why: "Three items have the places 0 to 2. Place 3 does not exist, and `=` cannot make it."
+          - text: "`rice` is added at the end"
+            why: "To add at the end, use `append`. A new place cannot be made with `=`."
+          - text: "The third item becomes `rice`"
+            why: "The third item is at place 2. Places start at 0."
 
   # 5. THEORY ----------------------------------------------------------------
   - id: change

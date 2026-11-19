@@ -3,7 +3,7 @@
 import { confetti, gsap, leave, place, stamp } from '@/kit/motion';
 import { getSettings, onSettings } from '@/kit/settings';
 import { warmPython } from '@/py/runner';
-import { getLesson, lessons } from './registry';
+import { course, getLesson, lessons } from './registry';
 import { brand, settingsButton } from './settings-menu';
 import { describeWait, finishLesson, lessonState, nextDue, reachStep } from './store';
 import type { Lesson, Step } from './types';
@@ -27,6 +27,7 @@ const PHASE: Record<Step['type'], string> = {
   debugger: 'Debug',
   quiz: 'Quiz',
   drill: 'Train',
+  investigate: 'Investigate',
   review: 'Review',
 };
 
@@ -50,6 +51,7 @@ function renderStep(step: Step, ctx: StepContext): StepView {
       return renderDebugger(step, ctx);
     case 'quiz':
     case 'drill':
+    case 'investigate':
       return renderQuiz(step, ctx);
     case 'review':
       return renderReview(step, ctx);
@@ -191,6 +193,8 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     finishLesson(lesson.id);
     updateRail();
     const minutes = Math.max(1, Math.round((Date.now() - stats.startedAt) / 60000));
+    // The last lesson of a module: time for a mixed set of the whole module.
+    const moduleAt = course.modules.findIndex((m) => m.lessons.at(-1)?.id === lesson.id);
     const due = nextDue();
     const mark = h('div', { class: 'stamp stamp-hero' }, 'Lesson complete');
     phase.textContent = 'Done';
@@ -219,6 +223,19 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
         { class: 'muted', 'data-enter': true },
         'Review is part of the course. Short tests after a pause make memory last longer than reading again.',
       ),
+      moduleAt >= 0
+        ? h(
+            'p',
+            { class: 'done-practice', 'data-enter': true },
+            h('span', null, `Module "${course.modules[moduleAt].title}" is done. Mix its lessons in one practice set:`),
+            h(
+              'a',
+              { class: 'btn btn-plain', href: `#/practice/${moduleAt + 1}` },
+              h('span', { class: 'btn-label' }, 'Mixed practice'),
+              icon('mix', 18),
+            ),
+          )
+        : null,
     );
     body.replaceChildren(el);
     gsap.set(body, { x: 0, opacity: 1 });

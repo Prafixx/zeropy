@@ -120,6 +120,33 @@ steps:
         expr: "err == 'KeyError'"
       - text: "Now use `phone.get(\"Zoe\", \"unknown\")` and print the result."
         expr: "err is None and called('get') and 'unknown' in lines"
+    investigate:
+      - kind: spot
+        id: i-new-key
+        prompt: "Which line adds a new key to the dictionary?"
+        code: |
+          phone = {"Ana": "555-01", "Ben": "555-02"}
+          phone["Cleo"] = "555-03"
+          number = phone["Ben"]
+          print(number)
+        line: 2
+        wrong:
+          - line: 3
+            say: "This line reads a value. It changes nothing."
+        explain: >-
+          `phone["Cleo"] = ...` with a key that is not there yet adds it.
+          With a key that exists, the same line would replace the value.
+      - kind: mcq
+        id: i-missing
+        prompt: "Line 3 becomes `number = phone[\"Dan\"]`. What happens?"
+        options:
+          - text: "A `KeyError`: there is no key `\"Dan\"`"
+            correct: true
+            why: "Reading a missing key stops the program. `phone.get(\"Dan\")` would give `None` instead."
+          - text: "`number` becomes `None`"
+            why: "That is what `.get()` does. Square brackets raise an error."
+          - text: "`Dan` is added with no number"
+            why: "Reading never adds a key. Only `=` does."
 
   # 5. THEORY ----------------------------------------------------------------
   - id: change
@@ -250,6 +277,28 @@ steps:
           why: "Without it, the program stops at the first new drink with a `KeyError`."
         - text: "It is not needed. It only makes the program faster"
           why: "It is needed: reading a key that does not exist is an error."
+
+  # TRACE -----------------------------------------------------------------
+  - id: trace
+    type: drill
+    objective: O2
+    title: Be the computer
+    items:
+      - kind: trace
+        id: t-count
+        objective: O2
+        prompt: "**Be the computer.** Write the whole dictionary each time it changes, like `{'a': 1}`. An empty space means: no change."
+        code: |
+          counts = {}
+          for w in ["tea", "cake", "tea"]:
+              if w in counts:
+                  counts[w] = counts[w] + 1
+              else:
+                  counts[w] = 1
+        names: [w, counts]
+        explain: >-
+          A new word gets the count 1. A word that is already a key gets 1
+          more. This is the counting pattern of dictionaries.
 
   # PUZZLE: put the lines in order (Parsons) ----------------------------
   - id: order

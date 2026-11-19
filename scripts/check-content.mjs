@@ -11,6 +11,7 @@ import { load } from 'js-yaml';
 import { loadPyodide } from 'pyodide';
 import { pauseAt, pausesOf, valueAt } from '../src/engine/debug-session.ts';
 import { parseReport, SEAL_SALT } from '../src/engine/local-report.ts';
+import { traceRows } from '../src/engine/trace-table.ts';
 import { validateLesson } from '../src/engine/validate.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -50,6 +51,7 @@ for (const folder of readdirSync(lessonsDir)) {
     if (step.type === 'predict') items.push(step.item);
     if (step.type === 'quiz' || step.type === 'drill') items.push(...step.items);
     if (step.type === 'demo') {
+      items.push(...(step.investigate ?? []));
       const result = call({ code: step.code, trace: true, pytest: step.pytest, checks: step.experiments, cases: [{ files: step.files, web: step.web }] });
       // A demo that asks for input cannot finish here; that is expected.
       if (result.error && !result.error.needsInput) fail(`${step.id}: demo code raises ${result.error.type}`);
@@ -118,6 +120,32 @@ for (const folder of readdirSync(lessonsDir)) {
     console.log(`  ok   ${step.id} (${step.checks.length} checks, ${cases.length} cases)`);
   }
   for (const item of items) {
+    if (item.kind === 'trace') {
+      // The table comes from the real run: it must be short, with values
+      // that are shown in full (the harness cuts long lists and texts).
+      const result = call({ code: item.code, trace: true, cases: [{ stdin: item.stdin ?? [] }] });
+      if (result.error) {
+        fail(`${item.id}: trace code raises ${result.error.type}`);
+        continue;
+      }
+      const rows = traceRows(result.steps, result.stdout, item.names);
+      if (rows.length < 2 || rows.length > 14) fail(`${item.id}: the table has ${rows.length} rows (2 to 14)`);
+      for (const name of item.names) {
+        if (!rows.some((r) => r.values[name])) fail(`${item.id}: ${name} never gets a value (is it a global name?)`);
+      }
+      const cells = rows.flatMap((r) => [...Object.values(r.values).map((v) => v.repr), ...(r.prints === null ? [] : [r.prints])]);
+      if (cells.some((c) => c.includes('...'))) fail(`${item.id}: a value is too long and is cut ("...")`);
+      if (rows.some((r) => r.prints?.includes('\n'))) fail(`${item.id}: one line prints more than one line`);
+      console.log(`  ok   ${item.id} (trace, ${rows.length} rows, ${cells.length} boxes: ${rows.map((r) => `${r.line}:${Object.entries(r.values).map(([n, v]) => `${n}=${v.repr}`).join(',')}${r.prints === null ? '' : `>${r.prints}`}`).join(' ')})`);
+      continue;
+    }
+    if (item.kind === 'spot') {
+      // The code is only read, not run (it may need files or the web): it must compile.
+      const result = call({ code: `compile(${JSON.stringify(item.code)}, 'main.py', 'exec')`, cases: [{}] });
+      if (result.error) fail(`${item.id}: spot code does not compile (${result.error.type})`);
+      else console.log(`  ok   ${item.id} (spot, line ${item.line}: ${item.code.split('\n')[item.line - 1].trim()})`);
+      continue;
+    }
     if (item.kind === 'order') {
       // The program must run, and the order must matter: the lines read
       // backwards may not give the same result (or there is nothing to learn).

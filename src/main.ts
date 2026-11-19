@@ -13,6 +13,7 @@ import { mountPlayground } from './engine/playground';
 import { mountCheatSheet } from './engine/cheatsheet';
 import { mountMistakes } from './engine/mistakes-page';
 import { mountNext } from './engine/next-page';
+import { mountPractice } from './engine/practice-page';
 
 const root = document.getElementById('app')!;
 let unmount: (() => void) | null = null;
@@ -32,6 +33,8 @@ function route(): void {
     unmount = mountNext(root);
   } else if (parts[0] === 'mistakes') {
     unmount = mountMistakes(root);
+  } else if (parts[0] === 'practice') {
+    unmount = mountPractice(root, parts[1]);
   } else if (parts[0] === 'cheatsheet') {
     unmount = mountCheatSheet(root);
   } else {

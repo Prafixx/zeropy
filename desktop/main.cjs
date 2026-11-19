@@ -3,7 +3,7 @@
 // Progress lives in the browser storage of the app's own origin
 // (app://zeropy), saved in %APPDATA%\ZeroPy. It stays there across
 // restarts and updates, because the origin and the app id never change.
-const { app, BrowserWindow, Menu, nativeTheme, net, protocol, session, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, nativeTheme, net, protocol, session, shell } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
@@ -74,6 +74,62 @@ function guard(contents) {
   });
 }
 
+// ---- Updates ------------------------------------------------------------
+// Only on a click in the settings: the app never goes online by itself.
+// New versions come from the GitHub releases of the project (latest.yml).
+// The download is checked against its SHA-512 before it is installed.
+// The portable .exe cannot update itself: it gets the download page.
+let updater = null;
+
+function canSelfUpdate() {
+  return app.isPackaged && !process.env.PORTABLE_EXECUTABLE_DIR;
+}
+
+function getUpdater() {
+  if (updater) return updater;
+  updater = require('electron-updater').autoUpdater;
+  updater.autoDownload = false;
+  updater.autoInstallOnAppQuit = false;
+  updater.allowPrerelease = false;
+  updater.logger = null;
+  const send = (data) => BrowserWindow.getAllWindows().forEach((w) => w.webContents.send('update:event', data));
+  updater.on('download-progress', (p) => send({ state: 'progress', percent: Math.round(p.percent) }));
+  updater.on('update-downloaded', (info) => send({ state: 'ready', version: info.version }));
+  updater.on('error', () => send({ state: 'error' }));
+  return updater;
+}
+
+function setupUpdates() {
+  ipcMain.handle('update:check', async () => {
+    if (!canSelfUpdate()) return { state: 'manual' };
+    try {
+      const result = await getUpdater().checkForUpdates();
+      const info = result?.updateInfo;
+      if (!result || !result.isUpdateAvailable || !info) return { state: 'none' };
+      const size = info.files?.[0]?.size;
+      return { state: 'available', version: info.version, size: typeof size === 'number' ? size : null };
+    } catch {
+      return { state: 'error' };
+    }
+  });
+  ipcMain.handle('update:download', async () => {
+    if (!canSelfUpdate()) return false;
+    try {
+      await getUpdater().downloadUpdate();
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  ipcMain.handle('update:install', () => {
+    if (!canSelfUpdate() || !updater) return false;
+    flush();
+    // Silent: the installer of ZeroPy needs no clicks. Then the new version starts.
+    setImmediate(() => updater.quitAndInstall(true, true));
+    return true;
+  });
+}
+
 function buildMenu() {
   // The menu bar stays hidden (press Alt to show it). It keeps zoom keys,
   // which help readers who need bigger text.
@@ -104,6 +160,7 @@ function createWindow() {
       sandbox: true,
       spellcheck: false,
       devTools: !app.isPackaged,
+      preload: path.join(__dirname, 'preload.cjs'),
     },
   });
   win.once('ready-to-show', () => win.show());
@@ -138,6 +195,7 @@ if (!app.requestSingleInstanceLock()) {
   });
   void app.whenReady().then(() => {
     protocol.handle(SCHEME, serve);
+    setupUpdates();
     buildMenu();
     createWindow();
   });

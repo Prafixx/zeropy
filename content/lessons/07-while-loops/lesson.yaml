@@ -136,6 +136,31 @@ steps:
         expr: "err is None and lines == ['10', '8', '6', '4', '2', 'Go!']"
       - text: "Delete the line `count = count - 1` and run. Python stops the program for you. Read the message, then put the line back."
         expr: "err == 'Timeout'"
+    investigate:
+      - kind: trace
+        id: i-trace-while
+        code: |
+          count = 3
+          while count > 0:
+              print(count)
+              count = count - 1
+          print("Go!")
+        names: [count]
+        explain: >-
+          Each round prints `count`, then makes it 1 smaller. When `count`
+          is 0, the condition `count > 0` is False, the loop ends, and
+          Python goes on with the line after the block.
+      - kind: mcq
+        id: i-no-change
+        prompt: "You remove line 4, `count = count - 1`. What happens?"
+        options:
+          - text: "The loop never ends: `count` stays 3, so `count > 0` is always True"
+            correct: true
+            why: "Something in the block must change the condition. The app stops such a loop after a while."
+          - text: "It prints 3 once, then `Go!`"
+            why: "The condition is checked again after each round, and it is still True."
+          - text: "An error on line 2"
+            why: "There is no error: the loop simply runs forever."
 
   # 5. PREDICT ---------------------------------------------------------------
   - id: predict-total

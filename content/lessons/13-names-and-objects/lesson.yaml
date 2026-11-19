@@ -121,6 +121,34 @@ steps:
         expr: "err is None and ns.get('other') == ['Zoe'] and len(ns.get('team', [])) == 3"
       - text: "Add `print(team is other)` at the end. `is` asks: one object, or two?"
         expr: "err is None and ' is ' in src and any(line in ('True', 'False') for line in lines)"
+    investigate:
+      - kind: spot
+        id: i-share
+        prompt: "After which line do `team` and `other` name the same list?"
+        code: |
+          team = ["Ana", "Ben"]
+          other = team
+          other.append("Cleo")
+          print(team)
+        line: 2
+        wrong:
+          - line: 3
+            say: "The list was shared before this line. `append` changes the one list that both names reach."
+        explain: >-
+          `other = team` makes no copy. It puts a second label on the same
+          list. From now on, a change through one name is seen through the
+          other.
+      - kind: mcq
+        id: i-copy
+        prompt: "Line 2 becomes `other = team.copy()`. What does line 4 print?"
+        options:
+          - text: "`['Ana', 'Ben']`"
+            correct: true
+            why: "`copy()` makes a second list. `append` changes only the copy."
+          - text: "`['Ana', 'Ben', 'Cleo']`"
+            why: "That is the result without `copy()`. Now there are two lists."
+          - text: "`['Cleo']`"
+            why: "The copy starts with the same items, and then gets `Cleo` too. `team` stays as it was."
 
   # 5. THEORY ----------------------------------------------------------------
   - id: in-place
@@ -248,6 +276,28 @@ steps:
           why: "Without `copy()`, there is only one list. The change on line 3 is seen through both names."
         - text: "An error"
           why: "Two names for one list is allowed. It is a mistake in the plan, not in the grammar."
+
+  # TRACE -----------------------------------------------------------------
+  - id: trace
+    type: drill
+    objective: O1
+    title: Be the computer
+    items:
+      - kind: trace
+        id: t-alias
+        objective: O1
+        prompt: "**Be the computer.** Write the whole list each time it changes. Careful: one line can change two names. An empty space means: no change."
+        code: |
+          a = [1]
+          b = a
+          b.append(2)
+          a = [9]
+          print(b)
+        names: [a, b]
+        explain: >-
+          After `b = a`, both names reach one list, so `b.append(2)` changes
+          what `a` shows too. `a = [9]` makes a new list for `a` only: `b`
+          keeps the old one.
 
   # PUZZLE: put the lines in order (Parsons) ----------------------------
   - id: order

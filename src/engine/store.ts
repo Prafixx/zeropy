@@ -34,14 +34,22 @@ interface Data {
    * the solution or many runs. The value is the time of the mistake.
    */
   mistakes: Record<string, number>;
+  /** When a task of mixed practice was last done: "lesson:item" or "lesson:step:id". */
+  practiced: Record<string, number>;
 }
 
 function load(): Data {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Data>;
-    return { lessons: raw.lessons ?? {}, cards: raw.cards ?? {}, code: raw.code ?? {}, mistakes: raw.mistakes ?? {} };
+    return {
+      lessons: raw.lessons ?? {},
+      cards: raw.cards ?? {},
+      code: raw.code ?? {},
+      mistakes: raw.mistakes ?? {},
+      practiced: raw.practiced ?? {},
+    };
   } catch {
-    return { lessons: {}, cards: {}, code: {}, mistakes: {} };
+    return { lessons: {}, cards: {}, code: {}, mistakes: {}, practiced: {} };
   }
 }
 
@@ -125,7 +133,7 @@ export function loadCode(lessonId: string, key: string): string | undefined {
 }
 
 export function resetProgress(): void {
-  data = { lessons: {}, cards: {}, code: {}, mistakes: {} };
+  data = { lessons: {}, cards: {}, code: {}, mistakes: {}, practiced: {} };
   save();
 }
 
@@ -156,6 +164,17 @@ export function mistakes(): Mistake[] {
       return { lessonId: key.slice(0, cut), ref: key.slice(cut + 1), at };
     })
     .sort((a, b) => b.at - a.at);
+}
+
+/** Remembers that a task of mixed practice was done now. */
+export function notePracticed(lessonId: string, ref: string): void {
+  data.practiced[`${lessonId}:${ref}`] = Date.now();
+  save();
+}
+
+/** When the task was last practiced (0: never). Old tasks come first. */
+export function lastPracticed(lessonId: string, ref: string): number {
+  return data.practiced[`${lessonId}:${ref}`] ?? 0;
 }
 
 export function describeWait(due: number, now = Date.now()): string {

@@ -1,7 +1,7 @@
 {
   "name": "zeropy",
   "productName": "ZeroPy",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Learn Python from zero: short lessons, real practice, instant feedback. Works offline.",
   "author": "Prafix",
   "license": "MIT",
@@ -44,6 +44,9 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.7"
   },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  },
   "build": {
     "appId": "io.github.prafixx.zeropy",
     "productName": "ZeroPy",
@@ -56,6 +59,7 @@
       "dist/**/*",
       "!dist/assets/*.woff",
       "desktop/main.cjs",
+      "desktop/preload.cjs",
       "package.json"
     ],
     "extraResources": [
@@ -90,6 +94,14 @@
     "portable": {
       "artifactName": "ZeroPy-Portable-${version}.exe"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Prafixx",
+        "repo": "zeropy",
+        "releaseType": "release"
+      }
+    ],
     "afterPack": "desktop/after-pack.cjs"
   }
 }

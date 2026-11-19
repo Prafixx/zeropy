@@ -133,6 +133,38 @@ steps:
         expr: "err == 'NameError' and 'result' in src.splitlines()[-1]"
       - text: "Call `area(3)` with only one value. Read the message."
         expr: "err == 'TypeError'"
+    investigate:
+      - kind: spot
+        id: i-return
+        prompt: "Which line gives the result back to the line that called the function?"
+        code: |
+          def area(width, height):
+              result = width * height
+              return result
+
+          w = 3
+          a = area(w, 4)
+          print(a)
+        line: 3
+        wrong:
+          - line: 6
+            say: "This line calls `area` and stores what comes back. The giving back happens inside the function."
+          - line: 2
+            say: "This line computes the result, but keeps it inside the call."
+        explain: >-
+          `return result` ends the call and hands the value back. On line 6,
+          that value goes into `a`.
+      - kind: mcq
+        id: i-no-return
+        prompt: "You remove line 3. What does `print(a)` show?"
+        options:
+          - text: "`None`"
+            correct: true
+            why: "A function without `return` gives back `None`. The result stays inside the call and is lost."
+          - text: "`12`"
+            why: "`result` is 12 inside the call, but without `return` it never leaves."
+          - text: "An error"
+            why: "A function without `return` is allowed. It gives back `None`."
 
   # 5. THEORY ----------------------------------------------------------------
   - id: params

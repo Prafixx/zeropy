@@ -139,6 +139,39 @@ steps:
         expr: "err is None and ns.get('count') == len(ns.get('hot', [])) and assigned('count') >= 2"
       - text: "Add a second new list `cool` with the other days. Use `else`."
         expr: "err is None and isinstance(ns.get('cool'), list) and len(ns['cool']) > 0 and len(ns['cool']) + len(ns.get('hot', [])) == len(ns.get('temps', []))"
+    investigate:
+      - kind: spot
+        id: i-decide
+        prompt: "Which line decides if a temperature goes into `hot`?"
+        code: |
+          temps = [18, 25, 31, 22, 29]
+          hot = []
+          for t in temps:
+              if t > 24:
+                  hot.append(t)
+          print(hot)
+        line: 4
+        wrong:
+          - line: 5
+            say: "This line adds the value. The decision is made on the line before it."
+          - line: 3
+            say: "This line takes each temperature in turn. It does not choose."
+        explain: >-
+          This is the filter pattern: a loop, an `if` that decides, and
+          `append` for the values that pass.
+      - kind: trace
+        id: i-trace-filter
+        code: |
+          temps = [18, 25, 31, 22, 29]
+          hot = []
+          for t in temps:
+              if t > 24:
+                  hot.append(t)
+          print(hot)
+        names: [t, hot]
+        explain: >-
+          Line 4 changes nothing, so it has no row. When the `if` is False,
+          the next row is the `for` line again, with the next temperature.
 
   # 5. WORKED EXAMPLE --------------------------------------------------------
   - id: example-lowest

@@ -121,6 +121,30 @@ steps:
         expr: "ns.get('is_freezing') is True"
       - text: "Add `is_mild = temperature == 20` and make it `True`."
         expr: "ns.get('is_mild') is True and ns.get('temperature') == 20"
+    investigate:
+      - kind: trace
+        id: i-trace-bool
+        code: |
+          temperature = 31
+          is_hot = temperature > 30
+          is_freezing = temperature <= 0
+          print(is_hot)
+          print(is_freezing)
+        names: [is_hot, is_freezing]
+        explain: >-
+          A comparison is a question, and its answer is a value: `True` or
+          `False`. `31 > 30` is `True`, `31 <= 0` is `False`.
+      - kind: mcq
+        id: i-30
+        prompt: "`temperature` becomes `30`. What is `is_hot`?"
+        options:
+          - text: "`False`"
+            correct: true
+            why: "`30 > 30` is False: 30 is not more than 30. With `>=` it would be True."
+          - text: "`True`"
+            why: "`>` means strictly more. 30 is equal, not more."
+          - text: "`30`"
+            why: "A comparison always gives `True` or `False`, never the number."
 
   # 5. THEORY ----------------------------------------------------------------
   - id: combine

@@ -133,6 +133,38 @@ steps:
         expr: "err is None and ns.get('temperature') == 30 and lines == ['nice']"
       - text: "Add a second line to the `else` block that prints `wear a coat`. Make the program reach it."
         expr: "err is None and lines == ['cold', 'wear a coat']"
+    investigate:
+      - kind: spot
+        id: i-branch
+        prompt: "With `temperature = 25`, which `print` line runs?"
+        code: |
+          temperature = 25
+          if temperature > 30:
+              print("hot")
+          elif temperature > 15:
+              print("nice")
+          else:
+              print("cold")
+        line: 5
+        wrong:
+          - line: 3
+            say: "`25 > 30` is False, so this block is skipped."
+          - line: 7
+            say: "`else` runs only when no condition before it was True. `25 > 15` is True."
+        explain: >-
+          Python checks the conditions from the top. The first True one wins:
+          `25 > 15`. Its block runs, and the rest is skipped.
+      - kind: mcq
+        id: i-40
+        prompt: "`temperature = 40`. How many lines does the program print?"
+        options:
+          - text: "One: `hot`"
+            correct: true
+            why: "The first True condition wins. `elif` is only checked when the `if` was False."
+          - text: "Two: `hot` and `nice`"
+            why: "40 > 15 is also true, but `elif` is skipped once a condition above it was True."
+          - text: "None"
+            why: "`40 > 30` is True, so `hot` is printed."
 
   # 5. PREDICT ---------------------------------------------------------------
   - id: predict-first

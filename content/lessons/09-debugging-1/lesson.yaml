@@ -183,6 +183,35 @@ steps:
         expr: "err == 'TypeError'"
       - text: "Make a `SyntaxError`. Delete one bracket or one quote."
         expr: "err == 'SyntaxError'"
+    investigate:
+      - kind: spot
+        id: i-zero
+        prompt: "You change line 3 to `rounds = 0`. Which line stops with an error?"
+        code: |
+          name = "Ada"
+          points = 40
+          rounds = 4
+          print(name)
+          print(points / rounds)
+        line: 5
+        wrong:
+          - line: 3
+            say: "A variable can be 0. The error comes where Python divides by it."
+        explain: >-
+          Python stops on line 5 with a `ZeroDivisionError`: no number can
+          be divided by 0. The lines before it run first, so `Ada` is
+          printed.
+      - kind: mcq
+        id: i-typo
+        prompt: "Line 4 becomes `print(nmae)`. Which kind of error is it?"
+        options:
+          - text: "`NameError`: there is no variable called `nmae`"
+            correct: true
+            why: "The line is valid Python, but the name does not exist."
+          - text: "`SyntaxError`"
+            why: "The grammar of the line is fine. Only the name is unknown."
+          - text: "`TypeError`"
+            why: "A `TypeError` is about a value of the wrong type. Here the name itself is missing."
 
   # 5. THEORY ----------------------------------------------------------------
   - id: method

@@ -118,6 +118,35 @@ steps:
         expr: "isinstance(ns.get('half'), float)"
       - text: 'Add `word = "la"` and then `song = word * 3`. What does `*` do with text?'
         expr: "isinstance(ns.get('word'), str) and ns.get('song') == ns.get('word') * 3"
+    investigate:
+      - kind: spot
+        id: i-rest
+        prompt: "Which line computes the minutes that are left over after the whole hours?"
+        code: |
+          minutes = 135
+          hours = minutes // 60
+          rest = minutes % 60
+          print(hours)
+          print(rest)
+        line: 3
+        wrong:
+          - line: 2
+            say: "`//` gives the whole hours. The rest is cut away here."
+        explain: >-
+          `%` gives the rest of a division: 135 minutes are 2 hours and 15
+          minutes, so `135 % 60` is `15`.
+      - kind: predict
+        id: i-200
+        prompt: "The same program with `minutes = 200`. **What does it print?**"
+        code: |
+          minutes = 200
+          hours = minutes // 60
+          rest = minutes % 60
+          print(hours)
+          print(rest)
+        explain: >-
+          200 minutes are 3 whole hours (180 minutes), and 20 minutes are
+          left over.
 
   # 5. THEORY ----------------------------------------------------------------
   - id: fstrings

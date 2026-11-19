@@ -56,7 +56,7 @@ export function checkBackup(text: string): string | null {
   if (data.version !== 1) return 'This file comes from a newer version of ZeroPy. Update the app first.';
   const progress = data.progress;
   if (!isRecord(progress)) return 'The progress in this file is damaged.';
-  for (const part of ['lessons', 'cards', 'code', 'mistakes']) {
+  for (const part of ['lessons', 'cards', 'code', 'mistakes', 'practiced']) {
     if (progress[part] !== undefined && !isRecord(progress[part])) return 'The progress in this file is damaged.';
   }
   return null;

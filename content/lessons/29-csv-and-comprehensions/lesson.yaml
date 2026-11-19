@@ -1,0 +1,687 @@
+id: csv-and-comprehensions
+order: 29
+title: CSV and comprehensions
+summary: Read and write tables in CSV files, and build new lists from old ones in one line.
+minutes: 40
+outcomes: [A4, A6]
+
+objectives:
+  - id: O1
+    text: Read a CSV file with csv.DictReader, and turn its texts into numbers
+  - id: O2
+    text: Write a CSV file with csv.DictWriter
+  - id: O3
+    text: Build a list with a comprehension - a value, a loop, and maybe a condition
+  - id: O4
+    text: Sum, count and find the biggest value of a table, and build a dictionary with a comprehension
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O3
+    title: A loop in one line
+    question: You have written this loop many times. Can it be shorter?
+    code: |
+      prices = [4, 12, 7, 20]
+      big = []
+      for p in prices:
+          if p > 5:
+              big.append(p * 2)
+
+      big = [p * 2 for p in prices if p > 5]
+    beats:
+      - beat: list
+        line: 1
+        caption: "Four prices. We want a new list: the double of each price that is more than 5."
+      - beat: empty
+        line: 2
+        caption: "The pattern from lesson 12: start with an empty list."
+      - beat: first
+        line: 4
+        caption: "Read each value. 4 is not more than 5: it is not kept."
+      - beat: second
+        line: 4
+        caption: "12 is more than 5..."
+      - beat: keepSecond
+        line: 5
+        caption: "...so its double, 24, goes into `big`."
+      - beat: third
+        line: 4
+        caption: "7 passes the test, too."
+      - beat: keepThird
+        line: 5
+        caption: "14 goes in."
+      - beat: fourth
+        line: 4
+        caption: "And 20."
+      - beat: keepFourth
+        line: 5
+        caption: "40. The loop is done."
+      - beat: oneLine
+        line: 7
+        caption: "A **comprehension** says the same in one line: **what** to keep (`p * 2`), **from where** (`for p in prices`), and **when** (`if p > 5`)."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: comprehensions
+    type: theory
+    objective: O3
+    title: Comprehensions
+    body: |
+      ## A list from a list
+
+      ```
+      squares = [n * n for n in numbers]
+      long_words = [w for w in words if len(w) > 3]
+      ```
+
+      Read it like a sentence: "`n * n`, for each `n` in `numbers`". The
+      `if` part is optional. The result is always a **new** list.
+
+      ## A dictionary
+
+      ```
+      lengths = {w: len(w) for w in words}
+      ```
+
+      Curly brackets and `key: value` make a dictionary.
+
+      ## Sum, count, the biggest
+
+      Without the square brackets, the values go straight into a function:
+
+      ```
+      total = sum(p for p in prices if p > 5)
+      count = sum(1 for p in prices if p > 5)
+      biggest = max(len(w) for w in words)
+      ```
+
+      Use a comprehension when the loop only builds a list. When the loop
+      does more (prints, uses several steps), keep the normal loop: it is
+      easier to read.
+    keys:
+      - code: "[p * 2 for p in prices if p > 5]"
+        means: "What to keep, from where, and when."
+      - code: "{w: len(w) for w in words}"
+        means: "A dictionary: a key and a value for each `w`."
+      - code: "sum(p for p in prices)"
+        means: "The values go into `sum` one by one. No list is built."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-comp
+    type: predict
+    objective: O3
+    title: Read the comprehension
+    item:
+      kind: predict
+      id: p-comp
+      code: |
+        words = ["tea", "coffee", "jam", "bread"]
+        print([w.upper() for w in words if len(w) > 3])
+        print([len(w) for w in words])
+        print(sum(1 for w in words if "a" in w))
+      explain: >-
+        The first keeps only the words longer than 3 letters, in capital
+        letters. The second keeps the length of every word. The last
+        counts the words with an `a`: tea, jam, bread.
+      misconceptions:
+        - answer: "['COFFEE', 'BREAD']\n[3, 6, 3, 5]\n2"
+          say: "Count again: `tea`, `jam` and `bread` all have an `a`."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: csv-demo
+    type: demo
+    visual: none
+    objective: O1
+    title: A table in a file
+    intro: |
+      A **CSV** file is a table as text: one line for each row, and commas
+      between the columns. The first line has the names of the columns.
+      Spreadsheets like Excel can open and save CSV files.
+
+      Press **Run**. Each row becomes a dictionary.
+    files:
+      expenses.csv: |
+        date,category,amount
+        2026-11-01,food,12.50
+        2026-11-02,travel,30
+        2026-11-03,food,7.25
+        2026-11-05,books,18
+    code: |
+      import csv
+
+      with open("expenses.csv", newline="") as f:
+          rows = list(csv.DictReader(f))
+
+      print(rows[0])
+      food = [float(r["amount"]) for r in rows
+              if r["category"] == "food"]
+      print("Food:", sum(food))
+    experiments:
+      - text: "Run the code. Look at `rows[0]`: what type is the amount?"
+        expr: "err is None and 'Food: 19.75' in lines"
+      - text: "Print the number of rows: `print(len(rows))`."
+        expr: "err is None and '4' in lines"
+      - text: "Print the total of all expenses: `print(sum(float(r[\"amount\"]) for r in rows))`."
+        expr: "err is None and '67.75' in lines"
+      - text: "Delete `float(...)` around `r[\"amount\"]` in the comprehension. Read the message."
+        expr: "err == 'TypeError'"
+    investigate:
+      - kind: spot
+        id: i-filter
+        prompt: "Which line keeps only the food rows?"
+        code: |
+          import csv
+
+          with open("expenses.csv", newline="") as f:
+              rows = list(csv.DictReader(f))
+
+          print(rows[0])
+          food = [float(r["amount"]) for r in rows
+                  if r["category"] == "food"]
+          print("Food:", sum(food))
+        line: 8
+        wrong:
+          - line: 7
+            say: "This line takes the amount of each row. The choice is made by the `if` part."
+          - line: 4
+            say: "This line reads all rows. Nothing is chosen yet."
+        explain: >-
+          The `if` at the end of a comprehension is a filter: only the rows
+          where it is True give a value.
+      - kind: mcq
+        id: i-float
+        prompt: "Why `float(r[\"amount\"])`, and not only `r[\"amount\"]`?"
+        options:
+          - text: "The csv module gives every value as text. `sum` needs numbers"
+            correct: true
+            why: "A CSV file is only text. You turn the values into numbers yourself."
+          - text: "To round the amount"
+            why: "`float` does not round. It turns text into a number."
+          - text: "Because `amount` is a keyword of Python"
+            why: "`amount` is a normal key of the row."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: csv
+    type: theory
+    objective: O1
+    title: Read and write CSV
+    body: |
+      ## Read
+
+      ```
+      import csv
+
+      with open("expenses.csv", newline="") as f:
+          rows = list(csv.DictReader(f))
+      ```
+
+      Each row is a dictionary: the names of the columns are its keys.
+      Every value is a **text**, also `"12.50"`. Turn it into a number with
+      `float()` or `int()` before you compute.
+
+      ## Write
+
+      ```
+      with open("food.csv", "w", newline="") as f:
+          writer = csv.DictWriter(f, fieldnames=["date", "amount"])
+          writer.writeheader()
+          writer.writerows(food_rows)
+      ```
+
+      `fieldnames` are the columns, in order. `writeheader()` writes the
+      first line, `writerows()` writes a list of dictionaries.
+
+      Always open CSV files with `newline=""`. The `csv` module handles the
+      ends of the lines itself; without it, Windows gets empty lines
+      between the rows.
+
+      Why not `line.split(",")`? A value can have a comma inside quotes,
+      like `"Oslo, Norway"`. The `csv` module handles that.
+    keys:
+      - code: "csv.DictReader(f)"
+        means: "Each row as a dictionary. All values are texts."
+      - code: "csv.DictWriter(f, fieldnames=[...])"
+        means: "Writes dictionaries as rows, in the order of `fieldnames`."
+      - code: 'open(name, newline="")'
+        means: "Always for CSV files."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O4
+    title: Tables and comprehensions
+    items:
+      - kind: predict
+        id: d-text
+        objective: O1
+        files:
+          scores.csv: "name,score\nAna,9\nBen,10\n"
+        code: |
+          import csv
+
+          with open("scores.csv", newline="") as f:
+              rows = list(csv.DictReader(f))
+
+          print(rows[1]["score"] + rows[0]["score"])
+          print(int(rows[1]["score"]) + int(rows[0]["score"]))
+        explain: "The values of a CSV file are texts: `\"10\" + \"9\"` joins them to `109`. After `int`, they are numbers: 19."
+        misconceptions:
+          - answer: "19\n19"
+            say: "CSV values are texts. Two texts with `+` are joined, not added."
+      - kind: predict
+        id: d-dict
+        objective: O4
+        code: |
+          prices = {"tea": 3, "cake": 5, "jam": 4}
+          cheap = {k: v for k, v in prices.items() if v < 5}
+          print(cheap)
+          print(max(v for v in prices.values()))
+        explain: "The dictionary comprehension keeps the pairs with a value under 5. `max` gets the values one by one."
+      - kind: mcq
+        id: d-when
+        objective: O3
+        prompt: "When is a normal `for` loop better than a comprehension?"
+        options:
+          - text: "When the loop does more than build a list, for example print or count several things"
+            correct: true
+            why: "A comprehension is for one job: a new list or dictionary from old values."
+          - text: "Never: a comprehension is always better"
+            why: "A long comprehension with many parts is hard to read."
+          - text: "When the list is short"
+            why: "The length does not matter. The job of the loop does."
+      - kind: diagnose
+        id: d-key
+        objective: O1
+        mode: read
+        files:
+          people.csv: "name,city\nAna,Oslo\n"
+        code: |
+          import csv
+
+          with open("people.csv", newline="") as f:
+              rows = list(csv.DictReader(f))
+          print(rows[0]["Name"])
+        explain: "The keys are the names in the first line of the file, exactly as written: `name` with a small `n`."
+        fix:
+          - text: "`rows[0][\"name\"]`"
+            correct: true
+            why: "The key must match the header line exactly."
+          - text: "`rows[\"Name\"][0]`"
+            why: "`rows` is a list: its index comes first. Then the key."
+          - text: "`rows[1][\"Name\"]`"
+            why: "The row is right. The key has the wrong capital letter."
+      - kind: predict
+        id: d-gen
+        objective: O4
+        code: |
+          words = ["sun", "moon", "a", "stars"]
+          print(sum(len(w) for w in words))
+          print(max(len(w) for w in words))
+          print([w for w in words if len(w) == max(len(x) for x in words)])
+        explain: "The lengths are 3, 4, 1 and 5: their sum is 13, the biggest is 5, and the word with length 5 is `stars`."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-totals
+    type: worked
+    objective: O4
+    title: A total for each category
+    problem: |
+      `expenses.csv` has a `category` and an `amount` in each row. Show the
+      total of each category.
+    lines:
+      - goal: "Get the data"
+        code: |
+          import csv
+
+          with open("expenses.csv", newline="") as f:
+              rows = list(csv.DictReader(f))
+        note: "Read the table. Each row is a dictionary of texts."
+      - goal: "Compute"
+        code: 'categories = {r["category"] for r in rows}'
+        note: "A **set** comprehension: each category one time."
+      - code: |
+          totals = {
+              c: sum(float(r["amount"]) for r in rows if r["category"] == c)
+              for c in categories
+          }
+        note: "For each category, the sum of the amounts of its rows. A long comprehension can go on several lines inside the brackets."
+      - goal: "Show the result"
+        code: |
+          for c in sorted(totals):
+              print(f"{c}: {totals[c]:.2f}")
+        note: "A normal loop to print: it does a job of its own."
+    check:
+      kind: mcq
+      id: w-totals
+      prompt: "Why is `float(...)` needed around `r[\"amount\"]`?"
+      options:
+        - text: "CSV values are texts, and `sum` cannot add texts"
+          correct: true
+          why: "`sum` of texts raises a `TypeError`. Turn each into a number first."
+        - text: "To round the amounts"
+          why: "`float` does not round. It turns the text into a number."
+        - text: "`float` makes the sum faster"
+          why: "Without it, the sum does not work at all."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-cheap
+        objective: O3
+        code: |
+          prices = [12, 5, 30, 8]
+          cheap = [p for p in prices if p < 10]
+          doubled = [p * 2 for p in cheap]
+          print(cheap)
+          print(doubled)
+        explain: >-
+          Each comprehension builds a new list from the list before it: first
+          the cheap prices `[5, 8]`, then each of them times 2: `[10, 16]`.
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-comp
+    type: exercise
+    fade: completion
+    objective: O3
+    title: One line instead of four
+    prompt: |
+      The loop builds a list of the names of the people over 30. **Replace
+      `___`** with a comprehension that gives the same list, and delete
+      the loop.
+    files:
+      people.csv: |
+        name,age
+        Ana,31
+        Ben,25
+        Cleo,44
+    starter: |
+      import csv
+
+      with open("people.csv", newline="") as f:
+          rows = list(csv.DictReader(f))
+
+      older = []
+      for r in rows:
+          if int(r["age"]) > 30:
+              older.append(r["name"])
+
+      older = ___
+      print(older)
+    solution: |
+      import csv
+
+      with open("people.csv", newline="") as f:
+          rows = list(csv.DictReader(f))
+
+      older = [r["name"] for r in rows if int(r["age"]) > 30]
+      print(older)
+    after: >-
+      The comprehension has the same three parts as the loop: the value
+      (`r["name"]`), the loop (`for r in rows`) and the condition.
+    cases:
+      - {}
+      - label: "`people.csv` has other people"
+        files:
+          people.csv: "name,age\nDan,30\nEve,70\nFay,5\nGus,31\n"
+    checks:
+      - expr: "err is None and older == [r['name'] for r in rows if int(r['age']) > 30]"
+        pass: "`older` has the names of the people over 30, in order"
+        hint: "The value is `r[\"name\"]`, the loop is `for r in rows`, the condition is `if int(r[\"age\"]) > 30`."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "The age is a text. Compare `int(r[\"age\"]) > 30`."
+          - when: "isinstance(ns.get('older'), list) and older and isinstance(older[0], dict)"
+            say: "The list holds whole rows. Keep only the name: `r[\"name\"]` at the start."
+      - expr: "syntax('ListComp') == 1 and syntax('For') == 0"
+        pass: "The loop is gone: one comprehension does the work"
+        hint: "Delete the `for` loop and the empty list above it."
+    hints:
+      - "Start with `[r[\"name\"] for r in rows ...]`."
+      - "Add the condition at the end: `if int(r[\"age\"]) > 30`."
+      - "`older = [r[\"name\"] for r in rows if int(r[\"age\"]) > 30]`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-max
+    type: exercise
+    fade: debug
+    objective: O1
+    title: The best score is 9?
+    prompt: |
+      The program must print the best score of the table. **Run it.** It
+      prints `9`, but Ben has 10.
+    files:
+      scores.csv: |
+        name,score
+        Ana,9
+        Ben,10
+        Cleo,7
+    starter: |
+      import csv
+
+      with open("scores.csv", newline="") as f:
+          rows = list(csv.DictReader(f))
+
+      best = max(r["score"] for r in rows)
+      print(best)
+    solution: |
+      import csv
+
+      with open("scores.csv", newline="") as f:
+          rows = list(csv.DictReader(f))
+
+      best = max(int(r["score"]) for r in rows)
+      print(best)
+    after: >-
+      Texts are compared letter by letter, like in a dictionary: `"9"`
+      comes after `"1"`, so `"9"` is bigger than `"10"`. As numbers, 10 is
+      bigger. No error, only a wrong answer: the most dangerous kind.
+    cases:
+      - {}
+      - label: "`scores.csv` has the scores 100, 25 and 3"
+        files:
+          scores.csv: "name,score\nDan,100\nEve,25\nFay,3\n"
+    checks:
+      - expr: "err is None and best == max(int(r['score']) for r in rows) and isinstance(best, int)"
+        pass: "`best` is the biggest score, as a number"
+        hint: "What type are the values of a CSV file? How are texts compared?"
+        misconceptions:
+          - when: "isinstance(ns.get('best'), str)"
+            say: "`best` is a text. Texts are compared letter by letter: `\"9\"` > `\"10\"`. Turn each score into a number with `int()`."
+      - expr: "lines == [str(max(int(r['score']) for r in rows))]"
+        pass: "It prints the best score"
+        hint: "Keep `print(best)`."
+    hints:
+      - "Print `\"9\" > \"10\"`. Is it True?"
+      - "The scores are texts. Turn them into numbers."
+      - "`max(int(r[\"score\"]) for r in rows)`."
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-passed
+    type: exercise
+    fade: independent
+    objective: O2
+    title: A new table from an old one
+    prompt: |
+      `grades.csv` has the columns `name` and `score`.
+
+      **Write `passed.csv`** with the same two columns, and only the rows
+      with a score of 50 or more, in the same order. Use a comprehension
+      to choose the rows, and `csv.DictWriter` to write them.
+
+      Then print the average score of all students, like `Average: 58.3`
+      (one digit after the point).
+    files:
+      grades.csv: |
+        name,score
+        Ana,72
+        Ben,41
+        Cleo,50
+        Dan,70
+    starter: |
+      import csv
+
+    solution: |
+      import csv
+
+      with open("grades.csv", newline="") as f:
+          rows = list(csv.DictReader(f))
+
+      passed = [r for r in rows if int(r["score"]) >= 50]
+
+      with open("passed.csv", "w", newline="") as f:
+          writer = csv.DictWriter(f, fieldnames=["name", "score"])
+          writer.writeheader()
+          writer.writerows(passed)
+
+      average = sum(int(r["score"]) for r in rows) / len(rows)
+      print(f"Average: {average:.1f}")
+    after: >-
+      Read, choose, write: three short parts. The comprehension chooses
+      whole rows, so `DictWriter` can write them as they are.
+    cases:
+      - {}
+      - label: "`grades.csv` has other students"
+        files:
+          grades.csv: "name,score\nEve,100\nFay,49\nGus,50\n"
+      - label: "nobody passed"
+        files:
+          grades.csv: "name,score\nHal,10\nIda,20\n"
+    checks:
+      - expr: "'passed.csv' in files and (lambda c, io: [dict(r) for r in c.DictReader(io.StringIO(files['passed.csv']))] == [dict(r) for r in c.DictReader(io.StringIO(start_files['grades.csv'])) if int(r['score']) >= 50] and files['passed.csv'].splitlines()[0].strip() == 'name,score')(__import__('csv'), __import__('io'))"
+        pass: "`passed.csv` has the header and the rows with 50 or more"
+        hint: "Choose the rows with `[r for r in rows if int(r[\"score\"]) >= 50]`, then write them with `DictWriter`, `writeheader()` and `writerows()`."
+        misconceptions:
+          - when: "'passed.csv' not in files"
+            say: "There is no `passed.csv`. Open it with `open(\"passed.csv\", \"w\", newline=\"\")` and write it."
+          - when: "'passed.csv' in files and not files['passed.csv'].startswith('name')"
+            say: "The first line must be the header. Call `writer.writeheader()` before `writerows`."
+          - when: "'passed.csv' in files and 'Cleo' not in files['passed.csv'] and 'Cleo' in start_files['grades.csv']"
+            say: "Cleo has exactly 50, and 50 passes: use `>= 50`."
+      - expr: "err is None and (lambda c, io: f\"Average: {sum(int(r['score']) for r in c.DictReader(io.StringIO(start_files['grades.csv']))) / len(list(c.DictReader(io.StringIO(start_files['grades.csv'])))):.1f}\" in lines)(__import__('csv'), __import__('io'))"
+        pass: "It prints the average of all students, with one digit after the point"
+        hint: "`sum(int(r[\"score\"]) for r in rows) / len(rows)`, printed with `:.1f`."
+      - expr: "syntax('ListComp') >= 1 and syntax('For') == 0"
+        pass: "The rows are chosen with a comprehension"
+        hint: "Write `passed = [r for r in rows if ...]`."
+    hints:
+      - "Read: `rows = list(csv.DictReader(f))`. Choose: `passed = [r for r in rows if int(r[\"score\"]) >= 50]`."
+      - "Write: `csv.DictWriter(f, fieldnames=[\"name\", \"score\"])`, then `writeheader()` and `writerows(passed)`."
+      - "The average: `sum(int(r[\"score\"]) for r in rows) / len(rows)`, then `print(f\"Average: {average:.1f}\")`."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: predict
+        id: q-comp
+        objective: O3
+        code: |
+          nums = [1, 2, 3, 4, 5]
+          print([n * 10 for n in nums if n % 2 == 1])
+        explain: "Only the odd numbers pass the test: 1, 3, 5. Each one is multiplied by 10."
+      - kind: mcq
+        id: q-text
+        objective: O1
+        prompt: "`row[\"price\"]` comes from `csv.DictReader`. What type is it?"
+        options:
+          - text: "Always `str`, also when it looks like a number"
+            correct: true
+            why: "CSV is only text. Use `float()` or `int()` to compute."
+          - text: "`float` when it has a point"
+            why: "The `csv` module does not guess types. Everything is a text."
+          - text: "`int` or `float`, as in the file"
+            why: "A file has only text. The `csv` module keeps it as text."
+      - kind: predict
+        id: q-count
+        objective: O4
+        code: |
+          ages = [12, 40, 17, 65, 30]
+          print(sum(1 for a in ages if a >= 18))
+          print({a: a >= 18 for a in ages[:2]})
+        explain: "`sum(1 for ...)` adds 1 for each age that passes: 40, 65 and 30. The dictionary maps the first two ages to True or False."
+      - kind: mcq
+        id: q-newline
+        objective: O2
+        prompt: "Why do you open a CSV file with `newline=\"\"`?"
+        options:
+          - text: "The `csv` module handles the ends of lines itself. Without it, Windows can get empty rows"
+            correct: true
+            why: "The `csv` docs say so, too."
+          - text: "To add an empty line at the end"
+            why: "It does not add lines. It lets the `csv` module control them."
+          - text: "It makes the file smaller"
+            why: "Size is not the reason."
+      - kind: diagnose
+        id: q-sum-text
+        objective: O1
+        mode: predict
+        files:
+          costs.csv: "item,cost\ntea,3\njam,4\n"
+        code: |
+          import csv
+
+          with open("costs.csv", newline="") as f:
+              rows = list(csv.DictReader(f))
+          print(sum(r["cost"] for r in rows))
+        explain: "The costs are texts, and `sum` starts at 0: `0 + \"3\"` is a `TypeError`. Use `float(r[\"cost\"])`."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-comp
+    objective: O3
+    code: |
+      words = ["a", "bb", "ccc"]
+      print([w * 2 for w in words if len(w) > 1])
+    explain: "Only `bb` and `ccc` pass. `* 2` repeats each text."
+  - kind: predict
+    id: r-dict
+    objective: O4
+    code: |
+      names = ["Ana", "Ben"]
+      print({n: len(n) for n in names})
+    explain: "A dictionary comprehension: each name with its length."
+  - kind: mcq
+    id: r-reader
+    objective: O1
+    prompt: "What does `list(csv.DictReader(f))` give?"
+    options:
+      - text: "A list of dictionaries, one for each row, with the header names as keys"
+        correct: true
+        why: "The first line of the file gives the keys."
+      - text: "A list of lists of numbers"
+        why: "The rows are dictionaries, and their values are texts."
+      - text: "One dictionary for the whole file"
+        why: "One dictionary for each row."
+  - kind: predict
+    id: r-strmax
+    objective: O1
+    code: |
+      print(max(["9", "10", "2"]))
+      print(max([9, 10, 2]))
+    explain: "Texts are compared letter by letter, so `\"9\"` is the biggest text. As numbers, 10 is the biggest."
+  - kind: mcq
+    id: r-writer
+    objective: O2
+    prompt: "Which call writes the line with the column names?"
+    options:
+      - text: "`writer.writeheader()`"
+        correct: true
+        why: "It writes the `fieldnames` as the first line."
+      - text: "`writer.writerows(rows)`"
+        why: "That writes the rows, not the header."
+      - text: "`csv.DictReader(f)`"
+        why: "That reads a file."

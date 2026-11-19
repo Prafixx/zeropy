@@ -4,13 +4,21 @@ ZeroPy is a free Python course that runs as a Windows app. It takes you from
 your very first line of code to building and packaging your own small
 desktop app, in about 31 hours.
 
-- **42 short lessons** in 8 modules. You write real Python on almost every screen.
+- **46 short lessons** in 8 modules. You write real Python on almost every screen.
 - **Instant feedback.** Your code runs inside the app and is checked at once.
 - **Pictures that move with the code.** Variables, lists and loops are shown
   as 3D (or 2D) scenes, one line at a time.
-- **Code puzzles.** Put the mixed-up lines of a program in order: 32
-  puzzles in 23 lessons. Python checks your order, so any order that works
+- **Code puzzles.** Put the mixed-up lines of a program in order: 33
+  puzzles in 24 lessons. Python checks your order, so any order that works
   is right.
+- **Be the computer.** Trace tables: you run a program in your head and
+  write each new value, line by line. Python's real run is the answer key.
+- **How does it work?** After you play with a demo, short questions ask
+  how its code works: click the line that does something, or say what
+  changes if a line changes.
+- **Mixed practice.** Exercises and questions from many lessons, in a
+  mixed order, so you learn to choose the right tool yourself. The tasks
+  you practiced longest ago come first.
 - **Solved examples with goals.** Each example is split into short goals,
   like "Get the data", "Compute", "Show the result", so you learn the plan,
   not only the code.
@@ -72,7 +80,12 @@ Only do this if you downloaded the file from this repository's Releases page.
 
 ### Update or uninstall
 
-- **Update:** download the new installer and run it. Your progress stays.
+- **Update (version 0.4.0 and newer, installed version):** open the
+  **settings** → **Check for updates** → **Download and install** →
+  **Restart now**. The app updates itself, and your progress stays. The
+  update is checked against its SHA-512 checksum before it is installed.
+- **Update from 0.3.0 or older, or the portable version:** download the new
+  file from the Releases page and run it. Your progress stays.
 - **Uninstall:** Windows Settings → Apps → ZeroPy → Uninstall. Your
   progress folder is kept, in case you install again. To remove it too,
   delete `%APPDATA%\ZeroPy`.

@@ -65,6 +65,11 @@ export function mountHome(root: HTMLElement): () => void {
     }
   }
 
+  // Hours from the lessons themselves, so the numbers always agree.
+  const minutesOf = (ids: string[]): number => ids.reduce((sum, id) => sum + (getLesson(id)?.minutes ?? 0), 0);
+  const hours = (minutes: number): string => String(Math.round((minutes / 60) * 2) / 2);
+  const totalMinutes = minutesOf(course.modules.flatMap((m) => m.lessons.map((l) => l.id)));
+
   const modules = course.modules.map((module, m) =>
     h(
       'section',
@@ -74,7 +79,7 @@ export function mountHome(root: HTMLElement): () => void {
         { class: 'module-head' },
         h('span', { class: 'module-num' }, String(m + 1).padStart(2, '0')),
         h('div', null, h('h3', null, module.title), h('p', null, module.goal)),
-        h('span', { class: 'module-hours' }, icon('clock', 14), `${module.hours} h`),
+        h('span', { class: 'module-hours' }, icon('clock', 14), `${hours(minutesOf(module.lessons.map((l) => l.id)))} h`),
       ),
       h(
         'ol',
@@ -98,6 +103,14 @@ export function mountHome(root: HTMLElement): () => void {
             ),
           );
         }),
+        // Mixed practice of the module, once one of its lessons is done.
+        module.lessons.some((entry) => lessonState(entry.id).done)
+          ? h(
+              'li',
+              null,
+              h('a', { class: 'chip is-open is-practice', href: `#/practice/${m + 1}` }, icon('mix', 13), h('span', null, 'Mixed practice')),
+            )
+          : null,
       ),
     ),
   );
@@ -113,6 +126,7 @@ export function mountHome(root: HTMLElement): () => void {
       h(
         'nav',
         { class: 'bar-nav', 'aria-label': 'Tools' },
+        h('a', { class: 'bar-link', href: '#/practice', 'aria-label': 'Mixed practice' }, icon('mix', 18), h('span', null, 'Practice')),
         h('a', { class: 'bar-link', href: '#/playground', 'aria-label': 'Playground' }, icon('code', 18), h('span', null, 'Playground')),
         h('a', { class: 'bar-link', href: '#/cheatsheet', 'aria-label': 'Cheat sheet' }, icon('book', 18), h('span', null, 'Cheat sheet')),
       ),
@@ -132,7 +146,7 @@ export function mountHome(root: HTMLElement): () => void {
           h(
             'p',
             { class: 'lead', 'data-enter': true },
-            `Short lessons. You write code on every screen. About ${course.modules.reduce((a, mod) => a + mod.hours, 0).toFixed(0)} hours from your first line to your own desktop app.`,
+            `Short lessons. You write code on every screen. About ${Math.round(totalMinutes / 60)} hours from your first line to your own desktop app.`,
           ),
           h(
             'div',
