@@ -378,6 +378,28 @@ steps:
       - "`def add_points(self, points):` changes `self.score`."
       - "`def summary(self):` with `return f\"{self.name}: {self.score} points\"`."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-dog
+        objective: O2
+        code: |
+          class Dog:
+              def __init__(self, name):
+                  self.name = name
+              def bark(self):
+                  print(self.name, "says woof")
+          rex = Dog("Rex")
+          rex.bark()
+        explain: >-
+          First the class with its methods, indented inside it. Then make an
+          object, and only then call a method on it. `__init__` stores the name
+          in `self.name`, so `bark` can use it.
+
   # 9. QUIZ ------------------------------------------------------------------
   - id: quiz
     type: quiz

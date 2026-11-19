@@ -249,6 +249,26 @@ steps:
         - text: "An error"
           why: "Two names for one list is allowed. It is a mistake in the plan, not in the grammar."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-backup
+        objective: O3
+        code: |
+          original = [1, 2, 3]
+          backup = original.copy()
+          original.append(4)
+          print(original)
+          print(backup)
+        explain: >-
+          The copy must be made **before** the change. If you copy after
+          `append`, the backup has the 4 too. `copy()` makes a new list, so
+          later changes to `original` do not reach it.
+
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-backup
     type: exercise

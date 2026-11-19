@@ -2,7 +2,7 @@
 // several cases; feedback names the failed requirement and why.
 import { confetti, place, shake, stamp } from '@/kit/motion';
 import { runPython, warmPython } from '@/py/runner';
-import { loadCode, saveCode } from '../store';
+import { loadCode, noteAnswer, saveCode } from '../store';
 import type { ExerciseStep } from '../types';
 import { button, codeBlock, h, icon, md, mdInline, panel } from '../ui';
 import type { StepContext, StepView } from './context';
@@ -20,6 +20,8 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
   let attempts = 0;
   let hintsShown = 0;
   let solved = false;
+  // The solution was shown before the code passed.
+  let helped = false;
   let disposed = false;
 
   const cases = (step.cases ?? [{}]).map((c) => ({ ...c, setup: c.setup ?? step.given, files: c.files ?? step.files, web: c.web ?? step.web }));
@@ -59,7 +61,7 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
       step.given
         ? h('div', { class: 'given' }, h('div', { class: 'given-label' }, 'This code runs before your code:'), codeBlock(step.given).el)
         : null,
-      h('h3', { class: 'todo-title' }, 'Your code is correct when'),
+      h('h2', { class: 'todo-title' }, 'Your code is correct when'),
       h('ul', { class: 'checks' }, ...checkRows),
       feedback,
       hintList,
@@ -80,6 +82,7 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
   }
 
   function showSolution(): void {
+    if (!solved) helped = true;
     solutionButton.hidden = true;
     solutionSlot.replaceChildren(
       h('div', { class: 'given-label' }, solved ? 'One possible solution:' : 'One possible solution. Type it yourself, then run it:'),
@@ -125,6 +128,8 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
       if (!solved) {
         solved = true;
         ctx.grade(attempts === 1);
+        // Hard work goes on the "My mistakes" list; an easy pass takes it off.
+        noteAnswer(lessonId, `step:${step.id}`, helped || attempts > 2);
         ctx.done();
       }
       const mark = h('span', { class: 'stamp stamp-big' }, 'Correct');

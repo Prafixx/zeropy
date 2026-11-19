@@ -86,7 +86,7 @@ export function mountCheatSheet(root: HTMLElement): () => void {
     pageBar('Cheat sheet', 'Every key fact'),
     h(
       'main',
-      { class: 'player-main' },
+      { class: 'player-main', tabindex: '0' },
       h(
         'div',
         { class: 'sheet' },

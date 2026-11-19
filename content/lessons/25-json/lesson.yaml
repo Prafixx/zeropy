@@ -277,6 +277,26 @@ steps:
         - text: "It stops with an error, because the file exists"
           why: "`exists()` is True, so the program loads the file."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O1
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-json
+        objective: O1
+        code: |
+          import json
+          data = {"name": "Ana", "score": 42}
+          text = json.dumps(data)
+          back = json.loads(text)
+          print(back["score"])
+        explain: >-
+          `dumps` turns the dictionary into JSON text, and `loads` turns the
+          text back into a dictionary. So `back["score"]` is the number 42
+          again.
+
   # 7. EXERCISE: completion --------------------------------------------------
   - id: ex-roundtrip
     type: exercise

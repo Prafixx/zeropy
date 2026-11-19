@@ -330,6 +330,25 @@ steps:
         - text: "`float` makes the sum faster"
           why: "Without it, the sum does not work at all."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-cheap
+        objective: O3
+        code: |
+          prices = [12, 5, 30, 8]
+          cheap = [p for p in prices if p < 10]
+          doubled = [p * 2 for p in cheap]
+          print(cheap)
+          print(doubled)
+        explain: >-
+          Each comprehension builds a new list from the list before it: first
+          the cheap prices `[5, 8]`, then each of them times 2: `[10, 16]`.
+
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-comp
     type: exercise

@@ -201,6 +201,26 @@ steps:
         - text: "`3 notebooks cost {total}`"
           why: "The text starts with `f`, so Python replaces `{total}` with the value."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-receipt
+        objective: O3
+        code: |
+          item = "tea"
+          price = 2.5
+          count = 4
+          total = price * count
+          print(f"{count} x {item} costs {total}")
+        explain: >-
+          The three values can come in any order, but all of them before the
+          line that uses them. `2.5 * 4` is the float `10.0`, and the f-string
+          puts every value into the text.
+
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-seconds
     type: exercise

@@ -153,6 +153,25 @@ steps:
         - text: "All four lines"
           why: "Lines 2, 3 and 4 contain only names. They work for any price."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-score
+        objective: O2
+        code: |
+          score = 10
+          print(score)
+          score = score + 5
+          print(score)
+        explain: >-
+          A name must get a value before Python can print it. Then `score =
+          score + 5` reads the old value (10) and stores 15 under the same name.
+          So the two prints show 10, then 15.
+
   # 6. EXERCISE: completion --------------------------------------------------
   - id: ex-pay
     type: exercise

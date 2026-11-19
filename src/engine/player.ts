@@ -3,7 +3,7 @@
 import { confetti, gsap, leave, place, stamp } from '@/kit/motion';
 import { getSettings, onSettings } from '@/kit/settings';
 import { warmPython } from '@/py/runner';
-import { getLesson } from './registry';
+import { getLesson, lessons } from './registry';
 import { brand, settingsButton } from './settings-menu';
 import { describeWait, finishLesson, lessonState, nextDue, reachStep } from './store';
 import type { Lesson, Step } from './types';
@@ -91,7 +91,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
   });
 
   const phase = h('span', { class: 'phase' });
-  const stepTitle = h('h2', { class: 'step-title' });
+  const stepTitle = h('h1', { class: 'step-title' });
   const objective = h('p', { class: 'objective' });
   const body = h('div', { class: 'step-body' });
   const back = button('Back', { kind: 'ghost', icon: 'left', onClick: () => void go(index - 1) });
@@ -110,7 +110,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
       rail,
       settingsButton(),
     ),
-    h('main', { class: 'player-main' }, h('div', { class: 'step-head' }, phase, stepTitle, objective), body),
+    h('main', { class: 'player-main', tabindex: '0' }, h('div', { class: 'step-head' }, phase, stepTitle, objective), body),
     h('footer', { class: 'dock' }, back, note, primary),
   );
   root.replaceChildren(shell);
@@ -224,7 +224,10 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     gsap.set(body, { x: 0, opacity: 1 });
     back.disabled = false;
     note.textContent = '';
-    setPrimary('Back to the course', true, () => (window.location.hash = '#/'));
+    // After the last lesson, the next screen is the path after the course.
+    const last = lesson.order === Math.max(...lessons().map((l) => l.order));
+    if (last) setPrimary('What comes next', true, () => (window.location.hash = '#/next'));
+    else setPrimary('Back to the course', true, () => (window.location.hash = '#/'));
     place(el.querySelectorAll('[data-enter]'), 0.25);
     stamp(mark).eventCallback('onComplete', () => confetti(mark, 26));
   }

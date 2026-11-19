@@ -64,14 +64,14 @@ export function mountPlayground(root: HTMLElement): () => void {
     },
   });
   const home = h('a', { class: 'btn btn-ghost', href: '#/' }, h('span', { class: 'btn-label' }, 'Back to the course'));
-  const body = h('div', { class: 'step-body' }, view.el);
+  const body = h('div', { class: 'step-body' }, h('h1', { class: 'sr-only' }, 'Playground'), view.el);
 
   root.replaceChildren(
     h(
       'div',
       { class: 'player' },
       pageBar('Playground', 'Your own code'),
-      h('main', { class: 'player-main' }, body),
+      h('main', { class: 'player-main', tabindex: '0' }, body),
       h('footer', { class: 'dock' }, home, h('div', { class: 'dock-note' }), reset),
     ),
   );

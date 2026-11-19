@@ -108,7 +108,7 @@ export function renderDebugger(step: DebuggerStep, ctx: StepContext): StepView {
       { class: 'split-text', 'data-enter': true },
       h('span', { class: 'tag tag-debug' }, 'Debugger'),
       md(step.prompt),
-      h('h3', { class: 'todo-title' }, 'Your tasks'),
+      h('h2', { class: 'todo-title' }, 'Your tasks'),
       h('ul', { class: 'checks' }, ...taskRows),
       checkButton,
       feedback,

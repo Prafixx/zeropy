@@ -2,7 +2,7 @@
 import { place } from '@/kit/motion';
 import { warmPython } from '@/py/runner';
 import type { Card } from '../registry';
-import { describeWait, gradeCard, pickReview } from '../store';
+import { describeWait, gradeCard, noteAnswer, pickReview } from '../store';
 import type { DrillStep, Item, PredictStep, QuizStep, ReviewStep, TheoryStep, WorkedStep } from '../types';
 import { codeBlock, h, md, mdInline, panel } from '../ui';
 import type { StepContext, StepView } from './context';
@@ -31,6 +31,7 @@ export function renderPredict(step: PredictStep, ctx: StepContext): StepView {
   void warmPython().catch(() => undefined);
   const view = renderItem(step.item, (firstTry) => {
     ctx.grade(firstTry);
+    noteAnswer(ctx.lesson.id, step.item.id, !firstTry);
     ctx.done();
   });
   ctx.dock.note('Predict first. Then Python shows the real output.');
@@ -79,9 +80,10 @@ export function renderWorked(step: WorkedStep, ctx: StepContext): StepView {
     ctx.dock.note('Answer the question to continue.');
     check = renderItem(step.check, (firstTry) => {
       ctx.grade(firstTry);
+      noteAnswer(ctx.lesson.id, step.check.id, !firstTry);
       ctx.done();
     });
-    checkSlot.append(h('h3', { class: 'worked-why' }, 'Explain it to yourself'), check.el);
+    checkSlot.append(h('h2', { class: 'worked-why' }, 'Explain it to yourself'), check.el);
     place(checkSlot);
     checkSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -93,6 +95,8 @@ interface SequenceOptions {
   items: Item[];
   intro?: HTMLElement;
   onAnswer?: (index: number, firstTry: boolean) => HTMLElement | null;
+  /** The lesson of each item (review cards come from many lessons). */
+  lessonOf?: (index: number) => string;
 }
 
 /** Shows items one at a time. Shared by quiz and review. */
@@ -114,6 +118,7 @@ function renderSequence(ctx: StepContext, options: SequenceOptions): StepView {
     ctx.objective(options.items[index].objective);
     current = renderItem(options.items[index], (firstTry) => {
       ctx.grade(firstTry);
+      noteAnswer(options.lessonOf?.(index) ?? ctx.lesson.id, options.items[index].id, !firstTry);
       const extra = options.onAnswer?.(index, firstTry);
       if (extra) {
         current!.el.append(extra);
@@ -143,6 +148,7 @@ export function renderCards(ctx: StepContext, cards: Card[], introText: string):
   void warmPython().catch(() => undefined);
   return renderSequence(ctx, {
     items: cards.map((c) => c.item),
+    lessonOf: (index) => cards[index].lessonId,
     intro: h('p', { class: 'muted sequence-intro' }, introText),
     onAnswer: (index, firstTry) => {
       const due = gradeCard(cards[index].cardId, firstTry);
@@ -161,4 +167,15 @@ export function renderReview(step: ReviewStep, ctx: StepContext): StepView {
       ? 'These questions mix this lesson with earlier lessons. Answer from memory. Do not look back.'
       : 'Answer from memory. Do not look back. Each card comes back later, just before you would forget it.',
   );
+}
+
+/** Questions from the "My mistakes" list. A first-try answer takes one off. */
+export function renderPractice(ctx: StepContext, entries: { lessonId: string; item: Item }[]): StepView {
+  return renderSequence(ctx, {
+    items: entries.map((e) => e.item),
+    lessonOf: (index) => entries[index].lessonId,
+    intro: h('p', { class: 'muted sequence-intro' }, 'Questions you answered wrong before. Right on the first try: it leaves your list.'),
+    onAnswer: (_, firstTry) =>
+      h('p', { class: 'next-review' }, firstTry ? 'Fixed. This question is off your list.' : 'Still on your list. It comes back here next time.'),
+  });
 }

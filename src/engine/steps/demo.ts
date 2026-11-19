@@ -192,7 +192,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
       'div',
       { class: 'split-text', 'data-enter': true },
       md(step.intro),
-      hasTodo ? h('h3', { class: 'todo-title' }, 'Try these') : null,
+      hasTodo ? h('h2', { class: 'todo-title' }, 'Try these') : null,
       hasTodo ? h('ul', { class: 'todo' }, ...todo) : null,
     ),
     h(

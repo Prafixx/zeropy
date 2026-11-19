@@ -1,0 +1,89 @@
+# "What next" page: a path after the course. Plain English, free resources.
+# Every link was checked to open. The page renders this file as it is.
+title: What comes after ZeroPy
+lead: >-
+  You can now write, test and package your own Python programs. Here is a
+  path to go further: first the foundations that everyone in tech needs,
+  then a branch that you choose. Every resource here is free.
+
+stages:
+  - title: Build your own projects
+    when: The first 1 or 2 months
+    why: >-
+      A skill becomes yours when you use it without a course. Build two or
+      three small programs that you want for yourself, and put each one on
+      GitHub. Together they become your portfolio.
+    ideas:
+      - A program that sorts the files of a folder into subfolders by type
+      - A quiz game with questions in a JSON file and a high score
+      - A small tool that warns you when it will rain, with a web API
+    links:
+      - { name: "The Python tutorial", url: "https://docs.python.org/3/tutorial/", note: "The official docs. Now you can read them." }
+      - { name: "Exercism, Python track", url: "https://exercism.org/tracks/python", note: "Many small exercises, with free feedback from mentors." }
+
+  - title: Foundations that everyone needs
+    when: The next 3 to 6 months, next to your projects
+    why: >-
+      These skills are the base of every branch: how computers and
+      programs really work, the command line, data in databases, and the
+      math of artificial intelligence.
+    links:
+      - { name: "Harvard CS50x", url: "https://cs50.harvard.edu/x/", note: "The best free introduction to computer science." }
+      - { name: "The Linux Command Line", url: "https://linuxcommand.org/tlcl.php", note: "A free book. Linux runs servers, AI tools and the Raspberry Pi." }
+      - { name: "SQLBolt", url: "https://sqlbolt.com/", note: "Short interactive lessons on SQL, the language of databases." }
+      - { name: "Khan Academy: Linear algebra", url: "https://www.khanacademy.org/math/linear-algebra", note: "Vectors and matrices: the core of AI." }
+      - { name: "Khan Academy: Statistics and probability", url: "https://www.khanacademy.org/math/statistics-probability", note: "How to reason with data and chance." }
+      - { name: "3Blue1Brown: Linear algebra", url: "https://www.3blue1brown.com/topics/linear-algebra", note: "Short videos that make the math visual." }
+
+branches:
+  - title: Artificial intelligence
+    why: >-
+      Python is the main language of AI. Go from data, to classic machine
+      learning, to neural networks, to apps that use language models.
+    path:
+      - { step: "Data tools", detail: "NumPy, pandas, matplotlib and Jupyter notebooks" }
+      - { step: "Classic machine learning", detail: "scikit-learn: models that learn from examples" }
+      - { step: "Deep learning", detail: "PyTorch: neural networks" }
+      - { step: "AI apps", detail: "Language models through APIs, embeddings, search over your own documents, agents" }
+    links:
+      - { name: "Jupyter", url: "https://jupyter.org/", note: "Notebooks: code, results and notes on one page." }
+      - { name: "NumPy for absolute beginners", url: "https://numpy.org/doc/stable/user/absolute_beginners.html", note: "Fast math on arrays of numbers." }
+      - { name: "pandas: getting started", url: "https://pandas.pydata.org/docs/getting_started/index.html", note: "Tables of data in Python." }
+      - { name: "scikit-learn: getting started", url: "https://scikit-learn.org/stable/getting_started.html", note: "Classic machine learning." }
+      - { name: "Machine Learning Specialization", url: "https://www.coursera.org/specializations/machine-learning-introduction", note: "A famous course by Andrew Ng. You can audit it for free." }
+      - { name: "Practical Deep Learning (fast.ai)", url: "https://course.fast.ai/", note: "Deep learning, project first." }
+      - { name: "Neural Networks: Zero to Hero", url: "https://karpathy.ai/zero-to-hero.html", note: "Andrej Karpathy builds a GPT from zero, step by step." }
+      - { name: "PyTorch: learn the basics", url: "https://pytorch.org/tutorials/beginner/basics/intro.html", note: "The official first tutorial." }
+      - { name: "Hugging Face courses", url: "https://huggingface.co/learn", note: "Language models and modern AI tools." }
+
+  - title: Raspberry Pi and electronics
+    why: >-
+      Make programs that touch the real world: lights, buttons, sensors,
+      motors and cameras. Python runs on the Raspberry Pi, and MicroPython
+      runs on small chips like the Raspberry Pi Pico.
+    path:
+      - { step: "A Raspberry Pi and a starter kit", detail: "LEDs, buttons and sensors, controlled from Python with gpiozero" }
+      - { step: "Basic electronics", detail: "Voltage, current, resistors, and how to read a datasheet" }
+      - { step: "Microcontrollers", detail: "MicroPython on a Raspberry Pi Pico; later C or C++ on Arduino" }
+      - { step: "Mix with AI", detail: "For example a camera that recognizes objects, or a voice assistant" }
+    links:
+      - { name: "Raspberry Pi projects", url: "https://projects.raspberrypi.org/en", note: "Hundreds of free guided projects." }
+      - { name: "gpiozero", url: "https://gpiozero.readthedocs.io/en/stable/", note: "The Python library for the pins of the Raspberry Pi." }
+      - { name: "MicroPython", url: "https://micropython.org/", note: "Python for microcontrollers." }
+
+languages:
+  title: Which languages, in which order
+  items:
+    - { name: "Python", why: "Your main language: AI, scripts, the Raspberry Pi." }
+    - { name: "SQL", why: "To ask questions of databases." }
+    - { name: "Bash", why: "The Linux command line, and small automations." }
+    - { name: "JavaScript, HTML and CSS", why: "To show your work on the web. ZeroPy itself is made with them." }
+    - { name: "C", why: "How computers really work, and electronics." }
+    - { name: "Later, only if you need it", why: "C++, Rust, or CUDA (AI on graphics cards)." }
+  link: { name: "MDN: learn web development", url: "https://developer.mozilla.org/en-US/docs/Learn_web_development", note: "The reference for HTML, CSS and JavaScript." }
+
+advice:
+  - { title: "Projects beat certificates", text: "People look at what you built. Show your projects on GitHub, with a short README." }
+  - { title: "Go deep before you go wide", text: "After about six months, choose the branch you like most and stay with it for a while." }
+  - { title: "A little every day", text: "One hour each day for a year beats ten hours one weekend and then nothing." }
+  - { title: "Learn in public", text: "Write a few lines about each project: what it does, what was hard, what you learned." }

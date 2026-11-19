@@ -255,6 +255,25 @@ steps:
         - text: "The whole dictionary"
           why: "The loop gets one pair in each round."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-unique
+        objective: O3
+        code: |
+          names = ["ana", "ben", "ana", "cleo", "ben"]
+          unique = set(names)
+          unique.add("dan")
+          print(len(names), "names")
+          print(len(unique), "different names")
+        explain: >-
+          A set keeps each value once, so the repeated names disappear: 3 names,
+          then 4 after `add`. The list keeps all 5.
+
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-swap
     type: exercise

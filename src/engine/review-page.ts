@@ -20,7 +20,7 @@ export function mountReview(root: HTMLElement): () => void {
       'div',
       { class: 'player' },
       h('header', { class: 'bar' }, brand(), h('div', { class: 'bar-title' }, h('span', { class: 'bar-kicker' }, 'Review'), h('span', null, 'Spaced practice')), h('div', { class: 'bar-spacer' }), settingsButton()),
-      h('main', { class: 'player-main' }, body),
+      h('main', { class: 'player-main', tabindex: '0' }, h('h1', { class: 'sr-only' }, 'Review'), body),
       h('footer', { class: 'dock' }, home, note, primary),
     ),
   );

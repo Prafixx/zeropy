@@ -438,6 +438,31 @@ steps:
       - "`__str__`: `mark = \"x\" if self.done else \" \"`, then `return f\"[{mark}] {self.title}\"`."
       - "`open_tasks`: a loop with a counter, or `sum(1 for task in tasks if not task.done)`."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-deposit
+        objective: O2
+        code: |
+          class Account:
+              def __init__(self):
+                  self.balance = 0
+              def deposit(self, amount):
+                  if amount <= 0:
+                      raise ValueError("amount must be positive")
+                  self.balance = self.balance + amount
+          acc = Account()
+          acc.deposit(50)
+          print(acc.balance)
+        explain: >-
+          The method checks the value **before** it changes the balance. If the
+          check came after the change, a bad amount would already be in the
+          account when the error comes.
+
   # 9. QUIZ ------------------------------------------------------------------
   - id: quiz
     type: quiz

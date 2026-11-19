@@ -75,7 +75,7 @@ export function renderLocal(step: LocalStep, ctx: StepContext): StepView {
       { class: 'split-text', 'data-enter': true },
       h('span', { class: 'tag tag-local' }, 'On your computer'),
       md(step.prompt),
-      h('h3', { class: 'todo-title' }, 'Your work is done when'),
+      h('h2', { class: 'todo-title' }, 'Your work is done when'),
       h('ul', { class: 'checks' }, ...checkRows),
       feedback,
       hintList,

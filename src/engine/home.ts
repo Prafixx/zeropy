@@ -4,7 +4,7 @@ import type { BoxVar } from '@/kit/actors/variable-boxes';
 import { finished, isReduced, place, revealLines, revealOnScroll, sleep } from '@/kit/motion';
 import { course, getLesson, lessons } from './registry';
 import { brand, settingsButton } from './settings-menu';
-import { dueCards, lessonState } from './store';
+import { dueCards, lessonState, mistakes } from './store';
 import { codeBlock, h, icon } from './ui';
 
 const LOOP = [
@@ -43,6 +43,7 @@ export function mountHome(root: HTMLElement): () => void {
   const current = available.find((l) => !lessonState(l.id).done) ?? available[0];
   const started = current ? lessonState(current.id).reached > 0 : false;
   const due = dueCards().length;
+  const missed = mistakes().length;
 
   // Hero demo: the product in ten seconds, built from the same actor as lessons.
   const heroCode = codeBlock(HERO_CODE, { numbers: true });
@@ -112,8 +113,8 @@ export function mountHome(root: HTMLElement): () => void {
       h(
         'nav',
         { class: 'bar-nav', 'aria-label': 'Tools' },
-        h('a', { class: 'bar-link', href: '#/playground' }, icon('code', 18), h('span', null, 'Playground')),
-        h('a', { class: 'bar-link', href: '#/cheatsheet' }, icon('book', 18), h('span', null, 'Cheat sheet')),
+        h('a', { class: 'bar-link', href: '#/playground', 'aria-label': 'Playground' }, icon('code', 18), h('span', null, 'Playground')),
+        h('a', { class: 'bar-link', href: '#/cheatsheet', 'aria-label': 'Cheat sheet' }, icon('book', 18), h('span', null, 'Cheat sheet')),
       ),
       settingsButton(),
     ),
@@ -147,6 +148,9 @@ export function mountHome(root: HTMLElement): () => void {
             due > 0
               ? h('a', { class: 'btn btn-plain btn-big', href: '#/review' }, h('span', { class: 'btn-label' }, `Review ${due} card${due === 1 ? '' : 's'}`), icon('loop', 18))
               : null,
+            missed > 0
+              ? h('a', { class: 'btn btn-plain btn-big', href: '#/mistakes' }, h('span', { class: 'btn-label' }, `My mistakes (${missed})`), icon('target', 18))
+              : null,
           ),
           h('p', { class: 'muted small', 'data-enter': true }, 'No account needed. Your progress stays on this device.'),
         ),
@@ -175,6 +179,12 @@ export function mountHome(root: HTMLElement): () => void {
         { class: 'band band-ink' },
         h('h2', { class: 'display', 'data-reveal': true }, 'At the end you can, alone:'),
         h('ul', { class: 'outcomes' }, ...course.outcomes.map((text) => h('li', { 'data-reveal': true }, icon('check', 18), h('span', null, text)))),
+        h(
+          'a',
+          { class: 'btn btn-primary next-link', href: '#/next', 'data-reveal': true },
+          h('span', { class: 'btn-label' }, 'And after the course? See the path'),
+          icon('right', 18),
+        ),
       ),
       h(
         'section',

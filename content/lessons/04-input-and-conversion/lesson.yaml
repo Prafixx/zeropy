@@ -151,6 +151,25 @@ steps:
         - text: "Python asks the user again"
           why: "Python asks only when it meets `input()`. Line 3 has no `input()`."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-age
+        objective: O3
+        code: |
+          text = input("Your age: ")
+          age = int(text)
+          next_year = age + 1
+          print(f"Next year you are {next_year}.")
+        stdin: [["30"]]
+        explain: >-
+          First ask, then convert: `input()` always gives text, and `int()`
+          makes a number from it. Only a number can be added to 1.
+
   # 6. EXERCISE: completion --------------------------------------------------
   - id: ex-area
     type: exercise

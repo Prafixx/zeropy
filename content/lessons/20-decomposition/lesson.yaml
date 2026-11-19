@@ -309,6 +309,27 @@ steps:
         - text: "All three"
           why: "Each function has one job. Only one of them knows the letters."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-report
+        objective: O3
+        code: |
+          def average(scores):
+              return sum(scores) / len(scores)
+          def report(scores):
+              avg = average(scores)
+              return f"Average: {avg:.1f}"
+          print(report([70, 85, 90]))
+        explain: >-
+          Two small functions, then one call. `report` asks `average` for the
+          number and only formats it. The two `def` blocks can change places:
+          Python needs them only when the last line runs.
+
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-password
     type: exercise

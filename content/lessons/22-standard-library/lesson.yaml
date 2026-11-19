@@ -289,6 +289,24 @@ steps:
         - text: "`math`"
           why: "`math` has number tools like `sqrt`, but no random choice."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O1
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-circle
+        objective: O1
+        code: |
+          import math
+          radius = 3
+          area = math.pi * radius ** 2
+          print(round(area, 2))
+        explain: >-
+          The `import` must come before the first use of `math`. `**` comes
+          before `*`, so this is pi times 9: about 28.27.
+
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-dice
     type: exercise

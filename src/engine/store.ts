@@ -28,14 +28,20 @@ interface Data {
   cards: Record<string, CardState>;
   /** Code the learner wrote in project steps, by lesson and step. */
   code: Record<string, string>;
+  /**
+   * Things that were hard, for the "My mistakes" page: "lesson:item" for a
+   * question answered wrong, "lesson:step:id" for an exercise that needed
+   * the solution or many runs. The value is the time of the mistake.
+   */
+  mistakes: Record<string, number>;
 }
 
 function load(): Data {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Data>;
-    return { lessons: raw.lessons ?? {}, cards: raw.cards ?? {}, code: raw.code ?? {} };
+    return { lessons: raw.lessons ?? {}, cards: raw.cards ?? {}, code: raw.code ?? {}, mistakes: raw.mistakes ?? {} };
   } catch {
-    return { lessons: {}, cards: {}, code: {} };
+    return { lessons: {}, cards: {}, code: {}, mistakes: {} };
   }
 }
 
@@ -119,8 +125,37 @@ export function loadCode(lessonId: string, key: string): string | undefined {
 }
 
 export function resetProgress(): void {
-  data = { lessons: {}, cards: {}, code: {} };
+  data = { lessons: {}, cards: {}, code: {}, mistakes: {} };
   save();
+}
+
+/**
+ * Remembers how an answer went. A wrong answer goes on the "My mistakes"
+ * list; a right one (first try) takes it off again.
+ */
+export function noteAnswer(lessonId: string, ref: string, wrong: boolean): void {
+  const key = `${lessonId}:${ref}`;
+  if (wrong) data.mistakes[key] = Date.now();
+  else if (key in data.mistakes) delete data.mistakes[key];
+  else return;
+  save();
+}
+
+export interface Mistake {
+  lessonId: string;
+  /** An item id, or "step:<id>" for an exercise. */
+  ref: string;
+  at: number;
+}
+
+/** The mistakes, newest first. */
+export function mistakes(): Mistake[] {
+  return Object.entries(data.mistakes)
+    .map(([key, at]) => {
+      const cut = key.indexOf(':');
+      return { lessonId: key.slice(0, cut), ref: key.slice(cut + 1), at };
+    })
+    .sort((a, b) => b.at - a.at);
 }
 
 export function describeWait(due: number, now = Date.now()): string {

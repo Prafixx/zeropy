@@ -257,6 +257,26 @@ steps:
         - text: "Python gives an error"
           why: "There is no error. That is why this mistake is easy to miss."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-join
+        objective: O3
+        code: |
+          sentence = "learn python step by step"
+          words = sentence.split()
+          words[0] = words[0].upper()
+          result = "-".join(words)
+          print(result)
+        explain: >-
+          `split()` makes a list of words. Change one word in the list, then
+          `join` puts the words back together, with "-" between them:
+          `LEARN-python-step-by-step`.
+
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-initials
     type: exercise

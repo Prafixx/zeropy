@@ -498,8 +498,8 @@ code {
 .sheet-card .keycard-code {
   font-size: 15px;
   max-width: 100%;
-  overflow-x: auto;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .sheet-from {
   display: inline-flex;
@@ -624,6 +624,14 @@ code {
   flex-wrap: wrap;
   gap: 8px;
 }
+.menu-reset + .menu-group {
+  margin-top: 18px;
+}
+.menu-version {
+  margin-bottom: 8px;
+  font: 600 13px/1.3 var(--font-mono);
+  color: var(--ink-2);
+}
 .menu-reset {
   display: block;
   margin-top: 14px;
@@ -668,7 +676,24 @@ code {
   border-radius: 99px;
 }
 .step-title {
+  margin: 0;
   font: 700 20px/1.2 var(--font-display);
+}
+.player-main:focus-visible {
+  outline: 3px solid var(--sun);
+  outline-offset: -3px;
+}
+/* Read by screen readers, not shown. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 .objective {
   width: 100%;
@@ -1098,8 +1123,9 @@ code {
 }
 .order-code {
   font: 500 15px/1.75 var(--font-mono);
-  white-space: pre;
-  overflow-x: auto;
+  /* A long line wraps; its leading spaces (the indent) stay. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   background: none;
   padding: 0;
   color: inherit;
@@ -1833,6 +1859,7 @@ code {
 }
 .chip.is-open.is-done {
   background: var(--tint-good);
+  color: var(--ink);
 }
 .chip small {
   font: 500 12px/1 var(--font-mono);
@@ -2683,4 +2710,130 @@ code {
 }
 :root[data-theme='dark'] .tag-milestone {
   color: var(--on-accent);
+}
+
+/* ---------- My mistakes ---------- */
+.mistakes > .lead {
+  margin-top: 10px;
+}
+.mistakes-part {
+  margin-top: 30px;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.mistake-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+.mistake-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'where go' 'title go';
+  align-items: center;
+  gap: 2px 14px;
+  padding: 12px 16px;
+  background: var(--paper-2);
+  border: var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-s);
+}
+.mistake-where {
+  grid-area: where;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.mistake-row strong {
+  grid-area: title;
+}
+.mistake-row .btn {
+  grid-area: go;
+}
+
+/* ---------- What next ---------- */
+.next > .lead {
+  margin-top: 10px;
+}
+.next-head {
+  margin-top: 40px;
+}
+.next-card {
+  margin-top: 22px;
+  padding: 20px 22px;
+  background: var(--paper-2);
+  border: var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 10px;
+}
+.next-card .sheet-title {
+  margin-bottom: 0;
+}
+.next-when {
+  font: 700 12px/1.2 var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.next-ideas {
+  margin: 0;
+  padding-left: 22px;
+  color: var(--ink-2);
+}
+.next-path {
+  margin: 0;
+  padding-left: 24px;
+  display: grid;
+  gap: 6px;
+}
+.next-path li span {
+  display: block;
+  color: var(--ink-2);
+}
+.next-links {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px dashed var(--ink-3);
+  display: grid;
+  gap: 8px;
+}
+.next-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--blue);
+}
+.next-links span {
+  display: block;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.next-advice {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 14px;
+}
+.next-tip {
+  padding: 14px 16px;
+  border: var(--line);
+  border-radius: var(--radius);
+  background: var(--tint-info);
+}
+.next-tip p {
+  margin-top: 4px;
+  font-size: 15px;
+}
+.next-link {
+  margin-top: 26px;
+}
+.mistakes > .panel {
+  margin-top: 18px;
 }

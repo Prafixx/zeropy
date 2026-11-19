@@ -469,6 +469,28 @@ steps:
       - "`Order` has one field: `items: list = field(default_factory=list)`."
       - "`most_expensive`: `best = None`, then for each item: `if best is None or item.cost() > best.cost(): best = item`. Return `best`."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-item
+        objective: O3
+        code: |
+          from dataclasses import dataclass
+          @dataclass
+          class Item:
+              name: str
+              price: float
+          pen = Item("pen", 1.5)
+          print(pen)
+        explain: >-
+          The order of the fields is the order of the arguments: `Item("pen",
+          1.5)` gives the name first, then the price. `@dataclass` stands right
+          above the class, and writes `__init__` and a clear print for you.
+
   # 9. QUIZ ------------------------------------------------------------------
   - id: quiz
     type: quiz

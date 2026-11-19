@@ -3,6 +3,7 @@ import { getSettings, reducedMotion, setSettings } from '@/kit/settings';
 import type { Graphics, MotionPref, ThemePref } from '@/kit/settings';
 import { exportProgress, pickProgressFile } from './backup';
 import { resetProgress } from './store';
+import { updateBlock } from './updates';
 import { h, icon } from './ui';
 
 const GRAPHICS: { value: Graphics; label: string; note: string }[] = [
@@ -79,6 +80,7 @@ export function settingsButton(): HTMLElement {
         },
         'Reset my progress',
       ),
+      updateBlock(),
     ];
     menu.replaceChildren(...parts.filter((part) => part !== null));
   }

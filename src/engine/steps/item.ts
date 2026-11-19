@@ -410,6 +410,8 @@ function renderOrder(item: OrderItem, onDone: OnDone): ItemView {
 
   const feedback = h('div', { class: 'item-feedback', 'aria-live': 'polite' });
   const list = h('ol', { class: 'order-list', 'aria-label': 'The lines of the program, in your order' });
+  // Says where a line went, for screen readers.
+  const moved = h('p', { class: 'sr-only', 'aria-live': 'polite' });
   const check = button('Check the order', { kind: 'plain', onClick: () => void submit() });
   const giveUp = button('Show the right order', { kind: 'ghost', small: true, onClick: () => showAnswer() });
   giveUp.hidden = true;
@@ -478,6 +480,7 @@ function renderOrder(item: OrderItem, onDone: OnDone): ItemView {
       list.append(...order.map((i) => cards[i]));
     });
     cards.forEach((card) => card.classList.remove('is-right'));
+    moved.textContent = `Line moved to place ${to + 1} of ${order.length}.`;
   }
 
   function move(line: number, by: -1 | 1, keepFocus: HTMLElement): void {
@@ -578,6 +581,7 @@ function renderOrder(item: OrderItem, onDone: OnDone): ItemView {
     { class: 'item' },
     md(item.prompt ?? 'The lines of a program are mixed up. **Put them in the right order.** Drag a line, or use its arrows.', 'prose item-prompt'),
     list,
+    moved,
     h('div', { class: 'order-actions' }, check, giveUp),
     feedback,
   );

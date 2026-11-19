@@ -8,19 +8,26 @@ desktop app, in about 31 hours.
 - **Instant feedback.** Your code runs inside the app and is checked at once.
 - **Pictures that move with the code.** Variables, lists and loops are shown
   as 3D (or 2D) scenes, one line at a time.
-- **Code puzzles.** Put the mixed-up lines of a program in order. Python
-  checks your order, so any order that works is right.
+- **Code puzzles.** Put the mixed-up lines of a program in order: 32
+  puzzles in 23 lessons. Python checks your order, so any order that works
+  is right.
 - **Solved examples with goals.** Each example is split into short goals,
   like "Get the data", "Compute", "Show the result", so you learn the plan,
   not only the code.
 - **Spaced review.** Cards from earlier lessons come back just before you
   would forget them.
+- **My mistakes.** Every question you answered wrong, and every exercise
+  that needed the solution, in one list. Practice them until they leave it.
 - **Playground.** Write any Python you like and watch it run, with no
   checks. Your code is saved.
 - **Cheat sheet.** Every key fact of the course on one searchable page.
+- **What next.** A path after the course, with free resources: computer
+  science basics, AI, and Raspberry Pi.
 - **Light or dark.** Follows your Windows setting, or choose in the settings.
 - **Works offline.** Python and everything else are inside the app. No
   account, no internet and no tracking. Your progress stays on your computer.
+  The app goes online only if you click **Check for updates** (settings) or
+  a link to another site.
 
 ![The ZeroPy home page](.github/screenshots/home.png)
 

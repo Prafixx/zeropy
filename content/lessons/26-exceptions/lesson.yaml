@@ -296,6 +296,26 @@ steps:
         - text: "It prints that the file is broken"
           why: "That block runs only for a `JSONDecodeError`."
 
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O1
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-try
+        objective: O1
+        code: |
+          text = "12a"
+          try:
+              number = int(text)
+              print("Number:", number)
+          except ValueError:
+              print("Not a number:", text)
+        explain: >-
+          `int("12a")` raises a `ValueError`, so Python jumps from that line to
+          the `except` block. The print after it inside `try` does not run.
+
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-ask
     type: exercise

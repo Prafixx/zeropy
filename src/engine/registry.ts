@@ -71,3 +71,25 @@ export function allCards(): Card[] {
     })),
   );
 }
+
+export type Found =
+  | { kind: 'item'; lesson: Lesson; item: Item }
+  | { kind: 'exercise'; lesson: Lesson; step: Lesson['steps'][number]; index: number };
+
+/** Finds what a mistake points to: a question, or an exercise ("step:<id>"). */
+export function findRef(lessonId: string, ref: string): Found | null {
+  const lesson = getLesson(lessonId);
+  if (!lesson) return null;
+  if (ref.startsWith('step:')) {
+    const index = lesson.steps.findIndex((s) => s.id === ref.slice(5));
+    return index === -1 ? null : { kind: 'exercise', lesson, step: lesson.steps[index], index };
+  }
+  for (const step of lesson.steps) {
+    const items: Item[] =
+      step.type === 'predict' ? [step.item] : step.type === 'worked' ? [step.check] : step.type === 'quiz' || step.type === 'drill' ? step.items : [];
+    const item = items.find((i) => i.id === ref);
+    if (item) return { kind: 'item', lesson, item };
+  }
+  const card = lesson.review.find((i) => i.id === ref);
+  return card ? { kind: 'item', lesson, item: card } : null;
+}

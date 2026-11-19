@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { load } from 'js-yaml';
 import { validateLesson } from './src/engine/validate.ts';
 
@@ -21,8 +22,11 @@ function contentYaml(): Plugin {
   };
 }
 
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
+
 export default defineConfig({
   base: './',
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   plugins: [contentYaml()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
