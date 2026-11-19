@@ -161,9 +161,11 @@ steps:
 
       Ten lines that are almost the same: this is work for a loop.
     lines:
-      - code: 'number = int(input("Number: "))'
+      - goal: "Get the data"
+        code: 'number = int(input("Number: "))'
         note: "Ask and convert, one time, before the loop."
-      - code: "for i in range(1, 11):"
+      - goal: "Repeat for each value"
+        code: "for i in range(1, 11):"
         note: "The values 1 to 10. The stop value is 11, because the stop is not included."
       - code: |2
               print(f"{number} x {i} = {number * i}")
@@ -180,6 +182,35 @@ steps:
           why: "`while` can do it, with a start value, a condition and a change. `for` is shorter and safer here."
         - text: "`for` is needed when the block has a `print`"
           why: "Both loops can print. The choice depends on what you know about the rounds."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O1
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-squares
+        objective: O1
+        code: |
+          for n in range(1, 4):
+              square = n * n
+              print(n, "squared is", square)
+          print("End of the table")
+        explain: >-
+          The two indented lines run once for each value of `n`: 1, 2 and 3. The
+          last line has no indent, so it runs once, after the loop.
+      - kind: order
+        id: o-range-sum
+        objective: O2
+        code: |
+          total = 0
+          for n in range(1, 6):
+              total = total + n
+          print("Sum of 1 to 5:", total)
+        explain: >-
+          The total starts at 0 before the loop. `range(1, 6)` gives 1 to 5. The
+          print comes after the loop, so it shows only the final total, 15.
 
   # 7. EXERCISE: completion --------------------------------------------------
   - id: ex-squares

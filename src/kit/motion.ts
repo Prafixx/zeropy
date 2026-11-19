@@ -133,6 +133,13 @@ export function revealOnScroll(root: HTMLElement): () => void {
   return () => triggers.forEach((t) => t.kill());
 }
 
+/** Glide: cards that change places slide to their new place (a layout change). */
+export function glide(targets: Element[], change: () => void): void {
+  const state = Flip.getState(targets);
+  change();
+  Flip.from(state, { duration: DUR.fast, ease: EASE.place });
+}
+
 export type Timeline = gsap.core.Timeline;
 
 /** Headline reveal: each line rises from behind a mask. Returns a cleanup. */

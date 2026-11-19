@@ -246,12 +246,14 @@ steps:
       `prices.txt` has one price on each line. Some lines are empty, and
       some have spaces. Compute the total.
     lines:
-      - code: |
+      - goal: "Get the data"
+        code: |
           from pathlib import Path
 
           lines = Path("prices.txt").read_text().splitlines()
         note: "Read all lines. A file from a person is never perfectly clean."
-      - code: |
+      - goal: "Clean and compute"
+        code: |
           total = 0
           for line in lines:
               line = line.strip()
@@ -259,7 +261,8 @@ steps:
                   continue
               total = total + float(line)
         note: "`strip` takes away the spaces. An empty line is skipped with `continue`: `float(\"\")` would be a `ValueError`."
-      - code: 'print(f"Total: {total:.2f}")'
+      - goal: "Show the result"
+        code: 'print(f"Total: {total:.2f}")'
         note: "The text from a file is always text. `float` turns it into a number."
     check:
       kind: mcq

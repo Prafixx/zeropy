@@ -296,13 +296,15 @@ steps:
       `expenses.csv` has a `category` and an `amount` in each row. Show the
       total of each category.
     lines:
-      - code: |
+      - goal: "Get the data"
+        code: |
           import csv
 
           with open("expenses.csv", newline="") as f:
               rows = list(csv.DictReader(f))
         note: "Read the table. Each row is a dictionary of texts."
-      - code: 'categories = {r["category"] for r in rows}'
+      - goal: "Compute"
+        code: 'categories = {r["category"] for r in rows}'
         note: "A **set** comprehension: each category one time."
       - code: |
           totals = {
@@ -310,7 +312,8 @@ steps:
               for c in categories
           }
         note: "For each category, the sum of the amounts of its rows. A long comprehension can go on several lines inside the brackets."
-      - code: |
+      - goal: "Show the result"
+        code: |
           for c in sorted(totals):
               print(f"{c}: {totals[c]:.2f}")
         note: "A normal loop to print: it does a job of its own."

@@ -3,7 +3,7 @@
 // Progress lives in the browser storage of the app's own origin
 // (app://zeropy), saved in %APPDATA%\ZeroPy. It stays there across
 // restarts and updates, because the origin and the app id never change.
-const { app, BrowserWindow, Menu, net, protocol, session, shell } = require('electron');
+const { app, BrowserWindow, Menu, nativeTheme, net, protocol, session, shell } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
@@ -95,7 +95,7 @@ function createWindow() {
     minWidth: 820,
     minHeight: 600,
     title: 'ZeroPy',
-    backgroundColor: '#F3EDE2',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#1B1C27' : '#F3EDE2',
     autoHideMenuBar: true,
     show: false,
     webPreferences: {

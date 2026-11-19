@@ -8,14 +8,29 @@ desktop app, in about 31 hours.
 - **Instant feedback.** Your code runs inside the app and is checked at once.
 - **Pictures that move with the code.** Variables, lists and loops are shown
   as 3D (or 2D) scenes, one line at a time.
+- **Code puzzles.** Put the mixed-up lines of a program in order. Python
+  checks your order, so any order that works is right.
+- **Solved examples with goals.** Each example is split into short goals,
+  like "Get the data", "Compute", "Show the result", so you learn the plan,
+  not only the code.
 - **Spaced review.** Cards from earlier lessons come back just before you
   would forget them.
+- **Playground.** Write any Python you like and watch it run, with no
+  checks. Your code is saved.
+- **Cheat sheet.** Every key fact of the course on one searchable page.
+- **Light or dark.** Follows your Windows setting, or choose in the settings.
 - **Works offline.** Python and everything else are inside the app. No
   account, no internet and no tracking. Your progress stays on your computer.
 
 ![The ZeroPy home page](.github/screenshots/home.png)
 
 ![A lesson: the code runs and each variable appears as a box](.github/screenshots/lesson-run.png)
+
+![A code puzzle: put the lines in order](.github/screenshots/puzzle.png)
+
+![The Playground in the dark theme](.github/screenshots/playground-dark.png)
+
+![The cheat sheet, searched for "list"](.github/screenshots/cheatsheet.png)
 
 ## Download and install (Windows 10 and 11)
 
@@ -45,9 +60,8 @@ Only do this if you downloaded the file from this repository's Releases page.
   when you install a newer version.
 - To keep a copy, or to move to another computer: open the **settings**
   (gear icon, top right) → **My progress** → **Save to a file**. Use
-  **Load a file** on the other computer.
-
-![Settings with Save to a file and Load a file](.github/screenshots/settings.png)
+  **Load a file** on the other computer. The file also holds your
+  Playground code.
 
 ### Update or uninstall
 

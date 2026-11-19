@@ -104,7 +104,19 @@ export function mountHome(root: HTMLElement): () => void {
   const page = h(
     'div',
     { class: 'home' },
-    h('header', { class: 'bar bar-home' }, brand(), h('div', { class: 'bar-spacer' }), settingsButton()),
+    h(
+      'header',
+      { class: 'bar bar-home' },
+      brand(),
+      h('div', { class: 'bar-spacer' }),
+      h(
+        'nav',
+        { class: 'bar-nav', 'aria-label': 'Tools' },
+        h('a', { class: 'bar-link', href: '#/playground' }, icon('code', 18), h('span', null, 'Playground')),
+        h('a', { class: 'bar-link', href: '#/cheatsheet' }, icon('book', 18), h('span', null, 'Cheat sheet')),
+      ),
+      settingsButton(),
+    ),
     h(
       'main',
       null,

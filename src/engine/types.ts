@@ -58,7 +58,24 @@ export interface DiagnoseItem {
   explain: string;
 }
 
-export type Item = McqItem | PredictItem | DiagnoseItem;
+/**
+ * Put the lines in order (a Parsons problem). Python is the judge: an order
+ * that prints the same and ends with the same values is right, too.
+ */
+export interface OrderItem {
+  kind: 'order';
+  id: string;
+  objective: string;
+  prompt?: string;
+  /** The program in a right order. Each line is one card; its indent is part of it. */
+  code: string;
+  /** Answers for input(), one list per run. Default: one run without input. */
+  stdin?: string[][];
+  /** Shown after the right order. */
+  explain: string;
+}
+
+export type Item = McqItem | PredictItem | DiagnoseItem | OrderItem;
 
 export interface Check {
   /** Python expression. True means the requirement is met. */
@@ -145,7 +162,11 @@ export interface DemoStep extends StepBase {
 export interface WorkedStep extends StepBase {
   type: 'worked';
   problem: string;
-  lines: { code: string; note: string }[];
+  /**
+   * `goal` starts a group of lines with a short label ("Get the data").
+   * The same labels come back in many examples, so the plan becomes a habit.
+   */
+  lines: { code: string; note: string; goal?: string }[];
   check: McqItem;
 }
 

@@ -1,23 +1,43 @@
 /* Design tokens of the paper workshop. See docs/design.md. */
-:root {
+
+/* The light paper. Scenes (the 3D/2D pictures, the hero card and the
+   pretend tkinter windows) always use it: their colors are part of the
+   meaning (number, text, True/False) and they are drawn for paper. */
+:root,
+:root[data-theme='dark'] :is(.stage-frame, .hero-card, .gw) {
   --paper: #f3ede2;
   --paper-2: #fbf7ef;
   --paper-3: #e7ddcb;
   --ink: #1a1b2e;
   --ink-2: #4a4b63;
   --ink-3: #8b889a;
-  --sun: #f6b92b;
   --blue: #2b50d6;
-  --leaf: #1e9e6a;
-  --tomato: #e4472b;
-  --kraft: #c99b63;
-  --kraft-dark: #a97c47;
+  --edge: var(--ink);
+  --shade: var(--ink);
 
   --tint-good: #dcf2e6;
   --tint-bad: #fbe3dc;
   --tint-info: #fdf0cc;
 
-  /* Code on the ink slab */
+  /* Derived tokens are declared here too, so a scene gets its own values. */
+  --line: 2px solid var(--edge);
+  --shadow: 4px 4px 0 var(--shade);
+  --shadow-s: 3px 3px 0 var(--shade);
+  --shadow-l: 8px 8px 0 var(--shade);
+  color: var(--ink);
+}
+
+:root {
+  --sun: #f6b92b;
+  --leaf: #1e9e6a;
+  --tomato: #e4472b;
+  --kraft: #c99b63;
+  --kraft-dark: #a97c47;
+
+  /* Code on the ink slab: dark in both themes */
+  --slab: #1a1b2e;
+  /* Text on sun, kraft and other light accents: dark in both themes */
+  --on-accent: #1a1b2e;
   --code-text: #f6f1e7;
   --code-dim: #8f8ca3;
   --code-kw: #ff8f73;
@@ -29,14 +49,37 @@
   --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, Consolas, monospace;
 
-  --line: 2px solid var(--ink);
   --radius: 14px;
   --radius-s: 9px;
-  --shadow: 4px 4px 0 var(--ink);
-  --shadow-s: 3px 3px 0 var(--ink);
-  --shadow-l: 8px 8px 0 var(--ink);
 
   --bar-h: 64px;
   --dock-h: 76px;
   --wrap: 1180px;
+  color-scheme: light;
+}
+
+/* The workshop at night: dark paper, light ink, black shadows. */
+:root[data-theme='dark'] {
+  --paper: #1b1c27;
+  --paper-2: #252634;
+  --paper-3: #323343;
+  --ink: #ede7db;
+  --ink-2: #bdb8c8;
+  --ink-3: #928da2;
+  --blue: #7f97ff;
+  --edge: #a7a2b5;
+  --shade: #06060b;
+
+  --tint-good: #173a2c;
+  --tint-bad: #44231f;
+  --tint-info: #3b331b;
+
+  --slab: #101119;
+  --code-dim: #8a87a0;
+
+  --line: 2px solid var(--edge);
+  --shadow: 4px 4px 0 var(--shade);
+  --shadow-s: 3px 3px 0 var(--shade);
+  --shadow-l: 8px 8px 0 var(--shade);
+  color-scheme: dark;
 }

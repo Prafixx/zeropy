@@ -3,15 +3,18 @@ import { setReducedMotion } from './motion';
 
 export type Graphics = '3d-high' | '3d-low' | '2d';
 export type MotionPref = 'system' | 'full' | 'reduced';
+export type ThemePref = 'system' | 'light' | 'dark';
 
 export interface Settings {
   graphics: Graphics;
   motion: MotionPref;
+  theme: ThemePref;
 }
 
 const KEY = 'zeropy:settings';
 const listeners = new Set<(s: Settings) => void>();
 const systemReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 
 function webglAvailable(): boolean {
   try {
@@ -23,7 +26,7 @@ function webglAvailable(): boolean {
 }
 
 function load(): Settings {
-  const base: Settings = { graphics: webglAvailable() ? '3d-high' : '2d', motion: 'system' };
+  const base: Settings = { graphics: webglAvailable() ? '3d-high' : '2d', motion: 'system', theme: 'system' };
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Settings>;
     return { ...base, ...saved };
@@ -68,12 +71,22 @@ export function onSettings(fn: (s: Settings) => void): () => void {
   return () => listeners.delete(fn);
 }
 
-function apply(): void {
-  setReducedMotion(reducedMotion());
+/** The colors in use now: the learner's choice, or the system's. */
+export function effectiveTheme(): 'light' | 'dark' {
+  return settings.theme === 'system' ? (systemDark.matches ? 'dark' : 'light') : settings.theme;
 }
 
-systemReduced.addEventListener('change', () => {
-  apply();
-  listeners.forEach((fn) => fn(settings));
-});
+function apply(): void {
+  setReducedMotion(reducedMotion());
+  const theme = effectiveTheme();
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1b1c27' : '#f3ede2');
+}
+
+for (const query of [systemReduced, systemDark]) {
+  query.addEventListener('change', () => {
+    apply();
+    listeners.forEach((fn) => fn(settings));
+  });
+}
 apply();

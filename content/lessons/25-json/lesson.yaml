@@ -243,7 +243,8 @@ steps:
       A game must remember the best score between runs. On the first run
       there is no file yet.
     lines:
-      - code: |
+      - goal: "Load the state"
+        code: |
           import json
           from pathlib import Path
 
@@ -253,13 +254,15 @@ steps:
           else:
               best = {"name": "", "score": 0}
         note: "1. Load, or start with a default when the file does not exist yet."
-      - code: |
+      - goal: "Change the state"
+        code: |
           score = 42
           if score > best["score"]:
               best = {"name": "Ana", "score": score}
               print("New best score!")
         note: "2. Change the state while the program runs."
-      - code: "path.write_text(json.dumps(best, indent=2))"
+      - goal: "Save the state"
+        code: "path.write_text(json.dumps(best, indent=2))"
         note: "3. Save at the end. The next run loads this file."
     check:
       kind: mcq

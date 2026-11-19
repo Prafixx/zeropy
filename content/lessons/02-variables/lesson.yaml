@@ -129,13 +129,16 @@ steps:
 
       **Compute the final price and print it.**
     lines:
-      - code: "price = 20"
+      - goal: "Get the data"
+        code: "price = 20"
         note: "Store the known value. A clear name says what the number means."
-      - code: "tax = price * 0.10"
+      - goal: "Compute"
+        code: "tax = price * 0.10"
         note: "Python reads `price` (20) and computes 2.0. The `*` sign means multiply."
       - code: "final_price = price + tax"
         note: "Use both variables. No number is typed twice."
-      - code: "print(final_price)"
+      - goal: "Show the result"
+        code: "print(final_price)"
         note: "Shows 22.0. The point shows that this number can have decimals."
     check:
       kind: mcq

@@ -118,6 +118,32 @@ for (const folder of readdirSync(lessonsDir)) {
     console.log(`  ok   ${step.id} (${step.checks.length} checks, ${cases.length} cases)`);
   }
   for (const item of items) {
+    if (item.kind === 'order') {
+      // The program must run, and the order must matter: the lines read
+      // backwards may not give the same result (or there is nothing to learn).
+      const outcome = (code, stdin) => {
+        const result = call({ code, cases: [{ stdin }] });
+        const values = result.vars.map((v) => `${v.name}=${v.repr}`).sort().join('\n');
+        return { error: result.error, key: `${result.stdout.trim()}\n--\n${values}` };
+      };
+      const source = item.code.replace(/\n+$/, '');
+      const backwards = source.split('\n').reverse().join('\n');
+      let ok = true;
+      let differs = false;
+      for (const stdin of item.stdin ?? [[]]) {
+        const good = outcome(source, stdin);
+        if (good.error) {
+          fail(`${item.id}: order code raises ${good.error.type}`);
+          ok = false;
+          break;
+        }
+        const bad = outcome(backwards, stdin);
+        if (bad.error || bad.key !== good.key) differs = true;
+      }
+      if (ok && !differs) fail(`${item.id}: the lines backwards give the same result, so the order does not matter`);
+      else if (ok) console.log(`  ok   ${item.id} (order of ${source.split('\n').length} lines)`);
+      continue;
+    }
     if (item.kind === 'diagnose') {
       // The program must stop with a real error on a known line.
       const result = call({ code: item.code, cases: [{ files: item.files, web: item.web }] });

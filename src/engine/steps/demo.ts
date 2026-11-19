@@ -150,7 +150,17 @@ function outLines(stdout: string): string[] {
   return text === '' ? [] : text.split('\n');
 }
 
-export function renderDemo(step: DemoStep, ctx: StepContext): StepView {
+export interface DemoOptions {
+  /** Called with the code after each edit (the playground saves it). */
+  onEdit?: (code: string) => void;
+}
+
+export interface DemoView extends StepView {
+  /** Puts new code in the editor. */
+  setCode(code: string): void;
+}
+
+export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOptions = {}): DemoView {
   void warmPython().catch(() => undefined);
   const visualName = step.visual ?? 'variables';
   let stage: Stage | null = null;
@@ -172,7 +182,9 @@ export function renderDemo(step: DemoStep, ctx: StepContext): StepView {
     sealed: step.sealed,
     runLabel: step.sealed ? 'Play' : undefined,
     files: step.files,
+    onEdit: () => options.onEdit?.(bench.getCode()),
   });
+  const hasTodo = step.experiments.length > 0;
   const el = h(
     'div',
     { class: 'split split-wide' },
@@ -180,8 +192,8 @@ export function renderDemo(step: DemoStep, ctx: StepContext): StepView {
       'div',
       { class: 'split-text', 'data-enter': true },
       md(step.intro),
-      h('h3', { class: 'todo-title' }, 'Try these'),
-      h('ul', { class: 'todo' }, ...todo),
+      hasTodo ? h('h3', { class: 'todo-title' }, 'Try these') : null,
+      hasTodo ? h('ul', { class: 'todo' }, ...todo) : null,
     ),
     h(
       'div',
@@ -193,6 +205,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext): StepView {
   );
 
   function updateNote(): void {
+    if (!hasTodo) return;
     const count = ticked.filter(Boolean).length;
     ctx.dock.note(`${count} of ${ticked.length} experiments done`);
   }
@@ -407,6 +420,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext): StepView {
   updateNote();
   return {
     el,
+    setCode: (code) => bench.setCode(code),
     entered: () => void setup(),
     dispose() {
       disposed = true;

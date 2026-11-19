@@ -124,11 +124,14 @@ steps:
 
       **Print the shop name, then the total price, then a thank-you line.**
     lines:
-      - code: 'print("Corner Shop")'
+      - goal: "Show a text"
+        code: 'print("Corner Shop")'
         note: "The name is text, so it needs quotes."
-      - code: "print(3 * 4)"
+      - goal: "Compute and show a number"
+        code: "print(3 * 4)"
         note: "No quotes: Python computes 12. The `*` sign means multiply."
-      - code: 'print("Thank you")'
+      - goal: "Show a text again"
+        code: 'print("Thank you")'
         note: "Three instructions give three lines on the screen, in the same order."
     check:
       kind: mcq

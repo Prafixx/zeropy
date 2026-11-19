@@ -127,13 +127,16 @@ steps:
 
       **Print the total price.** The price can have decimals, like 2.5.
     lines:
-      - code: 'price = float(input("Price: "))'
+      - goal: "Get the data"
+        code: 'price = float(input("Price: "))'
         note: "The price can have decimals, so the conversion is `float()`."
       - code: 'count = int(input("How many: "))'
         note: "A count is a whole number, so the conversion is `int()`."
-      - code: "total = price * count"
+      - goal: "Compute"
+        code: "total = price * count"
         note: "Both values are numbers now. Python can multiply them."
-      - code: 'print(f"Total: {total}")'
+      - goal: "Show the result"
+        code: 'print(f"Total: {total}")'
         note: "An f-string takes any type, so no conversion back to text is needed."
     check:
       kind: mcq

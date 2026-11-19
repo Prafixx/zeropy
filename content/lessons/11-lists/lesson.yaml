@@ -225,14 +225,17 @@ steps:
       The program does not know the names before it runs. So it starts
       with an empty list and fills it.
     lines:
-      - code: "names = []"
+      - goal: "Prepare the start value"
+        code: "names = []"
         note: "An empty list: brackets with nothing between them. It is the start value, like `total = 0`."
-      - code: |
+      - goal: "Collect the data"
+        code: |
           for i in range(3):
               name = input("Name: ")
               names.append(name)
         note: "Each round adds one value at the end. After three rounds, the list has three values."
-      - code: 'print(f"{len(names)} names")'
+      - goal: "Show the result"
+        code: 'print(f"{len(names)} names")'
         note: "`len` counts the values in the list."
       - code: |
           for name in names:
@@ -250,6 +253,39 @@ steps:
           why: "A list has no empty places that wait. It grows by one value for each `append`."
         - text: '`"Ana"`'
           why: "`names` is still a list. It holds one value now, the text `\"Ana\"`."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-names
+        objective: O2
+        code: |
+          names = ["Ana", "Ben"]
+          names.append("Chen")
+          names[0] = "Ada"
+          print(names)
+          print(len(names))
+        explain: >-
+          The list must exist before you change it. `append` adds "Chen" at the
+          end, and `names[0] = "Ada"` replaces "Ana". These two changes can come
+          in any order.
+      - kind: order
+        id: o-expensive
+        objective: O3
+        code: |
+          prices = [3, 8, 5]
+          for price in prices:
+              if price > 4:
+                  print(price, "is expensive")
+          print("Checked", len(prices), "prices")
+        explain: >-
+          The `if` is inside the loop (4 spaces), and its print is inside the
+          `if` (8 spaces). So the check runs for every price, and only 8 and 5
+          are printed.
 
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-first-last

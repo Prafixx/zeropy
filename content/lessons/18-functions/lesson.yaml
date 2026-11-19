@@ -240,11 +240,13 @@ steps:
 
       **Write the rule once, as a function, and call it three times.**
     lines:
-      - code: |
+      - goal: "Write the rule once"
+        code: |
           def with_tax(price):
               return price * 1.2
         note: "The rule, with a name that says what it does. `price` is the parameter."
-      - code: |
+      - goal: "Use it"
+        code: |
           print(with_tax(10))
           print(with_tax(25))
           print(with_tax(4))
@@ -263,6 +265,37 @@ steps:
           why: "The calls only give the price. The rule is inside the function."
         - text: "Every line with a price"
           why: "The prices stay the same. Only the rule changes, and it is in one place."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O1
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-greet
+        objective: O1
+        code: |
+          def greet(name):
+              print("Hello,", name)
+          greet("Mia")
+          greet("Leo")
+        explain: >-
+          The `def` must come before a call, and the body is indented under it.
+          The calls run in order: first Mia, then Leo.
+      - kind: order
+        id: o-area
+        objective: O2
+        code: |
+          def area(width, height):
+              result = width * height
+              return result
+          room = area(4, 3)
+          print("Area:", room)
+        explain: >-
+          Inside the function, compute first, then `return` the result. `return`
+          ends the call, so a line after it inside the function would never run.
+          Outside, the call gives 12 to `room`.
 
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-square

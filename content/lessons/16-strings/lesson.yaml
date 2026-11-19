@@ -231,11 +231,14 @@ steps:
 
       **Accept all of these as a yes.**
     lines:
-      - code: 'answer = input("Continue? (yes/no) ")'
+      - goal: "Get the data"
+        code: 'answer = input("Continue? (yes/no) ")'
         note: "The text exactly as the user typed it."
-      - code: "answer = answer.strip().lower()"
+      - goal: "Clean the text"
+        code: "answer = answer.strip().lower()"
         note: "Two methods in a row: first take away the spaces, then make small letters. The `=` keeps the result."
-      - code: |
+      - goal: "Decide"
+        code: |
           if answer == "yes":
               print("OK, we continue.")
           else:

@@ -226,17 +226,21 @@ steps:
       `items()` gives the pairs as tuples. Unpacking makes the loop easy
       to read.
     lines:
-      - code: 'marks = {"Ana": 72, "Ben": 88, "Cleo": 65}'
+      - goal: "Get the data"
+        code: 'marks = {"Ana": 72, "Ben": 88, "Cleo": 65}'
         note: "The data: a name and a mark for each student."
-      - code: 'best_name, best_mark = "", -1'
+      - goal: "Prepare the start values"
+        code: 'best_name, best_mark = "", -1'
         note: "Two start values in one line, also by unpacking. -1 is lower than every mark."
-      - code: |
+      - goal: "Repeat: show and compare"
+        code: |
           for name, mark in marks.items():
               print(f"{name}: {mark}")
               if mark > best_mark:
                   best_name, best_mark = name, mark
         note: "Each round unpacks one pair. The best-so-far pattern of lesson 12 keeps a name and a mark together."
-      - code: 'print(f"Best: {best_name}")'
+      - goal: "Show the result"
+        code: 'print(f"Best: {best_name}")'
         note: "`Best: Ben`."
     check:
       kind: mcq

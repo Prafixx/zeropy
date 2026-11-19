@@ -221,18 +221,22 @@ steps:
       You do not know the drinks before the program runs. A dictionary can
       grow a new key for each new drink.
     lines:
-      - code: 'votes = ["tea", "coffee", "tea", "tea", "juice"]'
+      - goal: "Get the data"
+        code: 'votes = ["tea", "coffee", "tea", "tea", "juice"]'
         note: "The data."
-      - code: "counts = {}"
+      - goal: "Prepare the start value"
+        code: "counts = {}"
         note: "An empty dictionary. Each drink will become a key, and its count the value."
-      - code: |
+      - goal: "Repeat: count each vote"
+        code: |
           for v in votes:
               if v in counts:
                   counts[v] = counts[v] + 1
               else:
                   counts[v] = 1
         note: "A drink that has a key gets one more vote. A new drink gets a new key with the count 1."
-      - code: "print(counts)"
+      - goal: "Show the result"
+        code: "print(counts)"
         note: "`{'tea': 3, 'coffee': 1, 'juice': 1}`. This is a very common pattern: count things by name."
     check:
       kind: mcq
@@ -246,6 +250,40 @@ steps:
           why: "Without it, the program stops at the first new drink with a `KeyError`."
         - text: "It is not needed. It only makes the program faster"
           why: "It is needed: reading a key that does not exist is an error."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-votes
+        objective: O3
+        code: |
+          votes = ["red", "blue", "red"]
+          counts = {}
+          for color in votes:
+              counts[color] = counts.get(color, 0) + 1
+          print(counts)
+        explain: >-
+          The empty dictionary starts before the loop. For each vote, `get`
+          gives the count so far (0 for a new color), and 1 is added. The print
+          after the loop shows `{'red': 2, 'blue': 1}`.
+      - kind: order
+        id: o-stock
+        objective: O2
+        code: |
+          stock = {"apples": 5}
+          stock["pears"] = 3
+          stock["apples"] = stock["apples"] - 1
+          if "pears" in stock:
+              print("Pears:", stock["pears"])
+          print(stock)
+        explain: >-
+          First the dictionary, then the changes, then the questions about it.
+          `in` asks for a key. The two changes can come in any order: one adds a
+          pair, the other changes one.
 
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-order

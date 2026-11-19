@@ -183,13 +183,16 @@ steps:
 
       **Compute if the delivery is free. Print the answer.**
     lines:
-      - code: "total = 35"
+      - goal: "Get the data"
+        code: "total = 35"
         note: "The first fact: a number."
       - code: "is_member = True"
         note: "The second fact is already a yes or no value, so it is a `bool`. No quotes."
-      - code: "free_delivery = total >= 50 or is_member"
+      - goal: "Decide with the rule"
+        code: "free_delivery = total >= 50 or is_member"
         note: "The rule, word for word. `total >= 50` is False, `is_member` is True, and `or` needs only one."
-      - code: "print(free_delivery)"
+      - goal: "Show the result"
+        code: "print(free_delivery)"
         note: "Shows `True`. A name that starts with `is_` or reads like a question helps the reader."
     check:
       kind: mcq
@@ -203,6 +206,38 @@ steps:
           why: "With `or`, a member with a total of 35 still gets free delivery. The new rule needs both."
         - text: "`free_delivery = total and is_member >= 50`"
           why: "This compares `is_member` with 50. The comparison belongs to `total`."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-weather
+        objective: O2
+        code: |
+          temperature = 31
+          is_hot = temperature > 30
+          is_cold = temperature < 5
+          print("Hot:", is_hot)
+          print("Cold:", is_cold)
+        explain: >-
+          First the value, then the comparisons that use it, then the prints.
+          `31 > 30` is `True` and `31 < 5` is `False`. The two comparison lines
+          can change places: each one only needs `temperature`.
+      - kind: order
+        id: o-delivery
+        objective: O3
+        code: |
+          total = 62
+          is_member = True
+          free_delivery = total >= 50 and is_member
+          print("Free delivery:", free_delivery)
+        explain: >-
+          A name must have a value before a line uses it. `total` and
+          `is_member` come first (in any order), then the line with `and` that
+          needs both.
 
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-passed

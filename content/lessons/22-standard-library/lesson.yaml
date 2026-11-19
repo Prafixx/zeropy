@@ -259,17 +259,20 @@ steps:
       A program needs the **median** of some scores: the middle value. Do
       not write it yourself. Find it.
     lines:
-      - code: "# Library index: 'statistics - Mathematical statistics functions'"
+      - goal: "Find it in the docs"
+        code: "# Library index: 'statistics - Mathematical statistics functions'"
         note: "The library index has a module for statistics. Its page lists `median`."
       - code: "# statistics.median(data): the middle value of the data"
         note: "The signature and the first sentence of its entry."
-      - code: |
+      - goal: "Try it small"
+        code: |
           import statistics
 
           print(statistics.median([3, 9, 4]))      # 4
           print(statistics.median([3, 9, 4, 1]))   # 3.5
         note: "A small try. With an even count, the docs say that the median is the mean of the two middle values: 3.5."
-      - code: |
+      - goal: "Use it"
+        code: |
           def middle_score(scores):
               return statistics.median(scores)
         note: "Now use it. One line, tested by the module authors."

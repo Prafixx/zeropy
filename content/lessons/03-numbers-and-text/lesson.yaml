@@ -177,13 +177,16 @@ steps:
 
       **Print one line like this:** `3 notebooks cost 7.5`
     lines:
-      - code: "count = 3"
+      - goal: "Get the data"
+        code: "count = 3"
         note: "A whole number: type `int`."
       - code: "price = 2.5"
         note: "A decimal point makes it a `float`."
-      - code: "total = count * price"
+      - goal: "Compute"
+        code: "total = count * price"
         note: "`int` times `float` gives a `float`: 7.5."
-      - code: 'print(f"{count} notebooks cost {total}")'
+      - goal: "Show the result"
+        code: 'print(f"{count} notebooks cost {total}")'
         note: "The f-string puts both values into the text. No `+` is needed."
     check:
       kind: mcq

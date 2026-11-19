@@ -1,9 +1,10 @@
 // One retrieval item (multiple choice or predict-the-output). Used by the
 // predict step, worked examples, quizzes and spaced review.
-import { confetti, place, shake, stamp } from '@/kit/motion';
+import { confetti, glide, place, shake, stamp } from '@/kit/motion';
 import { onPyStatus, runPython } from '@/py/runner';
-import type { DiagnoseItem, Item, McqItem, PredictItem, PyError } from '../types';
-import { button, codeBlock, h, md, mdInline, panel, shuffle } from '../ui';
+import type { DiagnoseItem, Item, McqItem, OrderItem, PredictItem, PyError } from '../types';
+import { button, codeBlock, h, icon, md, mdInline, panel, shuffle } from '../ui';
+import type { PanelKind } from '../ui';
 
 export interface ItemView {
   el: HTMLElement;
@@ -363,8 +364,236 @@ function renderDiagnose(item: DiagnoseItem, onDone: OnDone): ItemView {
   };
 }
 
+/** A run as the order check compares it: what it printed, how it ended, the values at the end. */
+interface Outcome {
+  out: string;
+  error: PyError | null;
+  values: string;
+}
+
+async function outcomeOf(code: string, stdin: string[]): Promise<Outcome> {
+  const result = await runPython({ code, cases: [{ stdin }] });
+  const values = result.vars
+    .map((v) => `${v.name}=${v.repr}`)
+    .sort()
+    .join('\n');
+  return { out: normalize(result.stdout), error: result.error, values };
+}
+
+/** A shuffled order of the lines that does not read like the program itself. */
+function shuffledOrder(lines: string[]): number[] {
+  const source = lines.join('\n');
+  let order = lines.map((_, i) => i);
+  for (let tries = 0; tries < 20; tries += 1) {
+    order = shuffle(order);
+    if (order.map((i) => lines[i]).join('\n') !== source) break;
+  }
+  return order;
+}
+
+/**
+ * Put the lines in order. The learner drags a line, or moves it with its
+ * buttons (or Alt + arrow keys). Python is the judge: the order is run and
+ * compared with the program of the lesson, so another order that does the
+ * same is right too.
+ */
+function renderOrder(item: OrderItem, onDone: OnDone): ItemView {
+  const source = item.code.replace(/\n+$/, '');
+  const lines = source.split('\n');
+  const runs = item.stdin ?? [[]];
+  let order = shuffledOrder(lines);
+  let wrongTries = 0;
+  let solved = false;
+  let busy = false;
+  let disposed = false;
+  let reference: Outcome[] | null = null;
+
+  const feedback = h('div', { class: 'item-feedback', 'aria-live': 'polite' });
+  const list = h('ol', { class: 'order-list', 'aria-label': 'The lines of the program, in your order' });
+  const check = button('Check the order', { kind: 'plain', onClick: () => void submit() });
+  const giveUp = button('Show the right order', { kind: 'ghost', small: true, onClick: () => showAnswer() });
+  giveUp.hidden = true;
+  const texts = lines.map((text) => h('span', { class: 'code-text' }, text));
+  void import('@/editor/editor').then((m) => m.highlightLines(texts, source));
+
+  const cards = lines.map((_, i) => {
+    const up = h('button', { type: 'button', class: 'order-move', 'aria-label': 'Move this line up' }, icon('up', 16));
+    const down = h('button', { type: 'button', class: 'order-move', 'aria-label': 'Move this line down' }, icon('down', 16));
+    const card = h(
+      'li',
+      { class: 'order-card', tabindex: '0', 'aria-label': `Line: ${lines[i].trim()}` },
+      h('span', { class: 'order-grip', 'aria-hidden': 'true' }, icon('grip', 16)),
+      h('code', { class: 'order-code' }, texts[i]),
+      h('span', { class: 'order-moves' }, up, down),
+    );
+    up.addEventListener('click', () => move(i, -1, up));
+    down.addEventListener('click', () => move(i, 1, down));
+    card.addEventListener('keydown', (event) => {
+      if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+      event.preventDefault();
+      move(i, event.key === 'ArrowUp' ? -1 : 1, card);
+    });
+    card.addEventListener('pointerdown', (event) => {
+      if ((event.target as Element).closest('button') || solved || busy || event.button !== 0) return;
+      event.preventDefault();
+      // The window follows the pointer: a moved card leaves the page for a
+      // moment, which would end a pointer capture on the card itself.
+      dragging = i;
+      card.classList.add('is-dragging');
+      window.addEventListener('pointermove', onDrag);
+      window.addEventListener('pointerup', onDrop);
+      window.addEventListener('pointercancel', onDrop);
+    });
+    return card;
+  });
+  list.append(...order.map((i) => cards[i]));
+
+  let dragging: number | null = null;
+
+  function onDrag(event: PointerEvent): void {
+    if (dragging === null) return;
+    const line = dragging;
+    // The new place: after every other card whose middle is above the pointer.
+    const target = order.filter((j) => {
+      if (j === line) return false;
+      const rect = cards[j].getBoundingClientRect();
+      return rect.top + rect.height / 2 < event.clientY;
+    }).length;
+    const at = order.indexOf(line);
+    if (target !== at) moveTo(at, target);
+  }
+
+  function onDrop(): void {
+    if (dragging !== null) cards[dragging].classList.remove('is-dragging');
+    dragging = null;
+    window.removeEventListener('pointermove', onDrag);
+    window.removeEventListener('pointerup', onDrop);
+    window.removeEventListener('pointercancel', onDrop);
+  }
+
+  function moveTo(from: number, to: number): void {
+    glide(cards, () => {
+      const [line] = order.splice(from, 1);
+      order.splice(to, 0, line);
+      list.append(...order.map((i) => cards[i]));
+    });
+    cards.forEach((card) => card.classList.remove('is-right'));
+  }
+
+  function move(line: number, by: -1 | 1, keepFocus: HTMLElement): void {
+    if (solved || busy) return;
+    const at = order.indexOf(line);
+    if (at + by < 0 || at + by >= order.length) return;
+    moveTo(at, at + by);
+    keepFocus.focus();
+  }
+
+  function say(kind: PanelKind, title: string, ...body: (Node | string | null)[]): void {
+    feedback.replaceChildren(panel(kind, title, ...body));
+    place(feedback.children);
+    feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function finish(firstTry: boolean): void {
+    solved = true;
+    check.hidden = true;
+    giveUp.hidden = true;
+    list.classList.add('is-solved');
+    cards.forEach((card) => card.classList.add('is-right'));
+    onDone(firstTry);
+  }
+
+  function showAnswer(): void {
+    if (solved || busy) return;
+    glide(cards, () => {
+      order = lines.map((_, i) => i);
+      list.append(...order.map((i) => cards[i]));
+    });
+    say('info', 'This is the order of the lesson.', md(item.explain, 'prose prose-small'));
+    finish(false);
+  }
+
+  const stopStatus = onPyStatus((status) => {
+    if (!solved) check.querySelector('.btn-label')!.textContent = status === 'loading' ? 'Python is starting…' : 'Check the order';
+  });
+
+  async function submit(): Promise<void> {
+    if (solved || busy) return;
+    busy = true;
+    check.disabled = true;
+    list.classList.add('is-busy');
+    const mine = order.map((i) => lines[i]).join('\n');
+    try {
+      if (mine === source) {
+        say('good', 'Correct.', md(item.explain, 'prose prose-small'));
+        confetti(list, wrongTries === 0 ? 12 : 6);
+        finish(wrongTries === 0);
+        return;
+      }
+      reference ??= await Promise.all(runs.map((stdin) => outcomeOf(source, stdin)));
+      const yours = await Promise.all(runs.map((stdin) => outcomeOf(mine, stdin)));
+      if (disposed) return;
+      const same = yours.every(
+        (run, k) => !run.error && run.out === reference![k].out && run.values === reference![k].values,
+      );
+      if (same) {
+        say('good', 'Correct. Your order is different from ours, but Python gives the same result.', md(item.explain, 'prose prose-small'));
+        confetti(list, wrongTries === 0 ? 12 : 6);
+        finish(wrongTries === 0);
+        return;
+      }
+      wrongTries += 1;
+      const bad = yours.findIndex((run, k) => run.error || run.out !== reference![k].out || run.values !== reference![k].values);
+      const run = yours[bad];
+      const want = reference[bad];
+      const rightPlaces = order.filter((line, at) => lines[line] === lines[at]).length;
+      order.forEach((line, at) => cards[line].classList.toggle('is-right', lines[line] === lines[at]));
+      const places = h('p', null, `${rightPlaces} of ${lines.length} lines are in the right place (green).`);
+      if (run.error) {
+        const last = run.error.traceback.trim().split('\n').at(-1) ?? run.error.type;
+        say('bad', 'Not yet. In your order, Python stops with an error:', h('pre', { class: 'out-text out-inline' }, last), places);
+      } else if (run.out !== want.out) {
+        say(
+          'bad',
+          'Not yet. Your order prints:',
+          h('pre', { class: 'out-text out-inline' }, run.out || '(nothing)'),
+          h('p', null, 'The program must print:'),
+          h('pre', { class: 'out-text out-inline' }, want.out || '(nothing)'),
+          places,
+        );
+      } else {
+        say('bad', 'Not yet. It prints the right text, but some values at the end are different.', places);
+      }
+      shake(list);
+      if (wrongTries >= 2) giveUp.hidden = false;
+    } finally {
+      busy = false;
+      check.disabled = false;
+      list.classList.remove('is-busy');
+    }
+  }
+
+  const el = h(
+    'div',
+    { class: 'item' },
+    md(item.prompt ?? 'The lines of a program are mixed up. **Put them in the right order.** Drag a line, or use its arrows.', 'prose item-prompt'),
+    list,
+    h('div', { class: 'order-actions' }, check, giveUp),
+    feedback,
+  );
+  return {
+    el,
+    dispose: () => {
+      disposed = true;
+      stopStatus();
+      onDrop();
+    },
+  };
+}
+
 export function renderItem(item: Item, onDone: OnDone): ItemView {
   if (item.kind === 'mcq') return renderMcq(item, onDone);
   if (item.kind === 'predict') return renderPredict(item, onDone);
+  if (item.kind === 'order') return renderOrder(item, onDone);
   return renderDiagnose(item, onDone);
 }

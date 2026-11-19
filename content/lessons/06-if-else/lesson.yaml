@@ -171,9 +171,11 @@ steps:
 
       **Ask for the age and print the price.**
     lines:
-      - code: 'age = int(input("Age: "))'
+      - goal: "Get the data"
+        code: 'age = int(input("Age: "))'
         note: "Ask and convert, as in lesson 4."
-      - code: |
+      - goal: "Decide: one rule per block"
+        code: |
           if age < 12:
               price = 5
         note: "The first rule. The block does not print. It stores the price."
@@ -185,7 +187,8 @@ steps:
           else:
               price = 10
         note: "Everyone else. No question is needed."
-      - code: 'print(f"Price: {price}")'
+      - goal: "Show the result"
+        code: 'print(f"Price: {price}")'
         note: "No spaces at the start: this line is after the chain and runs for every age."
     check:
       kind: mcq
@@ -199,6 +202,41 @@ steps:
           why: "`print` works in a block. You saw it in the examples before."
         - text: "Python runs faster with fewer lines"
           why: "The speed is the same. The reason is that the code is easier to change."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-coat
+        objective: O2
+        code: |
+          temperature = 12
+          if temperature < 10:
+              print("Take a coat.")
+          elif temperature < 20:
+              print("Take a jacket.")
+          else:
+              print("No jacket today.")
+        explain: >-
+          Each block comes right after its own line with the colon: `if`, then
+          `elif`, then `else`. `12 < 10` is `False`, `12 < 20` is `True`, so
+          Python prints "Take a jacket."
+      - kind: order
+        id: o-passed
+        objective: O2
+        code: |
+          score = 74
+          if score >= 50:
+              print("Passed")
+              print("Well done!")
+          else:
+              print("Try again next week.")
+        explain: >-
+          Both indented prints belong to the `if` block, so they run together.
+          The `else` block has its own print. `else` always comes last.
 
   # 7. EXERCISE: completion --------------------------------------------------
   - id: ex-even

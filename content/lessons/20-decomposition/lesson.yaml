@@ -264,12 +264,14 @@ steps:
       For a list of scores, show the average and a letter: `A` from 90,
       `B` from 75, else `C`.
     lines:
-      - code: |
+      - goal: "Plan the pieces"
+        code: |
           # 1. average of the scores   -> average(scores)
           # 2. letter for an average   -> letter(avg)
           # 3. one line for the report -> report(scores)
         note: "The plan in words. Each step is one function."
-      - code: |
+      - goal: "Build and test each piece"
+        code: |
           def average(scores):
               return sum(scores) / len(scores)
 
@@ -286,7 +288,8 @@ steps:
           assert letter(90) == "A"
           assert letter(74.9) == "C"
         note: "The second helper. The tests check the edges: exactly 90, and just under 75."
-      - code: |
+      - goal: "Connect the pieces"
+        code: |
           def report(scores):
               avg = average(scores)
               return f"{avg:.1f} {letter(avg)}"

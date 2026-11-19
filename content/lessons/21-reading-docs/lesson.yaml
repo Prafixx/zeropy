@@ -230,15 +230,18 @@ steps:
       A program must print a numbered list, from 1. The docs list a
       function `enumerate`. Learn it in four steps.
     lines:
-      - code: "# enumerate(iterable, start=0)"
+      - goal: "Read the docs"
+        code: "# enumerate(iterable, start=0)"
         note: "Step 1, the signature: one required value, and `start`, optional, 0 by default."
       - code: "# It gives pairs: (count, value), (count, value), ..."
         note: "Step 2, the first sentence of the docs, in short: it gives pairs of a number and a value."
-      - code: |
+      - goal: "Try it small"
+        code: |
           for pair in enumerate(["tea", "cake"]):
               print(pair)   # (0, 'tea') then (1, 'cake')
         note: "Steps 3 and 4: try it small and look at what comes out. Each pair is a tuple."
-      - code: |
+      - goal: "Use it"
+        code: |
           for n, item in enumerate(["tea", "cake"], start=1):
               print(f"{n}. {item}")
         note: "Now use it: unpack each pair, and start counting at 1."

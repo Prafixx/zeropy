@@ -9,6 +9,8 @@ import './kit/settings';
 import { mountHome } from './engine/home';
 import { mountLesson } from './engine/player';
 import { mountReview } from './engine/review-page';
+import { mountPlayground } from './engine/playground';
+import { mountCheatSheet } from './engine/cheatsheet';
 
 const root = document.getElementById('app')!;
 let unmount: (() => void) | null = null;
@@ -22,6 +24,10 @@ function route(): void {
     unmount = mountLesson(root, parts[1], parts[2] ? Number(parts[2]) : undefined);
   } else if (parts[0] === 'review') {
     unmount = mountReview(root);
+  } else if (parts[0] === 'playground') {
+    unmount = mountPlayground(root);
+  } else if (parts[0] === 'cheatsheet') {
+    unmount = mountCheatSheet(root);
   } else {
     unmount = mountHome(root);
   }

@@ -264,7 +264,8 @@ steps:
       person may have broken it with a typo. The program must work in both
       cases.
     lines:
-      - code: |
+      - goal: "Try the line that can fail"
+        code: |
           import json
           from pathlib import Path
 
@@ -272,7 +273,8 @@ steps:
               try:
                   return json.loads(Path(name).read_text())
         note: "Only the one line that can fail is inside `try`."
-      - code: |
+      - goal: "Handle each problem"
+        code: |
               except FileNotFoundError:
                   return {}
         note: "The first run: no file yet. That is normal, so no message."

@@ -40,10 +40,12 @@ export function renderPredict(step: PredictStep, ctx: StepContext): StepView {
 export function renderWorked(step: WorkedStep, ctx: StepContext): StepView {
   let shown = 0;
   let check: ItemView | null = null;
+  let goals = 0;
   const rows = step.lines.map((line, i) =>
     h(
       'li',
-      { class: 'worked-row', hidden: true },
+      { class: `worked-row${line.goal ? ' has-goal' : ''}`, hidden: true },
+      line.goal ? h('p', { class: 'worked-goal' }, h('span', { class: 'worked-goal-num' }, `Goal ${(goals += 1)}`), line.goal) : null,
       h('span', { class: 'worked-num' }, String(i + 1)),
       h('div', { class: 'worked-body' }, codeBlock(line.code).el, h('p', { class: 'worked-note' }, mdInline(line.note))),
     ),

@@ -51,8 +51,17 @@ function checkItem(item: unknown, where: string, objectives: Set<string>, out: s
   } else if (item.kind === 'predict') {
     if (!text(item.code)) out.push(`${where}: predict needs code`);
     if (!text(item.explain)) out.push(`${where}: predict needs an explanation`);
+  } else if (item.kind === 'order') {
+    const lines = text(item.code) ? item.code.replace(/\n+$/, '').split('\n') : [];
+    if (lines.length < 3) out.push(`${where}: order needs code with at least 3 lines`);
+    if (lines.some((line) => line.trim() === '')) out.push(`${where}: order code must have no empty lines`);
+    if (new Set(lines).size < 2) out.push(`${where}: order needs lines that differ`);
+    if (!text(item.explain)) out.push(`${where}: order needs an explanation`);
+    if (item.stdin !== undefined && (!Array.isArray(item.stdin) || !item.stdin.every(Array.isArray))) {
+      out.push(`${where}: order stdin must be a list of answer lists`);
+    }
   } else {
-    out.push(`${where}: item kind must be "mcq", "predict" or "diagnose"`);
+    out.push(`${where}: item kind must be "mcq", "predict", "diagnose" or "order"`);
   }
 }
 
@@ -118,6 +127,9 @@ export function validateLesson(data: unknown): string[] {
     }
     if (type === 'worked') {
       if (!Array.isArray(step.lines) || step.lines.length === 0) out.push(`${where}: worked needs lines`);
+      else if (step.lines.some((l) => isRec(l) && l.goal !== undefined) && !(isRec(step.lines[0]) && text(step.lines[0].goal))) {
+        out.push(`${where}: when lines have goals, the first line needs one too`);
+      }
       checkItem(step.check, `${where} check`, objectives, out);
     }
     if (type === 'exercise') {

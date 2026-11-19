@@ -177,15 +177,18 @@ steps:
       You do not know how many times the user will be wrong. This is the
       real job of `while`: **repeat until something happens.**
     lines:
-      - code: 'answer = input("Password: ")'
+      - goal: "Prepare the start value"
+        code: 'answer = input("Password: ")'
         note: "The start value: the first answer of the user."
-      - code: 'while answer != "python":'
+      - goal: "Repeat while the answer is wrong"
+        code: 'while answer != "python":'
         note: "The condition is True while the answer is wrong."
       - code: |2
               print("Wrong. Try again.")
               answer = input("Password: ")
         note: "The change: a new answer. Without this line, a wrong answer would stay wrong for ever."
-      - code: 'print("Welcome!")'
+      - goal: "Show the result"
+        code: 'print("Welcome!")'
         note: "After the loop. Python arrives here only when the condition is False, so the answer is right."
     check:
       kind: mcq
@@ -199,6 +202,40 @@ steps:
           why: "The condition is asked before every round, also before the first one."
         - text: "It never stops"
           why: "The loop repeats only while the answer is wrong. Here it is right at the start."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-count
+        objective: O2
+        code: |
+          count = 1
+          while count <= 3:
+              print(count)
+              count = count + 1
+          print("Done")
+        explain: >-
+          The counter starts before the loop. Inside, the loop first prints,
+          then adds 1. If you add first, it prints 2, 3, 4. If `count = count +
+          1` is not inside the loop, the loop never stops.
+      - kind: order
+        id: o-sum
+        objective: O2
+        code: |
+          total = 0
+          number = 1
+          while number <= 4:
+              total = total + number
+              number = number + 1
+          print(total)
+        explain: >-
+          Two names start before the loop (in any order). Inside the loop, add
+          the number to the total first, then go to the next number. Swap the
+          two lines and the total is 14, not 10.
 
   # 7. EXERCISE: completion --------------------------------------------------
   - id: ex-one-to-five

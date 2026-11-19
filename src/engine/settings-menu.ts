@@ -1,6 +1,6 @@
-// Settings popover: graphics quality and motion.
+// Settings popover: graphics quality, motion, colors and progress.
 import { getSettings, reducedMotion, setSettings } from '@/kit/settings';
-import type { Graphics, MotionPref } from '@/kit/settings';
+import type { Graphics, MotionPref, ThemePref } from '@/kit/settings';
 import { exportProgress, pickProgressFile } from './backup';
 import { resetProgress } from './store';
 import { h, icon } from './ui';
@@ -15,6 +15,12 @@ const MOTION: { value: MotionPref; label: string }[] = [
   { value: 'system', label: 'Same as my system' },
   { value: 'full', label: 'Full' },
   { value: 'reduced', label: 'Reduced' },
+];
+
+const THEME: { value: ThemePref; label: string }[] = [
+  { value: 'system', label: 'Same as my system' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
 ];
 
 export function settingsButton(): HTMLElement {
@@ -45,6 +51,7 @@ export function settingsButton(): HTMLElement {
         setSettings({ motion });
         render();
       }),
+      group('Colors', 'theme', THEME, settings.theme, (theme) => setSettings({ theme })),
       h(
         'fieldset',
         { class: 'menu-group' },

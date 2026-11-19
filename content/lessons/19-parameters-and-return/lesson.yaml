@@ -285,7 +285,8 @@ steps:
       A function must find the position of the first negative number in a
       list. If there is none, it gives back `-1`.
     lines:
-      - code: |
+      - goal: "Write the function"
+        code: |
           def first_negative(numbers):
               for i in range(len(numbers)):
                   if numbers[i] < 0:
@@ -293,7 +294,8 @@ steps:
         note: "The loop checks each place. At the first negative number, `return` ends the call at once, with the position."
       - code: "    return -1"
         note: "This line is after the loop, not inside it. It runs only when the loop finished without a match."
-      - code: |
+      - goal: "Test it"
+        code: |
           print(first_negative([4, -2, 7, -5]))   # 1
           print(first_negative([3, 8]))          # -1
         note: "Two calls. In the first, the loop stops early at position 1."
@@ -309,6 +311,38 @@ steps:
           why: "Inside the loop, `return -1` runs in the first round, after the first number."
         - text: "Python shows an error"
           why: "It is correct Python. It is a logic error: the result is wrong."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-min-max
+        objective: O2
+        code: |
+          def min_max(numbers):
+              return min(numbers), max(numbers)
+          low, high = min_max([7, 2, 9])
+          print("Lowest:", low)
+          print("Highest:", high)
+        explain: >-
+          The function gives back two values as a tuple. The line `low, high =
+          ...` takes them apart: `low` gets 2 and `high` gets 9.
+      - kind: order
+        id: o-chain
+        objective: O4
+        code: |
+          def double(x):
+              return x * 2
+          def double_plus_one(x):
+              return double(x) + 1
+          print(double_plus_one(5))
+        explain: >-
+          A function can call another one. The two `def` blocks can come in any
+          order, because Python only needs `double` when the call runs, on the
+          last line. It prints 11.
 
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-discount

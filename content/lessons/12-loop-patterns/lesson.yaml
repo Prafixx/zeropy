@@ -149,16 +149,20 @@ steps:
       **Find the lowest price in a list.** It is the same plan as for the
       biggest value, with one sign changed.
     lines:
-      - code: "prices = [7, 3, 9, 4]"
+      - goal: "Get the data"
+        code: "prices = [7, 3, 9, 4]"
         note: "The values. The program must work for any prices."
-      - code: "lowest = prices[0]"
+      - goal: "Prepare the start value"
+        code: "lowest = prices[0]"
         note: "Start with the first value, **not** with 0. No price is lower than 0, so with 0 the answer would always be 0."
-      - code: |
+      - goal: "Repeat: keep the best so far"
+        code: |
           for p in prices:
               if p < lowest:
                   lowest = p
         note: "The sign is `<` now. `lowest` changes only when a smaller value comes."
-      - code: "print(lowest)"
+      - goal: "Show the result"
+        code: "print(lowest)"
         note: "After the loop: 3."
     check:
       kind: mcq
@@ -264,6 +268,40 @@ steps:
         means: "The smallest value: `2`."
       - code: "sum(nums) / len(nums)"
         means: "The average."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-highest
+        objective: O2
+        code: |
+          temps = [14, 21, 17, 19]
+          highest = temps[0]
+          for t in temps:
+              if t > highest:
+                  highest = t
+          print("Highest:", highest)
+        explain: >-
+          The best-so-far variable starts before the loop, with the first value.
+          In the loop, a bigger value takes its place. The print comes after the
+          loop, when every value was checked.
+      - kind: order
+        id: o-short
+        objective: O3
+        code: |
+          words = ["tea", "sun", "apple", "go"]
+          short = []
+          for word in words:
+              if len(word) <= 3:
+                  short.append(word)
+          print(short)
+        explain: >-
+          The new list starts empty before the loop. Each short word is added
+          inside the `if`. Print it after the loop: `['tea', 'sun', 'go']`.
 
   # 8. EXERCISE: completion --------------------------------------------------
   - id: ex-total
