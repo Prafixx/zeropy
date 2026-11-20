@@ -5,6 +5,7 @@
 import { confetti, place, shake } from '@/kit/motion';
 import { runPython, warmPython } from '@/py/runner';
 import { parseReport, reportSetup } from '../local-report';
+import { noteEvidence } from '../store';
 import type { LocalStep } from '../types';
 import { button, codeBlock, h, icon, md, mdInline, panel } from '../ui';
 import type { StepContext, StepView } from './context';
@@ -149,6 +150,7 @@ export function renderLocal(step: LocalStep, ctx: StepContext): StepView {
         if (!solved) {
           solved = true;
           ctx.grade(attempts === 1);
+          noteEvidence(ctx.lesson.id, step.objective, attempts <= 2, 'local');
           ctx.done();
         }
         feedback.replaceChildren(panel('good', 'Your computer is ready for this step.', step.after ? md(step.after, 'prose prose-small') : null));

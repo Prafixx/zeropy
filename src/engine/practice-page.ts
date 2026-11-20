@@ -10,7 +10,7 @@ import { course, getLesson, itemsOf } from './registry';
 import type { StepContext, StepView } from './steps/context';
 import { renderExercise } from './steps/exercise';
 import { renderItem } from './steps/item';
-import { lastPracticed, lessonState, noteAnswer, notePracticed } from './store';
+import { isSkipped, lastPracticed, lessonState, noteAnswer, notePracticed } from './store';
 import type { ExerciseStep, Item, Lesson } from './types';
 import { button, h, icon, panel, shuffle } from './ui';
 
@@ -59,7 +59,7 @@ function interleave(tasks: Task[]): Task[] {
 
 function finishedLessons(module?: number): Lesson[] {
   const entries = module === undefined ? course.modules.flatMap((m) => m.lessons) : course.modules[module].lessons;
-  return entries.map((e) => getLesson(e.id)).filter((l): l is Lesson => Boolean(l && lessonState(l.id).done));
+  return entries.map((e) => getLesson(e.id)).filter((l): l is Lesson => Boolean(l && lessonState(l.id).done && !isSkipped(l.id)));
 }
 
 /**
@@ -79,8 +79,36 @@ function pickSet(module?: number): Task[] {
   return interleave([...pick('exercise', SET.exercises), ...pick('item', SET.items)]);
 }
 
-/** `which`: nothing for the overview, "all" for a set of all lessons, or a module number (1 is the first). */
-export function mountPractice(root: HTMLElement, which?: string): () => void {
+/**
+ * Practice of one topic (an objective of one lesson), from "My knowledge":
+ * its exercises and all its questions, also multiple choice and the review
+ * cards, because here the topic is the point.
+ */
+function topicSet(lessonId: string | undefined, objective: string | undefined): Task[] {
+  const lesson = lessonId ? getLesson(lessonId) : undefined;
+  if (!lesson || !objective) return [];
+  const tasks: Task[] = [];
+  for (const step of lesson.steps) {
+    if (step.type === 'exercise' && step.fade !== 'milestone' && !step.carry && step.objective === objective) {
+      tasks.push({ kind: 'exercise', lesson, step, ref: `step:${step.id}` });
+    }
+    for (const item of itemsOf(step)) {
+      if (item.objective === objective) tasks.push({ kind: 'item', lesson, item, ref: item.id });
+    }
+  }
+  for (const item of lesson.review) {
+    if (item.objective === objective && !tasks.some((t) => t.ref === item.id)) tasks.push({ kind: 'item', lesson, item, ref: item.id });
+  }
+  const exercises = oldestFirst(tasks.filter((t) => t.kind === 'exercise'), 2);
+  const items = oldestFirst(tasks.filter((t) => t.kind === 'item'), 5 - exercises.length);
+  return shuffle([...exercises, ...items]);
+}
+
+/**
+ * `which`: nothing for the overview, "all" for a set of all lessons, a
+ * module number (1 is the first), or "topic" with a lesson and an objective.
+ */
+export function mountPractice(root: HTMLElement, which?: string, rest: string[] = []): () => void {
   let view: StepView | null = null;
   let primaryAction: () => void = () => undefined;
   const body = h('div', { class: 'step-body' });
@@ -94,6 +122,12 @@ export function mountPractice(root: HTMLElement, which?: string): () => void {
   );
   const number = Number(which);
   const module = Number.isInteger(number) && course.modules[number - 1] ? number - 1 : undefined;
+  const topic = which === 'topic';
+  const nextSet = (): Task[] => (topic ? topicSet(rest[0], rest[1]) : pickSet(module));
+  if (topic) {
+    back.setAttribute('href', '#/knowledge');
+    back.querySelector('.btn-label')!.textContent = 'My knowledge';
+  }
 
   function show(el: HTMLElement): void {
     view?.dispose?.();
@@ -213,7 +247,7 @@ export function mountPractice(root: HTMLElement, which?: string): () => void {
   function summary(first: number, total: number): void {
     primary.querySelector('.btn-label')!.textContent = 'Another set';
     primary.disabled = false;
-    primaryAction = () => run(pickSet(module));
+    primaryAction = () => run(nextSet());
     note.textContent = '';
     show(
       h(
@@ -237,9 +271,9 @@ export function mountPractice(root: HTMLElement, which?: string): () => void {
     );
   }
 
-  if (which === undefined || (which !== 'all' && module === undefined)) overview();
+  if (which === undefined || (which !== 'all' && !topic && module === undefined)) overview();
   else {
-    const tasks = pickSet(module);
+    const tasks = nextSet();
     if (tasks.length === 0) overview();
     else run(tasks);
   }

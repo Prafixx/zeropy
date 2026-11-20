@@ -1,5 +1,8 @@
-// Progress and spaced review (Leitner boxes). Everything stays on the device.
-import { allCards } from './registry';
+// Progress, spaced review (Leitner boxes), what the learner knows, and the
+// lessons they chose to skip. Everything stays on the device.
+import { fromBox, guessOf, levelOf, update } from './knowledge';
+import type { KnowState, Level } from './knowledge';
+import { allCards, findRef } from './registry';
 import type { Card } from './registry';
 import { shuffle } from './ui';
 
@@ -36,6 +39,10 @@ interface Data {
   mistakes: Record<string, number>;
   /** When a task of mixed practice was last done: "lesson:item" or "lesson:step:id". */
   practiced: Record<string, number>;
+  /** How well each objective is known: "lesson:O1" → estimate (see knowledge.ts). */
+  knowledge: Record<string, KnowState>;
+  /** Lessons the learner chose to skip, with the time. */
+  skipped: Record<string, number>;
 }
 
 function load(): Data {
@@ -47,13 +54,36 @@ function load(): Data {
       code: raw.code ?? {},
       mistakes: raw.mistakes ?? {},
       practiced: raw.practiced ?? {},
+      knowledge: raw.knowledge ?? {},
+      skipped: raw.skipped ?? {},
     };
   } catch {
-    return { lessons: {}, cards: {}, code: {}, mistakes: {}, practiced: {} };
+    return empty();
   }
 }
 
+function empty(): Data {
+  return { lessons: {}, cards: {}, code: {}, mistakes: {}, practiced: {}, knowledge: {}, skipped: {} };
+}
+
 let data = load();
+seedKnowledge();
+
+/**
+ * Progress from before the knowledge model: the review cards that were
+ * answered give a first estimate of their objectives (the best box counts).
+ */
+function seedKnowledge(): void {
+  if (Object.keys(data.knowledge).length > 0 || Object.keys(data.cards).length === 0) return;
+  for (const card of allCards()) {
+    const state = data.cards[card.cardId];
+    if (!state) continue;
+    const key = `${card.lessonId}:${card.item.objective}`;
+    const seed = fromBox(state.box, Date.now());
+    if (!data.knowledge[key] || data.knowledge[key].p < seed.p) data.knowledge[key] = seed;
+  }
+  save();
+}
 
 function save(): void {
   try {
@@ -91,6 +121,7 @@ export function gradeCard(cardId: string, correct: boolean): number {
 /** Cards the learner has seen before and that are due now. */
 export function dueCards(now = Date.now()): Card[] {
   return allCards().filter((card) => {
+    if (isSkipped(card.lessonId)) return false;
     const state = data.cards[card.cardId];
     return state !== undefined && state.due <= now;
   });
@@ -133,7 +164,7 @@ export function loadCode(lessonId: string, key: string): string | undefined {
 }
 
 export function resetProgress(): void {
-  data = { lessons: {}, cards: {}, code: {}, mistakes: {}, practiced: {} };
+  data = empty();
   save();
 }
 
@@ -142,6 +173,11 @@ export function resetProgress(): void {
  * list; a right one (first try) takes it off again.
  */
 export function noteAnswer(lessonId: string, ref: string, wrong: boolean): void {
+  const found = findRef(lessonId, ref);
+  if (found) {
+    const objective = found.kind === 'item' ? found.item.objective : found.step.objective;
+    noteEvidence(lessonId, objective, !wrong, found.kind === 'item' ? found.item.kind : 'exercise');
+  }
   const key = `${lessonId}:${ref}`;
   if (wrong) data.mistakes[key] = Date.now();
   else if (key in data.mistakes) delete data.mistakes[key];
@@ -163,6 +199,7 @@ export function mistakes(): Mistake[] {
       const cut = key.indexOf(':');
       return { lessonId: key.slice(0, cut), ref: key.slice(cut + 1), at };
     })
+    .filter((m) => !isSkipped(m.lessonId))
     .sort((a, b) => b.at - a.at);
 }
 
@@ -175,6 +212,40 @@ export function notePracticed(lessonId: string, ref: string): void {
 /** When the task was last practiced (0: never). Old tasks come first. */
 export function lastPracticed(lessonId: string, ref: string): number {
   return data.practiced[`${lessonId}:${ref}`] ?? 0;
+}
+
+// ---- What the learner knows ------------------------------------------------
+
+/** One answer about an objective: right (on the first try, or easily) or not. */
+export function noteEvidence(lessonId: string, objective: string, correct: boolean, kind: string): void {
+  const key = `${lessonId}:${objective}`;
+  data.knowledge[key] = update(data.knowledge[key], correct, guessOf(kind));
+  save();
+}
+
+export function knowledgeOf(lessonId: string, objective: string): KnowState | undefined {
+  return data.knowledge[`${lessonId}:${objective}`];
+}
+
+export function knowledgeLevel(lessonId: string, objective: string): Level {
+  return levelOf(knowledgeOf(lessonId, objective));
+}
+
+// ---- Skipped lessons ----------------------------------------------------------
+
+export function isSkipped(lessonId: string): boolean {
+  return lessonId in data.skipped;
+}
+
+/** The learner does not want this lesson. It leaves "continue", review, mistakes and practice. */
+export function skipLesson(lessonId: string): void {
+  data.skipped[lessonId] = Date.now();
+  save();
+}
+
+export function includeLesson(lessonId: string): void {
+  delete data.skipped[lessonId];
+  save();
 }
 
 export function describeWait(due: number, now = Date.now()): string {

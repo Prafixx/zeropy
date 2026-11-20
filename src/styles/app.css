@@ -3056,3 +3056,248 @@ code {
     min-height: 36px;
   }
 }
+
+/* ---------- My knowledge ---------- */
+.knowledge {
+  --lv-mastered: var(--leaf);
+  --lv-solid: color-mix(in srgb, var(--leaf) 55%, #ffffff);
+  --lv-learning: var(--sun);
+  --lv-weak: var(--tomato);
+  --lv-new: var(--paper-3);
+}
+.knowledge > .lead {
+  margin-top: 10px;
+}
+.knowledge .sheet-title {
+  margin-top: 30px;
+}
+.know-tiles {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+}
+.know-tile {
+  display: grid;
+  gap: 2px;
+  padding: 12px 12px 10px;
+  border: var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  border-top: 8px solid var(--lv, var(--paper-3));
+}
+.know-tile b {
+  font: 800 26px/1.1 var(--font-display);
+}
+.know-tile span {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.is-mastered {
+  --lv: var(--lv-mastered);
+}
+.is-solid {
+  --lv: var(--lv-solid);
+}
+.is-learning {
+  --lv: var(--lv-learning);
+}
+.is-weak {
+  --lv: var(--lv-weak);
+}
+.is-new {
+  --lv: var(--lv-new);
+}
+.know-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 8px;
+  border: 2px solid var(--lv);
+  border-radius: 99px;
+  font: 700 13px/1.4 var(--font-body);
+  white-space: nowrap;
+}
+.know-badge::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lv);
+}
+.know-weak {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.know-weak li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: 'where badge go' 'title badge go';
+  align-items: center;
+  gap: 2px 12px;
+  padding: 12px 16px;
+  border: var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+}
+.know-weak .mistake-where {
+  grid-area: where;
+}
+.know-weak strong {
+  grid-area: title;
+}
+.know-weak .know-badge {
+  grid-area: badge;
+  justify-self: start;
+}
+.know-weak .btn {
+  grid-area: go;
+}
+.know-module {
+  margin-top: 22px;
+  display: grid;
+  gap: 8px;
+}
+.know-module-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(120px, 34%);
+  align-items: center;
+  gap: 12px;
+}
+.know-module-head .module-num {
+  min-width: 0;
+  font-size: 28px;
+}
+.know-module-head h2 {
+  font: 800 21px/1.15 var(--font-display);
+}
+.know-bar {
+  display: flex;
+  height: 14px;
+  border: 2px solid var(--edge);
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--paper-3);
+}
+.know-bar i {
+  background: var(--lv);
+  min-width: 4px;
+}
+.know-bar i + i {
+  border-left: 2px solid var(--paper);
+}
+.know-lesson {
+  border: var(--line);
+  border-radius: var(--radius-s);
+  background: var(--paper-2);
+}
+.know-lesson > summary {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.know-lesson > summary::-webkit-details-marker {
+  display: none;
+}
+.know-lesson > summary:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-s);
+}
+.know-num {
+  font: 700 14px/1 var(--font-mono);
+  color: var(--ink-2);
+}
+.know-title {
+  display: grid;
+}
+.know-title small {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.know-dots {
+  display: flex;
+  gap: 4px;
+}
+.know-dots i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--edge);
+  background: var(--lv);
+}
+.know-lesson.is-skipped {
+  border-style: dashed;
+  background: transparent;
+}
+.know-lesson.is-skipped .know-title strong {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+.know-skip[aria-pressed='true'] {
+  background: var(--tint-info);
+}
+.know-topics {
+  list-style: none;
+  margin: 0;
+  padding: 4px 12px 12px 56px;
+  display: grid;
+  gap: 8px;
+}
+.know-topics li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.know-topics li > span:first-child {
+  flex: 1 1 260px;
+}
+.know-open a {
+  font-weight: 700;
+}
+@media (max-width: 720px) {
+  .know-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .know-module-head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .know-module-head .know-bar {
+    grid-column: 1 / -1;
+  }
+  .know-lesson > summary {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+  }
+  .know-dots {
+    display: none;
+  }
+  .know-topics {
+    padding-left: 14px;
+  }
+  .know-weak li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'where where' 'title title' 'badge go';
+  }
+}
+
+/* Skipped lessons on the home page, and the skip button of a lesson. */
+.chip.is-open.is-skipped {
+  background: transparent;
+  color: var(--ink-3);
+  border-style: dashed;
+  box-shadow: none;
+}
+.chip.is-open.is-skipped span {
+  text-decoration: line-through;
+}
+.icon-btn.is-on {
+  background: var(--tint-info);
+}

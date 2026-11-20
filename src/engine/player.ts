@@ -5,7 +5,7 @@ import { getSettings, onSettings } from '@/kit/settings';
 import { warmPython } from '@/py/runner';
 import { course, getLesson, lessons } from './registry';
 import { brand, settingsButton } from './settings-menu';
-import { describeWait, finishLesson, lessonState, nextDue, reachStep } from './store';
+import { describeWait, finishLesson, includeLesson, isSkipped, lessonState, nextDue, reachStep, skipLesson } from './store';
 import type { Lesson, Step } from './types';
 import { button, h, icon, panel } from './ui';
 import type { StepContext, StepView } from './steps/context';
@@ -56,6 +56,35 @@ function renderStep(step: Step, ctx: StepContext): StepView {
     case 'review':
       return renderReview(step, ctx);
   }
+}
+
+/**
+ * Skip a lesson the learner does not want. It leaves "continue", review,
+ * mistakes and practice, and can be included again at any time.
+ */
+function skipButton(lessonId: string): HTMLElement {
+  const el = h('button', { type: 'button', class: 'icon-btn' }, icon('skip', 20));
+  const label = (): void => {
+    const text = isSkipped(lessonId) ? 'You skipped this lesson. Include it again' : 'Skip this lesson';
+    el.setAttribute('aria-label', text);
+    el.title = text;
+    el.classList.toggle('is-on', isSkipped(lessonId));
+  };
+  el.addEventListener('click', () => {
+    if (isSkipped(lessonId)) {
+      includeLesson(lessonId);
+      label();
+      return;
+    }
+    const ok = window.confirm(
+      'Skip this lesson?\n\nIt leaves your next steps, your reviews and your practice, and it does not count in "My knowledge". Later lessons may use what it teaches.\n\nYou can include it again at any time, here or on the "My knowledge" page.',
+    );
+    if (!ok) return;
+    skipLesson(lessonId);
+    window.location.hash = '#/';
+  });
+  label();
+  return el;
 }
 
 export function mountLesson(root: HTMLElement, lessonId: string, startStep?: number): () => void {
@@ -110,6 +139,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
       brand(),
       h('div', { class: 'bar-title' }, h('span', { class: 'bar-kicker' }, `Lesson ${lesson.order}`), h('span', null, lesson.title)),
       rail,
+      skipButton(lesson.id),
       settingsButton(),
     ),
     h('main', { class: 'player-main', tabindex: '0' }, h('div', { class: 'step-head' }, phase, stepTitle, objective), body),

@@ -8,6 +8,7 @@ import { confetti, place, shake } from '@/kit/motion';
 import { runPython, warmPython } from '@/py/runner';
 import { nextPause, pauseAt, pausesOf, sameValue, valueAt } from '../debug-session';
 import type { Move, Pause } from '../debug-session';
+import { noteEvidence } from '../store';
 import type { DebuggerStep, DebugTask, RunResult, VarState } from '../types';
 import { button, codeBlock, h, icon, md, mdInline, panel } from '../ui';
 import type { StepContext, StepView } from './context';
@@ -250,6 +251,7 @@ export function renderDebugger(step: DebuggerStep, ctx: StepContext): StepView {
     if (solved || done.size < step.tasks.length) return;
     solved = true;
     ctx.grade(wrong === 0);
+    noteEvidence(ctx.lesson.id, step.objective, wrong === 0, 'debugger');
     ctx.done();
     checkButton.hidden = true;
     feedback.replaceChildren(panel('good', 'All tasks done.', step.after ? md(step.after, 'prose prose-small') : null));

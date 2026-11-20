@@ -24,6 +24,11 @@ desktop app, in about 31 hours.
   not only the code.
 - **Spaced review.** Cards from earlier lessons come back just before you
   would forget them.
+- **My knowledge.** From your answers, the app estimates how well you know
+  each topic: not yet, learning, solid or mastered. Without practice a topic
+  slowly drops again. Your weakest topics get a practice button.
+- **Skip what you do not want.** Any lesson can be skipped, and included
+  again later. Skipped lessons leave your next steps, reviews and practice.
 - **My mistakes.** Every question you answered wrong, and every exercise
   that needed the solution, in one list. Practice them until they leave it.
 - **Playground.** Write any Python you like and watch it run, with no

@@ -14,6 +14,7 @@ import { mountCheatSheet } from './engine/cheatsheet';
 import { mountMistakes } from './engine/mistakes-page';
 import { mountNext } from './engine/next-page';
 import { mountPractice } from './engine/practice-page';
+import { mountKnowledge } from './engine/knowledge-page';
 
 const root = document.getElementById('app')!;
 let unmount: (() => void) | null = null;
@@ -34,7 +35,9 @@ function route(): void {
   } else if (parts[0] === 'mistakes') {
     unmount = mountMistakes(root);
   } else if (parts[0] === 'practice') {
-    unmount = mountPractice(root, parts[1]);
+    unmount = mountPractice(root, parts[1], parts.slice(2));
+  } else if (parts[0] === 'knowledge') {
+    unmount = mountKnowledge(root);
   } else if (parts[0] === 'cheatsheet') {
     unmount = mountCheatSheet(root);
   } else {

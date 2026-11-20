@@ -4,7 +4,7 @@ import type { BoxVar } from '@/kit/actors/variable-boxes';
 import { finished, isReduced, place, revealLines, revealOnScroll, sleep } from '@/kit/motion';
 import { course, getLesson, lessons } from './registry';
 import { brand, settingsButton } from './settings-menu';
-import { dueCards, lessonState, mistakes } from './store';
+import { dueCards, isSkipped, lessonState, mistakes } from './store';
 import { codeBlock, h, icon } from './ui';
 
 const LOOP = [
@@ -40,7 +40,7 @@ const HERO_STATES: { vars: BoxVar[]; from?: Record<string, string> }[] = [
 export function mountHome(root: HTMLElement): () => void {
   let alive = true;
   const available = lessons();
-  const current = available.find((l) => !lessonState(l.id).done) ?? available[0];
+  const current = available.find((l) => !lessonState(l.id).done && !isSkipped(l.id)) ?? available[0];
   const started = current ? lessonState(current.id).reached > 0 : false;
   const due = dueCards().length;
   const missed = mistakes().length;
@@ -91,15 +91,20 @@ export function mountHome(root: HTMLElement): () => void {
             return h('li', { class: `chip is-locked${kind}` }, icon('lock', 13), h('span', null, entry.title));
           }
           const state = lessonState(lesson.id);
+          const skipped = isSkipped(lesson.id);
           return h(
             'li',
             null,
             h(
               'a',
-              { class: `chip is-open${state.done ? ' is-done' : ''}${kind}`, href: `#/lesson/${lesson.id}` },
-              icon(state.done ? 'check' : 'play', 13),
+              {
+                class: `chip is-open${state.done ? ' is-done' : ''}${skipped ? ' is-skipped' : ''}${kind}`,
+                href: `#/lesson/${lesson.id}`,
+                title: skipped ? 'You skipped this lesson' : null,
+              },
+              icon(skipped ? 'skip' : state.done ? 'check' : 'play', 13),
               h('span', null, entry.title),
-              h('small', null, `${lesson.minutes} min`),
+              h('small', null, skipped ? 'skipped' : `${lesson.minutes} min`),
             ),
           );
         }),
@@ -126,6 +131,7 @@ export function mountHome(root: HTMLElement): () => void {
       h(
         'nav',
         { class: 'bar-nav', 'aria-label': 'Tools' },
+        h('a', { class: 'bar-link', href: '#/knowledge', 'aria-label': 'My knowledge' }, icon('bars', 18), h('span', null, 'Knowledge')),
         h('a', { class: 'bar-link', href: '#/practice', 'aria-label': 'Mixed practice' }, icon('mix', 18), h('span', null, 'Practice')),
         h('a', { class: 'bar-link', href: '#/playground', 'aria-label': 'Playground' }, icon('code', 18), h('span', null, 'Playground')),
         h('a', { class: 'bar-link', href: '#/cheatsheet', 'aria-label': 'Cheat sheet' }, icon('book', 18), h('span', null, 'Cheat sheet')),
