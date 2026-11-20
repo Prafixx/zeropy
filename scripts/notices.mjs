@@ -2,7 +2,7 @@
 // font that ships inside the app. Their licenses require these notices.
 // Also copies the file into public/ so the app can show it.
 // Run: node scripts/notices.mjs (runs before every build).
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -38,8 +38,10 @@ function walk(name) {
 SHIPPED.forEach(walk);
 
 function licenseText(name) {
-  const file = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'LICENCE'].map((f) => join(root, 'node_modules', name, f)).find(existsSync);
-  return file ? readFileSync(file, 'utf8').trim() : null;
+  // Any case: "LICENSE", "license.md", "Licence.txt". Linux file names are case-sensitive.
+  const dir = join(root, 'node_modules', name);
+  const file = readdirSync(dir).find((f) => /^licen[cs]e(\.(md|txt))?$/i.test(f));
+  return file ? readFileSync(join(dir, file), 'utf8').trim() : null;
 }
 
 const line = '='.repeat(78);
