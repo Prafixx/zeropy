@@ -414,6 +414,12 @@ code {
   .bar-link span {
     display: none;
   }
+  /* Icons only: keep a target a finger can hit. */
+  .bar-link {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
 }
 
 /* ---------- Cheat sheet ---------- */
@@ -1209,9 +1215,13 @@ code {
   display: flex;
   color: var(--code-dim);
 }
+.order-code .code-text {
+  display: block;
+  /* The indent of the line, as a margin: wrapped parts keep it. */
+  padding-left: calc(var(--indent, 0) * 1ch);
+}
 .order-code {
   font: 500 15px/1.75 var(--font-mono);
-  /* A long line wraps; its leading spaces (the indent) stay. */
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   background: none;
@@ -3004,4 +3014,45 @@ code {
   border: var(--line);
   border-radius: var(--radius);
   background: var(--tint-info);
+}
+
+/* ---------- Phones and tablets ---------- */
+/* Safari on iPhone zooms the page into any text field under 16px. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type]),
+  input[type='text'],
+  input[type='search'],
+  input[type='password'],
+  textarea,
+  .cm-editor .cm-scroller {
+    font-size: 16px !important;
+  }
+}
+/* A trace table fits a phone without a sideways scroll. */
+@media (max-width: 560px) {
+  .trace-table th,
+  .trace-table td {
+    padding: 4px 3px;
+  }
+  .trace-cell {
+    min-width: 52px;
+    padding: 6px 5px;
+  }
+  .trace-cell.is-print {
+    min-width: 84px;
+  }
+}
+/* Puzzle lines on a phone: smaller text, bigger arrows. */
+@media (max-width: 560px) {
+  .order-code {
+    font-size: 13px;
+  }
+  .order-card {
+    gap: 4px;
+    padding-left: 4px;
+  }
+  .order-move {
+    min-width: 36px;
+    min-height: 36px;
+  }
 }

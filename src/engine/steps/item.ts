@@ -394,6 +394,20 @@ function shuffledOrder(lines: string[]): number[] {
   return order;
 }
 
+/** Removes the first `count` spaces of a highlighted line (they are in its first text nodes). */
+function stripIndent(el: HTMLElement, count: number): void {
+  let left = count;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  while (left > 0 && walker.nextNode()) {
+    const node = walker.currentNode as Text;
+    const spaces = /^ */.exec(node.data)![0].length;
+    const cut = Math.min(spaces, left);
+    node.data = node.data.slice(cut);
+    left -= cut;
+    if (node.data.length > 0) break;
+  }
+}
+
 /**
  * Put the lines in order. The learner drags a line, or moves it with its
  * buttons (or Alt + arrow keys). Python is the judge: the order is run and
@@ -418,15 +432,25 @@ function renderOrder(item: OrderItem, onDone: OnDone): ItemView {
   const check = button('Check the order', { kind: 'plain', onClick: () => void submit() });
   const giveUp = button('Show the right order', { kind: 'ghost', small: true, onClick: () => showAnswer() });
   giveUp.hidden = true;
-  const texts = lines.map((text) => h('span', { class: 'code-text' }, text));
-  void import('@/editor/editor').then((m) => m.highlightLines(texts, source));
+  // The indent is drawn as a margin, not as spaces: a long line that wraps
+  // (on a phone) keeps its indent, and the indent is part of the answer.
+  const indents = lines.map((text) => /^ */.exec(text)![0].length);
+  const texts = lines.map((text, i) => {
+    const el = h('span', { class: 'code-text' }, text.slice(indents[i]));
+    el.style.setProperty('--indent', String(indents[i]));
+    return el;
+  });
+  void import('@/editor/editor').then((m) => {
+    m.highlightLines(texts, source);
+    texts.forEach((el, i) => stripIndent(el, indents[i]));
+  });
 
   const cards = lines.map((_, i) => {
     const up = h('button', { type: 'button', class: 'order-move', 'aria-label': 'Move this line up' }, icon('up', 16));
     const down = h('button', { type: 'button', class: 'order-move', 'aria-label': 'Move this line down' }, icon('down', 16));
     const card = h(
       'li',
-      { class: 'order-card', tabindex: '0', 'aria-label': `Line: ${lines[i].trim()}` },
+      { class: 'order-card', tabindex: '0', 'aria-label': `Line: ${lines[i].trim()}`, 'data-code': lines[i] },
       h('span', { class: 'order-grip', 'aria-hidden': 'true' }, icon('grip', 16)),
       h('code', { class: 'order-code' }, texts[i]),
       h('span', { class: 'order-moves' }, up, down),

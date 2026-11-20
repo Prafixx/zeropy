@@ -44,3 +44,7 @@ function route(): void {
 
 window.addEventListener('hashchange', route);
 route();
+
+// In a browser, ask to keep the progress: without this, Safari may delete
+// the data of a site that was not opened for some days.
+if (window.location.protocol !== 'app:') void navigator.storage?.persist?.().catch(() => false);

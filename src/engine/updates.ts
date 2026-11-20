@@ -117,12 +117,14 @@ export function updateBlock(): HTMLElement {
       check.disabled = false;
     }
   });
+  // The web version is always the newest: a reload gets it.
+  const web = window.location.protocol === 'http:' || window.location.protocol === 'https:';
   return h(
     'fieldset',
     { class: 'menu-group' },
     h('legend', null, 'About'),
     h('p', { class: 'menu-version' }, `ZeroPy ${APP_VERSION}`),
-    check,
-    result,
+    web ? h('p', { class: 'menu-note' }, 'This is the web version. It is always the newest version.') : check,
+    web ? null : result,
   );
 }

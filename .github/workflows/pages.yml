@@ -1,0 +1,52 @@
+# Publishes the web version of ZeroPy on GitHub Pages.
+# It runs only when started by hand (Actions → "Publish the web version" →
+# Run workflow), so nothing goes online by accident. GitHub builds the site
+# from the code in this repository: nothing from a personal computer is
+# uploaded. Every action is pinned to the exact commit of a checked release.
+name: Publish the web version
+
+on:
+  workflow_dispatch:
+
+# Only what is needed: read the code, write the Pages site.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install
+        run: npm ci
+        env:
+          # The web version needs no Electron.
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - name: Build
+        run: npm run build
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

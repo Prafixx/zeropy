@@ -22,12 +22,44 @@ function contentYaml(): Plugin {
   };
 }
 
+/**
+ * Only in the built app (web and desktop), not in the dev server: a strict
+ * content policy (no script from anywhere else can run, even if one were
+ * injected), no listing in search engines, and no referrer to other sites.
+ * Python runs in a worker, so WebAssembly needs 'wasm-unsafe-eval'.
+ */
+const POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "worker-src 'self'",
+  "connect-src 'self' https://api.github.com",
+  "img-src 'self' data: blob:",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+  "frame-src 'self'",
+].join('; ');
+
+function safeHead(): Plugin {
+  return {
+    name: 'zeropy-safe-head',
+    apply: 'build',
+    transformIndexHtml: () => [
+      { tag: 'meta', attrs: { 'http-equiv': 'Content-Security-Policy', content: POLICY }, injectTo: 'head-prepend' },
+      { tag: 'meta', attrs: { name: 'robots', content: 'noindex, nofollow' }, injectTo: 'head' },
+      { tag: 'meta', attrs: { name: 'referrer', content: 'no-referrer' }, injectTo: 'head' },
+    ],
+  };
+}
+
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
 export default defineConfig({
   base: './',
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
-  plugins: [contentYaml()],
+  plugins: [contentYaml(), safeHead()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
