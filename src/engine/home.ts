@@ -4,7 +4,9 @@ import type { BoxVar } from '@/kit/actors/variable-boxes';
 import { finished, isReduced, place, revealLines, revealOnScroll, sleep } from '@/kit/motion';
 import { course, getLesson, lessons } from './registry';
 import { brand, settingsButton } from './settings-menu';
-import { dueCards, isSkipped, lessonState, mistakes } from './store';
+import { lessonAvailable, pathStatus, paths } from './paths';
+import { dueCards, isSkipped, lessonState, mistakes, openPath } from './store';
+import type { CourseModule } from './types';
 import { codeBlock, h, icon } from './ui';
 
 const LOOP = [
@@ -40,7 +42,8 @@ const HERO_STATES: { vars: BoxVar[]; from?: Record<string, string> }[] = [
 export function mountHome(root: HTMLElement): () => void {
   let alive = true;
   const available = lessons();
-  const current = available.find((l) => !lessonState(l.id).done && !isSkipped(l.id)) ?? available[0];
+  // The next lesson: not done, not skipped, and not in a path that is still closed.
+  const current = available.find((l) => !lessonState(l.id).done && lessonAvailable(l)) ?? available[0];
   const started = current ? lessonState(current.id).reached > 0 : false;
   const due = dueCards().length;
   const missed = mistakes().length;
@@ -70,6 +73,41 @@ export function mountHome(root: HTMLElement): () => void {
   const hours = (minutes: number): string => String(Math.round((minutes / 60) * 2) / 2);
   const totalMinutes = minutesOf(course.modules.flatMap((m) => m.lessons.map((l) => l.id)));
 
+  /** The lessons of a module as chips. `practice`: the link to its mixed practice. */
+  const lessonChips = (module: CourseModule, practice?: string): HTMLElement =>
+    h(
+      'ol',
+      { class: 'module-lessons' },
+      ...module.lessons.map((entry) => {
+        const lesson = getLesson(entry.id);
+        const kind = entry.kind === 'project' ? ' is-project' : '';
+        if (!lesson) {
+          return h('li', { class: `chip is-locked${kind}` }, icon('lock', 13), h('span', null, entry.title));
+        }
+        const state = lessonState(lesson.id);
+        const skipped = isSkipped(lesson.id);
+        return h(
+          'li',
+          null,
+          h(
+            'a',
+            {
+              class: `chip is-open${state.done ? ' is-done' : ''}${skipped ? ' is-skipped' : ''}${kind}`,
+              href: `#/lesson/${lesson.id}`,
+              title: skipped ? 'You skipped this lesson' : null,
+            },
+            icon(skipped ? 'skip' : state.done ? 'check' : 'play', 13),
+            h('span', null, entry.title),
+            h('small', null, skipped ? 'skipped' : `${lesson.minutes} min`),
+          ),
+        );
+      }),
+      // Mixed practice of the module, once one of its lessons is done.
+      practice && module.lessons.some((entry) => lessonState(entry.id).done)
+        ? h('li', null, h('a', { class: 'chip is-open is-practice', href: practice }, icon('mix', 13), h('span', null, 'Mixed practice')))
+        : null,
+    );
+
   const modules = course.modules.map((module, m) =>
     h(
       'section',
@@ -81,44 +119,66 @@ export function mountHome(root: HTMLElement): () => void {
         h('div', null, h('h3', null, module.title), h('p', null, module.goal)),
         h('span', { class: 'module-hours' }, icon('clock', 14), `${hours(minutesOf(module.lessons.map((l) => l.id)))} h`),
       ),
-      h(
-        'ol',
-        { class: 'module-lessons' },
-        ...module.lessons.map((entry) => {
-          const lesson = getLesson(entry.id);
-          const kind = entry.kind === 'project' ? ' is-project' : '';
-          if (!lesson) {
-            return h('li', { class: `chip is-locked${kind}` }, icon('lock', 13), h('span', null, entry.title));
-          }
-          const state = lessonState(lesson.id);
-          const skipped = isSkipped(lesson.id);
-          return h(
-            'li',
-            null,
-            h(
-              'a',
-              {
-                class: `chip is-open${state.done ? ' is-done' : ''}${skipped ? ' is-skipped' : ''}${kind}`,
-                href: `#/lesson/${lesson.id}`,
-                title: skipped ? 'You skipped this lesson' : null,
-              },
-              icon(skipped ? 'skip' : state.done ? 'check' : 'play', 13),
-              h('span', null, entry.title),
-              h('small', null, skipped ? 'skipped' : `${lesson.minutes} min`),
-            ),
-          );
-        }),
-        // Mixed practice of the module, once one of its lessons is done.
-        module.lessons.some((entry) => lessonState(entry.id).done)
-          ? h(
-              'li',
-              null,
-              h('a', { class: 'chip is-open is-practice', href: `#/practice/${m + 1}` }, icon('mix', 13), h('span', null, 'Mixed practice')),
-            )
-          : null,
-      ),
+      lessonChips(module, `#/practice/${m + 1}`),
     ),
   );
+
+  // Paths after Python: open when their Python lessons are ready, or by hand.
+  const pathCards = paths().map((path) => {
+    const status = pathStatus(path);
+    const minutes = minutesOf(path.modules.flatMap((m) => m.lessons.map((l) => l.id)));
+    const ready = status.needs.filter((n) => n.ready).length;
+    const openAnyway = h(
+      'button',
+      { type: 'button', class: 'btn btn-plain btn-small' },
+      h('span', { class: 'btn-label' }, 'Open it anyway'),
+      icon('right', 16),
+    );
+    openAnyway.addEventListener('click', () => {
+      openPath(path.id);
+      // Draw the home page again, with the path open.
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    return h(
+      'section',
+      { class: `module path-card${status.open ? ' is-open' : ' is-closed'}`, 'data-reveal': true },
+      h(
+        'div',
+        { class: 'module-head' },
+        h('span', { class: 'path-icon', 'aria-hidden': 'true' }, status.open ? '>_' : icon('lock', 22)),
+        h('div', null, h('h3', null, path.title), h('p', null, path.goal)),
+        h('span', { class: 'module-hours' }, icon('clock', 14), `${hours(minutes)} h`),
+      ),
+      status.open
+        ? h(
+            'div',
+            { class: 'path-modules' },
+            ...path.modules.map((module) => h('div', null, h('h4', { class: 'path-module-title' }, module.title), lessonChips(module))),
+          )
+        : h(
+            'div',
+            { class: 'path-needs' },
+            h('p', null, `Opens when these Python lessons are done and their topics are not weak (${ready} of ${status.needs.length} ready):`),
+            h(
+              'ul',
+              { class: 'module-lessons' },
+              ...status.needs.map((n) =>
+                h(
+                  'li',
+                  null,
+                  h(
+                    'a',
+                    { class: `chip is-open${n.ready ? ' is-done' : ''}`, href: `#/lesson/${n.lesson.id}` },
+                    icon(n.ready ? 'check' : 'play', 13),
+                    h('span', null, n.lesson.title),
+                  ),
+                ),
+              ),
+            ),
+            h('div', { class: 'path-open' }, openAnyway, h('span', { class: 'muted small' }, 'You decide: the path opens now, and the Python lessons stay where they are.')),
+          ),
+    );
+  });
 
   const page = h(
     'div',
@@ -213,6 +273,19 @@ export function mountHome(root: HTMLElement): () => void {
         h('p', { class: 'lead', 'data-reveal': true }, 'Eight modules. Each one ends with a project that uses everything before it.'),
         h('div', { class: 'modules' }, ...modules),
       ),
+      pathCards.length
+        ? h(
+            'section',
+            { class: 'band', id: 'paths' },
+            h('h2', { class: 'display', 'data-reveal': true }, 'Paths after Python'),
+            h(
+              'p',
+              { class: 'lead', 'data-reveal': true },
+              'The world around Python, in the same kind of lessons: practice on every screen, checked at once. A path opens when the Python it needs is solid.',
+            ),
+            h('div', { class: 'modules' }, ...pathCards),
+          )
+        : null,
     ),
     h(
       'footer',

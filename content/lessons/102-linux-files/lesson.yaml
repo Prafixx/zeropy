@@ -1,0 +1,328 @@
+id: linux-files
+order: 102
+title: Files and folders
+summary: Make, copy, move, rename and remove files and folders, also many at once.
+minutes: 30
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Make folders and files with mkdir, touch and echo, and read a file with cat
+  - id: O2
+    text: Copy, move and rename with cp and mv
+  - id: O3
+    text: Remove files and folders with rm and rm -r, knowing there is no recycle bin
+  - id: O4
+    text: Work on many files at once with the wildcard *
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: make
+    type: theory
+    objective: O1
+    title: Make things
+    body: |
+      ```text
+      mkdir projects            make a directory
+      mkdir -p a/b/c            make a, b and c at once
+      touch todo.txt            make an empty file
+      echo "Hello" > hi.txt     write a line into a file
+      cat hi.txt                show what is in a file
+      ```
+
+      `>` sends the output of a command **into a file** instead of the
+      screen. Careful: `>` replaces what was in the file. `>>` adds at the
+      end instead.
+
+      Names with spaces are trouble in the terminal: `my notes.txt` is read
+      as two names. Use `-` or `_` instead: `my-notes.txt`.
+    keys:
+      - code: "mkdir projects"
+        means: "A new, empty directory."
+      - code: "echo \"text\" > file.txt"
+        means: "Write text into a file (replaces it)."
+      - code: "echo \"more\" >> file.txt"
+        means: "Add a line at the end."
+      - code: "cat file.txt"
+        means: "Print the file."
+
+  # 2. TERMINAL --------------------------------------------------------------
+  - id: project
+    type: terminal
+    objective: O1
+    title: A project folder
+    prompt: |
+      **Make a folder for a new project.**
+
+      1. Make the directory `robot`, and go into it.
+      2. Make an empty file `todo.txt`.
+      3. Write the line `Buy two motors` into a file `readme.txt`.
+      4. Show the file `readme.txt` with `cat`.
+    checks:
+      - expr: "isdir('robot')"
+        pass: "The directory `robot` exists"
+        hint: "`mkdir robot`."
+      - expr: "isfile('robot/todo.txt')"
+        pass: "`robot/todo.txt` exists"
+        hint: "Go into the folder first: `cd robot`, then `touch todo.txt`."
+      - expr: "(read('robot/readme.txt') or '').strip() == 'Buy two motors'"
+        pass: "`robot/readme.txt` holds the line `Buy two motors`"
+        hint: "`echo \"Buy two motors\" > readme.txt`, inside `robot`."
+      - expr: "ran('cat')"
+        pass: "You showed the file with `cat`"
+        hint: "`cat readme.txt`."
+    hints:
+      - "Start with `mkdir robot`, then `cd robot`."
+      - "`touch todo.txt` makes an empty file."
+      - "`echo \"Buy two motors\" > readme.txt`, then `cat readme.txt`."
+    solution: ["mkdir robot", "cd robot", "touch todo.txt", "echo \"Buy two motors\" > readme.txt", "cat readme.txt"]
+    after: >-
+      `cat` is short for "concatenate": with several names, it prints the
+      files one after the other. For one file, it simply shows it.
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: change
+    type: theory
+    objective: O2
+    title: Copy, move, remove
+    body: |
+      ```text
+      cp notes.txt backup.txt       copy a file
+      cp -r photos photos-old       copy a directory, with everything in it
+      mv notes.txt documents/       move into a directory
+      mv old.txt new.txt            rename
+      rm old.txt                    remove a file
+      rm -r old-folder              remove a directory, with everything in it
+      ```
+
+      There is **no recycle bin** in the terminal. `rm` deletes at once and
+      for good. So check with `ls` before you remove, and never type
+      `rm -r` in a hurry.
+
+      ## Many files at once
+
+      `*` stands for "any text". `*.jpg` is every name that ends with
+      `.jpg`; `photo*` is every name that starts with `photo`. The shell
+      replaces the pattern with the names before the command runs:
+
+      ```text
+      mv *.jpg photos/
+      ```
+    keys:
+      - code: "cp -r a b"
+        means: "Copy the directory `a` with everything in it to `b`."
+      - code: "mv a.txt b.txt"
+        means: "Rename. Into a directory: `mv a.txt docs/`."
+      - code: "rm -r folder"
+        means: "Delete a folder and all in it. For good."
+      - code: "*.jpg"
+        means: "Every name that ends with `.jpg`."
+
+  # 4. TERMINAL --------------------------------------------------------------
+  - id: tidy
+    type: terminal
+    objective: O4
+    title: Tidy the downloads
+    prompt: |
+      The folder `downloads` is a mess. **Sort it:**
+
+      - every `.jpg` file into a new directory `pictures`,
+      - every `.mp3` file into a new directory `music`,
+      - `notes.txt` stays in `downloads`.
+
+      Use `*`: one command for all the pictures.
+    start:
+      files:
+        downloads/beach.jpg: ""
+        downloads/dog.jpg: ""
+        downloads/party.jpg: ""
+        downloads/song.mp3: ""
+        downloads/radio.mp3: ""
+        downloads/notes.txt: "Ideas for the weekend\n"
+    checks:
+      - expr: "isdir('pictures') and sorted(listdir('pictures')) == ['beach.jpg', 'dog.jpg', 'party.jpg']"
+        pass: "`pictures` holds the three pictures"
+        hint: "`mkdir pictures`, then `mv downloads/*.jpg pictures/`."
+      - expr: "isdir('music') and sorted(listdir('music')) == ['radio.mp3', 'song.mp3']"
+        pass: "`music` holds the two songs"
+        hint: "`mkdir music`, then `mv downloads/*.mp3 music/`."
+      - expr: "listdir('downloads') == ['notes.txt']"
+        pass: "Only `notes.txt` is left in `downloads`"
+        hint: "Move the files, do not copy them: `mv`, not `cp`."
+      - expr: "any('*' in h for h in history)"
+        pass: "You used `*` for many files at once"
+        hint: "`*.jpg` stands for every name that ends with `.jpg`."
+    hints:
+      - "First make the two directories: `mkdir pictures music`."
+      - "`mv downloads/*.jpg pictures/` moves every picture at once."
+      - "The same for the songs: `mv downloads/*.mp3 music/`."
+    solution: ["mkdir pictures music", "mv downloads/*.jpg pictures/", "mv downloads/*.mp3 music/"]
+    after: >-
+      `mkdir` takes several names at once, like most commands. With `*`, one
+      command moved three files. For a hundred files it is still one
+      command.
+
+  # 5. TERMINAL --------------------------------------------------------------
+  - id: remove
+    type: terminal
+    objective: O3
+    title: Remove with care
+    prompt: |
+      The old project is not needed any more, but one file is.
+
+      1. Look first: `ls old-project`.
+      2. **Save** `old-project/keep.txt`: rename it to `keep.txt` in your
+         home directory, with `mv`.
+      3. Make a copy of it, `keep-backup.txt`.
+      4. Then remove the whole directory `old-project`.
+    start:
+      files:
+        old-project/keep.txt: "The wiring plan: pin 17 to the LED.\n"
+        old-project/test1.py: "print(1)\n"
+        old-project/test2.py: "print(2)\n"
+        old-project/logs/run.log: "ok\n"
+    checks:
+      - expr: "(read('keep.txt') or '').startswith('The wiring plan')"
+        pass: "`keep.txt` is safe in your home directory"
+        hint: "`mv old-project/keep.txt keep.txt` (or `mv old-project/keep.txt ~`)."
+      - expr: "read('keep-backup.txt') == read('keep.txt') and isfile('keep.txt')"
+        pass: "`keep-backup.txt` is a copy of it"
+        hint: "`cp keep.txt keep-backup.txt`."
+      - expr: "not exists('old-project')"
+        pass: "`old-project` is gone"
+        hint: "A directory with files needs `rm -r old-project`."
+      - expr: "any(h.startswith('ls') for h in history)"
+        pass: "You looked before you removed"
+        hint: "`ls old-project` first."
+    hints:
+      - "Look with `ls old-project`, then move the file out: `mv old-project/keep.txt keep.txt`."
+      - "Copy: `cp keep.txt keep-backup.txt`."
+      - "`rm old-project` fails: it is a directory. `rm -r old-project` removes it with all inside."
+    solution: ["ls old-project", "mv old-project/keep.txt keep.txt", "cp keep.txt keep-backup.txt", "rm -r old-project"]
+    after: >-
+      Save first, delete last: that order protects you. On a real computer,
+      a file removed with `rm` does not come back.
+
+  # 6. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-greater
+        objective: O1
+        prompt: "`notes.txt` has 10 lines. Then `echo \"new\" > notes.txt`. What is in the file now?"
+        options:
+          - text: "Only the line `new`"
+            correct: true
+            why: "`>` replaces the whole file. `>>` would add at the end."
+          - text: "The 10 lines and `new` at the end"
+            why: "That is what `>>` does."
+          - text: "An error: the file exists already"
+            why: "`>` writes over an existing file, with no question."
+      - kind: mcq
+        id: q-rename
+        objective: O2
+        prompt: "How do you rename `draft.txt` to `final.txt`?"
+        options:
+          - text: "`mv draft.txt final.txt`"
+            correct: true
+            why: "To move a file to a new name is to rename it."
+          - text: "`cp draft.txt final.txt`"
+            why: "This makes a copy: `draft.txt` stays."
+          - text: "`rename final.txt`"
+            why: "The command is `mv`, with the old name first."
+      - kind: mcq
+        id: q-rm-dir
+        objective: O3
+        prompt: "`rm photos` says `cannot remove 'photos': Is a directory`. What removes it with all its files?"
+        options:
+          - text: "`rm -r photos`"
+            correct: true
+            why: "`-r` (recursive) removes a directory and everything in it."
+          - text: "`rmdir photos`"
+            why: "`rmdir` only removes an empty directory."
+          - text: "`rm photos/`"
+            why: "The `/` changes nothing: `rm` still needs `-r` for a directory."
+      - kind: mcq
+        id: q-star
+        objective: O4
+        prompt: "A folder holds `a.txt`, `b.txt` and `c.py`. What does `ls *.txt` show?"
+        options:
+          - text: "`a.txt  b.txt`"
+            correct: true
+            why: "`*.txt` is every name that ends with `.txt`."
+          - text: "`a.txt  b.txt  c.py`"
+            why: "`c.py` does not end with `.txt`."
+          - text: "A file called `*.txt`"
+            why: "The shell replaces `*.txt` with the names that match."
+      - kind: mcq
+        id: q-bin
+        objective: O3
+        prompt: "You removed a file with `rm` by mistake. Where do you find it?"
+        options:
+          - text: "Nowhere: the terminal has no recycle bin"
+            correct: true
+            why: "`rm` deletes for good. Look with `ls` before you remove."
+          - text: "In the recycle bin"
+            why: "The recycle bin belongs to the desktop, not to `rm`."
+          - text: "In `/tmp`"
+            why: "`rm` does not move files anywhere: it deletes them."
+
+  # 7. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-mkdir-p
+    objective: O1
+    prompt: "Which command makes `a/b/c` when none of them exists yet?"
+    options:
+      - text: "`mkdir -p a/b/c`"
+        correct: true
+        why: "`-p` makes the parent directories too."
+      - text: "`mkdir a/b/c`"
+        why: "Without `-p`, `mkdir` fails because `a` does not exist."
+      - text: "`touch a/b/c`"
+        why: "`touch` makes a file, not directories."
+  - kind: mcq
+    id: r-append
+    objective: O1
+    prompt: "Which line adds `done` at the end of `log.txt`, and keeps what was there?"
+    options:
+      - text: "`echo \"done\" >> log.txt`"
+        correct: true
+        why: "`>>` appends."
+      - text: "`echo \"done\" > log.txt`"
+        why: "`>` replaces the whole file."
+      - text: "`cat done > log.txt`"
+        why: "This reads a file called `done`, and replaces `log.txt`."
+  - kind: mcq
+    id: r-cp-r
+    objective: O2
+    prompt: "How do you copy the directory `site` with all its files to `site-backup`?"
+    options:
+      - text: "`cp -r site site-backup`"
+        correct: true
+        why: "`-r` copies a directory with everything in it."
+      - text: "`cp site site-backup`"
+        why: "Without `-r`, `cp` skips a directory."
+      - text: "`mv site site-backup`"
+        why: "That renames it: there is no copy."
+  - kind: mcq
+    id: r-star-prefix
+    objective: O4
+    prompt: "Which pattern matches `photo1.jpg` and `photo2.png`, but not `my-photo.jpg`?"
+    options:
+      - text: "`photo*`"
+        correct: true
+        why: "Names that start with `photo`."
+      - text: "`*photo*`"
+        why: "This also matches `my-photo.jpg`: `photo` anywhere in the name."
+      - text: "`*.jpg`"
+        why: "This matches by the end of the name, and misses `photo2.png`."

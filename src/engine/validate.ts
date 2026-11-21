@@ -3,8 +3,8 @@
 
 type Rec = Record<string, unknown>;
 
-const STEP_TYPES = ['hook', 'theory', 'predict', 'demo', 'worked', 'exercise', 'local', 'debugger', 'quiz', 'drill', 'review'];
-const PRACTICE = ['predict', 'demo', 'exercise', 'local', 'debugger', 'quiz', 'drill', 'review'];
+const STEP_TYPES = ['hook', 'theory', 'predict', 'demo', 'worked', 'exercise', 'local', 'debugger', 'terminal', 'quiz', 'drill', 'review'];
+const PRACTICE = ['predict', 'demo', 'exercise', 'local', 'debugger', 'terminal', 'quiz', 'drill', 'review'];
 
 function isRec(v: unknown): v is Rec {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -192,6 +192,21 @@ export function validateLesson(data: unknown): string[] {
       });
       if (!isRec(step.example)) out.push(`${where}: local needs an example report`);
       if (!Array.isArray(step.hints) || step.hints.length < 2) out.push(`${where}: local needs at least 2 hints`);
+    }
+    if (type === 'terminal') {
+      if (!text(step.prompt)) out.push(`${where}: terminal needs a prompt`);
+      const checks = Array.isArray(step.checks) ? step.checks : [];
+      if (checks.length === 0) out.push(`${where}: terminal needs checks`);
+      checks.forEach((c, j) => {
+        if (!isRec(c) || !text(c.expr) || !text(c.pass) || !text(c.hint)) {
+          out.push(`${where}: check ${j + 1} needs "expr", "pass" and "hint"`);
+        }
+      });
+      if (!Array.isArray(step.solution) || step.solution.length === 0 || !step.solution.every((l) => text(l))) {
+        out.push(`${where}: terminal needs a solution: a list of commands`);
+      }
+      if (step.start !== undefined && !isRec(step.start)) out.push(`${where}: terminal start must be a mapping`);
+      if (!Array.isArray(step.hints) || step.hints.length < 2) out.push(`${where}: terminal needs at least 2 hints`);
     }
     if (type === 'debugger') {
       if (!text(step.prompt)) out.push(`${where}: debugger needs a prompt`);

@@ -24,6 +24,12 @@ desktop app, in about 31 hours.
   not only the code.
 - **Spaced review.** Cards from earlier lessons come back just before you
   would forget them.
+- **Paths after Python.** When the Python a path needs is solid, a new
+  path opens (or open it yourself at any time). The first one: **Linux and
+  the command line**, with a pretend Linux terminal in the app. You type
+  real commands (`ls`, `cd`, `mkdir`, `grep`, pipes, scripts, `sudo apt`),
+  and a picture of your folders changes with each one. Nothing on your
+  computer changes.
 - **My knowledge.** From your answers, the app estimates how well you know
   each topic: not yet, learning, solid or mastered. Without practice a topic
   slowly drops again. Your weakest topics get a practice button.

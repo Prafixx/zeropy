@@ -3,7 +3,7 @@
 // a gap; a question leaves the list when it is right on the first try.
 import { place } from '@/kit/motion';
 import { pageBar } from './playground';
-import { findRef } from './registry';
+import { findRef, lessonLabel } from './registry';
 import type { StepContext } from './steps/context';
 import { renderPractice } from './steps/simple';
 import { mistakes } from './store';
@@ -41,7 +41,7 @@ export function mountMistakes(root: HTMLElement): () => void {
           h(
             'li',
             { class: 'mistake-row' },
-            h('span', { class: 'mistake-where' }, `Lesson ${found.lesson.order} · ${found.lesson.title}`),
+            h('span', { class: 'mistake-where' }, `${lessonLabel(found.lesson)} · ${found.lesson.title}`),
             h('strong', null, found.step.title),
             h(
               'a',

@@ -1,6 +1,10 @@
 // Main-thread client for the Python worker. Lazy start, timeout, restart.
-import type { GuiEvent, GuiResult, RunRequest, RunResult } from '@/engine/types';
-import harness from './harness.py?raw';
+import type { GuiEvent, GuiResult, RunRequest, RunResult, ShellRequest, ShellResult } from '@/engine/types';
+import harnessCode from './harness.py?raw';
+import shellCode from './shell.py?raw';
+
+// The pretend Linux shell uses the harness (python3 runs a file with it).
+const harness = `${harnessCode}\n${shellCode}`;
 
 export type PyStatus = 'idle' | 'loading' | 'ready' | 'failed';
 
@@ -79,6 +83,46 @@ const TIMEOUT_RESULT: RunResult = {
   steps: [],
   checks: [],
 };
+
+/** One command in the pretend Linux terminal. Queued like a run. */
+export function runShell(request: ShellRequest): Promise<ShellResult> {
+  const next = queue.then(
+    () => shellNow(request),
+    () => shellNow(request),
+  );
+  queue = next.catch(() => undefined);
+  return next;
+}
+
+async function shellNow(request: ShellRequest): Promise<ShellResult> {
+  await warmPython();
+  const w = worker!;
+  const id = nextId++;
+  return new Promise<ShellResult>((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      w.removeEventListener('message', onMessage);
+      restart();
+      resolve({
+        out: 'The command ran for more than 6 seconds and was stopped.\n',
+        code: 124,
+        state: request.state,
+        prompt: '',
+        clear: false,
+        editor: null,
+        checks: (request.checks ?? []).map(() => false),
+      });
+    }, TIMEOUT_MS);
+    const onMessage = (msg: MessageEvent) => {
+      if (msg.data.id !== id) return;
+      window.clearTimeout(timer);
+      w.removeEventListener('message', onMessage);
+      if (msg.data.type === 'result') resolve(JSON.parse(msg.data.result) as ShellResult);
+      else reject(new Error(msg.data.message));
+    };
+    w.addEventListener('message', onMessage);
+    w.postMessage({ type: 'run', id, fn: 'shell', request: JSON.stringify(request) });
+  });
+}
 
 /** A click or a key in the window of the last run. Queued like a run. */
 export function guiEvent(event: GuiEvent): Promise<GuiResult> {

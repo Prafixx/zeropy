@@ -300,6 +300,25 @@ export interface DebuggerStep extends StepBase {
   after?: string;
 }
 
+/**
+ * Work in a pretend Linux terminal (src/py/shell.py). The checks are Python
+ * expressions over the shell: exists("notes"), isdir("p"), read("f"),
+ * lines("f"), mode("f"), executable("f"), listdir("."), cwd ("~/p"),
+ * history, ran("grep"), out (the output of the last command), packages.
+ * Paths in checks are relative to the home directory, /home/pi.
+ */
+export interface TerminalStep extends StepBase {
+  type: 'terminal';
+  prompt: string;
+  /** The files and folders at the start, and the working directory. */
+  start?: ShellState;
+  checks: Check[];
+  hints: string[];
+  /** Commands that solve it: shown on request, and run by check-content. */
+  solution: string[];
+  after?: string;
+}
+
 export interface ReviewStep extends StepBase {
   type: 'review';
   count: number;
@@ -317,6 +336,7 @@ export type Step =
   | DrillStep
   | InvestigateStep
   | LocalStep
+  | TerminalStep
   | ReviewStep;
 
 export interface Lesson {
@@ -344,10 +364,26 @@ export interface CourseModule {
   lessons: CourseLesson[];
 }
 
+/**
+ * A path after (or next to) the Python course, like Linux. Its lessons have
+ * the order 100 × (place of the path) + their place: 101, 102, ...
+ */
+export interface CoursePath {
+  id: string;
+  title: string;
+  /** The short name in labels: "Linux 3". */
+  short: string;
+  goal: string;
+  /** Python lessons that must be done, and not weak, before the path opens. */
+  needs: string[];
+  modules: CourseModule[];
+}
+
 export interface Course {
   title: string;
   outcomes: string[];
   modules: CourseModule[];
+  paths?: CoursePath[];
 }
 
 // ---- Python runner protocol -------------------------------------------------
@@ -461,6 +497,36 @@ export interface GuiResult {
   stdout: string;
   error: PyError | null;
   files?: Record<string, string>;
+}
+
+/** The whole pretend Linux: the page keeps it, shell.py changes it. */
+export interface ShellState {
+  /** Path → text. A path without a leading / is under the home directory (/home/pi). */
+  files?: Record<string, string>;
+  dirs?: string[];
+  modes?: Record<string, string>;
+  cwd?: string;
+  history?: string[];
+  packages?: string[];
+}
+
+export interface ShellRequest {
+  state: ShellState;
+  line?: string;
+  /** Text saved in the editor (nano). */
+  write?: { path: string; text: string };
+  /** Python expressions over the state (see shell.py check_env). */
+  checks?: string[];
+}
+
+export interface ShellResult {
+  out: string;
+  code: number;
+  state: ShellState;
+  prompt: string;
+  clear: boolean;
+  editor: { path: string; name: string; text: string } | null;
+  checks: boolean[];
 }
 
 export interface RunResult {

@@ -43,6 +43,8 @@ interface Data {
   knowledge: Record<string, KnowState>;
   /** Lessons the learner chose to skip, with the time. */
   skipped: Record<string, number>;
+  /** Paths the learner opened before their Python lessons were ready. */
+  paths: Record<string, number>;
 }
 
 function load(): Data {
@@ -56,6 +58,7 @@ function load(): Data {
       practiced: raw.practiced ?? {},
       knowledge: raw.knowledge ?? {},
       skipped: raw.skipped ?? {},
+      paths: raw.paths ?? {},
     };
   } catch {
     return empty();
@@ -63,7 +66,7 @@ function load(): Data {
 }
 
 function empty(): Data {
-  return { lessons: {}, cards: {}, code: {}, mistakes: {}, practiced: {}, knowledge: {}, skipped: {} };
+  return { lessons: {}, cards: {}, code: {}, mistakes: {}, practiced: {}, knowledge: {}, skipped: {}, paths: {} };
 }
 
 let data = load();
@@ -245,6 +248,18 @@ export function skipLesson(lessonId: string): void {
 
 export function includeLesson(lessonId: string): void {
   delete data.skipped[lessonId];
+  save();
+}
+
+// ---- Paths -----------------------------------------------------------------------
+
+export function pathOpenedByHand(pathId: string): boolean {
+  return pathId in data.paths;
+}
+
+/** "Open it anyway": the learner chooses, not the rule. */
+export function openPath(pathId: string): void {
+  data.paths[pathId] = Date.now();
   save();
 }
 

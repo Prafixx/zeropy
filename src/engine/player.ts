@@ -3,7 +3,7 @@
 import { confetti, gsap, leave, place, stamp } from '@/kit/motion';
 import { getSettings, onSettings } from '@/kit/settings';
 import { warmPython } from '@/py/runner';
-import { course, getLesson, lessons } from './registry';
+import { course, getLesson, lastCourseLesson, lessonLabel } from './registry';
 import { brand, settingsButton } from './settings-menu';
 import { describeWait, finishLesson, includeLesson, isSkipped, lessonState, nextDue, reachStep, skipLesson } from './store';
 import type { Lesson, Step } from './types';
@@ -12,6 +12,7 @@ import type { StepContext, StepView } from './steps/context';
 import { renderDemo } from './steps/demo';
 import { renderExercise } from './steps/exercise';
 import { renderLocal } from './steps/local';
+import { renderTerminal } from './steps/terminal';
 import { renderDebugger } from './steps/debugger';
 import { renderHook } from './steps/hook';
 import { renderPredict, renderQuiz, renderReview, renderTheory, renderWorked } from './steps/simple';
@@ -24,6 +25,7 @@ const PHASE: Record<Step['type'], string> = {
   worked: 'Example',
   exercise: 'Practice',
   local: 'Your computer',
+  terminal: 'Terminal',
   debugger: 'Debug',
   quiz: 'Quiz',
   drill: 'Train',
@@ -47,6 +49,8 @@ function renderStep(step: Step, ctx: StepContext): StepView {
       return renderExercise(step, ctx);
     case 'local':
       return renderLocal(step, ctx);
+    case 'terminal':
+      return renderTerminal(step, ctx);
     case 'debugger':
       return renderDebugger(step, ctx);
     case 'quiz':
@@ -137,7 +141,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
       'header',
       { class: 'bar' },
       brand(),
-      h('div', { class: 'bar-title' }, h('span', { class: 'bar-kicker' }, `Lesson ${lesson.order}`), h('span', null, lesson.title)),
+      h('div', { class: 'bar-title' }, h('span', { class: 'bar-kicker' }, lessonLabel(lesson)), h('span', null, lesson.title)),
       rail,
       skipButton(lesson.id),
       settingsButton(),
@@ -272,7 +276,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     back.disabled = false;
     note.textContent = '';
     // After the last lesson, the next screen is the path after the course.
-    const last = lesson.order === Math.max(...lessons().map((l) => l.order));
+    const last = lesson.id === lastCourseLesson();
     if (last) setPrimary('What comes next', true, () => (window.location.hash = '#/next'));
     else setPrimary('Back to the course', true, () => (window.location.hash = '#/'));
     place(el.querySelectorAll('[data-enter]'), 0.25);

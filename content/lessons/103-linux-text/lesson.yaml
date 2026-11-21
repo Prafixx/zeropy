@@ -1,0 +1,333 @@
+id: linux-text
+order: 103
+title: Read and search text
+summary: Look into big files, find the lines you need, and join small commands into a strong one.
+minutes: 30
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Look into files with cat, head and tail, and count with wc
+  - id: O2
+    text: Find lines with grep, also without case (-i), with numbers (-n) and as a count (-c)
+  - id: O3
+    text: Join commands with a pipe |, so the output of one is the input of the next
+  - id: O4
+    text: Save output in a file with > and >>
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: look
+    type: theory
+    objective: O1
+    title: Look into big files
+    body: |
+      Computers write **logs**: text files with one line for each event. A
+      log can have thousands of lines, so `cat` is too much. Look at parts:
+
+      ```text
+      head app.log           the first 10 lines
+      head -n 3 app.log      the first 3 lines
+      tail app.log           the last 10 lines: the newest events
+      wc -l app.log          how many lines
+      ```
+
+      `wc` means "word count". With `-l` it counts lines, with `-w` words.
+    keys:
+      - code: "head -n 3 file"
+        means: "The first 3 lines."
+      - code: "tail file"
+        means: "The last 10 lines: the newest."
+      - code: "wc -l file"
+        means: "The number of lines."
+
+  # 2. TERMINAL --------------------------------------------------------------
+  - id: peek
+    type: terminal
+    objective: O1
+    title: A look at a log
+    prompt: |
+      `logs/app.log` is the log of a small weather station.
+
+      1. Show its **first 3 lines**.
+      2. Show its **last 5 lines**.
+      3. Count its lines with `wc`.
+    start:
+      files:
+        logs/app.log: |
+          08:00 INFO station started
+          08:05 INFO temperature 12.5
+          08:10 WARNING sensor slow
+          08:15 INFO temperature 12.9
+          08:20 ERROR no network
+          08:25 INFO temperature 13.4
+          08:30 WARNING battery low
+          08:35 INFO temperature 13.8
+          08:40 ERROR sensor not found
+          08:45 INFO temperature 14.1
+          08:50 WARNING battery low
+          08:55 INFO station stopped
+    checks:
+      - expr: "any(h.startswith('head') and '3' in h for h in history)"
+        pass: "You showed the first 3 lines"
+        hint: "`head -n 3 logs/app.log`."
+      - expr: "any(h.startswith('tail') and '5' in h for h in history)"
+        pass: "You showed the last 5 lines"
+        hint: "`tail -n 5 logs/app.log`."
+      - expr: "ran('wc')"
+        pass: "You counted the lines with `wc`"
+        hint: "`wc -l logs/app.log`."
+    hints:
+      - "`head` and `tail` take `-n` and a number."
+      - "`head -n 3 logs/app.log`, then `tail -n 5 logs/app.log`."
+      - "`wc -l logs/app.log` counts the lines."
+    solution: ["head -n 3 logs/app.log", "tail -n 5 logs/app.log", "wc -l logs/app.log"]
+    after: >-
+      `tail` is the command of people who look after servers: the newest
+      events are at the end of a log.
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: grep
+    type: theory
+    objective: O2
+    title: grep, pipes and >
+    body: |
+      ## Find lines: grep
+
+      ```text
+      grep ERROR app.log        the lines that contain ERROR
+      grep -i error app.log     also Error and error (-i: ignore case)
+      grep -n ERROR app.log     with line numbers
+      grep -c ERROR app.log     only how many lines
+      ```
+
+      ## Join commands: the pipe |
+
+      `|` sends the output of one command into the next one, instead of to
+      the screen. Small commands become a strong one:
+
+      ```text
+      grep ERROR app.log | wc -l      how many errors?
+      grep WARNING app.log | tail -n 1     the last warning
+      ```
+
+      ## Keep the result: > and >>
+
+      As in the lesson before: `>` writes the output into a file, `>>` adds
+      it at the end.
+
+      ```text
+      grep ERROR app.log > errors.txt
+      ```
+    keys:
+      - code: "grep ERROR app.log"
+        means: "Only the lines with ERROR."
+      - code: "a | b"
+        means: "The output of `a` is the input of `b`."
+      - code: "grep ERROR app.log | wc -l"
+        means: "How many lines contain ERROR."
+      - code: "... > file.txt"
+        means: "Keep the output in a file."
+
+  # 4. TERMINAL --------------------------------------------------------------
+  - id: errors
+    type: terminal
+    objective: O4
+    title: A report of the errors
+    prompt: |
+      **Make a file `errors.txt` with only the ERROR lines of
+      `logs/app.log`.** Then show it with `cat`.
+    start:
+      files:
+        logs/app.log: |
+          08:00 INFO station started
+          08:05 INFO temperature 12.5
+          08:10 WARNING sensor slow
+          08:15 INFO temperature 12.9
+          08:20 ERROR no network
+          08:25 INFO temperature 13.4
+          08:30 WARNING battery low
+          08:35 INFO temperature 13.8
+          08:40 ERROR sensor not found
+          08:45 INFO temperature 14.1
+          08:50 WARNING battery low
+          08:55 INFO station stopped
+    checks:
+      - expr: "read('errors.txt') == ''.join(l + '\\n' for l in lines('logs/app.log') if 'ERROR' in l)"
+        pass: "`errors.txt` holds exactly the ERROR lines"
+        hint: "`grep ERROR logs/app.log > errors.txt`."
+      - expr: "ran('cat')"
+        pass: "You showed the report with `cat`"
+        hint: "`cat errors.txt`."
+    hints:
+      - "`grep ERROR logs/app.log` prints the lines on the screen. Try it first."
+      - "Add `> errors.txt` at the end to send them into a file instead."
+      - "`grep ERROR logs/app.log > errors.txt`, then `cat errors.txt`."
+    solution: ["grep ERROR logs/app.log > errors.txt", "cat errors.txt"]
+    after: >-
+      This is how people answer questions about a server in seconds: one
+      line finds what matters in a log of thousands.
+
+  # 5. TERMINAL --------------------------------------------------------------
+  - id: count
+    type: terminal
+    objective: O3
+    title: Count with a pipe
+    prompt: |
+      **How many WARNING lines are in `logs/app.log`?** Find out with a
+      pipe: `grep`, then `|`, then `wc -l`. Write the number into a file
+      `warnings.txt`.
+    start:
+      files:
+        logs/app.log: |
+          08:00 INFO station started
+          08:05 INFO temperature 12.5
+          08:10 WARNING sensor slow
+          08:15 INFO temperature 12.9
+          08:20 ERROR no network
+          08:25 INFO temperature 13.4
+          08:30 WARNING battery low
+          08:35 INFO temperature 13.8
+          08:40 ERROR sensor not found
+          08:45 INFO temperature 14.1
+          08:50 WARNING battery low
+          08:55 INFO station stopped
+    checks:
+      - expr: "(read('warnings.txt') or '').strip() == str(sum('WARNING' in l for l in lines('logs/app.log')))"
+        pass: "`warnings.txt` holds the number of warnings"
+        hint: "`grep WARNING logs/app.log | wc -l > warnings.txt`."
+      - expr: "any('|' in h and 'grep' in h for h in history)"
+        pass: "You used a pipe after `grep`"
+        hint: "`grep WARNING logs/app.log | wc -l` counts the lines that `grep` found."
+    hints:
+      - "`grep WARNING logs/app.log` shows the warning lines."
+      - "Add `| wc -l` to count them instead of showing them."
+      - "`grep WARNING logs/app.log | wc -l > warnings.txt`."
+    solution: ["grep WARNING logs/app.log | wc -l > warnings.txt", "cat warnings.txt"]
+    after: >-
+      `grep -c WARNING logs/app.log` gives the same number. The pipe is more
+      general: it joins any two commands.
+
+  # 6. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-tail
+        objective: O1
+        prompt: "You want the newest events of a log. Which command?"
+        options:
+          - text: "`tail app.log`"
+            correct: true
+            why: "New lines are added at the end: `tail` shows the last ones."
+          - text: "`head app.log`"
+            why: "`head` shows the oldest lines, at the start."
+          - text: "`wc app.log`"
+            why: "`wc` counts; it does not show lines."
+      - kind: mcq
+        id: q-i
+        objective: O2
+        prompt: "The log has `Error`, `ERROR` and `error`. Which command finds all three?"
+        options:
+          - text: "`grep -i error app.log`"
+            correct: true
+            why: "`-i` ignores the difference between capital and small letters."
+          - text: "`grep error app.log`"
+            why: "Without `-i`, only `error` in small letters matches."
+          - text: "`grep -c error app.log`"
+            why: "`-c` only counts, and still only small letters."
+      - kind: mcq
+        id: q-pipe
+        objective: O3
+        prompt: "What does `cat names.txt | sort` do?"
+        options:
+          - text: "It prints the lines of `names.txt` in sorted order"
+            correct: true
+            why: "The pipe gives the output of `cat` to `sort`."
+          - text: "It sorts the file itself, on the disk"
+            why: "The file does not change. Only the output is sorted."
+          - text: "It writes a file called `sort`"
+            why: "That would be `>`. `|` sends output to a command."
+      - kind: mcq
+        id: q-count
+        objective: O3
+        prompt: "Which line counts the lines with `ERROR`?"
+        options:
+          - text: "`grep ERROR app.log | wc -l`"
+            correct: true
+            why: "`grep` finds the lines, `wc -l` counts them."
+          - text: "`wc -l app.log | grep ERROR`"
+            why: "This counts all lines first. Then `grep` looks for ERROR in a number."
+          - text: "`grep ERROR | wc -l app.log`"
+            why: "Here `grep` gets no file, and `wc` counts the whole log."
+      - kind: mcq
+        id: q-redirect
+        objective: O4
+        prompt: "`grep ERROR app.log > errors.txt`. What is on the screen?"
+        options:
+          - text: "Nothing: the lines go into `errors.txt`"
+            correct: true
+            why: "`>` sends the output into the file instead of the screen."
+          - text: "The error lines, and also the file"
+            why: "The output goes to one place: the file."
+          - text: "The text `errors.txt`"
+            why: "`>` is not printed. It sends the output into the file."
+
+  # 7. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-head-n
+    objective: O1
+    prompt: "Which command shows the first 3 lines of `data.csv`?"
+    options:
+      - text: "`head -n 3 data.csv`"
+        correct: true
+        why: "`head` starts at the top, `-n` says how many lines."
+      - text: "`tail -n 3 data.csv`"
+        why: "`tail` shows the last lines."
+      - text: "`cat 3 data.csv`"
+        why: "`cat` prints whole files, and `3` is read as a file name."
+  - kind: mcq
+    id: r-grep-n
+    objective: O2
+    prompt: "What does `-n` add to `grep`?"
+    options:
+      - text: "The line number before each line found"
+        correct: true
+        why: "Useful to find the line in an editor."
+      - text: "Only the number of lines found"
+        why: "That is `-c` (count)."
+      - text: "Lines that do NOT match"
+        why: "That is `-v`."
+  - kind: mcq
+    id: r-pipe-idea
+    objective: O3
+    prompt: "What does the pipe `|` do?"
+    options:
+      - text: "It sends the output of the command on its left into the command on its right"
+        correct: true
+        why: "Small tools joined into a strong one."
+      - text: "It writes the output into a file"
+        why: "That is `>`."
+      - text: "It runs two commands at random"
+        why: "The order is fixed: left first, its output goes right."
+  - kind: mcq
+    id: r-wc
+    objective: O1
+    prompt: "`wc -l notes.txt` prints `12 notes.txt`. What is 12?"
+    options:
+      - text: "The number of lines in `notes.txt`"
+        correct: true
+        why: "`-l` counts lines."
+      - text: "The number of words"
+        why: "Words are `-w`."
+      - text: "The size in bytes"
+        why: "Bytes are `-c`."

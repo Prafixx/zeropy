@@ -1,6 +1,6 @@
 // Finds lessons and scenes by file name. Adding a lesson folder is enough.
 import type { SceneFactory } from '@/kit/stage';
-import type { Course, Item, Lesson } from './types';
+import type { Course, CoursePath, Item, Lesson } from './types';
 import courseData from '../../content/course.yaml';
 
 const lessonFiles = import.meta.glob<Lesson>('../../content/lessons/*/lesson.yaml', {
@@ -44,6 +44,24 @@ for (const [path, lesson] of Object.entries(lessonFiles)) {
   }
   const scenePath = path.replace('lesson.yaml', 'scene.ts');
   entries.set(lesson.id, { lesson, scene: sceneFiles[scenePath] });
+}
+
+/** The path of a lesson, or undefined for a lesson of the Python course. */
+export function pathOf(lessonId: string): CoursePath | undefined {
+  return (course.paths ?? []).find((p) => p.modules.some((m) => m.lessons.some((l) => l.id === lessonId)));
+}
+
+/** "Lesson 12" for the Python course, "Linux 3" for a lesson of a path. */
+export function lessonLabel(lesson: Lesson): string {
+  const path = pathOf(lesson.id);
+  if (!path) return `Lesson ${lesson.order}`;
+  const ids = path.modules.flatMap((m) => m.lessons.map((l) => l.id));
+  return `${path.short} ${ids.indexOf(lesson.id) + 1}`;
+}
+
+/** The last lesson of the Python course (its end leads to "What next"). */
+export function lastCourseLesson(): string | undefined {
+  return course.modules.at(-1)?.lessons.at(-1)?.id;
 }
 
 export function lessons(): Lesson[] {

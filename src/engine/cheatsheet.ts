@@ -2,7 +2,7 @@
 // with a search. Built from the lesson files, so it grows with the course.
 import { place } from '@/kit/motion';
 import { pageBar } from './playground';
-import { course, getLesson } from './registry';
+import { course, getLesson, lessonLabel } from './registry';
 import { lessonState } from './store';
 import { h, icon, mdInline } from './ui';
 
@@ -35,7 +35,7 @@ export function mountCheatSheet(root: HTMLElement): () => void {
               'a',
               { class: `sheet-from${done ? ' is-done' : ''}`, href: `#/lesson/${lesson.id}` },
               done ? icon('check', 14) : null,
-              `Lesson ${lesson.order} · ${lesson.title}`,
+              `${lessonLabel(lesson)} · ${lesson.title}`,
             ),
           );
           entries.push({ code: key.code, means: key.means, find: `${key.code} ${key.means} ${lesson.title}`.toLowerCase(), el });

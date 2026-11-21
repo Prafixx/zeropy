@@ -6,7 +6,7 @@
 import { place } from '@/kit/motion';
 import { warmPython } from '@/py/runner';
 import { pageBar } from './playground';
-import { course, getLesson, itemsOf } from './registry';
+import { course, getLesson, itemsOf, lessonLabel } from './registry';
 import type { StepContext, StepView } from './steps/context';
 import { renderExercise } from './steps/exercise';
 import { renderItem } from './steps/item';
@@ -200,7 +200,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
         { class: 'sequence-count practice-count', 'data-enter': true },
         ...tasks.map((_, i) => h('i', { class: i < index ? 'is-done' : i === index ? 'is-now' : '' })),
         h('span', null, `Task ${index + 1} of ${tasks.length}`),
-        h('span', { class: 'practice-from' }, `From lesson ${task.lesson.order}: ${task.lesson.title}`),
+        h('span', { class: 'practice-from' }, `From ${lessonLabel(task.lesson)}: ${task.lesson.title}`),
       );
       const next = (): void => step(index + 1);
       const label = index + 1 < tasks.length ? 'Next task' : 'Finish';

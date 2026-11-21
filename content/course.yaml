@@ -88,3 +88,21 @@ modules:
       - { id: app-structure, title: Structure of an app }
       - { id: packaging, title: Package with PyInstaller }
       - { id: capstone, title: "Capstone: your own app", kind: project }
+
+# Paths after Python. A path opens when its `needs` are done and not weak
+# (src/engine/paths.ts), or when the learner opens it by hand.
+paths:
+  - id: linux
+    title: Linux and the command line
+    short: Linux
+    goal: Work in the terminal, like on a Raspberry Pi or a server.
+    needs: [functions, files]
+    modules:
+      - title: The command line
+        goal: Move around, make and change files, find what you need, run scripts.
+        lessons:
+          - { id: linux-terminal, title: The terminal }
+          - { id: linux-files, title: Files and folders }
+          - { id: linux-text, title: Read and search text }
+          - { id: linux-scripts, title: "Permissions, scripts and sudo" }
+          - { id: linux-project, title: "Project: tidy up a Pi", kind: project }

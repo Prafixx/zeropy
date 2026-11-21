@@ -18,6 +18,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const lessonsDir = join(root, 'content', 'lessons');
 const pyodide = await loadPyodide();
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'harness.py'), 'utf8'));
+pyodide.runPython(readFileSync(join(root, 'src', 'py', 'shell.py'), 'utf8'));
+const shellFn = pyodide.globals.get('shell');
+const shell = (request) => JSON.parse(shellFn(JSON.stringify(request)));
 const run = pyodide.globals.get('run');
 const call = (request) => JSON.parse(run(JSON.stringify(request)));
 
@@ -31,13 +34,21 @@ const fail = (message) => {
 
 // Every lesson must be on the course map, at the place of its number, or
 // the home page shows it as locked.
-const courseIds = load(readFileSync(join(root, 'content', 'course.yaml'), 'utf8')).modules.flatMap((m) => m.lessons.map((l) => l.id));
+// A lesson of a path has the order 100 × (place of the path) + its place.
+const courseMap = load(readFileSync(join(root, 'content', 'course.yaml'), 'utf8'));
+const orders = new Map();
+courseMap.modules.flatMap((m) => m.lessons).forEach((l, i) => orders.set(l.id, i + 1));
+(courseMap.paths ?? []).forEach((path, p) => {
+  if (!path.id || !path.short || !Array.isArray(path.needs)) fail(`path ${p + 1}: needs id, short and needs`);
+  for (const need of path.needs ?? []) if (!orders.has(need)) fail(`path ${path.id}: needs "${need}", which is not a Python lesson`);
+  path.modules.flatMap((m) => m.lessons).forEach((l, i) => orders.set(l.id, 100 * (p + 1) + i + 1));
+});
 console.log('course.yaml');
 readdirSync(lessonsDir).forEach((folder) => {
   const lesson = load(readFileSync(join(lessonsDir, folder, 'lesson.yaml'), 'utf8'));
-  const at = courseIds.indexOf(lesson.id);
-  if (at === -1) fail(`${folder}: the id "${lesson.id}" is not in course.yaml`);
-  else if (at + 1 !== lesson.order) fail(`${folder}: order ${lesson.order}, but place ${at + 1} in course.yaml`);
+  const want = orders.get(lesson.id);
+  if (want === undefined) fail(`${folder}: the id "${lesson.id}" is not in course.yaml`);
+  else if (want !== lesson.order) fail(`${folder}: order ${lesson.order}, but its place in course.yaml gives ${want}`);
 });
 
 for (const folder of readdirSync(lessonsDir)) {
@@ -76,6 +87,33 @@ for (const folder of readdirSync(lessonsDir)) {
         }
       });
       console.log(`  ok   ${step.id} (debugger, ${pauses.length} stops; answers: ${answers.join(', ') || 'none'})`);
+      continue;
+    }
+    if (step.type === 'terminal') {
+      // The model commands must work and pass every check; the start alone must not.
+      const abs = (p) => (p.startsWith('/') ? p : `/home/pi/${p.replace(/^~\//, '')}`);
+      const start = step.start ?? {};
+      let state = {
+        files: Object.fromEntries(Object.entries(start.files ?? {}).map(([p, t]) => [abs(p), t])),
+        dirs: (start.dirs ?? []).map(abs),
+        modes: Object.fromEntries(Object.entries(start.modes ?? {}).map(([p, m]) => [abs(p), m])),
+        cwd: start.cwd ? abs(start.cwd) : '/home/pi',
+        history: [],
+        packages: start.packages ?? [],
+      };
+      const exprs = step.checks.map((c) => c.expr);
+      const first = shell({ state, checks: exprs });
+      if (first.checks.every(Boolean)) fail(`${step.id}: the start already passes every check`);
+      let last = first;
+      for (const line of step.solution) {
+        last = shell({ state, line, checks: exprs });
+        if (last.code === 127 || /syntax error/.test(last.out)) fail(`${step.id}: model command "${line}" fails: ${last.out.trim()}`);
+        state = last.state;
+      }
+      last.checks.forEach((ok, i) => {
+        if (!ok) fail(`${step.id}: the model commands fail check ${i + 1} (${exprs[i]})`);
+      });
+      console.log(`  ok   ${step.id} (terminal, ${step.solution.length} commands, ${exprs.length} checks)`);
       continue;
     }
     if (step.type === 'local') {

@@ -1,0 +1,365 @@
+id: linux-scripts
+order: 104
+title: "Permissions, scripts and sudo"
+summary: Read who may do what with a file, write scripts that type commands for you, and install programs.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Read the permissions in ls -l - read, write and run, for you, your group and others
+  - id: O2
+    text: Make a file runnable with chmod +x, and run it with ./
+  - id: O3
+    text: Write a small shell script and a Python program in the terminal, with nano or echo
+  - id: O4
+    text: Use sudo to act as the administrator, and install a program with apt
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: perms
+    type: theory
+    objective: O1
+    title: Who may do what
+    body: |
+      `ls -l` shows a line for each file. It starts with ten characters:
+
+      ```text
+      -rwxr-xr-- 1 pi pi 120 Nov 21 10:00 backup.sh
+      ```
+
+      - The first one: `-` a file, `d` a directory.
+      - Then three groups of three: for **you** (the owner), for your
+        **group**, for **others**.
+      - `r` read, `w` write (change), `x` run (for a directory: go in). A
+        `-` means "not allowed".
+
+      So `rwxr-xr--`: you may read, write and run it; your group may read
+      and run it; others may only read it.
+
+      ## Permissions as numbers
+
+      Each group is one digit: `r` = 4, `w` = 2, `x` = 1, added up. `rwx` is
+      7, `r-x` is 5, `r--` is 4. So `rwxr-xr--` is `754`. A normal file is
+      `644`, a script `755`.
+    keys:
+      - code: "rwx r-x r--"
+        means: "You · your group · others."
+      - code: "r=4  w=2  x=1"
+        means: "Add them: rwx=7, r-x=5, rw-=6."
+      - code: "drwxr-xr-x"
+        means: "The `d` says: a directory."
+
+  # 2. DRILL ----------------------------------------------------------------
+  - id: read-perms
+    type: drill
+    objective: O1
+    title: Read the permissions
+    items:
+      - kind: mcq
+        id: d-others
+        objective: O1
+        prompt: "`-rw-r-----  pi  pi  notes.txt`. What may others (not you, not your group) do?"
+        options:
+          - text: "Nothing"
+            correct: true
+            why: "The last group is `---`: no read, no write, no run."
+          - text: "Read it"
+            why: "Read is allowed for the group (`r--`), not for others (`---`)."
+          - text: "Read and write it"
+            why: "That is you (`rw-`), the first group."
+      - kind: mcq
+        id: d-number
+        objective: O1
+        prompt: "Which number is `rwxr-xr-x`?"
+        options:
+          - text: "`755`"
+            correct: true
+            why: "rwx = 4+2+1 = 7, r-x = 4+1 = 5, r-x = 5."
+          - text: "`777`"
+            why: "777 is `rwxrwxrwx`: everyone may change it."
+          - text: "`644`"
+            why: "644 is `rw-r--r--`: nobody may run it."
+      - kind: mcq
+        id: d-run
+        objective: O2
+        prompt: "`./backup.sh` says `Permission denied`, and `ls -l` shows `-rw-r--r--`. Why?"
+        options:
+          - text: "Nobody has the `x` (run) permission"
+            correct: true
+            why: "A script needs `x` to run with `./`. `chmod +x backup.sh` adds it."
+          - text: "The script has a mistake inside"
+            why: "The shell did not even open it: the `x` is missing."
+          - text: "You must be in the folder `/`"
+            why: "`./` means the current folder. The permission is the problem."
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: scripts
+    type: theory
+    objective: O2
+    title: Scripts, Python and sudo
+    body: |
+      ## A script
+
+      A shell script is a text file with commands, one per line. The shell
+      runs them one after the other, like you would type them:
+
+      ```text
+      echo "Backup starts"
+      mkdir -p backup
+      cp notes.txt backup/
+      ```
+
+      To run it with `./backup.sh`, it needs the run permission:
+      `chmod +x backup.sh`. (`bash backup.sh` works without it.)
+
+      ## nano, an editor in the terminal
+
+      `nano file.txt` opens a small editor. Type, then save and exit (Ctrl+X
+      on a real Pi asks "Save?", here the button does it).
+
+      ## Python in the terminal
+
+      `python3 program.py` runs a Python file: the same Python as in the
+      lessons before, without the app around it.
+
+      ## sudo: the administrator
+
+      Some work changes the whole computer, like installing a program. Only
+      the administrator, called **root**, may do it. `sudo` runs one
+      command as root:
+
+      ```text
+      sudo apt install tree
+      ```
+
+      `apt` installs programs from the internet. On a real computer, `sudo`
+      asks for your password. Use it only when a command needs it.
+    keys:
+      - code: "chmod +x run.sh"
+        means: "Add the run permission."
+      - code: "./run.sh"
+        means: "Run the script in this folder."
+      - code: "python3 app.py"
+        means: "Run a Python program."
+      - code: "sudo apt install tree"
+        means: "Install the program `tree`, as root."
+
+  # 4. TERMINAL --------------------------------------------------------------
+  - id: script
+    type: terminal
+    objective: O2
+    title: Your first script
+    prompt: |
+      **Write a script `hello.sh` and run it.**
+
+      1. Write the line `echo Hello from my script` into `hello.sh` (with
+         `echo ... > hello.sh`, or with `nano hello.sh`).
+      2. Try `./hello.sh`: read the answer.
+      3. Give it the run permission, and run it again.
+    checks:
+      - expr: "'echo' in (read('hello.sh') or '')"
+        pass: "`hello.sh` holds an `echo` command"
+        hint: "`echo 'echo Hello from my script' > hello.sh`. The quotes keep the inner `echo` as text."
+      - expr: "executable('hello.sh')"
+        pass: "`hello.sh` may be run (`x`)"
+        hint: "`chmod +x hello.sh`."
+      - expr: "any(h.strip().startswith('./hello.sh') for h in history) and executable('hello.sh') and 'Hello' in out"
+        pass: "You ran it with `./hello.sh`, and it said hello"
+        hint: "After `chmod +x hello.sh`, type `./hello.sh`."
+    hints:
+      - "`echo 'echo Hello from my script' > hello.sh` writes the script."
+      - "`./hello.sh` fails with `Permission denied` until you add `x`."
+      - "`chmod +x hello.sh`, then `./hello.sh`."
+    solution: ["echo 'echo Hello from my script' > hello.sh", "chmod +x hello.sh", "./hello.sh"]
+    after: >-
+      `Permission denied` is one of the most common messages on Linux. Now
+      you know the cause: a missing permission, here the `x`.
+
+  # 5. TERMINAL --------------------------------------------------------------
+  - id: python
+    type: terminal
+    objective: O3
+    title: Python in the terminal
+    prompt: |
+      **Write a Python program and run it from the terminal.**
+
+      1. Open the editor: `nano count.py`.
+      2. Write a program that prints the numbers 1, 2 and 3, one per line.
+         Save it.
+      3. Run it with `python3 count.py`.
+    checks:
+      - expr: "isfile('count.py') and 'print' in (read('count.py') or '')"
+        pass: "`count.py` is a Python program that prints"
+        hint: "`nano count.py`, then for example `for n in range(1, 4):` and `    print(n)`."
+      - expr: "any(h.startswith('python3') and 'count.py' in h for h in history) and out.split() == ['1', '2', '3']"
+        pass: "`python3 count.py` prints 1, 2 and 3"
+        hint: "The output must be the three numbers, one per line. Run it again after a change."
+    hints:
+      - "`nano count.py` opens the editor. Type the program, then press the save button."
+      - "A loop: `for n in range(1, 4):` and on the next line, indented, `print(n)`."
+      - "Then `python3 count.py`."
+    solution: ["echo 'for n in range(1, 4): print(n)' > count.py", "python3 count.py"]
+    after: >-
+      This is how Python runs on a Raspberry Pi or a server: a file, and
+      `python3` in a terminal. Everything you learned in the Python course
+      works there.
+
+  # 6. TERMINAL --------------------------------------------------------------
+  - id: install
+    type: terminal
+    objective: O4
+    title: Install a program
+    prompt: |
+      The program `tree` draws a directory and everything in it as a tree.
+      It is not installed yet.
+
+      1. Try `tree`: read the message.
+      2. Try `apt install tree` without `sudo`: read the message.
+      3. Install it as the administrator.
+      4. Run `tree projects`.
+    start:
+      files:
+        projects/robot/motor.py: "print('motor')\n"
+        projects/robot/README.txt: ""
+        projects/weather/station.py: "print('weather')\n"
+    checks:
+      - expr: "'tree' in packages"
+        pass: "`tree` is installed"
+        hint: "`sudo apt install tree`."
+      - expr: "any(h.startswith('tree') for h in history) and 'robot' in out and 'tree' in packages"
+        pass: "`tree projects` shows the projects"
+        hint: "After the install: `tree projects`."
+    hints:
+      - "Without `sudo`, `apt` says that you are not root."
+      - "`sudo apt install tree` runs `apt` as the administrator."
+      - "Then `tree projects`."
+    solution: ["sudo apt install tree", "tree projects"]
+    after: >-
+      The messages before the install are worth reading: `command not
+      found` means "not installed", and `are you root?` means "this needs
+      sudo".
+
+  # 7. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O4
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-chmod
+        objective: O2
+        prompt: "What does `chmod +x run.sh` do?"
+        options:
+          - text: "It allows running `run.sh`"
+            correct: true
+            why: "`+x` adds the run permission."
+          - text: "It runs `run.sh`"
+            why: "It only changes the permission. Run it with `./run.sh`."
+          - text: "It makes `run.sh` read-only"
+            why: "That would be `chmod -w`."
+      - kind: mcq
+        id: q-dot-slash
+        objective: O2
+        prompt: "Why `./run.sh`, and not only `run.sh`?"
+        options:
+          - text: "`./` says: the file in this folder. Without it, the shell looks for a command called `run.sh`"
+            correct: true
+            why: "The shell runs programs from fixed places, not from the current folder, unless you say `./`."
+          - text: "`./` makes the script faster"
+            why: "It only says where the file is."
+          - text: "`./` gives the run permission"
+            why: "The permission comes from `chmod +x`."
+      - kind: mcq
+        id: q-sudo
+        objective: O4
+        prompt: "When should you use `sudo`?"
+        options:
+          - text: "Only for a command that changes the system, like installing a program"
+            correct: true
+            why: "As root, a mistake can break the whole computer. Use it only when needed."
+          - text: "For every command, to be sure it works"
+            why: "That is dangerous: root may delete anything without a question."
+          - text: "Never: it is only for experts"
+            why: "You need it to install programs and change system settings."
+      - kind: mcq
+        id: q-python
+        objective: O3
+        prompt: "How do you run the Python file `app.py` in a terminal?"
+        options:
+          - text: "`python3 app.py`"
+            correct: true
+            why: "`python3` runs the file."
+          - text: "`run app.py`"
+            why: "There is no command `run`."
+          - text: "`cat app.py`"
+            why: "`cat` shows the code. It does not run it."
+      - kind: mcq
+        id: q-644
+        objective: O1
+        prompt: "A file has `644`. What may your group do with it?"
+        options:
+          - text: "Read it"
+            correct: true
+            why: "6 is you (rw-), 4 is the group (r--), 4 is others (r--)."
+          - text: "Read and write it"
+            why: "That is you: 6 = 4+2."
+          - text: "Run it"
+            why: "Nobody has 1 (x) here."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-rwx
+    objective: O1
+    prompt: "What do `r`, `w` and `x` mean in permissions?"
+    options:
+      - text: "Read, write, run"
+        correct: true
+        why: "For a directory, `x` means: you may go into it."
+      - text: "Read, write, delete"
+        why: "`x` is run (execute)."
+      - text: "Root, web, extra"
+        why: "They are read, write and execute."
+  - kind: mcq
+    id: r-denied
+    objective: O2
+    prompt: "`./tool.sh` says `Permission denied`. What is the first thing to try?"
+    options:
+      - text: "`chmod +x tool.sh`"
+        correct: true
+        why: "A script needs the run permission."
+      - text: "`sudo ./tool.sh`"
+        why: "This hides the problem and runs it as root. Add `x` instead."
+      - text: "`rm tool.sh`"
+        why: "The script is fine. It only misses a permission."
+  - kind: mcq
+    id: r-apt
+    objective: O4
+    prompt: "Which line installs the program `htop`?"
+    options:
+      - text: "`sudo apt install htop`"
+        correct: true
+        why: "`apt` installs, `sudo` gives it the right to change the system."
+      - text: "`apt install htop`"
+        why: "Without `sudo`, apt says: are you root?"
+      - text: "`install htop`"
+        why: "The tool is `apt`."
+  - kind: mcq
+    id: r-script
+    objective: O3
+    prompt: "What is a shell script?"
+    options:
+      - text: "A text file with commands that the shell runs one after the other"
+        correct: true
+        why: "It types the commands for you."
+      - text: "A Python program"
+        why: "A Python program runs with `python3`. A shell script is commands for the shell."
+      - text: "A special kind of directory"
+        why: "It is a normal text file."

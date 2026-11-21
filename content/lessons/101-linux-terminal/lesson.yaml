@@ -1,0 +1,335 @@
+id: linux-terminal
+order: 101
+title: The terminal
+summary: Talk to a computer with words. Read the prompt, see where you are, and move between folders.
+minutes: 25
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Read the prompt - who you are, which computer, and where you are
+  - id: O2
+    text: Show where you are and what is there, with pwd and ls
+  - id: O3
+    text: Move between folders with cd and paths - absolute, relative, ~ and ..
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: shell
+    type: theory
+    objective: O1
+    title: A computer you talk to
+    body: |
+      A Raspberry Pi, a web server, a robot: many computers have no screen
+      and no mouse. You talk to them in a **terminal**: you type a command,
+      press Enter, and the computer answers with text. The program that
+      reads your commands is the **shell** (on most Linux computers it is
+      called `bash`).
+
+      Before each command, the shell shows a **prompt**:
+
+      ```text
+      pi@raspberrypi:~ $
+      ```
+
+      - `pi` is your user name.
+      - `raspberrypi` is the name of the computer.
+      - `~` is where you are now: `~` means your **home directory**, here
+        `/home/pi`. A directory is the same as a folder.
+      - `$` means: the shell waits for you.
+
+      A command is a name, maybe with **options** (they start with `-`) and
+      **arguments** (what the command works on):
+
+      ```text
+      ls -l photos
+      ```
+
+      `ls` is the command, `-l` an option ("long list"), `photos` the
+      argument.
+    keys:
+      - code: "pi@raspberrypi:~ $"
+        means: "User `pi`, computer `raspberrypi`, in the home directory."
+      - code: "~"
+        means: "Your home directory: `/home/pi`."
+      - code: "ls -l photos"
+        means: "Command, option, argument."
+
+  # 2. TERMINAL --------------------------------------------------------------
+  - id: first
+    type: terminal
+    objective: O2
+    title: Your first commands
+    prompt: |
+      This terminal is a pretend Linux inside ZeroPy, like a Raspberry Pi.
+      Nothing on your own computer changes. **Type each command, then press
+      Enter.**
+
+      1. `pwd` (print working directory): where are you?
+      2. `ls` (list): what is in this directory?
+      3. `whoami`: which user are you?
+
+      The picture on the right shows your files and folders. It changes
+      with your commands.
+    start:
+      files:
+        notes.txt: "Buy a power supply for the Pi.\n"
+        photos/cat.jpg: ""
+        photos/pi.jpg: ""
+        music/song.mp3: ""
+      dirs: [documents]
+    checks:
+      - expr: "ran('pwd')"
+        pass: "You printed the working directory with `pwd`"
+        hint: "Type `pwd` and press Enter."
+      - expr: "ran('ls')"
+        pass: "You listed the directory with `ls`"
+        hint: "Type `ls` and press Enter."
+      - expr: "ran('whoami')"
+        pass: "You asked who you are with `whoami`"
+        hint: "Type `whoami` and press Enter."
+    hints:
+      - "Commands are short and lowercase. Type exactly `pwd`, then Enter."
+      - "Then `ls`, then `whoami`, each followed by Enter."
+    solution: ["pwd", "ls", "whoami"]
+    after: >-
+      `pwd` answers `/home/pi`: the full name of your home directory. `ls`
+      shows two kinds of things: folders (`photos`, `music`, `documents`)
+      and files (`notes.txt`).
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: paths
+    type: theory
+    objective: O3
+    title: Paths
+    body: |
+      `cd` (change directory) moves you to another directory. You tell it
+      where with a **path**:
+
+      - An **absolute** path starts with `/`, the top of everything:
+        `/home/pi/photos`. It works from anywhere.
+      - A **relative** path starts from where you are: `photos`, or
+        `photos/2024`.
+      - `~` is your home directory: `cd ~/music` works from anywhere.
+      - `..` is the directory one level up. `cd ..` goes up one level,
+        `cd ../..` goes up two.
+      - `cd` alone takes you home.
+
+      ## Two keys that save time
+
+      - **Tab** completes a name: type `cd pho` and press Tab.
+      - **Up** brings back the last command.
+
+      `ls` also takes a path: `ls photos` lists that directory without going
+      there.
+    keys:
+      - code: "cd photos/2024"
+        means: "A relative path: from here, into photos, then 2024."
+      - code: "cd /home/pi/music"
+        means: "An absolute path: from the top."
+      - code: "cd .."
+        means: "One level up."
+      - code: "cd"
+        means: "Home (`~`)."
+
+  # 4. TERMINAL --------------------------------------------------------------
+  - id: walk
+    type: terminal
+    objective: O3
+    title: Find your way
+    prompt: |
+      **Move through the folders.**
+
+      1. Go into `photos/2024` (one `cd` is enough).
+      2. Look what is there with `ls`.
+      3. Go up two levels with `..`.
+      4. End in `documents/work`.
+
+      Watch the line "you are here" in the picture.
+    start:
+      files:
+        photos/2024/beach.jpg: ""
+        photos/2024/mountain.jpg: ""
+        documents/work/plan.txt: "Step 1: buy the parts\n"
+        documents/letter.txt: ""
+    checks:
+      - expr: "any(h.startswith('cd') and '2024' in h for h in history)"
+        pass: "You went into `photos/2024`"
+        hint: "`cd photos/2024`."
+      - expr: "ran('ls')"
+        pass: "You looked with `ls`"
+        hint: "Type `ls` when you are in `photos/2024`."
+      - expr: "any(h.startswith('cd') and '..' in h for h in history)"
+        pass: "You went up with `..`"
+        hint: "`cd ../..` goes up two levels at once. `cd ..` twice works too."
+      - expr: "cwd == '~/documents/work'"
+        pass: "You end in `~/documents/work`"
+        hint: "From home: `cd documents/work`."
+    hints:
+      - "Start with `cd photos/2024`, then `ls`."
+      - "`cd ../..` takes you from `~/photos/2024` back home."
+      - "Then `cd documents/work`. The prompt shows `~/documents/work`."
+    solution: ["cd photos/2024", "ls", "cd ../..", "cd documents/work"]
+    after: >-
+      The prompt always shows where you are, so you never need to guess. If
+      you are lost: `pwd`, or `cd` alone to go home.
+
+  # 5. TERMINAL --------------------------------------------------------------
+  - id: lost
+    type: terminal
+    objective: O3
+    title: Lost in the folders
+    prompt: |
+      You start deep inside the folders: look at the prompt.
+
+      1. **Go home with one short command.**
+      2. Print the full path of your home directory.
+      3. List the folder `music` **without going into it**.
+    start:
+      cwd: projects/robot/code/old
+      files:
+        projects/robot/code/old/test.py: "print('old')\n"
+        music/song.mp3: ""
+        music/podcast.mp3: ""
+    checks:
+      - expr: "cwd == '~' and any(h.strip() in ('cd', 'cd ~', 'cd ~/', 'cd /home/pi', 'cd $HOME') for h in history)"
+        pass: "You went home with one command"
+        hint: "`cd` alone takes you home. `cd ~` too."
+      - expr: "ran('pwd')"
+        pass: "You printed the full path"
+        hint: "`pwd`: it shows `/home/pi`."
+      - expr: "any(h.startswith('ls') and 'music' in h for h in history) and cwd == '~'"
+        pass: "You listed `music` and stayed home"
+        hint: "`ls music`: `ls` takes a path too."
+    hints:
+      - "One command takes you home from anywhere."
+      - "It is `cd`, with nothing after it. Then `pwd`."
+      - "`ls music` lists that folder, and you stay where you are."
+    solution: ["cd", "pwd", "ls music"]
+    after: >-
+      `cd ../../../..` would work too, but `cd` alone is shorter and works
+      from anywhere.
+
+  # 6. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-prompt
+        objective: O1
+        prompt: "What does the prompt `ana@server:~/web $` tell you?"
+        options:
+          - text: "User `ana`, computer `server`, in the folder `web` of the home directory"
+            correct: true
+            why: "Before the `@` is the user, after it the computer, after the `:` where you are."
+          - text: "User `server`, computer `ana`"
+            why: "The user comes first: `user@computer`."
+          - text: "You are in the folder `/web` at the top"
+            why: "`~/web` is inside the home directory, not at the top."
+      - kind: mcq
+        id: q-absolute
+        objective: O3
+        prompt: "Which path is absolute?"
+        options:
+          - text: "`/home/pi/music`"
+            correct: true
+            why: "It starts with `/`, the top: it works from any directory."
+          - text: "`music`"
+            why: "This is relative: it starts from where you are."
+          - text: "`../music`"
+            why: "This starts from one level above where you are: relative."
+      - kind: mcq
+        id: q-up
+        objective: O3
+        prompt: "You are in `~/photos/2024`. Where does `cd ..` take you?"
+        options:
+          - text: "`~/photos`"
+            correct: true
+            why: "`..` is one level up."
+          - text: "`~`"
+            why: "That is two levels up: `cd ../..`."
+          - text: "`/`"
+            why: "`/` is the top. `..` goes up only one level."
+      - kind: mcq
+        id: q-ls
+        objective: O2
+        prompt: "What does `ls photos` do?"
+        options:
+          - text: "It lists the folder `photos`, and you stay where you are"
+            correct: true
+            why: "`ls` takes a path. Only `cd` moves you."
+          - text: "It goes into `photos`"
+            why: "Moving is the job of `cd`."
+          - text: "It makes a folder `photos`"
+            why: "That is `mkdir photos`, in the next lesson."
+      - kind: mcq
+        id: q-home
+        objective: O3
+        prompt: "What is the shortest way to go home from anywhere?"
+        options:
+          - text: "`cd`"
+            correct: true
+            why: "`cd` with nothing after it takes you home."
+          - text: "`home`"
+            why: "There is no command `home`: the shell says `command not found`."
+          - text: "`cd /`"
+            why: "`/` is the top of the whole computer, not your home directory."
+
+  # 7. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-pwd
+    objective: O2
+    prompt: "Which command shows the full path of where you are?"
+    options:
+      - text: "`pwd`"
+        correct: true
+        why: "Print working directory."
+      - text: "`ls`"
+        why: "`ls` lists what is in a directory, not where you are."
+      - text: "`whoami`"
+        why: "`whoami` shows your user name."
+  - kind: mcq
+    id: r-tilde
+    objective: O1
+    prompt: "What is `~` for the user `pi`?"
+    options:
+      - text: "The home directory, `/home/pi`"
+        correct: true
+        why: "`~` is short for your own home directory."
+      - text: "The top of the computer, `/`"
+        why: "The top is `/`. `~` is your home."
+      - text: "The last directory you were in"
+        why: "`~` always means home."
+  - kind: mcq
+    id: r-option
+    objective: O1
+    prompt: "In `ls -l music`, what is `-l`?"
+    options:
+      - text: "An option: it changes how `ls` works (a long list)"
+        correct: true
+        why: "Options start with `-`."
+      - text: "The folder to list"
+        why: "The folder is the argument: `music`."
+      - text: "A second command"
+        why: "One command per line here: `ls`."
+  - kind: mcq
+    id: r-relative
+    objective: O3
+    prompt: "You are in `~`. Which command takes you to `/home/pi/documents/work`?"
+    options:
+      - text: "`cd documents/work`"
+        correct: true
+        why: "A relative path from `~`. The absolute path works too."
+      - text: "`cd /documents/work`"
+        why: "This starts at the top, `/`, where there is no `documents`."
+      - text: "`cd work`"
+        why: "`work` is inside `documents`, not in `~`."

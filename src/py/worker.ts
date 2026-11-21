@@ -8,11 +8,13 @@ interface PyodideLike {
 
 type Incoming =
   | { type: 'init'; indexURL: string; harness: string }
-  | { type: 'run'; id: number; request: string; fn?: 'run' | 'gui_event' };
+  | { type: 'run'; id: number; request: string; fn?: 'run' | 'gui_event' | 'shell' };
 
 let runFn: ((request: string) => string) | null = null;
 // A click in a window of the last run (pretend tkinter).
 let guiFn: ((request: string) => string) | null = null;
+// One command of the pretend Linux terminal (shell.py).
+let shellFn: ((request: string) => string) | null = null;
 
 async function init(indexURL: string, harness: string): Promise<void> {
   const mod = (await import(/* @vite-ignore */ `${indexURL}pyodide.mjs`)) as {
@@ -22,6 +24,7 @@ async function init(indexURL: string, harness: string): Promise<void> {
   pyodide.runPython(harness);
   runFn = pyodide.globals.get('run');
   guiFn = pyodide.globals.get('gui_event');
+  shellFn = pyodide.globals.get('shell');
 }
 
 self.onmessage = async (event: MessageEvent<Incoming>) => {
@@ -37,7 +40,7 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
   }
   if (msg.type === 'run') {
     try {
-      const result = (msg.fn === 'gui_event' ? guiFn : runFn)!(msg.request);
+      const result = (msg.fn === 'gui_event' ? guiFn : msg.fn === 'shell' ? shellFn : runFn)!(msg.request);
       self.postMessage({ type: 'result', id: msg.id, result });
     } catch (error) {
       self.postMessage({ type: 'crash', id: msg.id, message: String(error) });

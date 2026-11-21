@@ -5,7 +5,7 @@ import { place } from '@/kit/motion';
 import { effective, LEVEL_NAME, levelOf } from './knowledge';
 import type { Level } from './knowledge';
 import { pageBar } from './playground';
-import { course, getLesson } from './registry';
+import { course, getLesson, lessonLabel } from './registry';
 import { includeLesson, isSkipped, knowledgeOf, lessonState, skipLesson } from './store';
 import type { Lesson } from './types';
 import { h, icon, panel } from './ui';
@@ -87,7 +87,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
       h(
         'summary',
         null,
-        h('span', { class: 'know-num' }, String(lesson.order)),
+        h('span', { class: 'know-num' }, lessonLabel(lesson).replace(/^Lesson /, '')),
         h(
           'span',
           { class: 'know-title' },
@@ -113,7 +113,12 @@ export function mountKnowledge(root: HTMLElement): () => void {
   }
 
   function render(keepOpen?: string): void {
-    const lessons = course.modules.flatMap((m) => m.lessons.map((e) => getLesson(e.id))).filter((l): l is Lesson => Boolean(l));
+    // The Python modules, then the modules of each path ("Linux: The terminal").
+    const groups = [
+      ...course.modules.map((m, i) => ({ num: String(i + 1).padStart(2, '0'), title: m.title, lessons: m.lessons })),
+      ...(course.paths ?? []).flatMap((p) => p.modules.map((m) => ({ num: p.short, title: m.title, lessons: m.lessons }))),
+    ];
+    const lessons = groups.flatMap((g) => g.lessons.map((e) => getLesson(e.id))).filter((l): l is Lesson => Boolean(l));
     const counted = lessons.filter((l) => !isSkipped(l.id)).flatMap(topicsOf);
     const weakest = counted
       .filter((t) => t.level === 'weak' || t.level === 'learning')
@@ -125,7 +130,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
       h('div', { class: `know-tile is-${level}` }, h('b', null, String(counted.filter((t) => t.level === level).length)), h('span', null, LEVEL_NAME[level])),
     );
 
-    const modules = course.modules.map((m, i) => {
+    const modules = groups.map((m) => {
       const own = m.lessons.map((e) => getLesson(e.id)).filter((l): l is Lesson => Boolean(l));
       return h(
         'section',
@@ -133,7 +138,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
         h(
           'div',
           { class: 'know-module-head' },
-          h('span', { class: 'module-num' }, String(i + 1).padStart(2, '0')),
+          h('span', { class: 'module-num' }, m.num),
           h('h2', null, m.title),
           bar(own.filter((l) => !isSkipped(l.id)).flatMap(topicsOf)),
         ),
@@ -161,7 +166,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
                 h(
                   'li',
                   null,
-                  h('span', { class: 'mistake-where' }, `Lesson ${t.lesson.order} · ${t.lesson.title}`),
+                  h('span', { class: 'mistake-where' }, `${lessonLabel(t.lesson)} · ${t.lesson.title}`),
                   h('strong', null, t.text),
                   badge(t.level),
                   practiceLink(t),
