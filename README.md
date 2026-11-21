@@ -30,6 +30,11 @@ desktop app, in about 31 hours.
   real commands (`ls`, `cd`, `mkdir`, `grep`, pipes, scripts, `sudo apt`),
   and a picture of your folders changes with each one. Nothing on your
   computer changes.
+- **Raspberry Pi and electronics.** A pretend Raspberry Pi on screen: the
+  pin header, LEDs, a button you can press, a buzzer, traffic lights and a
+  distance sensor with a slider. You write real `gpiozero` code (the same
+  class names and pin numbers as on a real Pi), and the board plays it in
+  real time. Wiring and safety are part of the lessons.
 - **My knowledge.** From your answers, the app estimates how well you know
   each topic: not yet, learning, solid or mastered. Without practice a topic
   slowly drops again. Your weakest topics get a practice button.

@@ -13,6 +13,7 @@ import type { CallFrame, DemoStep, RunResult, VarState } from '../types';
 import { h, icon, md, mdInline } from '../ui';
 import type { StepContext, StepView } from './context';
 import { legend } from './hook';
+import { createBoard } from './board';
 import { createWorkbench } from './workbench';
 
 const MAX_PLAYED_STEPS = 36;
@@ -173,7 +174,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
     h('li', { class: 'todo-item' }, h('span', { class: 'todo-box' }), h('span', null, mdInline(experiment.text))),
   );
   // The program picture has many small lines, so it gets a taller stage.
-  const hasStage = visualName !== 'none';
+  const hasStage = visualName !== 'none' && visualName !== 'board';
   const size = visualName === 'output' ? 'stage-medium' : 'stage-short';
   const frame = h('div', { class: `stage-frame ${size}` }, h('div', { class: 'stage-loading' }, 'Loading the scene…'));
   const bench = createWorkbench({
@@ -184,6 +185,11 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
     files: step.files,
     onEdit: () => options.onEdit?.(bench.getCode()),
   });
+  // A Raspberry Pi program: the board plays the run; an input runs it again from that moment.
+  const board =
+    visualName === 'board'
+      ? createBoard({ onInput: (_, at) => void onRun(bench.getCode(), at), onOutput: (text) => bench.setOutput(text) })
+      : null;
   const hasTodo = step.experiments.length > 0;
   const el = h(
     'div',
@@ -199,6 +205,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
       'div',
       { class: 'split-visual', 'data-enter': true },
       hasStage ? frame : null,
+      board?.el ?? null,
       visualName === 'variables' ? legend() : null,
       bench.el,
     ),
@@ -372,21 +379,25 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
     bench.showError(result.error);
   }
 
-  async function onRun(code: string): Promise<void> {
+  async function onRun(code: string, from?: number): Promise<void> {
+    if (board && from === undefined) board.reset();
     const mine = ++token;
     frame.querySelector('.stage-hint')?.remove();
     const done = await bench.interact((stdin, seed) =>
       runPython({
         code,
         trace: hasStage,
-        cases: [{ stdin, seed, files: step.files, web: step.web }],
+        cases: [{ stdin, seed, files: step.files, web: step.web, gpio: board ? { events: board.inputs() } : undefined }],
         pytest: step.pytest,
         checks: step.experiments.map((e) => ({ expr: e.expr })),
       }),
     );
     if (!done || disposed) return;
     const { result } = done;
-    await play(result, code, mine);
+    if (board) {
+      board.play(result.gpio, result.stdout, from);
+      bench.showError(result.error);
+    } else await play(result, code, mine);
     result.checks.forEach((check, i) => {
       if (!check.pass || ticked[i]) return;
       ticked[i] = true;
@@ -400,7 +411,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
   }
 
   async function setup(): Promise<void> {
-    if (visualName === 'none') return;
+    if (visualName === 'none' || visualName === 'board') return;
     stage = await createStage(frame);
     if (!disposed) visual = await createVisual(visualName, stage);
     if (disposed) {
@@ -426,6 +437,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
       disposed = true;
       token += 1;
       bench.dispose();
+      board?.dispose();
       visual?.dispose();
       stage?.dispose();
     },

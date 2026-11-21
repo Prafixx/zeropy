@@ -1,0 +1,333 @@
+id: pi-project
+order: 205
+title: "Project: a pedestrian crossing"
+summary: Traffic lights that turn red when someone presses the button, with a beep for the people who cross.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Plan a machine as states - green, amber, red - and the times between them
+  - id: O2
+    text: Use TrafficLights, a Button and a Buzzer together in one program
+  - id: O3
+    text: Test a program with events and times, not only with your eyes
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: brief
+    type: theory
+    objective: O1
+    title: The plan
+    body: |
+      You build the lights of a pedestrian crossing, in three steps. Each
+      step starts from your code of the step before.
+
+      1. **One cycle**: green, amber, red, and green again.
+      2. **On demand**: the lights stay green until someone presses the
+         button. Then amber, red for the people to cross, and green again.
+         Forever.
+      3. **A beep**: while it is red, a buzzer beeps, for people who cannot
+         see the light.
+
+      `TrafficLights(9, 10, 11)` gives three LEDs on GPIO 9 (red), 10
+      (amber) and 11 (green): `lights.red`, `lights.amber` and
+      `lights.green`, each with `on()` and `off()`.
+
+      A machine like this is a list of **states** (only green, only amber,
+      only red) and the **times** between them. Write the plan first, then
+      the code.
+    keys:
+      - code: "TrafficLights(9, 10, 11)"
+        means: "red, amber, green on these GPIO pins."
+      - code: "lights.amber.on()"
+        means: "One LED of the three."
+      - code: "button.wait_for_press()"
+        means: "Wait for a walker."
+
+  # 2. PROJECT STEP 1 ---------------------------------------------------------
+  - id: m1-cycle
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O1
+    board: true
+    title: "Step 1: one cycle"
+    prompt: |
+      **One cycle of the lights**, with only one light on at a time:
+
+      1. green for **3 s**,
+      2. amber for **1 s**,
+      3. red for **3 s**,
+      4. then green again, and the program ends.
+    starter: |
+      from gpiozero import TrafficLights
+      from time import sleep
+
+      lights = TrafficLights(9, 10, 11)
+
+      lights.green.on()
+      sleep(3)
+      # Amber, red, and green again.
+    solution: |
+      from gpiozero import TrafficLights
+      from time import sleep
+
+      lights = TrafficLights(9, 10, 11)
+
+      lights.green.on()
+      sleep(3)
+      lights.green.off()
+      lights.amber.on()
+      sleep(1)
+      lights.amber.off()
+      lights.red.on()
+      sleep(3)
+      lights.red.off()
+      lights.green.on()
+    checks:
+      - expr: "err is None and at(11, 1) == 1 and at(10, 1) == 0 and at(9, 1) == 0"
+        pass: "First only green"
+        hint: "`lights.green.on()` at the start."
+      - expr: "err is None and at(10, 3.5) == 1 and at(11, 3.5) == 0 and at(9, 3.5) == 0"
+        pass: "From 3 s: only amber, for 1 s"
+        hint: "After the green: `lights.green.off()`, `lights.amber.on()`, `sleep(1)`."
+      - expr: "err is None and all(at(9, t) == 1 and at(10, t) == 0 and at(11, t) == 0 for t in (4.2, 6.8))"
+        pass: "From 4 s: only red, for 3 s"
+        hint: "`lights.amber.off()`, `lights.red.on()`, `sleep(3)`."
+      - expr: "err is None and at(11, 7.1) == 1 and at(9, 7.1) == 0 and end_time >= 7"
+        pass: "At 7 s: green again"
+        hint: "At the end: `lights.red.off()` and `lights.green.on()`."
+    hints:
+      - "Each change has two parts: switch the old light off, the new one on."
+      - "`lights.green.off()`, `lights.amber.on()`, `sleep(1)`."
+      - "Then the same for red with `sleep(3)`, and at the end green on again."
+
+  # 3. PROJECT STEP 2 ---------------------------------------------------------
+  - id: m2-button
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    board: true
+    title: "Step 2: on demand"
+    prompt: |
+      Now the lights **wait for a walker**. Change your program:
+
+      - The lights are green, and wait for a press of the button on
+        **GPIO 2**.
+      - After a press: amber **1 s**, red **4 s**, then green again.
+      - Then they wait for the next press. **Forever**.
+
+      Press the button on the board to test it, also twice.
+    solution: |
+      from gpiozero import TrafficLights, Button
+      from time import sleep
+
+      lights = TrafficLights(9, 10, 11)
+      button = Button(2)
+
+      lights.green.on()
+      while True:
+          button.wait_for_press()
+          lights.green.off()
+          lights.amber.on()
+          sleep(1)
+          lights.amber.off()
+          lights.red.on()
+          sleep(4)
+          lights.red.off()
+          lights.green.on()
+    cases:
+      - {}
+      - label: "a press at 2 s"
+        gpio: { events: [{ at: 2, pin: 2, press: true }, { at: 2.2, pin: 2, press: false }] }
+      - label: "a press at 1 s and one at 10 s"
+        gpio: { events: [{ at: 1, pin: 2, press: true }, { at: 1.2, pin: 2, press: false }, { at: 10, pin: 2, press: true }, { at: 10.2, pin: 2, press: false }] }
+    checks:
+      - expr: "err is None and at(11, 0.5) == 1 and at(9, 0.5) == 0 and (not presses(2) or at(11, presses(2)[0] - 0.1) == 1)"
+        pass: "Green until someone presses"
+        hint: "`lights.green.on()`, then `button.wait_for_press()`."
+      - expr: "err is None and all(at(10, t + 0.5) == 1 and at(11, t + 0.5) == 0 for t in presses(2))"
+        pass: "After a press: amber for 1 s"
+        hint: "After `wait_for_press()`: green off, amber on, `sleep(1)`."
+      - expr: "err is None and all(at(9, t + 1.5) == 1 and at(9, t + 4.8) == 1 and at(10, t + 1.5) == 0 for t in presses(2))"
+        pass: "Then red for 4 s"
+        hint: "amber off, red on, `sleep(4)`."
+      - expr: "err is None and all(at(11, t + 5.2) == 1 and at(9, t + 5.2) == 0 for t in presses(2))"
+        pass: "Then green again"
+        hint: "red off, green on, at the end of the loop."
+      - expr: "err is None and ended == 'waiting'"
+        pass: "Then it waits for the next press"
+        hint: "Put the whole cycle in `while True:`, starting with `button.wait_for_press()`."
+    hints:
+      - "Make the button: `from gpiozero import TrafficLights, Button` and `button = Button(2)`."
+      - "Green on before the loop. In `while True:`, the first line is `button.wait_for_press()`."
+      - "After the press: amber 1 s, red 4 s, green on. The loop then waits again."
+
+  # 4. PROJECT STEP 3 ---------------------------------------------------------
+  - id: m3-beep
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O3
+    board: true
+    title: "Step 3: a beep for the walkers"
+    prompt: |
+      **Add a buzzer on GPIO 17.** While the light is red, it beeps:
+      `beep(on_time=0.2, off_time=0.2)`. When the light turns green again,
+      it is silent.
+
+      The checks test it with presses at different times.
+    solution: |
+      from gpiozero import TrafficLights, Button, Buzzer
+      from time import sleep
+
+      lights = TrafficLights(9, 10, 11)
+      button = Button(2)
+      buzzer = Buzzer(17)
+
+      lights.green.on()
+      while True:
+          button.wait_for_press()
+          lights.green.off()
+          lights.amber.on()
+          sleep(1)
+          lights.amber.off()
+          lights.red.on()
+          buzzer.beep(on_time=0.2, off_time=0.2)
+          sleep(4)
+          buzzer.off()
+          lights.red.off()
+          lights.green.on()
+    after: >-
+      Your crossing is done: states, times, an input and two outputs. On a
+      real Pi, wire the three LEDs with their resistors, the button to GPIO
+      2 and GND, the buzzer to GPIO 17 and GND, and run the same file with
+      `python3`.
+    cases:
+      - {}
+      - label: "a press at 1 s"
+        gpio: { events: [{ at: 1, pin: 2, press: true }, { at: 1.2, pin: 2, press: false }] }
+      - label: "a press at 0.5 s and one at 8 s"
+        gpio: { events: [{ at: 0.5, pin: 2, press: true }, { at: 0.7, pin: 2, press: false }, { at: 8, pin: 2, press: true }, { at: 8.2, pin: 2, press: false }] }
+    checks:
+      - expr: "err is None and device(17) == 'Buzzer'"
+        pass: "A buzzer on GPIO 17"
+        hint: "`from gpiozero import ... Buzzer` and `buzzer = Buzzer(17)`."
+      - expr: "err is None and all(sum(1 for s, d in flashes(17) if t + 1 <= s < t + 5) >= 5 for t in presses(2))"
+        pass: "It beeps while the light is red"
+        hint: "Right after `lights.red.on()`: `buzzer.beep(on_time=0.2, off_time=0.2)`."
+      - expr: "err is None and all(at(17, t + 5.5) == 0 and not any(t + 5.1 <= s < t + 6 for s, d in flashes(17)) for t in presses(2))"
+        pass: "It is silent when the light is green again"
+        hint: "`buzzer.off()` before the light turns green."
+        misconceptions:
+          - when: "err is None and any(at(17, t + 5.5) == 1 or any(t + 5.1 <= s < t + 6 for s, d in flashes(17)) for t in presses(2))"
+            say: "The beeps go on after the red light. `beep()` runs in the background: stop it with `buzzer.off()`."
+      - expr: "err is None and all(at(9, t + 3) == 1 and at(11, t + 5.5) == 1 for t in presses(2)) and ended == 'waiting'"
+        pass: "The lights still work as in step 2"
+        hint: "Keep the cycle of step 2 as it was."
+    hints:
+      - "Import `Buzzer` and make `buzzer = Buzzer(17)` at the top."
+      - "After `lights.red.on()`: `buzzer.beep(on_time=0.2, off_time=0.2)`."
+      - "`beep()` goes on in the background: after `sleep(4)`, call `buzzer.off()`."
+
+  # 5. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Look back
+    items:
+      - kind: mcq
+        id: q-states
+        objective: O1
+        prompt: "Why switch the old light off before the new one on?"
+        options:
+          - text: "So only one state is shown at a time: green, amber or red"
+            correct: true
+            why: "Two lights at once would be a state that the plan does not have."
+          - text: "The LEDs cannot be on at the same time"
+            why: "They can. The plan says one at a time."
+          - text: "It saves power"
+            why: "It is about clear states, not power."
+      - kind: mcq
+        id: q-wait-loop
+        objective: O2
+        prompt: "Why is `button.wait_for_press()` the first line in the loop?"
+        options:
+          - text: "Each cycle starts only when someone presses"
+            correct: true
+            why: "The loop waits, runs one cycle, and waits again."
+          - text: "It makes the button brighter"
+            why: "It waits for a press."
+          - text: "Python needs it at the start of every loop"
+            why: "Any line can start a loop. The plan puts the wait first."
+      - kind: mcq
+        id: q-test
+        objective: O3
+        prompt: "How did the checks test step 2, without anybody pressing?"
+        options:
+          - text: "They ran the program with presses at fixed times, and looked at the lights at chosen times"
+            correct: true
+            why: "Inputs and times as data: the same idea as test cases."
+          - text: "They looked at the code"
+            why: "They looked at what the program did."
+          - text: "They pressed the button with a robot"
+            why: "The presses are data in the test cases."
+      - kind: mcq
+        id: q-beep-off
+        objective: O2
+        prompt: "Why `buzzer.off()` after `sleep(4)`?"
+        options:
+          - text: "`beep()` runs in the background and would go on after the red light"
+            correct: true
+            why: "Background work must be stopped by the program."
+          - text: "The buzzer cannot beep for more than 4 seconds"
+            why: "It can beep forever. That is the problem."
+          - text: "It is not needed"
+            why: "Without it, the beeps go on during green."
+
+  # 6. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-traffic
+    objective: O2
+    prompt: "`lights = TrafficLights(9, 10, 11)`. Which LED is on GPIO 10?"
+    options:
+      - text: "`lights.amber`"
+        correct: true
+        why: "The order is red, amber, green."
+      - text: "`lights.red`"
+        why: "Red is the first number: GPIO 9."
+      - text: "`lights.green`"
+        why: "Green is the last number: GPIO 11."
+  - kind: mcq
+    id: r-plan
+    objective: O1
+    prompt: "What do you write first, for a machine like traffic lights?"
+    options:
+      - text: "The states and the times between them"
+        correct: true
+        why: "Then the code follows the plan, line by line."
+      - text: "The import lines"
+        why: "They come first in the file, but the plan comes before the code."
+      - text: "Nothing: just try"
+        why: "Without a plan, the order of lights and times gets mixed up."
+  - kind: mcq
+    id: r-test-events
+    objective: O3
+    prompt: "What is a good test for a program that reacts to a button?"
+    options:
+      - text: "Press at known times, and check the outputs a little later"
+        correct: true
+        why: "Inputs with times, outputs at times: the test can be repeated."
+      - text: "Look at the LEDs once"
+        why: "Your eyes miss short states and timing errors."
+      - text: "Run it without any press"
+        why: "That tests only the start."

@@ -3516,3 +3516,217 @@ code {
   gap: 8px 14px;
   margin-top: 14px;
 }
+
+/* ---------- Raspberry Pi board ---------- */
+.pi {
+  border: var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  box-shadow: var(--shadow-s);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.pi-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.pi-title {
+  font: 800 16px/1.2 var(--font-display);
+}
+.pi-clock {
+  font: 700 13px/1 var(--font-mono);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--slab);
+  color: var(--code-str);
+  margin-left: auto;
+}
+.pi-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.pi-board {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--slab);
+}
+.pi-board-name {
+  font: 600 11px/1 var(--font-mono);
+  color: var(--code-dim);
+}
+.pi-header {
+  display: grid;
+  grid-template-columns: repeat(2, 12px);
+  gap: 4px;
+}
+.pi-pin {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--code-dim);
+  opacity: 0.45;
+}
+.pi-pin.is-power {
+  background: var(--tomato);
+  opacity: 0.7;
+}
+.pi-pin.is-gnd {
+  background: var(--paper-3);
+  opacity: 0.6;
+}
+.pi-pin.is-used {
+  background: var(--sun);
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--code-text);
+}
+.pi-parts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.pi-part {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border: 2px solid var(--paper-3);
+  border-radius: 10px;
+  background: var(--paper);
+  text-align: center;
+}
+.pi-part-wide {
+  grid-column: span 2;
+}
+.pi-part-name {
+  display: grid;
+  font: 700 13px/1.25 var(--font-body);
+}
+.pi-part-name small {
+  font: 600 11px/1.3 var(--font-mono);
+  color: var(--ink-3);
+}
+.pi-led {
+  --c: var(--tomato);
+  --glow: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 40% 40%;
+  border: 2px solid var(--edge);
+  background: color-mix(in srgb, var(--c) calc(25% + var(--glow) * 75%), var(--paper-3));
+  box-shadow: 0 0 calc(var(--glow) * 26px) calc(var(--glow) * 6px) var(--c);
+  transition: background 0.08s, box-shadow 0.08s;
+}
+.pi-led.is-amber {
+  --c: var(--sun);
+}
+.pi-led.is-green {
+  --c: var(--leaf);
+}
+.pi-buzzer {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--edge);
+  background: var(--slab);
+  color: var(--code-dim);
+  font-size: 18px;
+}
+.pi-buzzer.is-on {
+  color: var(--sun);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sun) 40%, transparent), 0 0 0 9px color-mix(in srgb, var(--sun) 18%, transparent);
+}
+.pi-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid var(--edge);
+  background: var(--tomato);
+  box-shadow: 0 4px 0 var(--shade);
+  cursor: pointer;
+  touch-action: none;
+  transition: transform 0.05s, box-shadow 0.05s;
+}
+.pi-button.is-down {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--shade);
+}
+.pi-button:focus-visible,
+.pi-motion:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+.pi-motion {
+  padding: 6px 10px;
+  border: 2px solid var(--edge);
+  border-radius: 99px 99px 10px 10px;
+  background: var(--paper-2);
+  font: 700 12px/1 var(--font-body);
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: none;
+}
+.pi-motion.is-down {
+  background: var(--tint-info);
+}
+.pi-eyes {
+  display: flex;
+  gap: 8px;
+}
+.pi-eyes i {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid var(--edge);
+  background: var(--paper-3);
+}
+.pi-reading {
+  font: 700 15px/1 var(--font-mono);
+}
+.pi-slider {
+  width: 100%;
+}
+.pi-chip {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: var(--slab);
+  color: var(--code-text);
+  font: 700 11px/1 var(--font-mono);
+}
+.pi-status {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+@media (max-width: 560px) {
+  .pi-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pi-board {
+    justify-self: start;
+    grid-auto-flow: column;
+    align-items: center;
+  }
+  /* Lying down: odd pins in the top row, even pins in the bottom row, like the real header. */
+  .pi-header {
+    grid-template-columns: none;
+    grid-template-rows: repeat(2, 10px);
+    grid-auto-flow: column;
+  }
+  .pi-pin {
+    width: 10px;
+    height: 10px;
+  }
+}

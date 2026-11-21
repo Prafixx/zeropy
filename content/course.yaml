@@ -106,3 +106,17 @@ paths:
           - { id: linux-text, title: Read and search text }
           - { id: linux-scripts, title: "Permissions, scripts and sudo" }
           - { id: linux-project, title: "Project: tidy up a Pi", kind: project }
+  - id: pi
+    title: Raspberry Pi and electronics
+    short: Pi
+    goal: Light LEDs, read buttons and sensors, and build small machines with Python.
+    needs: [classes-and-objects, linux-terminal]
+    modules:
+      - title: Physical computing
+        goal: Wire parts safely and control them from Python with gpiozero.
+        lessons:
+          - { id: pi-meet, title: Meet the Raspberry Pi }
+          - { id: pi-led, title: Light an LED }
+          - { id: pi-button, title: Buttons and events }
+          - { id: pi-sensors, title: "Brightness, sound and distance" }
+          - { id: pi-project, title: "Project: a pedestrian crossing", kind: project }

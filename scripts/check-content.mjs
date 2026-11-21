@@ -19,6 +19,7 @@ const lessonsDir = join(root, 'content', 'lessons');
 const pyodide = await loadPyodide();
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'harness.py'), 'utf8'));
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'shell.py'), 'utf8'));
+pyodide.runPython(readFileSync(join(root, 'src', 'py', 'gpio.py'), 'utf8'));
 const shellFn = pyodide.globals.get('shell');
 const shell = (request) => JSON.parse(shellFn(JSON.stringify(request)));
 const run = pyodide.globals.get('run');

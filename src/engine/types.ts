@@ -146,6 +146,44 @@ export interface Case {
   files?: Record<string, string>;
   /** Answers of the pretend web for `requests` (see harness.py). */
   web?: Web;
+  /** The pretend Raspberry Pi (gpio.py): inputs with their time, and the CPU temperature. */
+  gpio?: GpioCase;
+}
+
+/** An input on the pretend Raspberry Pi, at a time in seconds. */
+export interface GpioInput {
+  at: number;
+  /** A button or a motion sensor on this GPIO pin. */
+  pin?: number;
+  press?: boolean;
+  motion?: boolean;
+  /** A distance sensor (its echo pin), in meters. */
+  echo?: number;
+  distance?: number;
+}
+
+export interface GpioCase {
+  events?: GpioInput[];
+  cpu?: number;
+}
+
+export interface GpioDevice {
+  id: number;
+  kind: 'LED' | 'PWMLED' | 'Buzzer' | 'Button' | 'MotionSensor' | 'DistanceSensor' | 'CPUTemperature' | string;
+  pins: Record<string, number | null>;
+  /** For the LEDs of TrafficLights. */
+  color?: string;
+}
+
+/** What a Pi program did, with times: the page plays it back. */
+export interface GpioRun {
+  devices: GpioDevice[];
+  timeline: { t: number; id: number; value: number }[];
+  /** The length of the output at a time: what was printed until then. */
+  outs: { t: number; pos: number }[];
+  inputs: GpioInput[];
+  /** done: the program ended. waiting: it waits for an input. cap: stopped after 30 s. */
+  end: { t: number; why: 'done' | 'waiting' | 'cap' };
 }
 
 interface StepBase {
@@ -177,8 +215,8 @@ export interface PredictStep extends StepBase {
 
 export interface DemoStep extends StepBase {
   type: 'demo';
-  /** Which picture the run drives. Default: variables. "none": no picture. */
-  visual?: 'variables' | 'output' | 'none';
+  /** Which picture the run drives. Default: variables. "none": no picture. "board": a Raspberry Pi. */
+  visual?: 'variables' | 'output' | 'none' | 'board';
   /** The code is hidden: the learner only plays the program. */
   sealed?: boolean;
   intro: string;
@@ -234,6 +272,8 @@ export interface ExerciseStep extends StepBase {
   web?: Web;
   /** Run the test functions after the program, like pytest, and print the report. */
   pytest?: boolean;
+  /** A Raspberry Pi program: show the board, and play the run on it. */
+  board?: boolean;
   starter: string;
   solution: string;
   /** Shown after success: why the solution works. */
@@ -541,4 +581,6 @@ export interface RunResult {
   checks: CheckResult[];
   /** The text files in the folder after the run (first case). */
   files?: Record<string, string>;
+  /** A program that used gpiozero: its devices and timeline (first case). */
+  gpio?: GpioRun | null;
 }

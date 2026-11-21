@@ -1,0 +1,399 @@
+id: pi-led
+order: 202
+title: Light an LED
+summary: Wire an LED safely, switch it on and off, and make it blink with exact timing.
+minutes: 30
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Wire an LED safely - GPIO pin, resistor, the long leg, and ground
+  - id: O2
+    text: Switch an LED with on() and off(), and hold a state with sleep()
+  - id: O3
+    text: Blink in a loop, and with blink()
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: circuit
+    type: theory
+    objective: O1
+    title: An LED and its resistor
+    body: |
+      An **LED** (light-emitting diode) lights up when current flows
+      through it, in one direction only:
+
+      - The **long leg** (the anode, +) goes towards the GPIO pin.
+      - The **short leg** (the cathode, -) goes towards ground (GND).
+
+      An LED alone would take too much current and could damage the pin.
+      A **resistor** in the circuit limits the current: 220 Ω to 330 Ω is a
+      good value for 3.3 V. The circuit is one loop:
+
+      ```text
+      GPIO 17 → resistor (330 Ω) → LED long leg → LED short leg → GND
+      ```
+
+      If the LED stays dark, turn it around: the legs are the wrong way.
+    keys:
+      - code: "GPIO → resistor → LED → GND"
+        means: "One loop. The resistor protects the pin."
+      - code: "long leg"
+        means: "Plus (+): towards the GPIO pin."
+      - code: "330 Ω"
+        means: "A safe resistor for an LED on 3.3 V."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: code
+    type: theory
+    objective: O2
+    title: On, off, and time
+    body: |
+      ```python
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+      led.on()
+      sleep(2)
+      led.off()
+      ```
+
+      `led.on()` and `led.off()` switch the pin. A computer is very fast:
+      without `sleep()`, the LED would be on for a millionth of a second,
+      and you would see nothing. `sleep(2)` waits 2 seconds, so the state
+      stays.
+
+      ## blink()
+
+      `led.blink()` blinks on its own: one second on, one second off. Its
+      options: `led.blink(on_time=0.2, off_time=0.8, n=5)` blinks 5 times.
+      It blinks **in the background**: the program goes on at once.
+
+      On the pretend Pi, time is simulated: a long program plays back on
+      the board in real time, and stops after 30 seconds.
+    keys:
+      - code: "led.on() / led.off()"
+        means: "Switch the pin on or off."
+      - code: "sleep(0.5)"
+        means: "Wait half a second: the state stays."
+      - code: "led.blink(n=5)"
+        means: "Blink 5 times (1 s on, 1 s off), in the background. `on_time` and `off_time` change the times."
+
+  # 3. DEMO -----------------------------------------------------------------
+  - id: blink
+    type: demo
+    objective: O3
+    title: Blink
+    visual: board
+    intro: |
+      Press **Run** and watch the LED and the clock. Then change the times.
+    code: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+      for i in range(3):
+          led.on()
+          sleep(0.5)
+          led.off()
+          sleep(0.5)
+      print("Done")
+    experiments:
+      - text: "Run it as it is: three flashes, then `Done`."
+        expr: "err is None and len(turned_on(17)) == 3"
+      - text: "Make each flash short: `sleep(0.1)` after `led.on()`."
+        expr: "err is None and flashes(17) and all(d <= 0.15 for _, d in flashes(17))"
+      - text: "Make it blink 6 times."
+        expr: "err is None and len(turned_on(17)) == 6"
+      - text: "Replace the loop with `led.blink(n=3, background=False)`."
+        expr: "err is None and called('blink') and len(turned_on(17)) == 3"
+    investigate:
+      - kind: spot
+        id: i-hold
+        prompt: "Which line keeps the LED on for half a second?"
+        code: |
+          from gpiozero import LED
+          from time import sleep
+
+          led = LED(17)
+          for i in range(3):
+              led.on()
+              sleep(0.5)
+              led.off()
+              sleep(0.5)
+          print("Done")
+        line: 7
+        wrong:
+          - line: 6
+            say: "This line switches the LED on. How long it stays on is decided by the next line."
+          - line: 9
+            say: "This sleep comes after `off()`: it keeps the LED off."
+        explain: >-
+          After `on()`, the program waits 0.5 s before `off()`. The time
+          between two changes is what you see.
+      - kind: mcq
+        id: i-no-sleep
+        prompt: "Both `sleep` lines are removed. What do you see on a real Pi?"
+        options:
+          - text: "Almost nothing: the LED is on for a tiny moment, too short to see"
+            correct: true
+            why: "The loop takes a millionth of a second. Without sleep, there is no time to see."
+          - text: "Three flashes, very fast"
+            why: "They are far too fast for the eye: microseconds."
+          - text: "An error"
+            why: "The code is valid. It is only too fast."
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-three
+    type: exercise
+    fade: completion
+    objective: O2
+    board: true
+    title: Three long flashes
+    prompt: |
+      **Complete the program**: the LED on GPIO 17 flashes 3 times. Each
+      flash is **1 second** on, then **1 second** off.
+    starter: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+      for i in range(3):
+          led.___()
+          sleep(___)
+          led.___()
+          sleep(1)
+    solution: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+      for i in range(3):
+          led.on()
+          sleep(1)
+          led.off()
+          sleep(1)
+    after: >-
+      The pattern on, wait, off, wait is the heart of every blink. The two
+      waits decide what you see.
+    checks:
+      - expr: "err is None and len(flashes(17)) == 3"
+        pass: "The LED flashes 3 times"
+        hint: "In the loop: `led.on()`, wait, `led.off()`, wait."
+      - expr: "err is None and len(flashes(17)) == 3 and all(abs(d - 1) < 0.01 for _, d in flashes(17))"
+        pass: "Each flash is 1 second long"
+        hint: "`sleep(1)` after `led.on()`."
+      - expr: "err is None and turned_on(17)[:3] == [0.0, 2.0, 4.0]"
+        pass: "There is 1 second off between the flashes"
+        hint: "Keep the `sleep(1)` after `led.off()`."
+    hints:
+      - "The first `___` switches the LED on."
+      - "The middle `___` is how long to wait: 1 second."
+      - "`led.on()`, `sleep(1)`, `led.off()`."
+
+  # 5. EXERCISE: debug -------------------------------------------------------
+  - id: ex-dark
+    type: exercise
+    fade: debug
+    objective: O2
+    board: true
+    title: The LED that never lights
+    prompt: |
+      This program should switch the LED on for **2 seconds**. On the Pi,
+      nobody sees it light. **Run it**, look at the board and the clock,
+      and fix it.
+    starter: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+      led.on()
+      led.off()
+      sleep(2)
+    solution: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+      led.on()
+      sleep(2)
+      led.off()
+    after: >-
+      The order of the lines is the order of time. The `sleep` must be
+      between `on()` and `off()`: that is the time the LED is on.
+    checks:
+      - expr: "err is None and len(flashes(17)) == 1 and abs(flashes(17)[0][1] - 2) < 0.01"
+        pass: "The LED is on for 2 seconds"
+        hint: "Put `sleep(2)` between `led.on()` and `led.off()`."
+        misconceptions:
+          - when: "err is None and len(flashes(17)) == 1 and flashes(17)[0][1] == 0"
+            say: "The LED goes off at the same moment it goes on. Wait between the two lines."
+      - expr: "err is None and history(17) and history(17)[-1][1] == 0"
+        pass: "The LED is off at the end"
+        hint: "Keep `led.off()`, after the wait."
+    hints:
+      - "Look at the clock: when does the LED switch on, and when off?"
+      - "Both switches happen at 0.0 s. The wait comes too late."
+      - "Order: `led.on()`, `sleep(2)`, `led.off()`."
+
+  # 6. EXERCISE: independent -------------------------------------------------
+  - id: ex-sos
+    type: exercise
+    fade: independent
+    objective: O3
+    board: true
+    title: SOS
+    prompt: |
+      **Flash SOS** on GPIO 17, the signal for help in Morse code: three
+      short, three long, three short flashes.
+
+      - A short flash: on for **0.2** s.
+      - A long flash: on for **0.6** s.
+      - Between two flashes: off for **0.2** s.
+
+      A function `flash(seconds)` makes it short and clear. Use loops.
+    starter: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+
+      # Write flash(seconds) and the SOS here.
+    solution: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+
+
+      def flash(seconds):
+          led.on()
+          sleep(seconds)
+          led.off()
+          sleep(0.2)
+
+
+      for length in (0.2, 0.6, 0.2):
+          for i in range(3):
+              flash(length)
+    after: >-
+      The function holds the pattern once; the loops say what to send. To
+      send another letter, you only change the list of lengths.
+    checks:
+      - expr: "err is None and len(flashes(17)) == 9"
+        pass: "The LED flashes 9 times"
+        hint: "Three groups of three flashes."
+      - expr: "err is None and [d for _, d in flashes(17)] == [0.2] * 3 + [0.6] * 3 + [0.2] * 3"
+        pass: "Short, short, short, long, long, long, short, short, short"
+        hint: "On for 0.2 s for the short ones, 0.6 s for the long ones."
+      - expr: "err is None and len(flashes(17)) == 9 and all(abs(b[0] - (a[0] + a[1]) - 0.2) < 0.01 for a, b in zip(flashes(17), flashes(17)[1:]))"
+        pass: "0.2 s off between the flashes"
+        hint: "After each `led.off()`, `sleep(0.2)`."
+      - expr: "syntax('FunctionDef') >= 1 and syntax('For') >= 1"
+        pass: "It uses a function and a loop"
+        hint: "`def flash(seconds):` and a `for` loop that calls it."
+    hints:
+      - "`def flash(seconds):` with `led.on()`, `sleep(seconds)`, `led.off()`, `sleep(0.2)`."
+      - "Three short ones: `for i in range(3): flash(0.2)`."
+      - "Loop over the three lengths: `for length in (0.2, 0.6, 0.2):` with the inner loop inside."
+
+  # 7. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-resistor
+        objective: O1
+        prompt: "Why does an LED need a resistor?"
+        options:
+          - text: "It limits the current, so the LED and the pin are not damaged"
+            correct: true
+            why: "Without it, too much current flows."
+          - text: "It makes the LED brighter"
+            why: "It makes it a little darker, and safe."
+          - text: "It stores the light"
+            why: "A resistor limits current. It stores nothing."
+      - kind: mcq
+        id: q-leg
+        objective: O1
+        prompt: "The LED stays dark, the code is right. What do you check first?"
+        options:
+          - text: "The legs: the long leg must go towards the GPIO pin"
+            correct: true
+            why: "An LED lets current through in one direction only."
+          - text: "The Python version"
+            why: "The code is right. The hardware is the suspect."
+          - text: "The resistor should be removed"
+            why: "Never: it protects the pin and the LED."
+      - kind: mcq
+        id: q-sleep
+        objective: O2
+        prompt: "`led.on()` and then `led.off()` with nothing between. What happens?"
+        options:
+          - text: "The LED is on for a tiny moment, too short to see"
+            correct: true
+            why: "Use `sleep()` between them to hold the state."
+          - text: "The LED stays on"
+            why: "`off()` switches it off at once."
+          - text: "An error"
+            why: "It is valid, only too fast to see."
+      - kind: mcq
+        id: q-background
+        objective: O3
+        prompt: "`led.blink()`, and then `print(\"hi\")`. When is `hi` printed?"
+        options:
+          - text: "At once: blink() works in the background"
+            correct: true
+            why: "With `background=False`, the program would wait for the blinking."
+          - text: "After the blinking ends"
+            why: "By default it blinks in the background, so the program goes on."
+          - text: "Never"
+            why: "The program goes on at once and prints it."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-loop
+    objective: O1
+    prompt: "In which order is an LED circuit wired?"
+    options:
+      - text: "GPIO pin → resistor → LED (long leg first) → GND"
+        correct: true
+        why: "One loop, with the resistor to limit the current."
+      - text: "GPIO pin → LED → 5V"
+        why: "No: 5 V is a power pin, and the loop needs ground."
+      - text: "GND → LED → GND"
+        why: "No pin switches it, so it never lights."
+  - kind: mcq
+    id: r-blink-n
+    objective: O3
+    prompt: "What does `led.blink(on_time=0.5, off_time=0.5, n=4)` do?"
+    options:
+      - text: "4 flashes of half a second, with half a second between them"
+        correct: true
+        why: "`n` is the number of flashes."
+      - text: "It blinks forever, every 4 seconds"
+        why: "`n=4` stops after 4 flashes."
+      - text: "It blinks 0.5 times"
+        why: "The times are seconds; `n` counts the flashes."
+  - kind: mcq
+    id: r-order-time
+    objective: O2
+    prompt: "How do you keep an LED on for 3 seconds?"
+    options:
+      - text: "`led.on()`, then `sleep(3)`, then `led.off()`"
+        correct: true
+        why: "The wait between the two switches is the time it is on."
+      - text: "`led.on(3)`"
+        why: "`on()` takes no time. Use `sleep`."
+      - text: "`sleep(3)`, then `led.on()`"
+        why: "That waits first, then switches on."

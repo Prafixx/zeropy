@@ -6,6 +6,7 @@ import { loadCode, noteAnswer, saveCode } from '../store';
 import type { ExerciseStep } from '../types';
 import { button, codeBlock, h, icon, md, mdInline, panel } from '../ui';
 import type { StepContext, StepView } from './context';
+import { createBoard } from './board';
 import { createWorkbench } from './workbench';
 
 const FADE_LABEL: Record<ExerciseStep['fade'], string> = {
@@ -49,6 +50,11 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
   });
   baseButton.hidden = !step.base;
   const bench = createWorkbench({ code: own ?? step.starter, onRun, tall: step.carry, files: step.files });
+  // A Raspberry Pi program: the board plays the run. An input on it runs the
+  // code again from that moment (it is not one more attempt).
+  const board = step.board
+    ? createBoard({ onInput: (_, at) => void onRun(bench.getCode(), at), onOutput: (text) => bench.setOutput(text) })
+    : null;
 
   const el = h(
     'div',
@@ -68,7 +74,7 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
       h('div', { class: 'exercise-help' }, hintButton, solutionButton, baseButton),
       solutionSlot,
     ),
-    h('div', { class: 'split-visual', 'data-enter': true }, bench.el),
+    h('div', { class: 'split-visual', 'data-enter': true }, board?.el ?? null, bench.el),
   );
 
   function showHint(): void {
@@ -101,21 +107,25 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
     });
   }
 
-  async function onRun(code: string): Promise<void> {
+  async function onRun(code: string, from?: number): Promise<void> {
+    if (board && from === undefined) board.reset();
     if (step.carry) saveCode(lessonId, step.id, code);
     // Case 1 is the code as written: it gets the answers the learner types.
     const done = await bench.interact((stdin, seed) =>
       runPython({
         code,
-        cases: cases.map((c, i) => (i === 0 ? { ...c, stdin, seed } : c)),
+        cases: cases.map((c, i) =>
+          i === 0 ? { ...c, stdin, seed, gpio: board ? { ...c.gpio, events: [...(c.gpio?.events ?? []), ...board.inputs()] } : c.gpio } : c,
+        ),
         pytest: step.pytest,
         checks: step.checks.map((c) => ({ expr: c.expr, misconceptions: c.misconceptions })),
       }),
     );
     if (!done || disposed) return;
     const { result } = done;
-    attempts += 1;
-    bench.setOutput(result.stdout);
+    if (from === undefined) attempts += 1;
+    if (board) board.play(result.gpio, result.stdout, from);
+    else bench.setOutput(result.stdout);
     bench.setFiles(result.files);
     bench.setWindow(result.gui);
     bench.showError(result.error);
@@ -181,6 +191,7 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
     dispose() {
       disposed = true;
       bench.dispose();
+      board?.dispose();
     },
   };
 }

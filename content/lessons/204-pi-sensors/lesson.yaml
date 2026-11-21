@@ -1,0 +1,328 @@
+id: pi-sensors
+order: 204
+title: "Brightness, sound and distance"
+summary: Dim an LED, beep a buzzer, and measure how far away something is.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Set the brightness of an LED with PWMLED and a value from 0 to 1
+  - id: O2
+    text: Make sounds with a Buzzer - on, off and beep()
+  - id: O3
+    text: Read a DistanceSensor in meters, and act on the distance in a loop
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: pwm
+    type: theory
+    objective: O1
+    title: Half on
+    body: |
+      A pin can only be on or off. To dim an LED, the Pi switches it on and
+      off very fast, many times a second. If it is on half of the time, the
+      LED looks half as bright. This is **PWM** (pulse-width modulation).
+
+      ```python
+      from gpiozero import PWMLED
+      led = PWMLED(18)
+      led.value = 0.25     # a quarter bright
+      led.value = 1        # full
+      led.pulse()          # fade up and down, in the background
+      ```
+
+      ## A buzzer
+
+      A buzzer beeps while its pin is on. It works like an LED:
+
+      ```python
+      from gpiozero import Buzzer
+      buzzer = Buzzer(17)
+      buzzer.on()
+      buzzer.beep(on_time=0.1, off_time=0.9, n=3)
+      ```
+    keys:
+      - code: "PWMLED(18)"
+        means: "An LED with a brightness."
+      - code: "led.value = 0.5"
+        means: "Half bright: 0 is off, 1 is full."
+      - code: "buzzer.beep(on_time=0.1, off_time=0.9)"
+        means: "Short beeps, once a second."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: dim
+    type: demo
+    objective: O1
+    title: A dimmer
+    visual: board
+    intro: |
+      Press **Run** and watch the brightness of the LED change. Then try
+      the changes.
+    code: |
+      from gpiozero import PWMLED
+      from time import sleep
+
+      led = PWMLED(18)
+      for level in [0.1, 0.4, 0.7, 1]:
+          led.value = level
+          print("brightness", level)
+          sleep(1)
+      led.off()
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and at(18, 3.5) == 1"
+      - text: "Add the level `0.05` at the start of the list: a very dim glow."
+        expr: "err is None and at(18, 0.5) == 0.05"
+      - text: "At the end, instead of `led.off()`, write `led.pulse(n=2, background=False)`."
+        expr: "err is None and called('pulse')"
+    investigate:
+      - kind: mcq
+        id: i-value
+        prompt: "What happens with `led.value = 1.5`?"
+        options:
+          - text: "A `ValueError`: the value must be between 0 and 1"
+            correct: true
+            why: "1 is already full. gpiozero refuses values outside 0 to 1."
+          - text: "The LED is one and a half times brighter than full"
+            why: "1 is the most: the pin is on all the time."
+          - text: "The LED blinks"
+            why: "A wrong value stops the program with an error."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-alarm
+    type: exercise
+    fade: completion
+    objective: O2
+    board: true
+    title: A short alarm
+    prompt: |
+      **Complete the alarm**: the buzzer on GPIO 17 beeps **5 times**,
+      each beep **0.2 s** on and **0.3 s** off. The program waits until
+      the beeps are done, then prints `Alarm over`.
+    starter: |
+      from gpiozero import Buzzer
+
+      buzzer = Buzzer(17)
+      buzzer.beep(on_time=___, off_time=___, n=___, background=False)
+      print("Alarm over")
+    solution: |
+      from gpiozero import Buzzer
+
+      buzzer = Buzzer(17)
+      buzzer.beep(on_time=0.2, off_time=0.3, n=5, background=False)
+      print("Alarm over")
+    after: >-
+      `background=False` makes the program wait for the beeps. Without it,
+      `Alarm over` would come at once, during the first beep.
+    checks:
+      - expr: "err is None and len(flashes(17)) == 5"
+        pass: "The buzzer beeps 5 times"
+        hint: "`n=5`."
+      - expr: "err is None and len(flashes(17)) == 5 and all(abs(d - 0.2) < 0.01 for _, d in flashes(17))"
+        pass: "Each beep is 0.2 s"
+        hint: "`on_time=0.2`."
+      - expr: "err is None and len(flashes(17)) == 5 and turned_on(17)[1] == 0.5"
+        pass: "0.3 s of silence between beeps"
+        hint: "`off_time=0.3`."
+      - expr: "err is None and lines == ['Alarm over']"
+        pass: "It prints `Alarm over` at the end"
+        hint: "Keep the print after the beeps."
+    hints:
+      - "The three `___` are numbers: on time, off time, and how many."
+      - "`on_time=0.2, off_time=0.3`."
+      - "And `n=5`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: distance
+    type: theory
+    objective: O3
+    title: How far away?
+    body: |
+      An ultrasonic **distance sensor** (the HC-SR04) sends a short sound,
+      too high to hear, and listens for its echo. The time of the echo gives
+      the distance. It needs two GPIO pins: `trigger` (send) and `echo`
+      (listen).
+
+      ```python
+      from gpiozero import DistanceSensor
+      sensor = DistanceSensor(echo=24, trigger=23)
+      print(sensor.distance)       # in meters: 0.42 is 42 cm
+      ```
+
+      `distance` is in **meters**, from 0 to `max_distance` (1 m by
+      default). Multiply by 100 for centimeters.
+
+      **Careful with the wiring:** the echo pin of the HC-SR04 gives 5 V. On
+      a real Pi, it needs two resistors (a voltage divider) to bring it down
+      to 3.3 V. Remember the first rule.
+
+      On the board, move the slider: it is the distance to an object.
+    keys:
+      - code: "DistanceSensor(echo=24, trigger=23)"
+        means: "Two pins: listen and send."
+      - code: "sensor.distance"
+        means: "Meters, from 0 to 1."
+      - code: "sensor.distance * 100"
+        means: "Centimeters."
+
+  # 5. EXERCISE: independent -------------------------------------------------
+  - id: ex-parking
+    type: exercise
+    fade: independent
+    objective: O3
+    board: true
+    title: A parking sensor
+    prompt: |
+      **Write a parking sensor.** In a loop that never ends, every 0.1 s:
+
+      - closer than **0.2 m**: the buzzer on GPIO 17 is on,
+      - else: the buzzer is off.
+
+      The distance sensor has `echo=24` and `trigger=23`. Test it with the
+      slider on the board: move it below 20 cm.
+    starter: |
+      from gpiozero import Buzzer, DistanceSensor
+      from time import sleep
+
+      sensor = DistanceSensor(echo=24, trigger=23)
+      buzzer = Buzzer(17)
+
+      # Write the loop here.
+    solution: |
+      from gpiozero import Buzzer, DistanceSensor
+      from time import sleep
+
+      sensor = DistanceSensor(echo=24, trigger=23)
+      buzzer = Buzzer(17)
+
+      while True:
+          if sensor.distance < 0.2:
+              buzzer.on()
+          else:
+              buzzer.off()
+          sleep(0.1)
+    after: >-
+      A loop that runs forever and checks a sensor is the heart of many
+      machines. On a real Pi, it runs until you press Ctrl+C.
+    cases:
+      - {}
+      - label: "a car that comes close, then goes"
+        gpio: { events: [{ at: 1, echo: 24, distance: 0.5 }, { at: 2, echo: 24, distance: 0.15 }, { at: 3, echo: 24, distance: 0.05 }, { at: 4, echo: 24, distance: 0.6 }] }
+    checks:
+      - expr: "err is None and all(at(17, t + 0.25) == (1 if d < 0.2 else 0) for t, d in history(24) if t + 0.25 < end_time)"
+        pass: "The buzzer is on when closer than 0.2 m, else off"
+        hint: "`if sensor.distance < 0.2: buzzer.on()`, `else: buzzer.off()`."
+        misconceptions:
+          - when: "err is None and any(at(17, t + 0.25) == 1 for t, d in history(24) if d >= 0.2 and t + 0.25 < end_time) and not any(at(17, t + 0.25) == 1 for t, d in history(24) if d < 0.2 and t + 0.25 < end_time)"
+            say: "The buzzer is on at the wrong distances. Compare with `<`: closer than 0.2."
+      - expr: "err is None and ended == 'cap'"
+        pass: "The loop runs on and on"
+        hint: "`while True:` around the check, with `sleep(0.1)` inside."
+      - expr: "syntax('While') >= 1 and called('sleep')"
+        pass: "It checks again and again, with a short pause"
+        hint: "`while True:`, and `sleep(0.1)` at the end of the loop."
+    hints:
+      - "`while True:` starts a loop that never ends."
+      - "In it: `if sensor.distance < 0.2:` the buzzer on, `else:` off."
+      - "End the loop with `sleep(0.1)`, so it checks ten times a second."
+
+  # 6. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-pwm
+        objective: O1
+        prompt: "How does PWM make an LED half as bright?"
+        options:
+          - text: "It switches the pin on and off very fast, on half of the time"
+            correct: true
+            why: "The eye sees the average."
+          - text: "It gives the LED half the volts"
+            why: "A GPIO pin is 0 V or 3.3 V. PWM changes the time, not the volts."
+          - text: "It uses half of the LED"
+            why: "The whole LED is on, half of the time."
+      - kind: mcq
+        id: q-beep-bg
+        objective: O2
+        prompt: "`buzzer.beep(n=3)` and then `print(\"done\")`. When is `done` printed?"
+        options:
+          - text: "At once: beep() works in the background, like blink()"
+            correct: true
+            why: "`background=False` would wait for the three beeps."
+          - text: "After the 3 beeps"
+            why: "Only with `background=False`."
+          - text: "Never"
+            why: "The program goes on at once."
+      - kind: mcq
+        id: q-meters
+        objective: O3
+        prompt: "`sensor.distance` gives `0.35`. How far is the object?"
+        options:
+          - text: "35 cm"
+            correct: true
+            why: "The distance is in meters: 0.35 m."
+          - text: "0.35 cm"
+            why: "gpiozero uses meters."
+          - text: "35 m"
+            why: "The sensor measures up to 1 m by default."
+      - kind: mcq
+        id: q-echo
+        objective: O3
+        prompt: "Why does the echo pin of an HC-SR04 need two resistors on a real Pi?"
+        options:
+          - text: "It gives 5 V, and a GPIO pin may only get 3.3 V"
+            correct: true
+            why: "Two resistors (a voltage divider) bring 5 V down to about 3.3 V."
+          - text: "To make the sound louder"
+            why: "The resistors protect the pin from 5 V."
+          - text: "They are not needed"
+            why: "Without them, 5 V reaches the GPIO pin. Rule number one."
+
+  # 7. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-value-range
+    objective: O1
+    prompt: "Which values may `PWMLED.value` have?"
+    options:
+      - text: "From 0 (off) to 1 (full)"
+        correct: true
+        why: "0.5 is half bright."
+      - text: "From 0 to 100"
+        why: "It is a part of 1, not a percent."
+      - text: "Only 0 or 1"
+        why: "That is a normal LED. A PWMLED takes anything between."
+  - kind: mcq
+    id: r-buzzer
+    objective: O2
+    prompt: "How does a program make a buzzer sound for 2 seconds?"
+    options:
+      - text: "`buzzer.on()`, `sleep(2)`, `buzzer.off()`"
+        correct: true
+        why: "Like an LED: on, wait, off."
+      - text: "`buzzer.sound(2)`"
+        why: "Buzzer has no `sound` method."
+      - text: "`buzzer.value = 2`"
+        why: "The value of a Buzzer is 0 or 1."
+  - kind: mcq
+    id: r-pins-hcsr04
+    objective: O3
+    prompt: "Which two pins does a DistanceSensor need?"
+    options:
+      - text: "echo and trigger"
+        correct: true
+        why: "trigger sends the sound, echo hears it come back."
+      - text: "in and out"
+        why: "In gpiozero they are called echo and trigger."
+      - text: "Only one"
+        why: "It sends on one pin and listens on another."

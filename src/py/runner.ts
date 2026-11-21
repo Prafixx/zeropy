@@ -2,9 +2,10 @@
 import type { GuiEvent, GuiResult, RunRequest, RunResult, ShellRequest, ShellResult } from '@/engine/types';
 import harnessCode from './harness.py?raw';
 import shellCode from './shell.py?raw';
+import gpioCode from './gpio.py?raw';
 
-// The pretend Linux shell uses the harness (python3 runs a file with it).
-const harness = `${harnessCode}\n${shellCode}`;
+// The pretend Linux shell and the pretend Raspberry Pi extend the harness.
+const harness = `${harnessCode}\n${shellCode}\n${gpioCode}`;
 
 export type PyStatus = 'idle' | 'loading' | 'ready' | 'failed';
 

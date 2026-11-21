@@ -1,0 +1,359 @@
+id: pi-meet
+order: 201
+title: Meet the Raspberry Pi
+summary: A whole computer the size of a card, with pins that Python can switch and read.
+minutes: 25
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Say what a Raspberry Pi is, and what its GPIO pins do
+  - id: O2
+    text: Read the pin header - GPIO numbers, 3.3 V, 5 V and ground - and know the safety rules
+  - id: O3
+    text: Run a first gpiozero program, and read a value from the Pi
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: what
+    type: theory
+    objective: O1
+    title: A computer the size of a card
+    body: |
+      A **Raspberry Pi** is a small, cheap computer. It runs Linux, so the
+      terminal of the Linux path works on it, and it runs Python. What makes
+      it special is a row of 40 metal **pins** on its edge.
+
+      Most of these pins are **GPIO** pins: general purpose input and
+      output. A program can use each one in two ways:
+
+      - **Output**: the program switches the pin on (3.3 volts) or off (0
+        volts). An LED, a buzzer or a motor driver on that pin follows.
+      - **Input**: the program reads whether the pin is on or off. A button,
+        or a sensor, decides.
+
+      This is how a program reaches the real world: lights, sounds,
+      movement, measurements. Robots, weather stations and smart homes
+      start here.
+
+      ## gpiozero
+
+      The library **gpiozero** gives each part a Python class: `LED`,
+      `Button`, `Buzzer`, `DistanceSensor`... It is installed on Raspberry
+      Pi OS. In ZeroPy, a pretend Pi runs the same code, with the same
+      names: what you write here works on a real Pi.
+    keys:
+      - code: "GPIO"
+        means: "A pin that a program can switch (output) or read (input)."
+      - code: "from gpiozero import LED"
+        means: "Each part is a class."
+      - code: "LED(17)"
+        means: "An LED on GPIO 17."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: header
+    type: theory
+    objective: O2
+    title: The pin header, and three rules
+    body: |
+      The 40 pins have two kinds of numbers. Do not mix them up:
+
+      - The **physical** number: the place on the header, 1 to 40.
+      - The **GPIO** number: the name of the pin for programs. gpiozero
+        uses these (they are also called BCM numbers). `LED(17)` means
+        GPIO 17, which is physical pin 11.
+
+      Not every pin is a GPIO pin. Some give power, and some are ground:
+
+      | Pin | What it is |
+      |---|---|
+      | 3V3 | 3.3 volts, always on |
+      | 5V | 5 volts, always on |
+      | GND | ground: 0 volts, the way back of every circuit |
+      | GPIO 2 to 27 | the pins that programs switch and read |
+
+      ## Three rules that protect your Pi
+
+      1. **GPIO pins work with 3.3 V.** Never connect 5 V to a GPIO pin.
+      2. **Never connect a pin straight to another pin** or to ground: put a
+         part (with a resistor) in between.
+      3. **Switch the Pi off before you change the wires.**
+
+      In the picture of the board, the yellow pins are the GPIO pins that
+      the program uses, the red ones are power, the grey ones ground.
+    keys:
+      - code: "LED(17)"
+        means: "GPIO number 17 (physical pin 11)."
+      - code: "3V3, 5V, GND"
+        means: "Power and ground, not for programs."
+      - code: "3.3 V"
+        means: "The highest voltage a GPIO pin may get."
+
+  # 3. DRILL ----------------------------------------------------------------
+  - id: pins
+    type: drill
+    objective: O2
+    title: Pins and rules
+    items:
+      - kind: mcq
+        id: d-numbering
+        objective: O2
+        prompt: "`button = Button(2)`. Which pin is meant?"
+        options:
+          - text: "GPIO 2: gpiozero uses the GPIO numbers"
+            correct: true
+            why: "GPIO 2 is physical pin 3. gpiozero always means the GPIO (BCM) number."
+          - text: "Physical pin 2"
+            why: "Physical pin 2 is a 5 V power pin, not a GPIO pin."
+          - text: "The second button of the program"
+            why: "The number is the pin, not a count of buttons."
+      - kind: mcq
+        id: d-5v
+        objective: O2
+        prompt: "A sensor gives 5 V on its output. Can you connect it straight to a GPIO pin?"
+        options:
+          - text: "No: GPIO pins work with 3.3 V, and 5 V can damage the Pi"
+            correct: true
+            why: "Such a sensor needs a level shifter or a voltage divider in between."
+          - text: "Yes: more volts give a clearer signal"
+            why: "More than 3.3 V on a GPIO pin can break it, and the Pi with it."
+          - text: "Yes, if the program reads it slowly"
+            why: "The program has nothing to do with it: the voltage itself does the damage."
+      - kind: mcq
+        id: d-gnd
+        objective: O1
+        prompt: "What is GND for?"
+        options:
+          - text: "It is the way back of every circuit: 0 volts"
+            correct: true
+            why: "Current flows from a pin, through the part, back to ground."
+          - text: "It gives extra power"
+            why: "Power comes from 3V3, 5V or a GPIO pin. GND is 0 volts."
+          - text: "It switches the Pi off"
+            why: "Ground is part of every circuit. It switches nothing."
+
+  # 4. DEMO -----------------------------------------------------------------
+  - id: temperature
+    type: demo
+    objective: O3
+    title: Your first Pi program
+    visual: board
+    intro: |
+      Some parts need no wires: the Pi itself has a temperature sensor in
+      its processor (the CPU). Press **Run**: the board shows the part, and
+      the program prints the temperature. Then try the changes.
+    code: |
+      from gpiozero import CPUTemperature
+
+      cpu = CPUTemperature()
+      print(f"The CPU is {cpu.temperature:.1f} °C")
+      if cpu.temperature > 60:
+          print("Hot! Give it some air.")
+      else:
+          print("All fine.")
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and 'All fine.' in lines"
+      - text: "Change `60` to `40`. What does the program say now?"
+        expr: "err is None and 'Hot! Give it some air.' in lines"
+      - text: "Add `print(cpu.value)`: the temperature as a part of 100 °C, from 0 to 1."
+        expr: "err is None and any(l.startswith('0.') for l in lines)"
+    investigate:
+      - kind: spot
+        id: i-make
+        prompt: "Which line makes the part that reads the temperature?"
+        code: |
+          from gpiozero import CPUTemperature
+
+          cpu = CPUTemperature()
+          print(f"The CPU is {cpu.temperature:.1f} °C")
+          if cpu.temperature > 60:
+              print("Hot! Give it some air.")
+          else:
+              print("All fine.")
+        line: 3
+        wrong:
+          - line: 1
+            say: "This line imports the class. It makes nothing yet."
+          - line: 4
+            say: "This line reads the temperature from the part. The part was made before."
+        explain: >-
+          `CPUTemperature()` makes an object, like any class. After that,
+          `cpu.temperature` reads the sensor each time you use it.
+      - kind: mcq
+        id: i-unit
+        prompt: "What is `cpu.temperature`?"
+        options:
+          - text: "A float: degrees Celsius, like `47.2`"
+            correct: true
+            why: "gpiozero gives the temperature of the CPU in degrees Celsius."
+          - text: "A text like `\"47.2 °C\"`"
+            why: "It is a number, so the program can compare it with `>`."
+          - text: "A value from 0 to 1"
+            why: "That is `cpu.value`."
+
+  # 5. EXERCISE: completion --------------------------------------------------
+  - id: ex-fan
+    type: exercise
+    fade: completion
+    objective: O3
+    board: true
+    title: Cool, warm or hot
+    prompt: |
+      A Pi in a closed box gets warm. **Complete the program**, so that it
+      prints one word:
+
+      - `cool` below 50 °C,
+      - `warm` from 50 °C up to 70 °C,
+      - `hot` above 70 °C.
+
+      The checks run the program on Pis with different temperatures.
+    starter: |
+      from gpiozero import CPUTemperature
+
+      cpu = CPUTemperature()
+      t = cpu.temperature
+      if t > 70:
+          print(___)
+      elif ___:
+          print("warm")
+      else:
+          print("cool")
+    solution: |
+      from gpiozero import CPUTemperature
+
+      cpu = CPUTemperature()
+      t = cpu.temperature
+      if t > 70:
+          print("hot")
+      elif t >= 50:
+          print("warm")
+      else:
+          print("cool")
+    after: >-
+      A real Pi could switch on a fan at `hot`, with an output pin. You
+      will switch outputs in the next lesson.
+    cases:
+      - {}
+      - label: "a CPU at 75 °C"
+        gpio: { cpu: 75 }
+      - label: "a CPU at 55 °C"
+        gpio: { cpu: 55 }
+      - label: "a CPU at exactly 50 °C"
+        gpio: { cpu: 50 }
+      - label: "a CPU at 30 °C"
+        gpio: { cpu: 30 }
+    checks:
+      - expr: "err is None and lines == [('hot' if cpu > 70 else 'warm' if cpu >= 50 else 'cool')]"
+        pass: "It prints the right word for each temperature"
+        hint: "The first `___` is `\"hot\"`. The second is the condition for warm: `t >= 50`."
+        misconceptions:
+          - when: "err is None and cpu == 50 and lines == ['cool']"
+            say: "At exactly 50 °C it must say `warm`: use `>=`, not `>`."
+      - expr: "called('CPUTemperature')"
+        pass: "It reads the temperature from the Pi"
+        hint: "Keep `cpu = CPUTemperature()`."
+    hints:
+      - "The first `___` is the text `\"hot\"`, with quotes."
+      - "The second `___` is a condition: when is it warm?"
+      - "`elif t >= 50:`: the `if` above already took everything above 70."
+
+  # 6. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-gpio
+        objective: O1
+        prompt: "What can a program do with a GPIO pin?"
+        options:
+          - text: "Switch it on or off (output), or read if it is on or off (input)"
+            correct: true
+            why: "That is what general purpose input and output means."
+          - text: "Only show text on a screen"
+            why: "A screen uses its own port. GPIO pins switch and read parts."
+          - text: "Store files"
+            why: "Files are on the memory card. Pins switch and read."
+      - kind: mcq
+        id: q-led17
+        objective: O2
+        prompt: "`LED(17)` in gpiozero means:"
+        options:
+          - text: "The LED is on GPIO 17"
+            correct: true
+            why: "gpiozero uses GPIO (BCM) numbers."
+          - text: "The LED is on physical pin 17"
+            why: "Physical pin 17 is a 3V3 power pin. GPIO 17 is physical pin 11."
+          - text: "The LED has a brightness of 17"
+            why: "The number is the pin."
+      - kind: mcq
+        id: q-wires
+        objective: O2
+        prompt: "When should you change the wires on a Pi?"
+        options:
+          - text: "When it is switched off"
+            correct: true
+            why: "A wire in the wrong place can short a pin while the power is on."
+          - text: "While a program runs, to see the effect at once"
+            why: "A mistake while the power is on can damage the Pi."
+          - text: "Any time: the pins are protected"
+            why: "GPIO pins have no protection against 5 V or a short circuit."
+      - kind: mcq
+        id: q-real
+        objective: O3
+        prompt: "Will the gpiozero code from ZeroPy run on a real Raspberry Pi?"
+        options:
+          - text: "Yes: the pretend Pi uses the same class names and the same pin numbers"
+            correct: true
+            why: "gpiozero is installed on Raspberry Pi OS. Wire the parts as in the lesson."
+          - text: "No: a real Pi needs a different language"
+            why: "A real Pi runs Python and gpiozero."
+          - text: "Only after a translation"
+            why: "The code is the same."
+
+  # 7. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-volt
+    objective: O2
+    prompt: "How many volts does a GPIO pin give when it is on?"
+    options:
+      - text: "3.3 V"
+        correct: true
+        why: "And it may never get more than 3.3 V from outside."
+      - text: "5 V"
+        why: "5 V is a power pin, not a GPIO pin."
+      - text: "12 V"
+        why: "Far too much for a Pi."
+  - kind: mcq
+    id: r-input-output
+    objective: O1
+    prompt: "A button on a pin is an...?"
+    options:
+      - text: "Input: the program reads it"
+        correct: true
+        why: "The button decides, the program reads."
+      - text: "Output: the program switches it"
+        why: "An LED or a buzzer is an output."
+      - text: "Power pin"
+        why: "The button sits on a GPIO pin, and the program reads it."
+  - kind: mcq
+    id: r-cpu
+    objective: O3
+    prompt: "Which part needs no wires?"
+    options:
+      - text: "`CPUTemperature()`: the sensor is inside the Pi"
+        correct: true
+        why: "It reads the temperature of the processor."
+      - text: "`LED(17)`"
+        why: "An LED is wired to a pin, with a resistor."
+      - text: "`Button(2)`"
+        why: "A button is wired to a pin and to ground."

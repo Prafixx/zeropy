@@ -142,7 +142,7 @@ export function validateLesson(data: unknown): string[] {
     if (type === 'predict') checkItem(step.item, where, objectives, out);
     if (type === 'demo') {
       if (!text(step.code)) out.push(`${where}: demo needs code`);
-      if (step.visual !== undefined && !['variables', 'output', 'none'].includes(String(step.visual))) {
+      if (step.visual !== undefined && !['variables', 'output', 'none', 'board'].includes(String(step.visual))) {
         out.push(`${where}: unknown visual "${String(step.visual)}"`);
       }
       if (!Array.isArray(step.experiments) || step.experiments.length === 0) {

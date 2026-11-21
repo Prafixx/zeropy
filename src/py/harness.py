@@ -22,6 +22,10 @@ from contextlib import redirect_stderr, redirect_stdout
 _FILE = "main.py"
 _MAX_STEPS = 400  # trace steps that are recorded for the stepper
 _MAX_LINES = 100_000  # lines a program may run before it is stopped
+# Extensions (gpio.py) add hooks: start(case) before a run, end(exc) after it,
+# finish() for the data of the run, env(data) for the checks. An exception
+# with `_zp_quiet` ends a run without an error (a simulation that is over).
+_RUN_HOOKS = []
 _MAX_OUTPUT = 20_000  # characters a program may print
 _MAX_FEED = 40  # values of a for-loop that the stepper can show
 _MAX_ITEMS = 10  # values of a list that the stepper can show
@@ -1181,6 +1185,8 @@ def _execute(src, case, trace, index=0, pytest=False):
     try:
         with redirect_stdout(out), redirect_stderr(out):
             try:
+                for hook in _RUN_HOOKS:
+                    hook.start(case)
                 if case.get("setup"):
                     exec(compile(case["setup"], "setup.py", "exec"), ns)
                 # A true copy: a check must see the values before the learner's
@@ -1207,12 +1213,18 @@ def _execute(src, case, trace, index=0, pytest=False):
                         # Like running pytest on the file: every test, then the report.
                         test_results.extend(_run_tests(ns, src))
                         out.write("\n" + _report(test_results))
+                    for hook in _RUN_HOOKS:
+                        hook.end(None)
                 finally:
                     sys.settrace(None)
             except BaseException as exc:  # includes SystemExit and KeyboardInterrupt
-                error = _describe(exc)
+                for hook in _RUN_HOOKS:
+                    hook.end(exc)
+                if not getattr(exc, "_zp_quiet", False):
+                    error = _describe(exc)
     finally:
         builtins.input = real_input
+        ext = {hook.name: hook.finish() for hook in _RUN_HOOKS}
 
     stdout = out.getvalue()
     _enter(home)  # the program may have changed the folder
@@ -1232,7 +1244,7 @@ def _execute(src, case, trace, index=0, pytest=False):
                 "ret": step.get("ret"),
             }
         )
-    return {"inputs": list(case.get("stdin") or []), "asked": asked[0], "ns": ns, "pre": pre, "stdout": stdout, "error": error, "steps": shifted, "feeds": feeds, "vars": final, "tree": tree, "src": src, "home": home, "files": files, "start_files": dict(case.get("files") or {}), "web_log": web_log, "test_results": test_results, "gui": _gui.state}
+    return {"inputs": list(case.get("stdin") or []), "asked": asked[0], "ns": ns, "pre": pre, "stdout": stdout, "error": error, "steps": shifted, "feeds": feeds, "vars": final, "tree": tree, "src": src, "home": home, "files": files, "start_files": dict(case.get("files") or {}), "web_log": web_log, "test_results": test_results, "gui": _gui.state, "ext": ext}
 
 
 def _check_env(result):
@@ -1409,6 +1421,11 @@ def run(request_json):
     cases = req.get("cases") or [{}]
     results = [_execute(src, case, bool(req.get("trace")) and i == 0, i, bool(req.get("pytest"))) for i, case in enumerate(cases)]
     envs = [_check_env(r) for r in results]
+    # Helpers of an extension, only for a run that used it (a Pi program).
+    for env, result in zip(envs, results):
+        for hook in _RUN_HOOKS:
+            if result["ext"].get(hook.name) is not None:
+                env.update(hook.env(result["ext"][hook.name]))
 
     checks = []
     for check in req.get("checks") or []:
@@ -1457,5 +1474,6 @@ def run(request_json):
             "feeds": first["feeds"],
             "checks": checks,
             "files": first["files"],
+            "gpio": first["ext"].get("gpio"),
         }
     )

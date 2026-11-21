@@ -1,0 +1,408 @@
+id: pi-button
+order: 203
+title: Buttons and events
+summary: Read a button in three ways - ask it, wait for it, or let it call your function.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Wire a button between a GPIO pin and ground, and read it with is_pressed
+  - id: O2
+    text: Wait for a press with wait_for_press()
+  - id: O3
+    text: React to events with when_pressed and when_released, and keep the program alive with pause()
+  - id: O4
+    text: Give a button your own function, without calling it too early
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: wiring
+    type: theory
+    objective: O1
+    title: A button, and three ways to read it
+    body: |
+      A push button joins its two legs while you press it. Wire one leg to a
+      GPIO pin, the other to **GND**. No resistor is needed: the Pi has one
+      inside (a *pull-up*), and gpiozero switches it on for you.
+
+      ```python
+      from gpiozero import Button
+      button = Button(2)
+      ```
+
+      Then there are three ways to work with it:
+
+      1. **Ask**: `button.is_pressed` is `True` or `False`, right now.
+      2. **Wait**: `button.wait_for_press()` stops the program until someone
+         presses.
+      3. **React**: `button.when_pressed = a_function`. gpiozero calls the
+         function at each press, while the program does other things. This
+         is called an **event**.
+
+      On the board, press the red button with the mouse (or a finger). The
+      program runs again with your press, at that moment.
+    keys:
+      - code: "Button(2)"
+        means: "A button between GPIO 2 and GND."
+      - code: "button.is_pressed"
+        means: "True while it is held down."
+      - code: "button.wait_for_press()"
+        means: "Stop here until a press."
+      - code: "button.when_pressed = led.on"
+        means: "At each press, call `led.on`."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: wait
+    type: demo
+    objective: O2
+    title: Wait for a press
+    visual: board
+    intro: |
+      Press **Run**. The program waits: **press the button on the board**.
+    code: |
+      from gpiozero import Button, LED
+      from time import sleep
+
+      button = Button(2)
+      led = LED(17)
+      print("Press the button!")
+      button.wait_for_press()
+      print("Thank you!")
+      led.on()
+      sleep(2)
+      led.off()
+    experiments:
+      - text: "Run it, and press the button on the board."
+        expr: "err is None and len(presses(2)) >= 1 and 'Thank you!' in lines"
+      - text: "Wait for a second press too: add `button.wait_for_press()` and `print(\"Again!\")` at the end. Press twice."
+        expr: "err is None and 'Again!' in lines"
+    investigate:
+      - kind: spot
+        id: i-stop
+        prompt: "On which line does the program stop until someone presses?"
+        code: |
+          from gpiozero import Button, LED
+          from time import sleep
+
+          button = Button(2)
+          led = LED(17)
+          print("Press the button!")
+          button.wait_for_press()
+          print("Thank you!")
+          led.on()
+          sleep(2)
+          led.off()
+        line: 7
+        wrong:
+          - line: 4
+            say: "This line makes the button object. It does not wait."
+          - line: 10
+            say: "This waits 2 seconds, with or without a press."
+        explain: >-
+          `wait_for_press()` returns only after a press. The lines after it
+          wait their turn.
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-follow
+    type: exercise
+    fade: completion
+    objective: O3
+    board: true
+    title: Light while pressed
+    prompt: |
+      **The LED on GPIO 17 must be on while the button on GPIO 2 is held
+      down**, and off when it is released. Use events: replace the two
+      `___` with the right methods of `led`. Then press the button on the
+      board.
+    starter: |
+      from gpiozero import Button, LED
+      from signal import pause
+
+      button = Button(2)
+      led = LED(17)
+      button.when_pressed = ___
+      button.when_released = ___
+      pause()
+    solution: |
+      from gpiozero import Button, LED
+      from signal import pause
+
+      button = Button(2)
+      led = LED(17)
+      button.when_pressed = led.on
+      button.when_released = led.off
+      pause()
+    after: >-
+      `pause()` keeps the program alive: without it, the program would end
+      at once, and the events would have nobody to call. Here, the program
+      does nothing at all; gpiozero calls `led.on` and `led.off` for you.
+    cases:
+      - {}
+      - label: "a press from 1 s to 2 s"
+        gpio: { events: [{ at: 1, pin: 2, press: true }, { at: 2, pin: 2, press: false }] }
+      - label: "two presses"
+        gpio: { events: [{ at: 0.5, pin: 2, press: true }, { at: 3, pin: 2, press: false }, { at: 4, pin: 2, press: true }, { at: 4.2, pin: 2, press: false }] }
+    checks:
+      - expr: "err is None and all(at(17, t + 0.05) == v for t, v in history(2))"
+        pass: "The LED follows the button: on while pressed, off when released"
+        hint: "`button.when_pressed = led.on` and `button.when_released = led.off`."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "Give the function itself, without `()`: `led.on`, not `led.on()`."
+      - expr: "err is None and at(17, 0) == 0"
+        pass: "The LED is off before the first press"
+        hint: "Do not call `led.on()` at the start: write `led.on` without brackets."
+      - expr: "ended == 'waiting'"
+        pass: "The program stays alive and waits for events"
+        hint: "Keep `pause()` at the end."
+    hints:
+      - "`when_pressed` needs a function to call later."
+      - "The LED has the methods `on` and `off`."
+      - "`button.when_pressed = led.on`, and `button.when_released = led.off`, without brackets."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: callbacks
+    type: theory
+    objective: O4
+    title: Your own function as an event
+    body: |
+      Any function can be an event:
+
+      ```python
+      count = 0
+
+      def pressed():
+          global count
+          count = count + 1
+          print("Pressed", count)
+
+      button.when_pressed = pressed
+      ```
+
+      Two details matter:
+
+      - Write the **name** of the function: `pressed`, not `pressed()`.
+        With brackets, Python calls the function at once, and gives its
+        result (`None`) to `when_pressed`.
+      - A function that changes a variable outside it needs `global` (or
+        better: keep the state in an object).
+    keys:
+      - code: "button.when_pressed = pressed"
+        means: "Call `pressed` at each press."
+      - code: "button.when_pressed = pressed()"
+        means: "A mistake: calls it now, and gives `None`."
+      - code: "global count"
+        means: "The function may change the outer `count`."
+
+  # 5. EXERCISE: debug -------------------------------------------------------
+  - id: ex-toggle
+    type: exercise
+    fade: debug
+    objective: O4
+    board: true
+    title: A switch that switches at the start
+    prompt: |
+      Each press should switch the LED: on, off, on... But the LED goes on
+      at the start, and the button does nothing. **Find the mistake** and
+      fix it. Then test with a few presses.
+    starter: |
+      from gpiozero import Button, LED
+      from signal import pause
+
+      button = Button(2)
+      led = LED(17)
+      button.when_pressed = led.toggle()
+      pause()
+    solution: |
+      from gpiozero import Button, LED
+      from signal import pause
+
+      button = Button(2)
+      led = LED(17)
+      button.when_pressed = led.toggle
+      pause()
+    after: >-
+      `led.toggle()` ran once, at the start, and its result `None` became
+      the event: so nothing happened at a press. Without brackets, the
+      button gets the function to call later.
+    cases:
+      - {}
+      - label: "three presses"
+        gpio: { events: [{ at: 1, pin: 2, press: true }, { at: 1.2, pin: 2, press: false }, { at: 2, pin: 2, press: true }, { at: 2.2, pin: 2, press: false }, { at: 3, pin: 2, press: true }, { at: 3.2, pin: 2, press: false }] }
+    checks:
+      - expr: "err is None and at(17, 0.5) == 0"
+        pass: "The LED is off at the start"
+        hint: "Something calls `toggle` before any press. Look for brackets."
+      - expr: "err is None and [at(17, t + 0.1) for t in presses(2)] == [i % 2 for i in range(1, len(presses(2)) + 1)]"
+        pass: "Each press switches the LED: on, off, on"
+        hint: "`button.when_pressed = led.toggle`, without `()`."
+    hints:
+      - "Look at the clock: the LED goes on at 0.0 s, before any press."
+      - "`led.toggle()` with brackets runs now. Its result is `None`."
+      - "Write `led.toggle` without brackets."
+
+  # 6. EXERCISE: independent -------------------------------------------------
+  - id: ex-count
+    type: exercise
+    fade: independent
+    objective: O3
+    board: true
+    title: Count the presses
+    prompt: |
+      **Write a program that counts the presses** of the button on GPIO 2.
+      At each press it prints `Pressed 1`, `Pressed 2`, ... Use your own
+      function as the event, and `pause()` at the end.
+    starter: |
+      from gpiozero import Button
+      from signal import pause
+
+      button = Button(2)
+      count = 0
+
+      # Write the function and connect it to the button.
+
+      pause()
+    solution: |
+      from gpiozero import Button
+      from signal import pause
+
+      button = Button(2)
+      count = 0
+
+
+      def pressed():
+          global count
+          count = count + 1
+          print("Pressed", count)
+
+
+      button.when_pressed = pressed
+      pause()
+    after: >-
+      The function remembers the count between presses because `count`
+      lives outside it. In the Classes module you saw a cleaner way: an
+      object with a `count` attribute and a method as the event.
+    cases:
+      - {}
+      - label: "three presses"
+        gpio: { events: [{ at: 1, pin: 2, press: true }, { at: 1.1, pin: 2, press: false }, { at: 2, pin: 2, press: true }, { at: 2.1, pin: 2, press: false }, { at: 3, pin: 2, press: true }, { at: 3.1, pin: 2, press: false }] }
+    checks:
+      - expr: "err is None and lines == [f'Pressed {i}' for i in range(1, len(presses(2)) + 1)]"
+        pass: "Each press prints the next number"
+        hint: "In the function: `count = count + 1`, then `print(\"Pressed\", count)`."
+        misconceptions:
+          - when: "err == 'UnboundLocalError'"
+            say: "The function changes `count`, which lives outside it. Add `global count` as its first line."
+          - when: "err is None and len(presses(2)) > 1 and all(l == 'Pressed 1' for l in lines)"
+            say: "The count starts again at each press. Keep `count` outside the function, and use `global count`."
+      - expr: "err is None and ended == 'waiting'"
+        pass: "The program waits for presses"
+        hint: "Keep `pause()` at the end."
+      - expr: "syntax('FunctionDef') >= 1 and 'when_pressed' in src"
+        pass: "Your function is the event of the button"
+        hint: "`button.when_pressed = pressed`, without brackets."
+    hints:
+      - "Write `def pressed():`, and in it add 1 to `count` and print."
+      - "The function changes `count` from outside: start it with `global count`."
+      - "`button.when_pressed = pressed`, before `pause()`."
+
+  # 7. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-wire
+        objective: O1
+        prompt: "How is a button wired for `Button(2)`?"
+        options:
+          - text: "One leg to GPIO 2, the other to GND"
+            correct: true
+            why: "gpiozero switches on the pull-up inside the Pi, so no resistor is needed."
+          - text: "Both legs to GPIO 2"
+            why: "Then the button joins the pin with itself: nothing changes."
+          - text: "One leg to GPIO 2, the other to 5V"
+            why: "Never 5 V on a GPIO pin."
+      - kind: mcq
+        id: q-ways
+        objective: O2
+        prompt: "Which way stops the program until a press?"
+        options:
+          - text: "`button.wait_for_press()`"
+            correct: true
+            why: "It returns only after a press."
+          - text: "`button.is_pressed`"
+            why: "It answers at once: True or False."
+          - text: "`button.when_pressed = f`"
+            why: "This sets an event; the program goes on at once."
+      - kind: mcq
+        id: q-pause
+        objective: O3
+        prompt: "Why `pause()` at the end of a program with events?"
+        options:
+          - text: "Without it, the program ends at once, and no event is called"
+            correct: true
+            why: "`pause()` keeps it alive, so gpiozero can call your functions."
+          - text: "It makes the events faster"
+            why: "It only keeps the program running."
+          - text: "It pauses the button"
+            why: "It pauses the program, not the parts."
+      - kind: mcq
+        id: q-brackets
+        objective: O4
+        prompt: "What is wrong with `button.when_pressed = beep()`?"
+        options:
+          - text: "`beep()` runs at once; the event gets its result, not the function"
+            correct: true
+            why: "Write `beep` without brackets."
+          - text: "Nothing"
+            why: "The brackets call it now. The event should call it later."
+          - text: "`when_pressed` must be called like a method"
+            why: "It is a property: you give it a function with `=`."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O4
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-is-pressed
+    objective: O1
+    prompt: "What is `button.is_pressed`?"
+    options:
+      - text: "True while the button is held down, else False"
+        correct: true
+        why: "It is a question, answered now."
+      - text: "The number of presses so far"
+        why: "gpiozero does not count. Count yourself, in a function."
+      - text: "A function to call at a press"
+        why: "That is `when_pressed`."
+  - kind: mcq
+    id: r-event
+    objective: O3
+    prompt: "What is an event, here?"
+    options:
+      - text: "A function that gpiozero calls when something happens, like a press"
+        correct: true
+        why: "Your program sets it once; gpiozero calls it at each press."
+      - text: "A loop that asks the button again and again"
+        why: "That is polling, the first way. An event needs no loop."
+      - text: "An error of the button"
+        why: "An event is a happening that calls your function."
+  - kind: mcq
+    id: r-global
+    objective: O4
+    prompt: "A function adds 1 to `count`, a variable outside it. What does it need?"
+    options:
+      - text: "`global count` as its first line"
+        correct: true
+        why: "Without it, Python sees a new local name and stops with an UnboundLocalError."
+      - text: "Nothing"
+        why: "Changing an outer name needs `global`."
+      - text: "`return count`"
+        why: "An event cannot use a returned value: gpiozero ignores it."
