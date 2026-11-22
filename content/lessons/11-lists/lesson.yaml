@@ -645,3 +645,88 @@ review:
         why: "In the brackets of a list goes an index, a whole number."
       - text: '`basket.find("egg")`'
         why: "A list has no `find`. The word is `in`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-playlist
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A playlist
+    prompt: |
+      **Replace the two `___`** with list methods: add `"Night"` at the end,
+      and take `"Rain"` out.
+
+      ```text
+      ['Intro', 'Sun', 'Night']
+      3 songs
+      ```
+    starter: |
+      songs = ["Intro", "Rain", "Sun"]
+      songs.___("Night")
+      songs.___("Rain")
+      print(songs)
+      print(len(songs), "songs")
+    solution: |
+      songs = ["Intro", "Rain", "Sun"]
+      songs.append("Night")
+      songs.remove("Rain")
+      print(songs)
+      print(len(songs), "songs")
+    after: >-
+      `append` adds at the end, `remove` takes out a value by what it is
+      (not by its place). Both change the list itself.
+    checks:
+      - expr: "err is None and songs == ['Intro', 'Sun', 'Night']"
+        pass: "Night is added at the end, Rain is gone"
+        hint: "`songs.append(\"Night\")` and `songs.remove(\"Rain\")`."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "`remove` did not find the value. Check the spelling: \"Rain\" with a capital R."
+      - expr: "lines == [\"['Intro', 'Sun', 'Night']\", '3 songs']"
+        pass: "It prints the list and the number of songs"
+        hint: "Keep the two prints."
+    hints:
+      - "One method adds at the end, one takes out a value."
+      - "`append` adds at the end."
+      - "`remove` takes out a value: `songs.remove(\"Rain\")`."
+  - id: x-guests
+    type: exercise
+    fade: independent
+    objective: O3
+    title: On the guest list?
+    prompt: |
+      **Write an if/else with `in`**: when `name` is in `guests`, print
+      `Welcome, Bo` (with the name). Else print `Sorry, Bo is not on the
+      list`.
+    starter: |
+      guests = ["Ana", "Bo", "Cleo"]
+      name = "Bo"
+      # Your if and else here.
+    solution: |
+      guests = ["Ana", "Bo", "Cleo"]
+      name = "Bo"
+      if name in guests:
+          print(f"Welcome, {name}")
+      else:
+          print(f"Sorry, {name} is not on the list")
+    after: >-
+      `in` walks through the list for you and answers True or False. No
+      loop needed.
+    cases:
+      - {}
+      - label: "name is Dan"
+        set: { name: "Dan" }
+      - label: "name is Cleo"
+        set: { name: "Cleo" }
+    checks:
+      - expr: "err is None and lines == ([f'Welcome, {name}'] if name in guests else [f'Sorry, {name} is not on the list'])"
+        pass: "The right message for guests and for others"
+        hint: "`if name in guests:` and an `else:`, each with an f-string."
+      - expr: "syntax('If') >= 1 and ' in guests' in src"
+        pass: "It asks with in"
+        hint: "Use `name in guests` as the condition."
+    hints:
+      - "`name in guests` is True or False."
+      - "Use it as the condition of an `if`."
+      - "Print with f-strings, so the message has the name."

@@ -655,3 +655,93 @@ review:
               counts[w] = 1
       print(counts["a"])
     explain: "The first `a` creates the key with 1, the second `a` makes it 2."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-stock
+    type: exercise
+    fade: completion
+    objective: O2
+    title: The stock of a shop
+    prompt: |
+      **Replace the three `___`**: add 7 plums, change the apples to 4, and
+      delete the pears.
+
+      ```text
+      {'apples': 4, 'plums': 7}
+      ```
+    starter: |
+      stock = {"apples": 5, "pears": 2}
+      ___ = 7
+      ___ = 4
+      del ___
+      print(stock)
+    solution: |
+      stock = {"apples": 5, "pears": 2}
+      stock["plums"] = 7
+      stock["apples"] = 4
+      del stock["pears"]
+      print(stock)
+    after: >-
+      Adding and changing look the same: `stock[key] = value`. A new key is
+      added, an old one gets a new value.
+    checks:
+      - expr: "err is None and stock == {'apples': 4, 'plums': 7}"
+        pass: "Plums added, apples changed, pears gone"
+        hint: "`stock[\"plums\"] = 7`, `stock[\"apples\"] = 4`, `del stock[\"pears\"]`."
+        misconceptions:
+          - when: "err == 'KeyError'"
+            say: "`del` did not find the key. Write it exactly: `del stock[\"pears\"]`."
+      - expr: "lines == [\"{'apples': 4, 'plums': 7}\"]"
+        pass: "It prints the dictionary"
+        hint: "Keep the print."
+    hints:
+      - "A value is set with `stock[key] = value`."
+      - "`stock[\"plums\"] = 7` adds a new pair."
+      - "`del stock[\"pears\"]` deletes one."
+  - id: x-word-count
+    type: exercise
+    fade: independent
+    objective: O3
+    title: How often each word
+    prompt: |
+      **Count each word of `words` in a dictionary** called `counts`: the
+      word is the key, the number of times is the value. Then print
+      `counts`.
+
+      ```text
+      {'the': 3, 'cat': 1, 'and': 2, 'dog': 1, 'bird': 1}
+      ```
+    starter: |
+      words = "the cat and the dog and the bird".split()
+      # Your loop here.
+    solution: |
+      words = "the cat and the dog and the bird".split()
+      counts = {}
+      for word in words:
+          if word in counts:
+              counts[word] = counts[word] + 1
+          else:
+              counts[word] = 1
+      print(counts)
+    after: >-
+      The first time a word comes, it has no key yet: that is why the `in`
+      test (or `counts.get(word, 0) + 1`) is needed.
+    cases:
+      - {}
+      - label: "other words"
+        set: { words: ["a", "b", "a", "a"] }
+    checks:
+      - expr: "counts == {w: words.count(w) for w in words}"
+        pass: "Each word with the number of times"
+        hint: "Start with `counts = {}`. For each word: add 1, or start at 1."
+        misconceptions:
+          - when: "err == 'KeyError'"
+            say: "A new word has no key yet. Ask with `in` first, or use `counts.get(word, 0) + 1`."
+      - expr: "lines[-1:] == [str({w: words.count(w) for w in words})]"
+        pass: "It prints the dictionary"
+        hint: "`print(counts)` after the loop."
+    hints:
+      - "Start with an empty dictionary: `counts = {}`."
+      - "For each word: `if word in counts:` add 1, `else:` set it to 1."
+      - "Or in one line: `counts[word] = counts.get(word, 0) + 1`."

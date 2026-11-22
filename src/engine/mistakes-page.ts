@@ -45,7 +45,11 @@ export function mountMistakes(root: HTMLElement): () => void {
             h('strong', null, found.step.title),
             h(
               'a',
-              { class: 'btn btn-plain btn-small', href: `#/lesson/${found.lesson.id}/${found.index + 1}` },
+              {
+                class: 'btn btn-plain btn-small',
+                // An extra exercise has no place in the lesson: it opens on its own.
+                href: found.index === -1 ? `#/practice/lesson/${found.lesson.id}/${found.step.id}` : `#/lesson/${found.lesson.id}/${found.index + 1}`,
+              },
               h('span', { class: 'btn-label' }, 'Do it again'),
               icon('right', 16),
             ),

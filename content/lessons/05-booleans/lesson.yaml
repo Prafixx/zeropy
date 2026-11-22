@@ -556,3 +556,95 @@ review:
         why: "`3 > 1` is `True`. `not` changes it to `False`."
       - text: "`2`"
         why: "A comparison never gives a number. The result is `True` or `False`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-vote
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Who can vote?
+    prompt: |
+      A person can vote when they are **18 or older** and a **citizen**.
+      **Replace `___`** with one condition, so `can_vote` is `True` or
+      `False`.
+    starter: |
+      age = 17
+      citizen = True
+      can_vote = ___
+      print(can_vote)
+    solution: |
+      age = 17
+      citizen = True
+      can_vote = age >= 18 and citizen
+      print(can_vote)
+    after: >-
+      `and` is True only when both sides are True. The check tried other
+      ages and a person who is not a citizen.
+    cases:
+      - {}
+      - label: "age 30, a citizen"
+        set: { age: 30, citizen: True }
+      - label: "age 18, a citizen"
+        set: { age: 18, citizen: True }
+      - label: "age 40, not a citizen"
+        set: { age: 40, citizen: False }
+    checks:
+      - expr: "can_vote is (age >= 18 and citizen)"
+        pass: "can_vote is True only for citizens of 18 or older"
+        hint: "Two conditions joined with `and`: `age >= 18 and citizen`."
+        misconceptions:
+          - when: "ns.get('can_vote') is (age > 18 and citizen) and age == 18"
+            say: "At exactly 18 a person can vote: use `>=`, not `>`."
+          - when: "ns.get('can_vote') is (age >= 18 or citizen)"
+            say: "With `or`, one of the two is enough. Here both are needed: `and`."
+      - expr: "out.strip() == str(can_vote)"
+        pass: "It prints can_vote"
+        hint: "Keep `print(can_vote)`."
+    hints:
+      - "Write the two rules: `age >= 18` and `citizen`."
+      - "Both must be True: join them with `and`."
+      - "`can_vote = age >= 18 and citizen`."
+  - id: x-weekend
+    type: exercise
+    fade: debug
+    objective: O3
+    title: Every day is a weekend
+    prompt: |
+      `is_weekend` should be `True` on Saturday and Sunday, and `False` on
+      other days. But it says the weekend is on Monday too. **Fix the
+      condition.**
+    starter: |
+      day = "Monday"
+      is_weekend = day == "Saturday" or "Sunday"
+      print(is_weekend)
+    solution: |
+      day = "Monday"
+      is_weekend = day == "Saturday" or day == "Sunday"
+      print(is_weekend)
+    after: >-
+      `or "Sunday"` does not compare anything: a text that is not empty
+      counts as true, so the whole condition is always true. Each side of
+      `or` needs its own comparison.
+    cases:
+      - {}
+      - label: "day is Sunday"
+        set: { day: "Sunday" }
+      - label: "day is Saturday"
+        set: { day: "Saturday" }
+      - label: "day is Friday"
+        set: { day: "Friday" }
+    checks:
+      - expr: "is_weekend is (day in ('Saturday', 'Sunday'))"
+        pass: "True on Saturday and Sunday, False on other days"
+        hint: "Compare `day` on both sides of `or`: `day == \"Saturday\" or day == \"Sunday\"`."
+        misconceptions:
+          - when: "ns.get('is_weekend') == 'Sunday'"
+            say: "The value is the text \"Sunday\", not True. The right side of `or` must be a comparison too."
+      - expr: "out.strip() == str(is_weekend)"
+        pass: "It prints True or False"
+        hint: "Keep `print(is_weekend)`."
+    hints:
+      - "What does `or \"Sunday\"` compare? Print `is_weekend` on Monday."
+      - "Each side of `or` must be a full comparison."
+      - "`is_weekend = day == \"Saturday\" or day == \"Sunday\"`."

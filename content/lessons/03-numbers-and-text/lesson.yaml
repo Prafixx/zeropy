@@ -531,3 +531,102 @@ review:
         why: "That is the remainder, `20 % 6`."
       - text: "`3.33`"
         why: "The sign `/` gives decimals. `//` cuts them off."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-pizza
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Pizza for everyone
+    prompt: |
+      Each pizza has 8 slices. The slices are shared fairly, and the rest
+      stays in the box. **Replace the two `___`**: `each` is how many whole
+      slices each person gets, `left` how many stay.
+
+      ```text
+      Each gets 3, 1 left over
+      ```
+    starter: |
+      pizzas = 2
+      people = 5
+      slices = pizzas * 8
+      each = ___
+      left = ___
+      print(f"Each gets {each}, {left} left over")
+    solution: |
+      pizzas = 2
+      people = 5
+      slices = pizzas * 8
+      each = slices // people
+      left = slices % people
+      print(f"Each gets {each}, {left} left over")
+    after: >-
+      `//` and `%` always go together: how many whole times, and what is
+      left. 16 slices for 5 people: 3 each, and 1 left.
+    cases:
+      - {}
+      - label: "3 pizzas for 7 people"
+        set: { pizzas: 3, people: 7 }
+    checks:
+      - expr: "each == slices // people"
+        pass: "`each` is the whole slices per person"
+        hint: "`//` divides and drops the rest: `slices // people`."
+        misconceptions:
+          - when: "isinstance(ns.get('each'), float)"
+            say: "`/` gives a number with a point, like 3.2. People get whole slices: use `//`."
+      - expr: "left == slices % people"
+        pass: "`left` is the rest"
+        hint: "`%` gives the rest of a division: `slices % people`."
+      - expr: "lines[-1] == f'Each gets {slices // people}, {slices % people} left over'"
+        pass: "It prints the sentence"
+        hint: "Keep the last line."
+    hints:
+      - "Whole slices per person: divide and drop the rest."
+      - "`each = slices // people`."
+      - "`left = slices % people`."
+  - id: x-badge
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A name badge
+    prompt: |
+      **Print a badge** with an f-string: the first name, the last name,
+      and the age in brackets.
+
+      ```text
+      Ada Lovelace (36)
+      ```
+    starter: |
+      first = "Ada"
+      last = "Lovelace"
+      age = 36
+      # Print the badge here.
+    solution: |
+      first = "Ada"
+      last = "Lovelace"
+      age = 36
+      print(f"{first} {last} ({age})")
+    after: >-
+      An f-string puts text and numbers together with no `str()` and no
+      `+`: the age is a number, and it just works.
+    cases:
+      - {}
+      - label: "Alan Turing, 41"
+        set: { first: "Alan", last: "Turing", age: 41 }
+    checks:
+      - expr: "err is None and lines[-1:] == [f'{first} {last} ({age})']"
+        pass: "It prints the badge, with the values of the variables"
+        hint: "`print(f\"{first} {last} ({age})\")`."
+        misconceptions:
+          - when: "err is None and lines[-1:] == ['Ada Lovelace (36)'] and first != 'Ada'"
+            say: "You typed the names in the text. Use `{first}`, `{last}` and `{age}`, so the badge works for anyone."
+          - when: "err == 'TypeError'"
+            say: "Text plus a number gives a TypeError. An f-string avoids it: `f\"... {age} ...\"`."
+      - expr: "syntax('JoinedStr') >= 1"
+        pass: "It uses an f-string"
+        hint: "Put an `f` before the quotes."
+    hints:
+      - "An f-string starts with `f` before the quote."
+      - "Put each name in curly brackets: `{first}`."
+      - "`print(f\"{first} {last} ({age})\")`."

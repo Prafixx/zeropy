@@ -530,3 +530,85 @@ review:
         why: "A variable holds one value at a time. The old value is gone."
       - text: "13"
         why: "An assignment replaces. It adds only if you write that: `x = x + 8`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-pocket-money
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Pocket money
+    prompt: |
+      Mia has some money. She gets money for the week, then she buys
+      something. **Replace `___`** so that `left` is what she has now.
+    starter: |
+      start = 50
+      week = 20
+      spent = 15
+      left = ___
+      print(left)
+    solution: |
+      start = 50
+      week = 20
+      spent = 15
+      left = start + week - spent
+      print(left)
+    after: >-
+      With names instead of numbers, the same line works for every week:
+      the check ran it again with other amounts.
+    cases:
+      - {}
+      - label: "`start` is 10, `week` is 5 and `spent` is 12"
+        set: { start: 10, week: 5, spent: 12 }
+    checks:
+      - expr: "left == start + week - spent"
+        pass: "`left` is start, plus week, minus spent"
+        hint: "Use the three names: `start + week - spent`."
+        misconceptions:
+          - when: "ns.get('left') == 55"
+            say: "`left` is always 55: you typed the result. Use the names, so it works for other amounts too."
+      - expr: "str(left) in out"
+        pass: "It prints `left`"
+        hint: "Keep `print(left)`."
+    hints:
+      - "Start with what she had, add, then take away."
+      - "Use the names, not 50, 20 and 15."
+      - "`left = start + week - spent`."
+  - id: x-level-up
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Level up
+    prompt: |
+      **Write a program:** a variable `level` starts at 1. Raise it by 1,
+      three times, each time with the line `level = level + 1`. Then print
+      `level`.
+
+      ```text
+      4
+      ```
+    starter: |
+      # level starts at 1, then goes up by 1, three times.
+    solution: |
+      level = 1
+      level = level + 1
+      level = level + 1
+      level = level + 1
+      print(level)
+    after: >-
+      `level = level + 1` reads the old value on the right, adds 1, and
+      puts the new value in the same name. Games do this all the time.
+    checks:
+      - expr: "err is None and lines == ['4']"
+        pass: "It prints 4"
+        hint: "Start with `level = 1`, then three times `level = level + 1`, then `print(level)`."
+      - expr: "src.replace(' ', '').count('level=level+1') + src.replace(' ', '').count('level+=1') >= 3"
+        pass: "The value goes up three times"
+        hint: "Write `level = level + 1` three times."
+        misconceptions:
+          - when: "'level = 4' in src or 'level=4' in src"
+            say: "Setting `level = 4` gives the right number, but the task is to raise it step by step."
+    hints:
+      - "The first line: `level = 1`."
+      - "Each raise is the same line: `level = level + 1`."
+      - "At the end: `print(level)`."

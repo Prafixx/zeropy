@@ -26,6 +26,8 @@ for (const [path, lesson] of Object.entries(lessonFiles)) {
       ? [step, { type: 'investigate' as const, id: `${step.id}-how`, objective: step.objective, title: 'How does it work?', items: step.investigate }]
       : [step],
   );
+  lesson.extra ??= [];
+  for (const step of lesson.extra) step.isExtra = true;
   // Items inside steps inherit the objective of their step.
   // Project steps (carry) learn which step comes before them.
   let lastCarry: { id: string; solution: string } | undefined;
@@ -101,10 +103,14 @@ export type Found =
   | { kind: 'item'; lesson: Lesson; item: Item }
   | { kind: 'exercise'; lesson: Lesson; step: Lesson['steps'][number]; index: number };
 
-/** Finds what a mistake points to: a question, or an exercise ("step:<id>"). */
+/** Finds what a mistake points to: a question, an exercise ("step:<id>") or an extra exercise ("extra:<id>"). */
 export function findRef(lessonId: string, ref: string): Found | null {
   const lesson = getLesson(lessonId);
   if (!lesson) return null;
+  if (ref.startsWith('extra:')) {
+    const step = lesson.extra.find((s) => s.id === ref.slice(6));
+    return step ? { kind: 'exercise', lesson, step, index: -1 } : null;
+  }
   if (ref.startsWith('step:')) {
     const index = lesson.steps.findIndex((s) => s.id === ref.slice(5));
     return index === -1 ? null : { kind: 'exercise', lesson, step: lesson.steps[index], index };

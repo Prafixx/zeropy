@@ -70,7 +70,9 @@ for (const folder of readdirSync(lessonsDir)) {
 
   const items = [...(lesson.review ?? [])];
   let lastCarry = null;
-  for (const step of lesson.steps ?? []) {
+  // "Practice more" extras are exercises like the others: their solutions must
+  // pass and their starters must fail.
+  for (const step of [...(lesson.steps ?? []), ...(lesson.extra ?? [])]) {
     if (step.type === 'predict') items.push(step.item);
     if (step.type === 'quiz' || step.type === 'drill') items.push(...step.items);
     if (step.type === 'demo') {

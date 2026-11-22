@@ -481,3 +481,91 @@ review:
         why: "That needs `int()` first. Without conversion the answers are text."
       - text: "A `TypeError`"
         why: "Text plus text is allowed. That is why this mistake is hard to see."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-tickets
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Tickets for a group
+    prompt: |
+      A ticket costs 7.5. **Replace the two `___`**: change the answer to a
+      number, and compute the total.
+
+      ```text
+      How many tickets? 4
+      Total: 30.0
+      ```
+    starter: |
+      tickets = ___(input("How many tickets? "))
+      price = 7.5
+      total = ___
+      print(f"Total: {total}")
+    solution: |
+      tickets = int(input("How many tickets? "))
+      price = 7.5
+      total = tickets * price
+      print(f"Total: {total}")
+    after: >-
+      `int()` for a count (you cannot buy half a ticket), and the price can
+      have decimals. A whole number times 7.5 gives a float.
+    cases:
+      - {}
+      - label: "the user types `4`"
+        stdin: ["4"]
+      - label: "the user types `1`"
+        stdin: ["1"]
+    checks:
+      - expr: "len(inputs) == 1 and err is None"
+        pass: "It asks once and runs without an error"
+        hint: "Change the answer with `int(...)` before you compute."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "The answer of `input()` is text. Change it with `int()`."
+      - expr: "lines[-1] == f'Total: {int(inputs[0]) * 7.5}'"
+        pass: "The total is tickets times price"
+        hint: "`total = tickets * price`."
+    hints:
+      - "The answer of `input()` is text. Which function makes a whole number?"
+      - "`tickets = int(input(\"How many tickets? \"))`."
+      - "`total = tickets * price`."
+  - id: x-next-year
+    type: exercise
+    fade: debug
+    objective: O2
+    title: Next year
+    prompt: |
+      This program should say how old you are next year. It stops with a
+      `TypeError`. **Fix it**:
+
+      ```text
+      Your age: 14
+      Next year you are 15
+      ```
+    starter: |
+      age = input("Your age: ")
+      print("Next year you are", age + 1)
+    solution: |
+      age = int(input("Your age: "))
+      print("Next year you are", age + 1)
+    after: >-
+      `input()` always gives text, also when you type digits. `"14" + 1`
+      mixes text and a number: Python refuses. `int()` makes it a number.
+    cases:
+      - {}
+      - label: "the user types `14`"
+        stdin: ["14"]
+      - label: "the user types `99`"
+        stdin: ["99"]
+    checks:
+      - expr: "err is None and lines[-1] == f'Next year you are {int(inputs[0]) + 1}'"
+        pass: "It prints the age of next year"
+        hint: "Change the answer to a number with `int()`."
+        misconceptions:
+          - when: "err is None and lines[-1:] == [f'Next year you are {inputs[0]}1']"
+            say: "That joined the text \"1\" to the age. Change the age to a number with `int()`, and add the number 1."
+    hints:
+      - "Read the message: text and a number cannot be added."
+      - "What type is `age`? It comes from `input()`."
+      - "`age = int(input(\"Your age: \"))`."

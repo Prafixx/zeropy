@@ -180,22 +180,7 @@ export function validateLesson(data: unknown): string[] {
       }
       checkItem(step.check, `${where} check`, objectives, out);
     }
-    if (type === 'exercise') {
-      if (!text(step.prompt)) out.push(`${where}: exercise needs a prompt`);
-      // A project step can start from the code of the step before it.
-      if (typeof step.starter !== 'string' && step.carry !== true) out.push(`${where}: exercise needs starter code`);
-      if (!text(step.solution)) out.push(`${where}: exercise needs a solution`);
-      const checks = Array.isArray(step.checks) ? step.checks : [];
-      if (checks.length === 0) out.push(`${where}: exercise needs checks`);
-      checks.forEach((c, j) => {
-        if (!isRec(c) || !text(c.expr) || !text(c.pass) || !text(c.hint)) {
-          out.push(`${where}: check ${j + 1} needs "expr", "pass" and "hint"`);
-        }
-      });
-      if (!Array.isArray(step.hints) || step.hints.length < 2) {
-        out.push(`${where}: exercise needs at least 2 hints`);
-      }
-    }
+    if (type === 'exercise') checkExercise(step, where, out);
     if (type === 'local') {
       if (!text(step.prompt)) out.push(`${where}: local needs a prompt`);
       if (!text(step.task) || !/^[a-z][a-z0-9-]*$/.test(step.task)) out.push(`${where}: local needs a task name`);
@@ -260,5 +245,42 @@ export function validateLesson(data: unknown): string[] {
     checkItem(item, `review card ${j + 1}`, objectives, out);
     if (isRec(item) && !text(item.objective)) out.push(`review card ${j + 1}: missing objective`);
   });
+
+  // "Practice more": extra exercises, not shown in the lesson itself.
+  if (data.extra !== undefined && !Array.isArray(data.extra)) out.push('"extra" must be a list of exercises');
+  const extra = Array.isArray(data.extra) ? data.extra : [];
+  extra.forEach((step, j) => {
+    const where = `extra ${j + 1}`;
+    if (!isRec(step)) {
+      out.push(`${where}: must be a mapping`);
+      return;
+    }
+    if (step.type !== 'exercise') out.push(`${where}: an extra must be an exercise (type: exercise)`);
+    if (!text(step.id)) out.push(`${where}: missing id`);
+    else if (ids.has(step.id)) out.push(`${where}: duplicate id "${step.id}"`);
+    else ids.add(step.id);
+    if (!text(step.title)) out.push(`${where}: missing title`);
+    if (!text(step.objective) || !objectives.has(step.objective)) out.push(`${where}: must name one of the lesson objectives`);
+    if (!['completion', 'debug', 'independent'].includes(String(step.fade))) out.push(`${where}: fade must be completion, debug or independent`);
+    if (step.carry !== undefined) out.push(`${where}: an extra stands alone (no carry)`);
+    checkExercise(step, where, out);
+  });
   return out;
+}
+
+function checkExercise(step: Record<string, unknown>, where: string, out: string[]): void {
+  if (!text(step.prompt)) out.push(`${where}: exercise needs a prompt`);
+  // A project step can start from the code of the step before it.
+  if (typeof step.starter !== 'string' && step.carry !== true) out.push(`${where}: exercise needs starter code`);
+  if (!text(step.solution)) out.push(`${where}: exercise needs a solution`);
+  const checks = Array.isArray(step.checks) ? step.checks : [];
+  if (checks.length === 0) out.push(`${where}: exercise needs checks`);
+  checks.forEach((c, j) => {
+    if (!isRec(c) || !text(c.expr) || !text(c.pass) || !text(c.hint)) {
+      out.push(`${where}: check ${j + 1} needs "expr", "pass" and "hint"`);
+    }
+  });
+  if (!Array.isArray(step.hints) || step.hints.length < 2) {
+    out.push(`${where}: exercise needs at least 2 hints`);
+  }
 }

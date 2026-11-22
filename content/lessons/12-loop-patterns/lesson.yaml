@@ -770,3 +770,99 @@ review:
         why: "That is `board[1][1]` or `board[0][0]`."
       - text: "`[\"o\", \"x\"]`"
         why: "That is `board[1]`: the whole row."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-cold
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Cold days
+    prompt: |
+      **Replace the two `___`**: count the days with a temperature below
+      zero.
+
+      ```text
+      3 cold days
+      ```
+    starter: |
+      temps = [2, -1, 5, -4, 0, -2, 3]
+      count = 0
+      for t in temps:
+          if ___:
+              count = ___
+      print(f"{count} cold days")
+    solution: |
+      temps = [2, -1, 5, -4, 0, -2, 3]
+      count = 0
+      for t in temps:
+          if t < 0:
+              count = count + 1
+      print(f"{count} cold days")
+    after: >-
+      A count starts at 0 before the loop, and goes up by 1 for each value
+      that fits. 0 is not below zero, so it is not counted.
+    cases:
+      - {}
+      - label: "other temperatures"
+        set: { temps: [-5, -5, 1, 0] }
+    checks:
+      - expr: "count == len([t for t in temps if t < 0])"
+        pass: "It counts the days below zero"
+        hint: "`if t < 0:` and `count = count + 1`."
+        misconceptions:
+          - when: "ns.get('count') == len([t for t in temps if t <= 0])"
+            say: "0 is counted too. Below zero means `t < 0`."
+      - expr: "lines[-1:] == [f'{count} cold days']"
+        pass: "It prints the count"
+        hint: "Keep the last line."
+    hints:
+      - "The condition: is `t` below 0?"
+      - "`if t < 0:`"
+      - "Add one: `count = count + 1`."
+  - id: x-lowest
+    type: exercise
+    fade: independent
+    objective: O2
+    title: The lowest price, by hand
+    prompt: |
+      **Find the lowest price in a loop**, with a best-so-far variable
+      called `lowest`. Do not use `min()`. Then print it.
+
+      ```text
+      1.2
+      ```
+    starter: |
+      prices = [4.5, 2.0, 7.25, 1.2, 3.0]
+      # Your loop here.
+    solution: |
+      prices = [4.5, 2.0, 7.25, 1.2, 3.0]
+      lowest = prices[0]
+      for price in prices:
+          if price < lowest:
+              lowest = price
+      print(lowest)
+    after: >-
+      Start with the first value, not with 0: no price is below 0, so a
+      start of 0 would stay the "lowest" forever.
+    cases:
+      - {}
+      - label: "other prices"
+        set: { prices: [9.0, 8.5, 12.0] }
+    checks:
+      - expr: "lowest == min(prices)"
+        pass: "lowest is the smallest price"
+        hint: "Start with `lowest = prices[0]`, and replace it when a price is smaller."
+        misconceptions:
+          - when: "ns.get('lowest') == 0"
+            say: "`lowest` started at 0 and no price is smaller. Start with the first price: `prices[0]`."
+      - expr: "'min(' not in src and syntax('For') >= 1"
+        pass: "A loop, without min()"
+        hint: "Use a for loop and an if."
+      - expr: "lines[-1:] == [str(min(prices))]"
+        pass: "It prints the lowest price"
+        hint: "`print(lowest)` after the loop."
+    hints:
+      - "Start with the first price: `lowest = prices[0]`."
+      - "For each price: is it smaller than `lowest`?"
+      - "`if price < lowest: lowest = price`."

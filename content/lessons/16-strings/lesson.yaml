@@ -644,3 +644,93 @@ review:
         why: "`format` builds a text; it does not calculate."
       - text: "`\"{} + {}\"`"
         why: "`.format` replaces each `{}` with a value."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-email
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A clean e-mail address
+    prompt: |
+      People type e-mail addresses with spaces and capitals. **Replace the
+      two `___`**: remove the spaces around it and make it small letters.
+      Then take the part before `@`.
+
+      ```text
+      ana.silva@example.com
+      ana.silva
+      ```
+    starter: |
+      raw = "  Ana.Silva@Example.COM "
+      email = raw.___().___()
+      user = email.split("@")[0]
+      print(email)
+      print(user)
+    solution: |
+      raw = "  Ana.Silva@Example.COM "
+      email = raw.strip().lower()
+      user = email.split("@")[0]
+      print(email)
+      print(user)
+    after: >-
+      Methods can follow each other: `strip()` gives a new text, and
+      `.lower()` works on that one. `raw` itself does not change.
+    cases:
+      - {}
+      - label: "other address"
+        set: { raw: " BO@MAIL.ORG" }
+    checks:
+      - expr: "email == raw.strip().lower()"
+        pass: "No spaces around it, all small letters"
+        hint: "`raw.strip().lower()`."
+      - expr: "lines == [raw.strip().lower(), raw.strip().lower().split('@')[0]]"
+        pass: "It prints the address and the user"
+        hint: "Keep the prints."
+    hints:
+      - "One method removes spaces at the ends, one makes small letters."
+      - "`strip()` and `lower()`."
+      - "`email = raw.strip().lower()`."
+  - id: x-receipt
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A short receipt
+    prompt: |
+      **Print the items joined with commas, then the total with two
+      decimals:**
+
+      ```text
+      tea, cake, juice
+      Total: 9.75
+      ```
+    starter: |
+      items = ["tea", "cake", "juice"]
+      prices = [2.5, 3.75, 3.5]
+      # Your two prints here.
+    solution: |
+      items = ["tea", "cake", "juice"]
+      prices = [2.5, 3.75, 3.5]
+      print(", ".join(items))
+      print(f"Total: {sum(prices):.2f}")
+    after: >-
+      `join` is called on the text that goes **between** the items.
+      `:.2f` shows two decimals, also for 10.0 (`10.00`).
+    cases:
+      - {}
+      - label: "other items"
+        set: { items: ["soup"], prices: [10.0] }
+    checks:
+      - expr: "err is None and lines == [', '.join(items), f'Total: {sum(prices):.2f}']"
+        pass: "The items with commas, and the total with two decimals"
+        hint: "`\", \".join(items)` and `f\"Total: {sum(prices):.2f}\"`."
+        misconceptions:
+          - when: "err is None and lines[-1:] == [f'Total: {sum(prices)}'] and f'{sum(prices)}' != f'{sum(prices):.2f}'"
+            say: "Two decimals are needed: `{sum(prices):.2f}`."
+      - expr: "'.join(' in src"
+        pass: "It uses join"
+        hint: "`\", \".join(items)`."
+    hints:
+      - "`join` is a method of the text that goes between: `\", \".join(...)`."
+      - "The total: `sum(prices)`."
+      - "Two decimals: `f\"Total: {sum(prices):.2f}\"`."

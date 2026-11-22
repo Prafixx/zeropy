@@ -655,3 +655,90 @@ review:
         why: "It makes three places, but they all point at one row."
       - text: "It is a syntax error"
         why: "It runs. The problem only shows when you change a value."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-saved
+    type: exercise
+    fade: debug
+    objective: O3
+    title: The saved list changed
+    prompt: |
+      `saved` should keep the list as it was **before** `"clean"` was
+      added. But it changes too. **Fix it**:
+
+      ```text
+      ['shop', 'cook', 'clean']
+      ['shop', 'cook']
+      ```
+    starter: |
+      todo = ["shop", "cook"]
+      saved = todo
+      todo.append("clean")
+      print(todo)
+      print(saved)
+    solution: |
+      todo = ["shop", "cook"]
+      saved = todo.copy()
+      todo.append("clean")
+      print(todo)
+      print(saved)
+    after: >-
+      `saved = todo` puts a second name on the same list. `copy()` makes a
+      new list with the same values, which does not follow later changes.
+    checks:
+      - expr: "err is None and saved == ['shop', 'cook'] and todo == ['shop', 'cook', 'clean']"
+        pass: "saved keeps the old values"
+        hint: "Make a real copy: `saved = todo.copy()`."
+      - expr: "saved is not todo"
+        pass: "saved and todo are two different lists"
+        hint: "`=` alone does not copy."
+      - expr: "lines == [\"['shop', 'cook', 'clean']\", \"['shop', 'cook']\"]"
+        pass: "It prints both lists"
+        hint: "Keep the two prints."
+    hints:
+      - "After `saved = todo`, how many lists are there?"
+      - "One list with two names: a change shows through both."
+      - "`saved = todo.copy()`."
+  - id: x-same-or-equal
+    type: exercise
+    fade: completion
+    objective: O4
+    title: The same, or equal?
+    prompt: |
+      **Replace the two `___`**: `b` is a second name for the list `a`, and
+      `c` is a copy of it. Then Python tells the difference:
+
+      ```text
+      True False True
+      ```
+    starter: |
+      a = [1, 2, 3]
+      b = ___
+      c = ___
+      print(b is a, c is a, c == a)
+    solution: |
+      a = [1, 2, 3]
+      b = a
+      c = a.copy()
+      print(b is a, c is a, c == a)
+    after: >-
+      `is` asks "the same object?", `==` asks "the same values?". A copy is
+      equal, but not the same.
+    checks:
+      - expr: "b is a"
+        pass: "b is another name for the same list"
+        hint: "`b = a`."
+      - expr: "c is not a and c == a"
+        pass: "c is a new list with the same values"
+        hint: "`c = a.copy()`."
+        misconceptions:
+          - when: "ns.get('c') is ns.get('a')"
+            say: "`c = a` is the same list again. Make a copy: `a.copy()`."
+      - expr: "lines == ['True False True']"
+        pass: "It prints True False True"
+        hint: "Keep the print."
+    hints:
+      - "A second name: just `=`."
+      - "A new list with the same values: `copy()`."
+      - "`b = a` and `c = a.copy()`."

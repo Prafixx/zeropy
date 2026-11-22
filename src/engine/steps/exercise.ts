@@ -141,7 +141,7 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
         solved = true;
         ctx.grade(attempts === 1);
         // Hard work goes on the "My mistakes" list; an easy pass takes it off.
-        noteAnswer(lessonId, `step:${step.id}`, helped || attempts > 2);
+        noteAnswer(lessonId, `${step.isExtra ? 'extra' : 'step'}:${step.id}`, helped || attempts > 2);
         ctx.done();
       }
       const mark = h('span', { class: 'stamp stamp-big' }, 'Correct');

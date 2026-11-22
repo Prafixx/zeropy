@@ -33,7 +33,33 @@ function tasksOf(lesson: Lesson): Task[] {
       if (CODE_ITEMS.has(item.kind)) tasks.push({ kind: 'item', lesson, item, ref: item.id });
     }
   }
+  for (const step of lesson.extra) tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
   return tasks;
+}
+
+/**
+ * "Practice more" of one lesson: its extra exercises first, then its own,
+ * the ones practiced longest ago first. With an id: only that extra (from
+ * "My mistakes").
+ */
+function lessonSet(lessonId: string | undefined, extraId: string | undefined): Task[] {
+  const lesson = lessonId ? getLesson(lessonId) : undefined;
+  if (!lesson) return [];
+  if (extraId) {
+    const step = lesson.extra.find((s) => s.id === extraId);
+    return step ? [{ kind: 'exercise', lesson, step, ref: `extra:${step.id}` }] : [];
+  }
+  const extras = oldestFirst(
+    lesson.extra.map((step): Task => ({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` })),
+    SET.exercises,
+  );
+  const own = oldestFirst(
+    lesson.steps.flatMap((step): Task[] =>
+      step.type === 'exercise' && step.fade !== 'milestone' && !step.carry ? [{ kind: 'exercise', lesson, step, ref: `step:${step.id}` }] : [],
+    ),
+    SET.exercises - extras.length,
+  );
+  return [...extras, ...own];
 }
 
 /** The tasks practiced longest ago first; never practiced counts as oldest. */
@@ -99,6 +125,9 @@ function topicSet(lessonId: string | undefined, objective: string | undefined): 
   for (const item of lesson.review) {
     if (item.objective === objective && !tasks.some((t) => t.ref === item.id)) tasks.push({ kind: 'item', lesson, item, ref: item.id });
   }
+  for (const step of lesson.extra) {
+    if (step.objective === objective) tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
+  }
   const exercises = oldestFirst(tasks.filter((t) => t.kind === 'exercise'), 2);
   const items = oldestFirst(tasks.filter((t) => t.kind === 'item'), 5 - exercises.length);
   return shuffle([...exercises, ...items]);
@@ -118,15 +147,26 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
   const back = h('a', { class: 'btn btn-ghost', href: '#/practice' }, h('span', { class: 'btn-label' }, 'All practice'));
   const main = h('main', { class: 'player-main', tabindex: '0' }, body);
   root.replaceChildren(
-    h('div', { class: 'player' }, pageBar('Mixed practice', 'Tasks from many lessons'), main, h('footer', { class: 'dock' }, back, note, primary)),
+    h(
+      'div',
+      { class: 'player' },
+      which === 'lesson' ? pageBar('Practice more', 'Extra exercises of one lesson') : pageBar('Mixed practice', 'Tasks from many lessons'),
+      main,
+      h('footer', { class: 'dock' }, back, note, primary),
+    ),
   );
   const number = Number(which);
   const module = Number.isInteger(number) && course.modules[number - 1] ? number - 1 : undefined;
   const topic = which === 'topic';
-  const nextSet = (): Task[] => (topic ? topicSet(rest[0], rest[1]) : pickSet(module));
+  const more = which === 'lesson';
+  const nextSet = (): Task[] => (topic ? topicSet(rest[0], rest[1]) : more ? lessonSet(rest[0], rest[1]) : pickSet(module));
   if (topic) {
     back.setAttribute('href', '#/knowledge');
     back.querySelector('.btn-label')!.textContent = 'My knowledge';
+  }
+  if (more) {
+    back.setAttribute('href', rest[1] ? '#/mistakes' : '#/');
+    back.querySelector('.btn-label')!.textContent = rest[1] ? 'My mistakes' : 'The course';
   }
 
   function show(el: HTMLElement): void {
@@ -271,7 +311,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
     );
   }
 
-  if (which === undefined || (which !== 'all' && !topic && module === undefined)) overview();
+  if (which === undefined || (which !== 'all' && !topic && !more && module === undefined)) overview();
   else {
     const tasks = nextSet();
     if (tasks.length === 0) overview();

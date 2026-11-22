@@ -576,3 +576,85 @@ review:
       for item, price in prices.items():
           print(item, price)
     explain: "`items()` gives each pair as a tuple, unpacked into `item` and `price`. `print` with two values puts a space between them."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-point
+    type: exercise
+    fade: completion
+    objective: O1
+    title: How far from zero?
+    prompt: |
+      **Replace `___`** so that `x` and `y` get the two values of the tuple
+      `point`, in one line. The program then prints the distance from 0.
+
+      ```text
+      5.0
+      ```
+    starter: |
+      point = (3, 4)
+      x, y = ___
+      distance = (x ** 2 + y ** 2) ** 0.5
+      print(distance)
+    solution: |
+      point = (3, 4)
+      x, y = point
+      distance = (x ** 2 + y ** 2) ** 0.5
+      print(distance)
+    after: >-
+      Unpacking gives each value of the tuple its own name, in order. It
+      is the same thing as `for name, value in d.items()`.
+    cases:
+      - {}
+      - label: "point is (6, 8)"
+        set: { point: [6, 8] }
+    checks:
+      - expr: "(x, y) == tuple(point)"
+        pass: "x and y are the two values of point"
+        hint: "`x, y = point`."
+      - expr: "lines[-1:] == [str((point[0] ** 2 + point[1] ** 2) ** 0.5)]"
+        pass: "It prints the distance"
+        hint: "Keep the last two lines."
+    hints:
+      - "Two names on the left, one tuple on the right."
+      - "The values go to the names in order."
+      - "`x, y = point`."
+  - id: x-tags
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Different tags
+    prompt: |
+      **Print how many different tags there are, then the different tags
+      sorted**, with a set.
+
+      ```text
+      3
+      ['pi', 'python', 'web']
+      ```
+    starter: |
+      tags = ["python", "pi", "python", "web", "pi"]
+      # Your code here.
+    solution: |
+      tags = ["python", "pi", "python", "web", "pi"]
+      unique = set(tags)
+      print(len(unique))
+      print(sorted(unique))
+    after: >-
+      A set keeps each value once. `sorted()` gives a list back, in order:
+      a set itself has no order.
+    cases:
+      - {}
+      - label: "other tags"
+        set: { tags: ["b", "a", "b", "b"] }
+    checks:
+      - expr: "err is None and lines[-2:] == [str(len(set(tags))), str(sorted(set(tags)))]"
+        pass: "It prints the count and the sorted tags"
+        hint: "`unique = set(tags)`, then `len(unique)` and `sorted(unique)`."
+      - expr: "'set(' in src or syntax('Set') >= 1"
+        pass: "It uses a set"
+        hint: "`set(tags)` removes the repeated values."
+    hints:
+      - "A set keeps each value only once."
+      - "`unique = set(tags)`."
+      - "`print(len(unique))` and `print(sorted(unique))`."

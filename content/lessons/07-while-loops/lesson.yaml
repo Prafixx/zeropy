@@ -630,3 +630,98 @@ review:
         why: "Comparing is `==` or `!=`. `:=` gives a name."
       - text: "It is a syntax error"
         why: "It is allowed since Python 3.8, with the brackets."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-countdown
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Countdown
+    prompt: |
+      **Replace the two `___`**: the loop counts down from `n` to 1, then
+      the program prints `Go!`.
+
+      ```text
+      5
+      4
+      3
+      2
+      1
+      Go!
+      ```
+    starter: |
+      n = 5
+      while ___:
+          print(n)
+          n = ___
+      print("Go!")
+    solution: |
+      n = 5
+      while n > 0:
+          print(n)
+          n = n - 1
+      print("Go!")
+    after: >-
+      The loop stops when `n` reaches 0, so 0 is never printed. If `n`
+      never changed, the condition would stay True forever.
+    cases:
+      - {}
+      - label: "n starts at 3"
+        set: { n: 3 }
+    checks:
+      - expr: "err is None and lines[-1] == 'Go!' and lines[:-1] == [str(i) for i in range(int(lines[0]), 0, -1)] and int(lines[0]) in (5, 3)"
+        pass: "It counts down to 1, then prints Go!"
+        hint: "`while n > 0:` and `n = n - 1`."
+        misconceptions:
+          - when: "err is None and '0' in lines"
+            say: "0 is printed too. Stop while `n > 0`, not `n >= 0`."
+      - expr: "n == 0"
+        pass: "At the end, n is 0"
+        hint: "Take 1 away each round: `n = n - 1`."
+    hints:
+      - "The loop goes on as long as n is bigger than 0."
+      - "`while n > 0:`"
+      - "Each round: `n = n - 1`."
+  - id: x-double
+    type: exercise
+    fade: debug
+    objective: O4
+    title: Doubling money
+    prompt: |
+      Money doubles every day. How many days until it is 100 or more? This
+      program never ends: it is stopped after a long time. **Find why, and
+      fix it.**
+
+      ```text
+      7 128
+      ```
+    starter: |
+      money = 1
+      days = 0
+      while money < 100:
+          days = days + 1
+      money = money * 2
+      print(days, money)
+    solution: |
+      money = 1
+      days = 0
+      while money < 100:
+          days = days + 1
+          money = money * 2
+      print(days, money)
+    after: >-
+      The line that changes `money` was outside the loop: inside, `money`
+      stayed 1, and `1 < 100` stayed True. Indentation decides what is
+      repeated.
+    checks:
+      - expr: "err is None and lines == ['7 128']"
+        pass: "It stops after 7 days, with 128"
+        hint: "Which line must be repeated? Indent it under the `while`."
+      - expr: "money >= 100 and days == 7"
+        pass: "The loop ends when the money is 100 or more"
+        hint: "The money must change inside the loop."
+    hints:
+      - "Which value does the condition test? Does it change inside the loop?"
+      - "`money = money * 2` is not indented."
+      - "Put 4 spaces in front of `money = money * 2`."

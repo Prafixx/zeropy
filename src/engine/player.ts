@@ -257,6 +257,19 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
         { class: 'muted', 'data-enter': true },
         'Review is part of the course. Short tests after a pause make memory last longer than reading again.',
       ),
+      lesson.extra.length
+        ? h(
+            'p',
+            { class: 'done-practice', 'data-enter': true },
+            h('span', null, `Want more practice of this lesson? ${lesson.extra.length} extra exercises are waiting:`),
+            h(
+              'a',
+              { class: 'btn btn-plain', href: `#/practice/lesson/${lesson.id}` },
+              h('span', { class: 'btn-label' }, 'Practice more'),
+              icon('right', 18),
+            ),
+          )
+        : null,
       moduleAt >= 0
         ? h(
             'p',

@@ -564,3 +564,91 @@ review:
         why: "Nobody knows how many rounds that takes. That is a job for `while`."
       - text: "When the block has more than one line"
         why: "The size of the block does not matter for the choice."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-even-sum
+    type: exercise
+    fade: completion
+    objective: O2
+    title: The even numbers up to 20
+    prompt: |
+      **Replace `___`** with the numbers for `range`, so the loop adds up
+      2, 4, 6 ... up to and with 20.
+
+      ```text
+      110
+      ```
+    starter: |
+      total = 0
+      for n in range(___):
+          total = total + n
+      print(total)
+    solution: |
+      total = 0
+      for n in range(2, 21, 2):
+          total = total + n
+      print(total)
+    after: >-
+      `range(start, stop, step)`: start at 2, go up by 2, and stop before
+      21, so 20 is the last one.
+    checks:
+      - expr: "err is None and lines == ['110'] and total == 110"
+        pass: "It adds 2 + 4 + ... + 20 = 110"
+        hint: "`range(2, 21, 2)`: start, stop, step."
+        misconceptions:
+          - when: "err is None and lines == ['90']"
+            say: "20 is missing: the stop is never part of the row. Use a stop of 21 (or 22)."
+          - when: "err is None and lines == ['210']"
+            say: "All numbers are added, not only the even ones. Give a step of 2."
+      - expr: "syntax('For') >= 1 and '110' not in src"
+        pass: "The loop does the adding"
+        hint: "Let the loop add; do not type 110."
+    hints:
+      - "Three numbers in `range`: start, stop and step."
+      - "Start at 2, step 2. The stop must be after 20."
+      - "`range(2, 21, 2)`."
+  - id: x-table
+    type: exercise
+    fade: independent
+    objective: O1
+    title: A times table
+    prompt: |
+      **Print the times table of `num`**, from 1 to 10, with a for loop:
+
+      ```text
+      7 x 1 = 7
+      7 x 2 = 14
+      ...
+      7 x 10 = 70
+      ```
+    starter: |
+      num = 7
+      # Your loop here.
+    solution: |
+      num = 7
+      for i in range(1, 11):
+          print(f"{num} x {i} = {num * i}")
+    after: >-
+      The loop variable `i` takes each value from 1 to 10. Change `num`,
+      and the whole table changes with it.
+    cases:
+      - {}
+      - label: "num is 3"
+        set: { num: 3 }
+    checks:
+      - expr: "err is None and lines == [f'{num} x {i} = {num * i}' for i in range(1, 11)]"
+        pass: "Ten lines, from 1 to 10"
+        hint: "`for i in range(1, 11):` and `print(f\"{num} x {i} = {num * i}\")`."
+        misconceptions:
+          - when: "err is None and len(lines) == 10 and lines[0].endswith('= 0')"
+            say: "The table starts at 0. Start the range at 1: `range(1, 11)`."
+          - when: "err is None and len(lines) == 9"
+            say: "10 is missing: `range(1, 11)` ends at 10."
+      - expr: "syntax('For') >= 1"
+        pass: "It uses a for loop"
+        hint: "Use `for i in range(...)`."
+    hints:
+      - "`for i in range(1, 11):` gives 1 to 10."
+      - "Each line uses `num`, `i` and `num * i`."
+      - "`print(f\"{num} x {i} = {num * i}\")`."

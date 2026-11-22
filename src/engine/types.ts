@@ -295,6 +295,8 @@ export interface ExerciseStep extends StepBase {
   /** Set by the registry for carry steps: id and solution of the step before. */
   prev?: string;
   base?: string;
+  /** Set by the registry for "Practice more" exercises (lesson.extra). */
+  isExtra?: boolean;
   prompt: string;
   /** Code that already ran before the learner's code. Shown read-only. */
   given?: string;
@@ -425,6 +427,8 @@ export interface Lesson {
   steps: Step[];
   /** Cards that enter spaced review when the lesson is finished. */
   review: Item[];
+  /** "Practice more": extra exercises, not shown in the lesson itself. */
+  extra: ExerciseStep[];
 }
 
 export interface CourseLesson {
