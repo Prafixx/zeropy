@@ -171,6 +171,19 @@ steps:
 
       In an f-string, a format after a colon controls how a number looks:
       `f"{price:.2f}"` shows two decimals.
+
+      ## Two older ways
+
+      Older code, and many examples on the internet, use two forms from
+      before f-strings. They do the same:
+
+      ```
+      "{} is {} years old".format(name, age)
+      "{:.2f} EUR".format(price)               # the same format, after a colon
+      "%s is %d years old" % (name, age)       # %s text, %d whole number, %.2f two decimals
+      ```
+
+      Read them; write f-strings.
     keys:
       - code: "s.lower()    s.upper()"
         means: "Small letters, capital letters."
@@ -182,6 +195,10 @@ steps:
         means: "`True` if the text starts with `Py`."
       - code: 'f"{3.5:.2f}"'
         means: "`'3.50'`: a number with two decimals."
+      - code: '"{} and {}".format(a, b)'
+        means: "Older: the values fill the `{}` in order."
+      - code: '"%s: %d" % (name, n)'
+        means: "Oldest: %s text, %d whole number."
 
   # 6. DRILL -----------------------------------------------------------------
   - id: drill
@@ -530,6 +547,17 @@ steps:
             why: "Look again: the letters c, a, t follow each other inside the word."
           - text: "A `TypeError`"
             why: "`in` works with two texts."
+      - kind: predict
+        id: q-old-format
+        objective: O4
+        code: |
+          name = "Ana"
+          price = 3.5
+          print("{} pays {:.2f}".format(name, price))
+          print("%s has %d cats" % (name, 2))
+        explain: >-
+          `.format` fills each `{}` in order, and `{:.2f}` shows two
+          decimals. With `%`, `%s` takes a text and `%d` a whole number.
 
   # 12. REVIEW ---------------------------------------------------------------
   - id: review
@@ -586,3 +614,15 @@ review:
       print(s.upper())
       s[0] = "f"
     explain: "A text cannot change in place. Line 3 gives a `TypeError`. Make a new text: `s = \"f\" + s[1:]`."
+  - kind: mcq
+    id: r-old-format
+    objective: O4
+    prompt: "What does `\"{} + {}\".format(2, 3)` give?"
+    options:
+      - text: "`\"2 + 3\"`"
+        correct: true
+        why: "The values fill the `{}` in order, as text. Nothing is added."
+      - text: "`5`"
+        why: "`format` builds a text; it does not calculate."
+      - text: "`\"{} + {}\"`"
+        why: "`.format` replaces each `{}` with a value."

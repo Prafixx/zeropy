@@ -1,0 +1,514 @@
+id: match-case
+order: 17
+title: match and case
+summary: Choose between many cases by the value or the shape of something, like the words of a command.
+minutes: 30
+outcomes: [A1]
+
+objectives:
+  - id: O1
+    text: Choose between cases with match and case - values, the bar | for "or", and _ for everything else
+  - id: O2
+    text: Match the shape of a list or a tuple, and take its parts with names
+  - id: O3
+    text: Add a condition to a case with if, and avoid the trap of a bare name
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: values
+    type: theory
+    objective: O1
+    title: One value, many cases
+    body: |
+      With many `elif` lines that all compare the same variable, `match`
+      is shorter and clearer:
+
+      ```python
+      day = "sat"
+      match day:
+          case "sat" | "sun":
+              print("weekend")
+          case "fri":
+              print("almost weekend")
+          case _:
+              print("workday")
+      ```
+
+      - `match day:` names the value to look at.
+      - Each `case` is a pattern. Python tries them from the top. The
+        first one that fits runs, and the others are skipped.
+      - `|` means "or": `"sat"` or `"sun"`.
+      - `_` fits everything. It is the last case: "anything else". Without
+        it, nothing runs when no case fits.
+
+      `match` is new in Python 3.10. Older code uses `if` and `elif` for the
+      same thing; both are right.
+    keys:
+      - code: "match value:"
+        means: "Look at this value."
+      - code: 'case "a" | "b":'
+        means: "It is \"a\" or \"b\"."
+      - code: "case _:"
+        means: "Anything else. Always last."
+
+  # 2. PREDICT ---------------------------------------------------------------
+  - id: predict-first
+    type: predict
+    objective: O1
+    title: Which case runs?
+    item:
+      kind: predict
+      id: p-first
+      prompt: "**What does this program print?**"
+      code: |
+        code = 404
+        match code:
+            case 200:
+                print("OK")
+            case 401 | 403:
+                print("Not allowed")
+            case 404:
+                print("Not found")
+            case _:
+                print("Other")
+      explain: >-
+        Python tries the cases from the top: `200` does not fit, `401 | 403`
+        does not fit, `404` fits. Only that case runs; `_` is skipped.
+      misconceptions:
+        - answer: "Not found\nOther"
+          say: "Only the first case that fits runs. `_` runs only when no case above it fits."
+
+  # 3. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O2
+    title: The words of a command
+    intro: |
+      A game reads commands like `go north`. `split()` makes a list of the
+      words, and `match` looks at the **shape** of that list. Press
+      **Run**, then try other commands.
+    code: |
+      command = "go north"
+
+      match command.split():
+          case ["go", direction]:
+              print("You walk", direction)
+          case ["look"]:
+              print("You see a dark room.")
+          case ["quit" | "exit"]:
+              print("Bye!")
+          case _:
+              print("I do not understand.")
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and 'You walk north' in lines"
+      - text: "Change the command to `\"look\"`."
+        expr: "err is None and 'You see a dark room.' in lines"
+      - text: "Try `\"go\"` alone, without a direction. Which case fits?"
+        expr: "err is None and ns.get('command') == 'go' and 'I do not understand.' in lines"
+      - text: "Try `\"exit\"`."
+        expr: "err is None and 'Bye!' in lines"
+    investigate:
+      - kind: spot
+        id: i-direction
+        prompt: "On which line does the name `direction` get its value?"
+        code: |
+          command = "go north"
+
+          match command.split():
+              case ["go", direction]:
+                  print("You walk", direction)
+              case ["look"]:
+                  print("You see a dark room.")
+              case ["quit" | "exit"]:
+                  print("Bye!")
+              case _:
+                  print("I do not understand.")
+        line: 4
+        wrong:
+          - line: 5
+            say: "This line uses `direction`. It got its value in the pattern, one line above."
+          - line: 1
+            say: "This line makes `command`. `direction` is not there yet."
+        explain: >-
+          The pattern `["go", direction]` fits a list of two words where the
+          first is `"go"`. The second word, whatever it is, goes into the
+          name `direction`.
+      - kind: mcq
+        id: i-three
+        prompt: "The command is `\"go far north\"`: three words. Which case runs?"
+        options:
+          - text: "`case _:`: no pattern has three words"
+            correct: true
+            why: "`[\"go\", direction]` fits only a list of exactly two words."
+          - text: "`case [\"go\", direction]:`, with `direction` as `\"far north\"`"
+            why: "One name takes one word. Three words do not fit a pattern of two."
+          - text: "An error"
+            why: "When no pattern fits, `_` catches it."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: shapes
+    type: theory
+    objective: O3
+    title: Shapes, conditions, and one trap
+    body: |
+      ## Shapes
+
+      A pattern can describe a list or a tuple. A **name** in a pattern
+      takes the part that is in its place:
+
+      ```python
+      match point:                     # point is a tuple like (0, 5)
+          case (0, 0):
+              print("the middle")
+          case (0, y):
+              print("on the y axis at", y)
+          case (x, y):
+              print("somewhere:", x, y)
+      ```
+
+      `*rest` takes all the other items: `case ["take", *things]:` fits
+      `take key` and also `take key map lamp`.
+
+      ## A condition: if
+
+      A case can have a condition after it. It fits only when the
+      condition is true:
+
+      ```python
+      case ["take", *things] if things:
+      ```
+
+      ## The trap: a bare name
+
+      A **bare name** in a case does not compare: it **takes** the value.
+      So `case answer:` fits everything, like `_`. Python stops the program
+      with a `SyntaxError` when such a case is not the last one. To compare
+      with a value, write the value itself: `case "quit":`.
+    keys:
+      - code: 'case ["go", direction]:'
+        means: "Two words, the first is \"go\". The second goes into `direction`."
+      - code: 'case ["take", *things]:'
+        means: "\"take\" and any number of words after it."
+      - code: "case [x, y] if x == y:"
+        means: "A shape and a condition."
+      - code: "case quit:"
+        means: "A trap: takes any value. Write `case \"quit\":`."
+
+  # 5. EXERCISE: completion --------------------------------------------------
+  - id: ex-day
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Weekend or workday
+    prompt: |
+      **Replace the `___`**, so that the program prints:
+
+      - `weekend` for `"sat"` and `"sun"`,
+      - `workday` for `"mon"`, `"tue"`, `"wed"`, `"thu"` and `"fri"`,
+      - `not a day` for anything else.
+    starter: |
+      day = "sun"
+
+      match day:
+          case "sat" ___ "sun":
+              print("weekend")
+          case "mon" | "tue" | "wed" | "thu" | "fri":
+              print("workday")
+          case ___:
+              print("not a day")
+    solution: |
+      day = "sun"
+
+      match day:
+          case "sat" | "sun":
+              print("weekend")
+          case "mon" | "tue" | "wed" | "thu" | "fri":
+              print("workday")
+          case _:
+              print("not a day")
+    after: >-
+      The same with `if` needs `day == "sat" or day == "sun"` and an `elif`
+      with five comparisons. `match` lists the values, and nothing else.
+    cases:
+      - {}
+      - label: "day = \"sat\""
+        set: { day: "sat" }
+      - label: "day = \"wed\""
+        set: { day: "wed" }
+      - label: "day = \"holiday\""
+        set: { day: "holiday" }
+    checks:
+      - expr: "err is None and lines == [('weekend' if day in ('sat', 'sun') else 'workday' if day in ('mon', 'tue', 'wed', 'thu', 'fri') else 'not a day')]"
+        pass: "It prints the right word for every day, and `not a day` for anything else"
+        hint: "The first `___` is `|` (or). The second is `_` (anything else)."
+        misconceptions:
+          - when: "err == 'SyntaxError'"
+            say: "Python cannot read the code yet. The first `___` is the bar `|`, the second is `_`."
+          - when: "err is None and day == 'holiday' and lines == []"
+            say: "Nothing is printed for an unknown day. The last case must be `case _:`."
+      - expr: "syntax('Match') == 1"
+        pass: "It uses `match`"
+        hint: "Keep the `match` and its cases."
+    hints:
+      - "`|` means \"or\" in a pattern."
+      - "`_` fits anything: it is the last case."
+      - "`case \"sat\" | \"sun\":` and `case _:`."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-trap
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A case that takes everything
+    prompt: |
+      A command `quit` should print `Bye!`, `help` should print `Commands:
+      help, quit`, and anything else `Unknown`. **Run it**, read the
+      message, and fix the program.
+    starter: |
+      QUIT = "quit"
+      command = "help"
+
+      match command:
+          case QUIT:
+              print("Bye!")
+          case "help":
+              print("Commands: help, quit")
+          case _:
+              print("Unknown")
+    solution: |
+      command = "help"
+
+      match command:
+          case "quit":
+              print("Bye!")
+          case "help":
+              print("Commands: help, quit")
+          case _:
+              print("Unknown")
+    after: >-
+      `case QUIT:` does not compare with the variable `QUIT`: it is a new
+      name that takes any value, so the cases after it could never run.
+      Write the value itself in the pattern.
+    cases:
+      - {}
+      - label: "command = \"quit\""
+        set: { command: "quit" }
+      - label: "command = \"dance\""
+        set: { command: "dance" }
+    checks:
+      - expr: "err is None and lines == [{'quit': 'Bye!', 'help': 'Commands: help, quit'}.get(command, 'Unknown')]"
+        pass: "`quit`, `help` and other commands each print the right line"
+        hint: "Write the value in the pattern: `case \"quit\":`."
+        misconceptions:
+          - when: "err == 'SyntaxError'"
+            say: "Read the message: a bare name in a case takes any value, so the cases after it are never reached. Use `case \"quit\":`."
+          - when: "err is None and command != 'quit' and lines == ['Bye!']"
+            say: "The first case fits every command. A bare name takes the value; it does not compare. Write `case \"quit\":`."
+    hints:
+      - "Read the last line of the message: which name does it talk about?"
+      - "`case QUIT:` makes a new name and takes any value. It does not look at the variable `QUIT`."
+      - "Write `case \"quit\":`. Then `QUIT` is not needed."
+
+  # 7. EXERCISE: independent -------------------------------------------------
+  - id: ex-robot
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Commands for a robot
+    prompt: |
+      A robot gets commands as text. **Write a `match` on the words of
+      `command`** that prints:
+
+      | Command | Prints |
+      |---|---|
+      | `move 3` (any number) | `Moving 3 steps` |
+      | `turn left` or `turn right` | `Turning left` / `Turning right` |
+      | `stop` | `Stopping` |
+      | anything else | `Unknown command` |
+
+      `move` counts only with a number: `move far` is unknown. Use a
+      condition with `.isdigit()`: `"12".isdigit()` is `True`,
+      `"far".isdigit()` is `False` (it is true when every character is a
+      digit).
+    starter: |
+      command = "move 3"
+
+      # Write the match here.
+    solution: |
+      command = "move 3"
+
+      match command.split():
+          case ["move", steps] if steps.isdigit():
+              print(f"Moving {steps} steps")
+          case ["turn", side] if side in ("left", "right"):
+              print(f"Turning {side}")
+          case ["stop"]:
+              print("Stopping")
+          case _:
+              print("Unknown command")
+    after: >-
+      One pattern per kind of command, and the shape of the words says
+      which one it is. A condition (`if steps.isdigit()`) adds a check that
+      a pattern alone cannot make.
+    cases:
+      - {}
+      - label: "command = \"move 12\""
+        set: { command: "move 12" }
+      - label: "command = \"move far\""
+        set: { command: "move far" }
+      - label: "command = \"turn left\""
+        set: { command: "turn left" }
+      - label: "command = \"turn right\""
+        set: { command: "turn right" }
+      - label: "command = \"turn back\""
+        set: { command: "turn back" }
+      - label: "command = \"stop\""
+        set: { command: "stop" }
+      - label: "command = \"stop now\""
+        set: { command: "stop now" }
+    checks:
+      - expr: "err is None and lines == [(lambda w: f'Moving {w[1]} steps' if len(w) == 2 and w[0] == 'move' and w[1].isdigit() else f'Turning {w[1]}' if len(w) == 2 and w[0] == 'turn' and w[1] in ('left', 'right') else 'Stopping' if w == ['stop'] else 'Unknown command')(command.split())]"
+        pass: "Every command prints the right line"
+        hint: "One case for each kind: `[\"move\", steps] if steps.isdigit()`, `[\"turn\", side]`, `[\"stop\"]`, and `_`."
+        misconceptions:
+          - when: "err is None and command == 'move far' and lines == ['Moving far steps']"
+            say: "`move far` must be unknown. Add a condition: `case [\"move\", steps] if steps.isdigit():`."
+          - when: "err is None and command == 'turn back' and lines == ['Turning back']"
+            say: "Only left and right are turns: `case [\"turn\", \"left\" | \"right\"]`, or a condition."
+          - when: "err is None and command == 'stop now' and lines == ['Stopping']"
+            say: "`[\"stop\"]` fits only the single word `stop`. `stop now` must be unknown."
+      - expr: "syntax('Match') >= 1"
+        pass: "It uses `match`"
+        hint: "`match command.split():`."
+    hints:
+      - "Start with `match command.split():` and the last case `case _:`."
+      - "`case [\"move\", steps] if steps.isdigit():` prints `f\"Moving {steps} steps\"`."
+      - "For the turns: `case [\"turn\", side] if side in (\"left\", \"right\"):`. And `case [\"stop\"]:`."
+
+  # 8. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-order
+        objective: O1
+        prompt: "Two cases fit the value. Which one runs?"
+        options:
+          - text: "Only the first one"
+            correct: true
+            why: "Python tries the cases from the top, and stops at the first that fits."
+          - text: "Both, from the top"
+            why: "Only one case runs."
+          - text: "The last one"
+            why: "The first that fits wins."
+      - kind: mcq
+        id: q-underscore
+        objective: O1
+        prompt: "What does `case _:` do?"
+        options:
+          - text: "It fits any value: the case for everything else"
+            correct: true
+            why: "Put it last. Python refuses it before other cases."
+          - text: "It fits only an empty value"
+            why: "It fits everything."
+          - text: "It fits nothing"
+            why: "It is the case that always fits."
+      - kind: mcq
+        id: q-shape
+        objective: O2
+        prompt: "Which pattern fits the list `[\"take\", \"key\", \"map\"]`?"
+        options:
+          - text: "`[\"take\", *things]`"
+            correct: true
+            why: "`*things` takes all the other words: `[\"key\", \"map\"]`."
+          - text: "`[\"take\", thing]`"
+            why: "This fits exactly two words. The list has three."
+          - text: "`[\"take\"]`"
+            why: "This fits only the single word `take`."
+      - kind: mcq
+        id: q-bare
+        objective: O3
+        prompt: "`limit = 5`, then `case limit:` in a match. What does it do?"
+        options:
+          - text: "It takes any value into a new name `limit`: it does not compare with 5"
+            correct: true
+            why: "A bare name is a capture pattern. Write the value: `case 5:`."
+          - text: "It fits when the value is 5"
+            why: "That is the trap: a bare name does not compare."
+          - text: "It is an error at once"
+            why: "Only if more cases follow it. As the last case, it silently fits everything."
+      - kind: mcq
+        id: q-guard
+        objective: O3
+        prompt: "What does `case [\"move\", n] if n.isdigit():` add to a pattern?"
+        options:
+          - text: "A condition: the case fits only when the second word is a number"
+            correct: true
+            why: "A condition after `if` checks what a pattern alone cannot."
+          - text: "A loop over the words"
+            why: "`if` here is a condition, not a loop."
+          - text: "Nothing: `if` is not allowed in a case"
+            why: "A case can have a condition after it."
+
+  # 9. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-or
+    objective: O1
+    prompt: "How do you write \"`\"y\"` or `\"yes\"`\" in a case?"
+    options:
+      - text: "`case \"y\" | \"yes\":`"
+        correct: true
+        why: "`|` means \"or\" in a pattern."
+      - text: "`case \"y\" or \"yes\":`"
+        why: "In a pattern, \"or\" is written with `|`."
+      - text: "`case [\"y\", \"yes\"]:`"
+        why: "That fits a list of two words."
+  - kind: predict
+    id: r-point
+    objective: O2
+    code: |
+      point = (3, 0)
+      match point:
+          case (0, y):
+              print("y axis", y)
+          case (x, 0):
+              print("x axis", x)
+          case _:
+              print("elsewhere")
+    explain: >-
+      `(0, y)` needs a 0 first: no. `(x, 0)` fits: `x` takes 3. The names in
+      a pattern take the parts that are in their place.
+  - kind: mcq
+    id: r-capture
+    objective: O3
+    prompt: "Why is `case answer:` before other cases a problem?"
+    options:
+      - text: "A bare name takes any value, so the cases after it can never run"
+        correct: true
+        why: "Python refuses it with a SyntaxError. Write the value itself."
+      - text: "`answer` is a keyword"
+        why: "It is a normal name. A bare name in a case takes the value."
+      - text: "There is no problem"
+        why: "It fits everything, like `_`."
+  - kind: mcq
+    id: r-when
+    objective: O1
+    prompt: "When is `match` a good choice?"
+    options:
+      - text: "When one value is compared with many cases, or when the shape of a value matters"
+        correct: true
+        why: "Like commands, codes or points. For one or two conditions, `if` is simpler."
+      - text: "Always instead of `if`"
+        why: "For a simple condition, `if` is clearer."
+      - text: "Only for numbers"
+        why: "It works with text, lists, tuples, dictionaries and more."

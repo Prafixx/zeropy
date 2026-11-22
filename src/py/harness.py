@@ -8,6 +8,7 @@ import builtins
 import copy
 import io
 import json
+import importlib
 import linecache
 import os
 import random
@@ -264,6 +265,18 @@ def _folder(index, files):
     """A fresh, empty folder for one case, with the starting files of the case.
     Every run starts the same, also when an earlier run wrote files."""
     path = _HOME if index == 0 else f"{_HOME}-{index + 1}"
+    # Forget the learner's own modules of earlier runs (helpers.py, a package):
+    # an import must read the file as it is now, not the copy Python keeps.
+    for name, module in list(sys.modules.items()):
+        if (getattr(module, "__file__", None) or "").startswith(_HOME):
+            del sys.modules[name]
+    # A file of the case with the name of a module (random.py) hides that
+    # module, as on a real computer: the folder of the program comes first.
+    own = {p.split("/")[0][:-3] if p.split("/")[0].endswith(".py") else p.split("/")[0] for p in (files or {})}
+    for name in list(sys.modules):
+        if name.split(".")[0] in own:
+            del sys.modules[name]
+    importlib.invalidate_caches()
     shutil.rmtree(path, ignore_errors=True)
     os.makedirs(path)
     for name, text in (files or {}).items():
@@ -1275,6 +1288,18 @@ def _check_env(result):
         "DictComp", "Try" or "With" (the names of the ast module)."""
         return sum(1 for node in nodes if type(node).__name__ == kind)
 
+    def import_out(name="mymodule"):
+        """What the code prints when another file imports it (then __name__ is
+        the module name, not "__main__"). An error gives its name in brackets."""
+        buffer = io.StringIO()
+        module_ns = {"__name__": name}
+        try:
+            with redirect_stdout(buffer), redirect_stderr(buffer):
+                exec(compile(result["src"], f"{name}.py", "exec"), module_ns)
+        except BaseException as exc:  # a check must never stop
+            buffer.write(f"[{type(exc).__name__}]")
+        return buffer.getvalue()
+
     def raises(fn, *args, **kwargs):
         """The name of the error that a call raises, or None."""
         try:
@@ -1393,6 +1418,7 @@ def _check_env(result):
         called=called,
         calls_in=calls_in,
         raises=raises,
+        import_out=import_out,
         syntax=syntax,
         assigned=assigned,
         uses=uses,
@@ -1475,5 +1501,6 @@ def run(request_json):
             "checks": checks,
             "files": first["files"],
             "gpio": first["ext"].get("gpio"),
+            "plot": first["ext"].get("plot"),
         }
     )

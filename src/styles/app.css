@@ -2656,6 +2656,63 @@ code {
 .bench-window-slot:empty {
   display: none;
 }
+/* Charts of matplotlib.pyplot (src/engine/steps/chart.ts). */
+.bench-charts:empty {
+  display: none;
+}
+.bench-charts {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0;
+}
+.chart {
+  margin: 0;
+  padding: 6px;
+  border: var(--line);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+}
+.chart-svg {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  margin: 0 auto;
+}
+.chart-frame {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 1;
+}
+.chart-axis {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+}
+.chart-grid {
+  stroke: var(--paper-3);
+  stroke-width: 1;
+}
+.chart-tick {
+  font: 500 11px var(--font-mono);
+  fill: var(--ink-2);
+}
+.chart-title {
+  font: 700 14px var(--font-body);
+  fill: var(--ink);
+}
+.chart-label {
+  font: 600 12px var(--font-body);
+  fill: var(--ink-2);
+}
+.chart-hist {
+  stroke: var(--paper);
+  stroke-width: 1;
+}
+.chart-legend-box {
+  fill: var(--paper);
+  stroke: var(--paper-3);
+  opacity: 0.92;
+}
 .gw {
   margin: 10px 0;
   border: var(--line);
@@ -3380,19 +3437,29 @@ code {
 .term-line.is-busy {
   opacity: 0.6;
 }
+.term-line {
+  flex-wrap: wrap;
+}
 .term-prompt {
   color: var(--code-str);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .term-input {
   flex: 1;
-  min-width: 0;
+  min-width: 6em;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--code-text);
   font: inherit;
   caret-color: var(--sun);
+}
+/* A password: like a real terminal, nothing shows while you type (only the cursor). */
+.term-input.is-secret {
+  color: transparent;
+}
+.term-frame.is-pc .term-bar {
+  color: var(--blue);
 }
 .term-frame:focus-within {
   outline: 3px solid var(--blue);
@@ -3528,14 +3595,17 @@ code {
 }
 .pi-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   margin-bottom: 10px;
 }
 .pi-title {
   font: 800 16px/1.2 var(--font-display);
+  white-space: nowrap;
 }
 .pi-clock {
+  white-space: nowrap;
   font: 700 13px/1 var(--font-mono);
   padding: 4px 8px;
   border-radius: 6px;
@@ -3703,6 +3773,98 @@ code {
   background: var(--slab);
   color: var(--code-text);
   font: 700 11px/1 var(--font-mono);
+}
+/* Light sensor: a sun that is as bright as the light on the sensor. */
+.pi-sun {
+  --level: 0.6;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--edge);
+  background: color-mix(in srgb, var(--sun) calc(var(--level) * 100%), var(--slab));
+  box-shadow: 0 0 calc(var(--level) * 18px) calc(var(--level) * 4px) color-mix(in srgb, var(--sun) 60%, transparent);
+}
+/* Knob (potentiometer): its mark turns with the value, from -135 to 135 degrees. */
+.pi-knob {
+  --level: 0.5;
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--edge);
+  background: var(--paper-2);
+  transform: rotate(calc(-135deg + var(--level) * 270deg));
+}
+.pi-knob i {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 4px;
+  height: 11px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+/* Motor: a wheel that turns, faster with more speed, the other way backward. */
+.pi-wheel {
+  --turn: 0s;
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 4px solid var(--slab);
+  background: var(--paper-3);
+}
+.pi-wheel i {
+  position: absolute;
+  inset: 45% 2px;
+  border-radius: 2px;
+  background: var(--slab);
+}
+.pi-wheel i + i {
+  transform: rotate(90deg);
+}
+.pi-wheel.is-on {
+  animation: pi-spin var(--turn) linear infinite;
+}
+.pi-wheel.is-on.is-back {
+  animation-direction: reverse;
+}
+@keyframes pi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pi-wheel.is-on {
+    animation: none;
+    border-color: var(--leaf);
+  }
+}
+/* Robot: seen from above, on its floor, with the way it drove. */
+.pi-part-floor {
+  grid-column: 1 / -1;
+}
+.pi-floor {
+  width: 100%;
+  max-width: 360px;
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: var(--paper-2);
+}
+.pi-trail {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+.pi-bot rect {
+  fill: var(--tomato);
+  stroke: var(--edge);
+  stroke-width: 1.5;
+}
+.pi-bot path {
+  fill: var(--ink);
 }
 .pi-status {
   display: block;

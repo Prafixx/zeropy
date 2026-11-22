@@ -1,0 +1,278 @@
+id: linux-project
+order: 109
+title: "Project: tidy up a Pi"
+summary: A Raspberry Pi full of mess. Sort it, find the errors in its log, keep a backup, and write a script that checks it.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Plan the work on files and folders, and do it with few commands
+  - id: O2
+    text: Find what matters in a log, and keep it in a report
+  - id: O3
+    text: Write a script that does a check for you, and make it runnable
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: brief
+    type: theory
+    objective: O1
+    title: The job
+    body: |
+      A friend used a Raspberry Pi for a weather station. Now the home
+      directory is a mess: pictures, logs, old files and a temporary folder,
+      all mixed. Your job, in three parts:
+
+      1. **Sort**: pictures into `photos`, the log into `logs`.
+      2. **Report and clean**: the errors of the log in a report, a backup
+         of the important file, and the temporary folder removed.
+      3. **Automate**: a script that tells how many photos there are.
+
+      Each part starts where the last one ended. Before you change
+      something, look with `ls`. Before you remove something, look twice.
+    keys:
+      - code: "ls"
+        means: "Look before you change."
+      - code: "mv *.jpg photos/"
+        means: "Many files, one command."
+      - code: "grep ... > report.txt"
+        means: "Keep what matters."
+
+  # 2. TERMINAL --------------------------------------------------------------
+  - id: m1-sort
+    type: terminal
+    objective: O1
+    title: "Part 1: sort"
+    prompt: |
+      **Sort the home directory:**
+
+      - every `.jpg` file into a new directory `photos`,
+      - `station.log` into a new directory `logs`.
+
+      Everything else stays where it is.
+    start:
+      files:
+        IMG_0001.jpg: ""
+        IMG_0002.jpg: ""
+        IMG_0003.jpg: ""
+        station.log: |
+          06:00 INFO start
+          06:10 INFO temperature 9.5
+          06:20 ERROR sensor not found
+          06:30 INFO temperature 9.9
+          06:40 WARNING battery low
+          06:50 ERROR no network
+          07:00 INFO temperature 10.4
+        settings.txt: "city=Oslo\nunits=metric\n"
+        temp/cache1.tmp: ""
+        temp/cache2.tmp: ""
+    checks:
+      - expr: "isdir('photos') and sorted(listdir('photos')) == ['IMG_0001.jpg', 'IMG_0002.jpg', 'IMG_0003.jpg']"
+        pass: "The three pictures are in `photos`"
+        hint: "`mkdir photos`, then `mv *.jpg photos/`."
+      - expr: "not any(n.endswith('.jpg') for n in listdir('.'))"
+        pass: "No picture is left in the home directory"
+        hint: "Move them, with `mv`. `cp` would leave the originals."
+      - expr: "isfile('logs/station.log') and not exists('station.log')"
+        pass: "`station.log` is in `logs`"
+        hint: "`mkdir logs`, then `mv station.log logs/`."
+      - expr: "isfile('settings.txt') and isdir('temp')"
+        pass: "`settings.txt` and `temp` are still where they were"
+        hint: "Only the pictures and the log move in this part."
+    hints:
+      - "Two new directories: `mkdir photos logs`."
+      - "`mv *.jpg photos/` moves all the pictures at once."
+      - "`mv station.log logs/`."
+    solution: ["ls", "mkdir photos logs", "mv *.jpg photos/", "mv station.log logs/"]
+    after: >-
+      Two directories and two moves. With a hundred pictures, it would still
+      be the same four commands.
+
+  # 3. TERMINAL --------------------------------------------------------------
+  - id: m2-clean
+    type: terminal
+    objective: O2
+    title: "Part 2: report and clean"
+    prompt: |
+      Now the home directory is sorted. **Next:**
+
+      1. `logs/errors.txt` holds only the ERROR lines of
+         `logs/station.log`.
+      2. `backup/settings.txt` is a copy of `settings.txt`. The original
+         stays.
+      3. The directory `temp` is gone.
+    start:
+      files:
+        photos/IMG_0001.jpg: ""
+        photos/IMG_0002.jpg: ""
+        photos/IMG_0003.jpg: ""
+        logs/station.log: |
+          06:00 INFO start
+          06:10 INFO temperature 9.5
+          06:20 ERROR sensor not found
+          06:30 INFO temperature 9.9
+          06:40 WARNING battery low
+          06:50 ERROR no network
+          07:00 INFO temperature 10.4
+        settings.txt: "city=Oslo\nunits=metric\n"
+        temp/cache1.tmp: ""
+        temp/cache2.tmp: ""
+    checks:
+      - expr: "read('logs/errors.txt') == ''.join(l + '\\n' for l in lines('logs/station.log') if 'ERROR' in l)"
+        pass: "`logs/errors.txt` holds exactly the ERROR lines"
+        hint: "`grep ERROR logs/station.log > logs/errors.txt`."
+      - expr: "read('backup/settings.txt') == read('settings.txt') and isfile('settings.txt')"
+        pass: "`backup/settings.txt` is a copy, and the original stays"
+        hint: "`mkdir backup`, then `cp settings.txt backup/`."
+      - expr: "not exists('temp')"
+        pass: "`temp` is gone"
+        hint: "`ls temp` first, then `rm -r temp`."
+    hints:
+      - "The report: `grep ERROR logs/station.log > logs/errors.txt`."
+      - "The backup: `mkdir backup`, then `cp settings.txt backup/`."
+      - "Look with `ls temp`, then `rm -r temp`."
+    solution: ["grep ERROR logs/station.log > logs/errors.txt", "mkdir backup", "cp settings.txt backup/", "ls temp", "rm -r temp"]
+    after: >-
+      The report first, the backup second, the delete last: if something
+      goes wrong, nothing important is lost.
+
+  # 4. TERMINAL --------------------------------------------------------------
+  - id: m3-script
+    type: terminal
+    objective: O3
+    title: "Part 3: a script that counts"
+    prompt: |
+      **Write a script `count-photos.sh`** that prints how many files are
+      in `photos`. Make it runnable, and run it with `./count-photos.sh`.
+
+      It needs one line: `ls photos` piped into `wc -l`. Use `nano`, or
+      `echo '...' > count-photos.sh` with single quotes around the command.
+    start:
+      files:
+        photos/IMG_0001.jpg: ""
+        photos/IMG_0002.jpg: ""
+        photos/IMG_0003.jpg: ""
+        logs/station.log: "06:00 INFO start\n"
+        logs/errors.txt: "06:20 ERROR sensor not found\n06:50 ERROR no network\n"
+        backup/settings.txt: "city=Oslo\nunits=metric\n"
+        settings.txt: "city=Oslo\nunits=metric\n"
+    checks:
+      - expr: "'wc' in (read('count-photos.sh') or '') and 'photos' in (read('count-photos.sh') or '')"
+        pass: "`count-photos.sh` counts the files in `photos`"
+        hint: "The line in the script: `ls photos | wc -l`."
+      - expr: "executable('count-photos.sh')"
+        pass: "The script may be run"
+        hint: "`chmod +x count-photos.sh`."
+      - expr: "any(h.strip().startswith('./count-photos.sh') for h in history) and out.strip() == '3'"
+        pass: "`./count-photos.sh` prints 3"
+        hint: "Run it: `./count-photos.sh`. It must print only the number."
+    hints:
+      - "`echo 'ls photos | wc -l' > count-photos.sh`: the quotes keep the `|` inside the script."
+      - "`chmod +x count-photos.sh`."
+      - "Then `./count-photos.sh`. It prints 3."
+    solution: ["echo 'ls photos | wc -l' > count-photos.sh", "chmod +x count-photos.sh", "./count-photos.sh"]
+    after: >-
+      Without the quotes, `echo ls photos | wc -l > count-photos.sh` would
+      run the pipe at once and write its result, not the command. The
+      quotes say: this is text, keep it for later.
+
+  # 5. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Look back
+    items:
+      - kind: mcq
+        id: q-order
+        objective: O1
+        prompt: "In part 2, why make the report and the backup before you remove `temp`?"
+        options:
+          - text: "If a command goes wrong, the important things are safe already"
+            correct: true
+            why: "Delete last: `rm` cannot be undone."
+          - text: "`rm -r` only works at the end of a session"
+            why: "`rm` works at any time. The order is about safety."
+          - text: "`grep` cannot read a log while `temp` exists"
+            why: "`grep` and `temp` have nothing to do with each other."
+      - kind: mcq
+        id: q-quotes
+        objective: O3
+        prompt: "Why `echo 'ls photos | wc -l' > count-photos.sh`, with single quotes?"
+        options:
+          - text: "So the `|` is written into the script as text, and not run at once"
+            correct: true
+            why: "Without quotes, the shell runs the pipe now."
+          - text: "Single quotes make the script faster"
+            why: "They only decide what is text."
+          - text: "`echo` needs quotes for every text"
+            why: "`echo hello` works without quotes. The `|` is the reason."
+      - kind: mcq
+        id: q-report
+        objective: O2
+        prompt: "Which line writes only the ERROR lines of `logs/station.log` into `report.txt`?"
+        options:
+          - text: "`grep ERROR logs/station.log > report.txt`"
+            correct: true
+            why: "`grep` finds, `>` keeps."
+          - text: "`cat logs/station.log > report.txt`"
+            why: "This copies the whole log."
+          - text: "`grep report.txt ERROR logs/station.log`"
+            why: "The pattern comes first, then the files. And there is no `>`."
+      - kind: mcq
+        id: q-script-why
+        objective: O3
+        prompt: "What is the gain of the script `count-photos.sh`?"
+        options:
+          - text: "Next time, one short command does the work, and nobody needs to remember the pipe"
+            correct: true
+            why: "Scripts keep commands for later, also for other people."
+          - text: "It counts faster than the pipe itself"
+            why: "It runs the same pipe."
+          - text: "It makes the photos smaller"
+            why: "It only counts them."
+
+  # 6. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-plan
+    objective: O1
+    prompt: "What should you do before `rm -r` on a directory?"
+    options:
+      - text: "Look into it with `ls`, and save what you need"
+        correct: true
+        why: "`rm -r` deletes everything inside, for good."
+      - text: "Nothing: `rm -r` asks first"
+        why: "It does not ask. It deletes at once."
+      - text: "Run `sudo`"
+        why: "`sudo` makes it more dangerous, not safer."
+  - kind: mcq
+    id: r-grep-redirect
+    objective: O2
+    prompt: "Which line adds the WARNING lines at the END of `report.txt`, and keeps what is there?"
+    options:
+      - text: "`grep WARNING app.log >> report.txt`"
+        correct: true
+        why: "`>>` appends."
+      - text: "`grep WARNING app.log > report.txt`"
+        why: "`>` replaces the report."
+      - text: "`grep WARNING app.log | report.txt`"
+        why: "`|` sends to a command, and `report.txt` is not one."
+  - kind: mcq
+    id: r-chmod-run
+    objective: O3
+    prompt: "A new script `check.sh`. Which two commands make it run?"
+    options:
+      - text: "`chmod +x check.sh`, then `./check.sh`"
+        correct: true
+        why: "First the permission, then the run."
+      - text: "`./check.sh`, then `chmod +x check.sh`"
+        why: "The first one fails with `Permission denied`."
+      - text: "`sudo check.sh`"
+        why: "The script still needs `x`, and `./` to be found."

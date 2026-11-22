@@ -1,0 +1,479 @@
+id: data-numpy
+order: 302
+title: Arrays with numpy
+summary: Calculate with whole columns at once, pick values with a condition, and work with a table of numbers, the way all AI tools do.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Make a numpy array, and read its shape, size and dtype
+  - id: O2
+    text: Calculate with a whole array at once, and use sum, mean, min, max and std
+  - id: O3
+    text: Pick the values that meet a condition, like a[a > 20], and count them
+  - id: O4
+    text: Work with a 2D array - rows, columns, and axis=0 and axis=1
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: arrays
+    type: theory
+    objective: O1
+    title: An array
+    body: |
+      **numpy** is the base of almost every data and AI library in Python.
+      Its main type is the **array**: like a list, but all values have the
+      same type, and its size is fixed. That makes it fast, and it lets you
+      calculate with all values at once.
+
+      ```python
+      import numpy as np
+
+      temps = np.array([12.5, 14.0, 13.2, 16.8])
+      temps.shape      # (4,): 4 values in one row
+      temps.size       # 4
+      temps.dtype      # dtype('float64'): numbers with decimals
+      np.arange(1, 8)            # array([1, 2, 3, 4, 5, 6, 7])
+      np.linspace(0, 1, num=5)   # 5 values from 0 to 1: 0, 0.25, ..., 1
+      np.zeros(3)                # array([0., 0., 0.])
+      ```
+
+      Places start at 0, and slices work as with lists: `temps[0]`,
+      `temps[-1]`, `temps[1:3]`.
+    keys:
+      - code: "np.array([1, 2, 3])"
+        means: "An array from a list."
+      - code: "a.shape"
+        means: "Its size in each direction: `(4,)`, or `(3, 7)` for a table."
+      - code: "np.arange(1, 8)"
+        means: "Like `range`, as an array."
+
+  # 2. PREDICT ---------------------------------------------------------------
+  - id: predict-times
+    type: predict
+    objective: O2
+    title: A list or an array?
+    item:
+      kind: predict
+      id: p-times
+      prompt: "The same `* 2` on a list and on an array. **What does this print?**"
+      code: |
+        import numpy as np
+
+        prices = [3, 5, 2]
+        print(prices * 2)
+        print(np.array(prices) * 2)
+      explain: >-
+        A list times 2 is the list two times, one after the other. An array
+        times 2 multiplies **each value**. numpy prints an array without
+        commas.
+      misconceptions:
+        - answer: "[6, 10, 4]\n[6 10 4]"
+          say: "For a list, `* 2` repeats it: `[3, 5, 2, 3, 5, 2]`. Only the array multiplies each value."
+
+  # 3. DEMO -----------------------------------------------------------------
+  - id: whole
+    type: demo
+    objective: O2
+    title: No loop needed
+    intro: |
+      Press **Run**: one line changes every temperature, and one word gives
+      the mean. No `for` loop.
+    code: |
+      import numpy as np
+
+      celsius = np.array([12.5, 14.0, 13.2, 16.8, 18.1, 17.4, 15.0])
+      fahrenheit = celsius * 9 / 5 + 32
+      print(fahrenheit)
+      print("mean:", celsius.mean().round(1))
+      print("min:", celsius.min(), "max:", celsius.max())
+      print("spread:", celsius.std().round(2))
+      change = celsius[1:] - celsius[:-1]
+      print("change from day to day:", change.round(1))
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and len(lines) == 5"
+      - text: "Add 10 to every value of `celsius`, in one line."
+        expr: "err is None and '+ 10' in src or err is None and '+= 10' in src"
+      - text: "Print the sum of all temperatures with `celsius.sum()`."
+        expr: "err is None and 'sum()' in src"
+    investigate:
+      - kind: mcq
+        id: i-change
+        prompt: "What does `celsius[1:] - celsius[:-1]` calculate?"
+        options:
+          - text: "Each day minus the day before it"
+            correct: true
+            why: "`celsius[1:]` starts at Tuesday, `celsius[:-1]` at Monday: the values are taken in pairs."
+          - text: "The first day minus the last day"
+            why: "Both slices have 6 values; numpy subtracts them place by place."
+          - text: "It gives an error: the arrays have different sizes"
+            why: "Both slices have 6 values: 7 minus 1."
+      - kind: mcq
+        id: i-std
+        prompt: "`celsius.std()` gives 2.02, but `statistics.stdev` of the same values gives 2.18. Why?"
+        options:
+          - text: "They use two formulas: numpy divides by n, `stdev` by n - 1"
+            correct: true
+            why: "For many values the two are close. `np.std(a, ddof=1)` gives the same as `stdev`."
+          - text: "numpy is less exact"
+            why: "Both are exact. They answer slightly different questions."
+          - text: "numpy rounds the values"
+            why: "Nothing is rounded: the formulas differ."
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-sale
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Every price at once
+    prompt: |
+      A shop gives 20% off everything. **Complete the program**, with no
+      loop: `sale` holds every price after the discount, and the program
+      prints `sale` and the money saved in total.
+
+      ```text
+      [ 8.  4. 16.  2.]
+      saved: 7.5
+      ```
+    starter: |
+      import numpy as np
+
+      prices = np.array([10.0, 5.0, 20.0, 2.5])
+      sale = ___
+      print(sale)
+      print("saved:", ___)
+    solution: |
+      import numpy as np
+
+      prices = np.array([10.0, 5.0, 20.0, 2.5])
+      sale = prices * 0.8
+      print(sale)
+      print("saved:", prices.sum() - sale.sum())
+    after: >-
+      `prices * 0.8` is one line, for 4 prices or for 4 million. That is why
+      numpy is the base of data and AI work.
+    checks:
+      - expr: "err is None and hasattr(ns.get('sale'), 'tolist') and ns['sale'].tolist() == [8.0, 4.0, 16.0, 2.0]"
+        pass: "`sale` holds every price minus 20%"
+        hint: "`prices * 0.8`: 80% of each price."
+        misconceptions:
+          - when: "err is None and hasattr(ns.get('sale'), 'tolist') and ns['sale'].tolist() == [2.0, 1.0, 4.0, 0.5]"
+            say: "These are the 20% that are taken away. The new price is 80%: `prices * 0.8`."
+      - expr: "err is None and lines[-1:] == ['saved: 7.5']"
+        pass: "It prints the total saved: 7.5"
+        hint: "`prices.sum() - sale.sum()`."
+      - expr: "syntax('For') == 0 and syntax('ListComp') == 0"
+        pass: "No loop: numpy does it"
+        hint: "Calculate with the whole array, not with a loop."
+    hints:
+      - "20% off means: 80% of the price stays."
+      - "`sale = prices * 0.8`."
+      - "Saved: the sum of the old prices minus the sum of the new ones."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: masks
+    type: theory
+    objective: O3
+    title: Pick with a condition
+    body: |
+      A comparison with an array gives an array of `True` and `False`, one
+      for each value:
+
+      ```python
+      temps = np.array([12.5, 21.0, 13.2, 24.8, 18.1])
+      temps > 20                 # array([False,  True, False,  True, False])
+      temps[temps > 20]          # array([21. , 24.8]): only the hot values
+      (temps > 20).sum()         # 2: True counts as 1
+      temps[(temps > 15) & (temps < 22)]   # two conditions: & is "and", | is "or"
+      ```
+
+      With two conditions, use `&` and `|` (not `and` / `or`), and put each
+      condition in brackets.
+
+      **Careful:** a slice of an array is a **view** of the same data, not a
+      copy. `part = temps[0:2]` then `part[0] = 99` changes `temps` too.
+      Use `temps[0:2].copy()` for a separate array.
+    keys:
+      - code: "a[a > 20]"
+        means: "Only the values above 20."
+      - code: "(a > 20).sum()"
+        means: "How many values are above 20."
+      - code: "a[(a > 5) & (a < 9)]"
+        means: "Two conditions: `&`, and brackets."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-hot
+    type: exercise
+    fade: debug
+    objective: O3
+    title: Warm and dry days
+    prompt: |
+      The program should print the temperatures of the days that were
+      **warmer than 15 and dry** (no rain), and how many there were:
+
+      ```text
+      [16.8 18.1]
+      2
+      ```
+
+      **Run it**, read the message, and fix it.
+    starter: |
+      import numpy as np
+
+      temps = np.array([12.5, 14.0, 13.2, 16.8, 18.1, 17.4, 15.0])
+      rain = np.array([0.0, 2.5, 0.4, 0.0, 0.0, 5.1, 1.2])
+      nice = temps > 15 and rain == 0
+      print(temps[nice])
+      print(nice.sum())
+    solution: |
+      import numpy as np
+
+      temps = np.array([12.5, 14.0, 13.2, 16.8, 18.1, 17.4, 15.0])
+      rain = np.array([0.0, 2.5, 0.4, 0.0, 0.0, 5.1, 1.2])
+      nice = (temps > 15) & (rain == 0)
+      print(temps[nice])
+      print(nice.sum())
+    after: >-
+      `and` wants one True or False, but `temps > 15` is seven of them, so
+      numpy refuses: "ambiguous". `&` combines them place by place.
+    checks:
+      - expr: "err is None and lines == ['[16.8 18.1]', '2']"
+        pass: "It prints the two warm, dry days, and 2"
+        hint: "Use `&` between the conditions, with brackets around each one."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "`and` does not work with arrays: the message says the truth value is ambiguous. Use `(temps > 15) & (rain == 0)`."
+          - when: "err is None and lines[:1] == ['[16.8 18.1 17.4]']"
+            say: "17.4 was a rainy day. Both conditions must be true: `&`, not `|`."
+      - expr: "'&' in src"
+        pass: "The conditions are combined with `&`"
+        hint: "`(temps > 15) & (rain == 0)`."
+    hints:
+      - "Read the last line of the message: what is \"ambiguous\"?"
+      - "`and` works for one True or False, not for a whole array."
+      - "`nice = (temps > 15) & (rain == 0)`: brackets around each condition."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: table2d
+    type: theory
+    objective: O4
+    title: A table of numbers
+    body: |
+      An array can have rows and columns: a **2D array**. Here, 3 stations
+      (rows) and 4 days (columns):
+
+      ```python
+      t = np.array([[12, 14, 13, 16],
+                    [ 9, 11, 10, 12],
+                    [15, 17, 16, 19]])
+      t.shape          # (3, 4): 3 rows, 4 columns
+      t[2, 3]          # row 2, column 3: 19
+      t[0]             # the first row: array([12, 14, 13, 16])
+      t[:, 1]          # column 1, of every row: array([14, 11, 17])
+      ```
+
+      `axis` says in which direction to calculate:
+
+      ```python
+      t.mean(axis=1)   # the mean of each row: one per station
+      t.mean(axis=0)   # the mean of each column: one per day
+      t.mean()         # the mean of all 12 values
+      ```
+
+      A way to remember: `axis=0` goes **down** the rows (and leaves one
+      value per column), `axis=1` goes **across** the columns (one value per
+      row).
+    keys:
+      - code: "t[r, c]"
+        means: "Row `r`, column `c`, in one bracket."
+      - code: "t[:, 1]"
+        means: "Column 1, from every row."
+      - code: "t.mean(axis=1)"
+        means: "One value per row."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-stations
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Three stations, one week
+    prompt: |
+      `t` holds the temperatures of 3 stations (rows) on 7 days (columns).
+      **Print, each on its own line:**
+
+      1. the mean of each station, rounded to 1 decimal,
+      2. the warmest temperature of each day,
+      3. how many values in the whole table are above 15.
+
+      ```text
+      [13.9 10.9 17.7]
+      [15 18 17 19 20 18 17]
+      7
+      ```
+    given: |
+      import numpy as np
+
+      t = np.array([[12, 14, 13, 16, 15, 14, 13],
+                    [ 9, 11, 10, 12, 13, 11, 10],
+                    [15, 18, 17, 19, 20, 18, 17]])
+    starter: |
+      # numpy is imported as np, and t exists.
+    solution: |
+      print(t.mean(axis=1).round(1))
+      print(t.max(axis=0))
+      print((t > 15).sum())
+    after: >-
+      Three lines, three questions. Each answer would need a loop in a loop
+      with lists: numpy does the loops for you, in fast code.
+    cases:
+      - {}
+      - label: "another week"
+        setup: |
+          import numpy as np
+
+          t = np.array([[20, 22, 21], [16, 15, 17], [10, 12, 11]])
+    checks:
+      - expr: "err is None and len(lines) == 3 and lines[0] == str(pre['t'].mean(axis=1).round(1))"
+        pass: "The mean of each station"
+        hint: "`t.mean(axis=1)`: one value per row, then `.round(1)`."
+        misconceptions:
+          - when: "err is None and len(lines) >= 1 and lines[0] == str(pre['t'].mean(axis=0).round(1))"
+            say: "These are the means of the days (columns). One per station is `axis=1`."
+      - expr: "err is None and len(lines) == 3 and lines[1] == str(pre['t'].max(axis=0))"
+        pass: "The warmest value of each day"
+        hint: "`t.max(axis=0)`: down the rows, one value per column."
+      - expr: "err is None and len(lines) == 3 and lines[2] == str((pre['t'] > 15).sum())"
+        pass: "How many values are above 15"
+        hint: "`(t > 15).sum()`."
+    hints:
+      - "One value per station: per row, so `axis=1`."
+      - "One value per day: per column, so `axis=0`."
+      - "`print(t.mean(axis=1).round(1))`, `print(t.max(axis=0))`, `print((t > 15).sum())`."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O4
+    title: Check yourself
+    items:
+      - kind: predict
+        id: q-shape
+        objective: O1
+        code: |
+          import numpy as np
+
+          a = np.array([[1, 2, 3], [4, 5, 6]])
+          print(a.shape)
+          print(a.size)
+          print(a[1, 0])
+        explain: "2 rows and 3 columns, 6 values. Row 1, column 0 is 4."
+      - kind: predict
+        id: q-axis
+        objective: O4
+        code: |
+          import numpy as np
+
+          a = np.array([[1, 2, 3], [4, 5, 6]])
+          print(a.sum(axis=0))
+          print(a.sum(axis=1))
+        explain: "`axis=0`: down the rows, one sum per column. `axis=1`: across, one sum per row."
+        misconceptions:
+          - answer: "[ 6 15]\n[5 7 9]"
+            say: "It is the other way round: `axis=0` gives one value per column (`[5 7 9]`)."
+      - kind: predict
+        id: q-view
+        objective: O3
+        code: |
+          import numpy as np
+
+          a = np.array([1, 2, 3, 4])
+          part = a[0:2]
+          part[0] = 99
+          print(a)
+        explain: "A slice of an array is a view of the same data. Use `.copy()` to get a separate array."
+        misconceptions:
+          - answer: "[1 2 3 4]"
+            say: "With a list, a slice is a copy. With numpy it is a view: `a` changes too."
+      - kind: mcq
+        id: q-mask
+        objective: O3
+        prompt: "What does `scores[scores >= 50]` give?"
+        options:
+          - text: "The scores that are 50 or more"
+            correct: true
+            why: "The condition picks the places where it is True."
+          - text: "True or False for each score"
+            why: "That is `scores >= 50` alone."
+          - text: "How many scores are 50 or more"
+            why: "That is `(scores >= 50).sum()`."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-why
+    objective: O1
+    prompt: "Why do data and AI tools use numpy arrays and not lists?"
+    options:
+      - text: "One type and a fixed size make them fast, and you calculate with all values at once"
+        correct: true
+        why: "That is also why `a * 2` multiplies each value."
+      - text: "Arrays can hold texts and numbers mixed"
+        why: "An array holds one type. That is part of its speed."
+      - text: "Lists cannot hold numbers"
+        why: "They can; arrays are faster for many numbers."
+  - kind: mcq
+    id: r-times
+    objective: O2
+    prompt: "`np.array([1, 2]) * 3` gives?"
+    options:
+      - text: "`array([3, 6])`"
+        correct: true
+        why: "Each value times 3."
+      - text: "`[1, 2, 1, 2, 1, 2]`"
+        why: "That is a list times 3."
+      - text: "An error"
+        why: "An array times a number works."
+  - kind: mcq
+    id: r-count
+    objective: O3
+    prompt: "How do you count the values of `a` that are below 0?"
+    options:
+      - text: "`(a < 0).sum()`"
+        correct: true
+        why: "True counts as 1."
+      - text: "`a < 0`"
+        why: "That gives True or False for each value."
+      - text: "`len(a) < 0`"
+        why: "That compares the length."
+  - kind: mcq
+    id: r-and
+    objective: O3
+    prompt: "Which line keeps the values of `a` between 5 and 10?"
+    options:
+      - text: "`a[(a > 5) & (a < 10)]`"
+        correct: true
+        why: "`&` with brackets around each condition."
+      - text: "`a[a > 5 and a < 10]`"
+        why: "`and` does not work with arrays: ValueError."
+      - text: "`a[5:10]`"
+        why: "That is the places 5 to 9, not the values."
+  - kind: mcq
+    id: r-axis1
+    objective: O4
+    prompt: "`t` has one row per student and one column per test. What gives one mean per student?"
+    options:
+      - text: "`t.mean(axis=1)`"
+        correct: true
+        why: "Across the columns: one value per row."
+      - text: "`t.mean(axis=0)`"
+        why: "That is one mean per test (column)."
+      - text: "`t.mean()`"
+        why: "That is one mean of everything."

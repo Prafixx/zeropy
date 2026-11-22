@@ -2,7 +2,7 @@ id: while-loops
 order: 7
 title: while loops
 summary: Repeat a block as long as a condition is true.
-minutes: 25
+minutes: 28
 outcomes: [A1, A2]
 
 objectives:
@@ -417,6 +417,36 @@ steps:
       - "The loop: `while number <= n:`. In the block, add `number` to `total`, then make `number` one bigger."
       - "After the loop, without spaces at the start: `print(total)`."
 
+
+  # 9b. THEORY ----------------------------------------------------------------
+  - id: walrus
+    type: theory
+    objective: O2
+    title: Give a name and test it, in one line
+    body: |
+      You will meet this form in other people's code:
+
+      ```
+      while (answer := input("Your guess: ")) != "stop":
+          print("You said", answer)
+      ```
+
+      `:=` is the **walrus operator** (it looks like the eyes and teeth of
+      a walrus). It gives a value a name **and** gives the value back, so
+      the condition can use it at once. The line above asks, keeps the
+      answer in `answer`, and compares it with `"stop"`, in one step.
+
+      Without it, you need the `input` two times: one before the loop and
+      one at the end of the block. Use `:=` only where it makes the code
+      shorter and still clear. The brackets around it are needed.
+    keys:
+      - code: "(answer := input())"
+        means: "Ask, keep the answer, and use it at once."
+      - code: "while (n := n - 3) > 0:"
+        means: "Change `n`, then compare the new value."
+      - code: "n = n - 3"
+        means: "A normal assignment: it is not a value, so it cannot be in a condition."
+
   # 10. QUIZ -----------------------------------------------------------------
   - id: quiz
     type: quiz
@@ -506,6 +536,20 @@ steps:
             why: "A loop does not need `else`. Without a change in the block it never stops."
           - text: "A condition, a `print`, and an `input`"
             why: "`print` and `input` are useful, but not needed. Without start and change the loop cannot count."
+      - kind: predict
+        id: q-walrus
+        objective: O2
+        code: |
+          n = 10
+          while (n := n - 3) > 0:
+              print(n)
+        explain: >-
+          Each round first makes `n` 3 smaller, then compares the new value:
+          7, 4 and 1 are printed. Then `n` becomes -2, the condition is
+          False, and the loop ends.
+        misconceptions:
+          - answer: "10\n7\n4\n1"
+            say: "The change comes first, in the condition: the first value that is printed is 7."
 
   # 11. REVIEW ---------------------------------------------------------------
   - id: review
@@ -574,3 +618,15 @@ review:
         why: "A comparison uses `==`."
       - text: "It stores 5 in `score`"
         why: "That is `score = 5`. The `+` before the `=` adds to the old value."
+  - kind: mcq
+    id: r-walrus
+    objective: O2
+    prompt: "What does `:=` do in `while (word := input()) != \"end\":`?"
+    options:
+      - text: "It keeps the answer in `word` and gives it to the comparison at once"
+        correct: true
+        why: "The walrus operator gives a name and gives the value back."
+      - text: "It compares `word` with the answer"
+        why: "Comparing is `==` or `!=`. `:=` gives a name."
+      - text: "It is a syntax error"
+        why: "It is allowed since Python 3.8, with the brackets."

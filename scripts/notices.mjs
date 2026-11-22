@@ -108,6 +108,17 @@ section(
   ].join('\n'),
 );
 section(
+  'NumPy, the Pyodide build in public/pyodide (BSD-3-Clause)',
+  [
+    'NumPy is used without changes. The licenses of the parts it bundles',
+    '(for example pocketfft, LAPACK lite and the random generators) are inside',
+    'the wheel file, in numpy-*.dist-info/licenses.',
+    'Source code: https://github.com/numpy/numpy',
+    '',
+    readFileSync(join(root, 'licenses', 'numpy-LICENSE.txt'), 'utf8'),
+  ].join('\n'),
+);
+section(
   'CPython 3.14 standard library and interpreter, inside Pyodide (PSF License)',
   [
     'Python and its standard library include software from other authors.',
@@ -128,4 +139,4 @@ section(
 const text = `${parts.join('\n').replace(/\r\n/g, '\n')}\n`;
 writeFileSync(join(root, 'THIRD-PARTY-NOTICES.txt'), text);
 copyFileSync(join(root, 'THIRD-PARTY-NOTICES.txt'), join(root, 'public', 'THIRD-PARTY-NOTICES.txt'));
-console.log(`[notices] ${found.size + 4} parts written to THIRD-PARTY-NOTICES.txt`);
+console.log(`[notices] ${found.size + 5} parts written to THIRD-PARTY-NOTICES.txt`);

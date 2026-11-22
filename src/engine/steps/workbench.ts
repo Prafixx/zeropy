@@ -3,7 +3,8 @@ import type { CodeEditor } from '@/editor/editor';
 import { place } from '@/kit/motion';
 import { explainError } from '@/py/errors';
 import { guiEvent, onPyStatus } from '@/py/runner';
-import type { GuiEvent, GuiTree, PyError, RunResult } from '../types';
+import type { ChartFigure, GuiEvent, GuiTree, PyError, RunResult } from '../types';
+import { drawChart } from './chart';
 import { createGuiWindow } from './gui-window';
 import type { GuiWindow } from './gui-window';
 import { button, h, icon } from '../ui';
@@ -23,6 +24,8 @@ export interface Workbench {
   setOutput(text: string): void;
   /** Shows the window of a tkinter program; its clicks run the program's code. */
   setWindow(tree?: GuiTree | null): void;
+  /** Shows the charts of a program that used matplotlib.pyplot. */
+  setCharts(figures?: ChartFigure[] | null): void;
   /** Shows the files in the folder after a run (or the starting files). */
   setFiles(files?: Record<string, string>): void;
   showError(error: PyError | null): void;
@@ -68,6 +71,7 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
   const errorSlot = h('div', { class: 'bench-error', 'aria-live': 'polite' });
   const filesSlot = h('div', { class: 'bench-files-slot', 'aria-live': 'polite' });
   const windowSlot = h('div', { class: 'bench-window-slot' });
+  const chartsSlot = h('div', { class: 'bench-charts', 'aria-live': 'polite' });
   let gui: GuiWindow | null = null;
   let printed = '';
   const frame = h(
@@ -81,6 +85,7 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     { class: `bench${options.sealed ? ' is-sealed' : ''}${options.tall ? ' is-tall' : ''}` },
     frame,
     windowSlot,
+    chartsSlot,
     h('div', { class: 'bench-out' }, h('div', { class: 'out-label' }, 'Output'), out, inputSlot),
     filesSlot,
     errorSlot,
@@ -204,6 +209,11 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     gui.update(tree, true);
   }
 
+  function setCharts(figures?: ChartFigure[] | null): void {
+    chartsSlot.replaceChildren(...(figures ?? []).map((fig) => drawChart(fig)));
+    if (figures?.length) place(chartsSlot.children);
+  }
+
   async function onGuiEvent(event: GuiEvent): Promise<void> {
     if (busy || disposed) return;
     const result = await guiEvent(event);
@@ -268,6 +278,7 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     interact,
     setOutput,
     setWindow,
+    setCharts,
     setFiles,
     showError,
     getCode,

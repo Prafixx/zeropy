@@ -1,0 +1,513 @@
+id: pi-motors
+order: 206
+title: Motors and a robot
+summary: Drive a motor at any speed and in both directions, steer a robot with two wheels, and stop it before a wall.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Explain why a motor needs a motor controller and its own batteries
+  - id: O2
+    text: Drive a motor forward, backward and at a speed with Motor
+  - id: O3
+    text: Steer a robot with two wheels - forward, backward, left, right
+  - id: O4
+    text: Make a robot react to a sensor, in a loop
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: controller
+    type: theory
+    objective: O1
+    title: A motor needs help
+    body: |
+      A GPIO pin gives only a few milliamps. A small motor needs hundreds,
+      and when it starts or stops it sends spikes of voltage back. Connected
+      straight to a pin, it would not turn, or it would damage the Pi.
+
+      So a motor gets two helpers:
+
+      - A **motor controller** board (an **H-bridge**). The Pi sends it small
+        signals; the board switches the big current for the motor, in both
+        directions. Most boards also have diodes against the spikes.
+      - Its **own batteries**, connected to the board: red to `+`, black to
+        `-`. Never power a motor from the pins of the Pi.
+
+      Put the board on the Pi only when the Pi is **turned off**.
+
+      In gpiozero, a motor has two pins on the controller: one for
+      **forward**, one for **backward**:
+
+      ```python
+      from gpiozero import Motor
+      motor = Motor(forward=4, backward=14)
+      motor.forward()          # full speed
+      motor.forward(0.5)       # half speed
+      motor.backward()
+      motor.reverse()          # the other direction, same speed
+      motor.stop()
+      ```
+
+      `motor.value` goes from **-1** (full backward) through 0 (stopped) to
+      **1** (full forward).
+    keys:
+      - code: "Motor(4, 14)"
+        means: "A motor on the controller: the pins for forward and backward."
+      - code: "motor.forward(0.5)"
+        means: "Half speed. Speeds go from 0 to 1."
+      - code: "motor.value"
+        means: "-1 backward, 0 stopped, 1 forward."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: drive
+    type: demo
+    objective: O2
+    title: One motor
+    visual: board
+    intro: |
+      Press **Run** and watch the wheel: its speed and its direction.
+    code: |
+      from gpiozero import Motor
+      from time import sleep
+
+      motor = Motor(forward=4, backward=14)
+      motor.forward()
+      sleep(2)
+      motor.forward(0.5)
+      sleep(2)
+      motor.backward()
+      sleep(1)
+      motor.stop()
+      print(motor.value)
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and at(4, 1) == 1"
+      - text: "Make the slow part slower: `motor.forward(0.2)`."
+        expr: "err is None and at(4, 3) == 0.2"
+      - text: "Replace `motor.backward()` with `motor.reverse()`. What speed does it have now?"
+        expr: "err is None and called('reverse')"
+    investigate:
+      - kind: mcq
+        id: i-too-fast
+        prompt: "Line 9 becomes `motor.forward(2)`. What happens?"
+        options:
+          - text: "A `ValueError`: the speed must be between 0 and 1"
+            correct: true
+            why: "1 is full speed. gpiozero refuses more."
+          - text: "The motor turns twice as fast"
+            why: "1 is already the fastest: the controller gives the full voltage."
+          - text: "The motor turns backward"
+            why: "Backward is `backward()`, or a negative value."
+      - kind: mcq
+        id: i-reverse
+        prompt: "The motor runs `forward(0.5)`. Then `motor.reverse()`. What is `motor.value` now?"
+        options:
+          - text: "-0.5"
+            correct: true
+            why: "`reverse()` keeps the speed and changes the direction."
+          - text: "-1"
+            why: "The speed stays 0.5. Only the direction changes."
+          - text: "0"
+            why: "`reverse()` does not stop the motor."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-fan
+    type: exercise
+    fade: completion
+    objective: O2
+    board: true
+    title: A slow fan
+    prompt: |
+      **Complete the program for a fan** on `Motor(forward=4, backward=14)`:
+
+      1. forward at **0.3** for 3 seconds,
+      2. forward at **full speed** for 2 seconds,
+      3. stop.
+    starter: |
+      from gpiozero import Motor
+      from time import sleep
+
+      fan = Motor(forward=4, backward=14)
+      fan.forward(___)
+      sleep(3)
+      fan.___()
+      sleep(2)
+      fan.___()
+    solution: |
+      from gpiozero import Motor
+      from time import sleep
+
+      fan = Motor(forward=4, backward=14)
+      fan.forward(0.3)
+      sleep(3)
+      fan.forward()
+      sleep(2)
+      fan.stop()
+    after: >-
+      A fan, a pump, a car: the same few lines. On a real Pi, a motor also
+      stops when the program ends, because gpiozero turns its pins off.
+    checks:
+      - expr: "err is None and at(4, 1.5) == 0.3"
+        pass: "First it runs at 0.3"
+        hint: "`fan.forward(0.3)`."
+      - expr: "err is None and at(4, 4) == 1"
+        pass: "Then at full speed"
+        hint: "`fan.forward()` alone is full speed."
+      - expr: "err is None and at(4, 5.01) == 0 and end_time >= 5"
+        pass: "After 5 seconds it stops"
+        hint: "`fan.stop()` at the end."
+    hints:
+      - "The first `___` is a speed between 0 and 1."
+      - "Full speed is `forward()` with nothing in the brackets."
+      - "The last line: `fan.stop()`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: robot
+    type: theory
+    objective: O3
+    title: Two wheels make a robot
+    body: |
+      A simple robot has a motor on the left and one on the right, and a
+      small free wheel at the front. It steers by turning its wheels at
+      different speeds, like a tank.
+
+      ```python
+      from gpiozero import Robot, Motor
+      robot = Robot(left=Motor(4, 14), right=Motor(17, 18))
+      robot.forward()          # both wheels forward
+      robot.backward()
+      robot.left()             # turn on the spot: left wheel back, right wheel forward
+      robot.right()
+      robot.forward(0.8, curve_left=0.5)   # a curve to the left
+      robot.stop()
+      ```
+
+      `robot.value` holds the two speeds: `(left, right)`.
+
+      **How far** a robot drives in a second depends on its motors, its
+      wheels and the floor. On a real robot you test, and then change the
+      times. On the board, a full-speed robot drives 40 cm a second, and
+      `left()` or `right()` turns it by 90° in half a second.
+    keys:
+      - code: "Robot(left=..., right=...)"
+        means: "Two motors make a robot: `left=Motor(4, 14), right=Motor(17, 18)`."
+      - code: "robot.right()"
+        means: "Turn right, on the spot."
+      - code: "robot.value"
+        means: "(left speed, right speed)."
+
+  # 5. DEMO -----------------------------------------------------------------
+  - id: square
+    type: demo
+    objective: O3
+    title: Drive a square
+    visual: board
+    intro: |
+      Press **Run**. Watch the robot from above, on its floor, and the line
+      it draws.
+    code: |
+      from gpiozero import Robot, Motor
+      from time import sleep
+
+      robot = Robot(left=Motor(4, 14), right=Motor(17, 18))
+
+      for side in range(4):
+          robot.forward()
+          sleep(1)
+          robot.right()
+          sleep(0.5)
+      robot.stop()
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and robot_at(0.5) == (1, 1)"
+      - text: "Make it turn left instead."
+        expr: "err is None and called('left')"
+      - text: "Drive a triangle: three sides, and turns of 120° (one third of a full turn takes about 0.67 s)."
+        expr: "err is None and 'range(3)' in src"
+    investigate:
+      - kind: spot
+        id: i-turn
+        prompt: "Which line turns the robot?"
+        code: |
+          from gpiozero import Robot, Motor
+          from time import sleep
+
+          robot = Robot(left=Motor(4, 14), right=Motor(17, 18))
+
+          for side in range(4):
+              robot.forward()
+              sleep(1)
+              robot.right()
+              sleep(0.5)
+          robot.stop()
+        line: 9
+        wrong:
+          - line: 10
+            say: "This line decides how long the turn lasts. The turn starts on the line before."
+          - line: 7
+            say: "This line drives straight ahead."
+        explain: >-
+          `robot.right()` turns the left wheel forward and the right wheel
+          backward, so the robot turns on the spot. `sleep(0.5)` decides how
+          far.
+      - kind: mcq
+        id: i-left
+        prompt: "What do the wheels do during `robot.left()`?"
+        options:
+          - text: "The left wheel turns backward, the right wheel forward"
+            correct: true
+            why: "So the robot turns on the spot, to the left."
+          - text: "Only the left wheel turns"
+            why: "Both turn, in opposite directions."
+          - text: "Both turn backward"
+            why: "That is `robot.backward()`."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-still
+    type: exercise
+    fade: debug
+    objective: O3
+    board: true
+    title: A robot that does not move
+    prompt: |
+      The robot should drive forward for **2 seconds**, then stop.
+
+      **Run it.** The robot does not move at all, and there is no error.
+      Find out why, and fix it.
+    starter: |
+      from gpiozero import Robot, Motor
+      from time import sleep
+
+      robot = Robot(left=Motor(4, 14), right=Motor(17, 18))
+      robot.forward()
+      robot.stop()
+    solution: |
+      from gpiozero import Robot, Motor
+      from time import sleep
+
+      robot = Robot(left=Motor(4, 14), right=Motor(17, 18))
+      robot.forward()
+      sleep(2)
+      robot.stop()
+    after: >-
+      `forward()` only starts the wheels, and returns at once. The next line
+      stopped them a moment later. The `sleep` between them is the time it
+      drives.
+    checks:
+      - expr: "err is None and robot_at(1) == (1, 1)"
+        pass: "The robot drives forward"
+        hint: "Between `forward()` and `stop()`, the program must wait."
+        misconceptions:
+          - when: "err is None and robot_at(1) == (0, 0)"
+            say: "`forward()` returns at once, and `stop()` comes right after it. Wait with `sleep(2)` in between."
+      - expr: "err is None and robot_at(2.01) == (0, 0) and robot_at(1.9) == (1, 1)"
+        pass: "It stops after 2 seconds"
+        hint: "`sleep(2)`, then `robot.stop()`."
+    hints:
+      - "How long does `robot.forward()` take?"
+      - "It takes no time: it starts the motors, and the program goes on at once."
+      - "Add `sleep(2)` between `robot.forward()` and `robot.stop()`."
+
+  # 7. EXERCISE: independent -------------------------------------------------
+  - id: ex-wall
+    type: exercise
+    fade: independent
+    objective: O4
+    board: true
+    title: Do not hit the wall
+    prompt: |
+      The robot has a distance sensor at the front (`echo=24`,
+      `trigger=23`). **Write a loop that never ends.** Every 0.05 s:
+
+      - closer than **0.2 m**: drive **backward for 0.5 s**, then turn
+        **right for 0.5 s**,
+      - else: drive **forward**.
+
+      Test it with the distance slider: move it below 20 cm while the robot
+      drives.
+    starter: |
+      from gpiozero import Robot, Motor, DistanceSensor
+      from time import sleep
+
+      robot = Robot(left=Motor(4, 14), right=Motor(17, 18))
+      sensor = DistanceSensor(echo=24, trigger=23)
+
+      # Write the loop here.
+    solution: |
+      from gpiozero import Robot, Motor, DistanceSensor
+      from time import sleep
+
+      robot = Robot(left=Motor(4, 14), right=Motor(17, 18))
+      sensor = DistanceSensor(echo=24, trigger=23)
+
+      while True:
+          if sensor.distance < 0.2:
+              robot.backward()
+              sleep(0.5)
+              robot.right()
+              sleep(0.5)
+          else:
+              robot.forward()
+          sleep(0.05)
+    after: >-
+      This is how many real robots move around a room: forward until
+      something is close, then back up and turn. The rest is choosing good
+      numbers, by testing.
+    cases:
+      - {}
+      - label: "a wall at 2 s; after the turn the way is free"
+        gpio: { events: [{ at: 2, echo: 24, distance: 0.15 }, { at: 2.3, echo: 24, distance: 0.8 }] }
+    checks:
+      - expr: "err is None and robot_at(0.5) == (1, 1)"
+        pass: "It drives forward when the way is free"
+        hint: "`else: robot.forward()`."
+      - expr: "err is None and all(robot_at(t + 0.3) == (-1, -1) for t, d in history(24) if d < 0.2 and t > 0)"
+        pass: "Close to a wall, it drives backward"
+        hint: "`if sensor.distance < 0.2:` then `robot.backward()` and `sleep(0.5)`."
+      - expr: "err is None and all(robot_at(t + 0.8) == (1, -1) for t, d in history(24) if d < 0.2 and t > 0)"
+        pass: "Then it turns right"
+        hint: "After the backward part: `robot.right()` and `sleep(0.5)`."
+      - expr: "err is None and ended == 'cap' and syntax('While') >= 1"
+        pass: "The loop runs on and on"
+        hint: "`while True:`, with `sleep(0.05)` at the end."
+    hints:
+      - "`while True:`, and inside it `if sensor.distance < 0.2:` ... `else:` ..."
+      - "In the `if`: `robot.backward()`, `sleep(0.5)`, `robot.right()`, `sleep(0.5)`."
+      - "In the `else`: `robot.forward()`. After the `if`: `sleep(0.05)`."
+
+  # 8. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-direct
+        objective: O1
+        prompt: "Why not connect a motor straight to a GPIO pin?"
+        options:
+          - text: "A pin gives far too little current, and the motor's spikes can damage the Pi"
+            correct: true
+            why: "A motor controller and batteries do the heavy work."
+          - text: "Motors only work with 12 V"
+            why: "Many small motors run on 3 to 6 V. The problem is the current."
+          - text: "There is no reason"
+            why: "It can break the Pi."
+      - kind: mcq
+        id: q-batteries
+        objective: O1
+        prompt: "Where does the power for the motors come from?"
+        options:
+          - text: "From batteries connected to the motor controller"
+            correct: true
+            why: "The Pi sends only the signals."
+          - text: "From the 5V pin of the Pi"
+            why: "The motors would take too much: the Pi could restart."
+          - text: "From the GPIO pins"
+            why: "They give only a few milliamps."
+      - kind: mcq
+        id: q-value
+        objective: O2
+        prompt: "`motor.value` is `-0.5`. What does the motor do?"
+        options:
+          - text: "It turns backward at half speed"
+            correct: true
+            why: "The sign is the direction, the number the speed."
+          - text: "It is stopped"
+            why: "Stopped is 0."
+          - text: "It turns forward at half speed"
+            why: "Forward is a positive value."
+      - kind: mcq
+        id: q-spin
+        objective: O3
+        prompt: "How does a robot with two wheels turn on the spot?"
+        options:
+          - text: "One wheel turns forward, the other backward"
+            correct: true
+            why: "That is `robot.left()` or `robot.right()`."
+          - text: "Both wheels turn forward fast"
+            why: "That drives straight ahead."
+          - text: "It needs a third motor for steering"
+            why: "Two wheels at different speeds are enough."
+      - kind: mcq
+        id: q-times
+        objective: O3
+        prompt: "On your real robot, `right()` with `sleep(0.5)` turns only 60°, not 90°. What do you do?"
+        options:
+          - text: "Test a longer time, like `sleep(0.75)`, until it fits"
+            correct: true
+            why: "Each robot is different: wheels, motors, batteries, floor. Test and adjust."
+          - text: "Nothing: 0.5 s is always 90°"
+            why: "That is only true on the board. Real robots differ."
+          - text: "Use `forward()` instead"
+            why: "That drives straight. The turn needs more time."
+
+  # 9. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-hbridge
+    objective: O1
+    prompt: "What does an H-bridge on a motor controller do?"
+    options:
+      - text: "It switches the big current of the motor, in both directions"
+        correct: true
+        why: "The Pi gives small signals; the H-bridge does the heavy work."
+      - text: "It makes the Pi faster"
+        why: "It drives motors."
+      - text: "It measures the speed"
+        why: "It switches power. It does not measure."
+  - kind: mcq
+    id: r-half
+    objective: O2
+    prompt: "Which line drives a motor forward at half speed?"
+    options:
+      - text: "`motor.forward(0.5)`"
+        correct: true
+        why: "Speeds go from 0 to 1."
+      - text: "`motor.forward(50)`"
+        why: "50 is too big: a `ValueError`."
+      - text: "`motor.value = 50`"
+        why: "The value goes from -1 to 1."
+  - kind: mcq
+    id: r-reverse
+    objective: O2
+    prompt: "What does `motor.reverse()` do?"
+    options:
+      - text: "It changes the direction, and keeps the speed"
+        correct: true
+        why: "0.3 forward becomes 0.3 backward."
+      - text: "It stops the motor"
+        why: "That is `stop()`."
+      - text: "It drives backward at full speed"
+        why: "That is `backward()`."
+  - kind: mcq
+    id: r-sleep
+    objective: O3
+    prompt: "`robot.forward()` then `robot.stop()` on the next line. What happens?"
+    options:
+      - text: "Almost nothing: it stops at once"
+        correct: true
+        why: "`forward()` returns at once. A `sleep` in between sets how long it drives."
+      - text: "It drives forward for one second"
+        why: "There is no pause, so it does not drive at all."
+      - text: "An error"
+        why: "It is allowed, it is just too short."
+  - kind: mcq
+    id: r-robot-value
+    objective: O3
+    prompt: "`robot.value` is `(1, -1)`. What does the robot do?"
+    options:
+      - text: "It turns right on the spot"
+        correct: true
+        why: "Left wheel forward, right wheel backward."
+      - text: "It drives forward"
+        why: "Forward is `(1, 1)`."
+      - text: "It turns left on the spot"
+        why: "Left is `(-1, 1)`."

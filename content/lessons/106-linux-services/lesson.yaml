@@ -1,0 +1,536 @@
+id: linux-services
+order: 106
+title: "Processes, services and logs"
+summary: See what runs, stop a program that hangs, check memory and disk, and make your own Python program start at boot.
+minutes: 45
+outcomes: []
+
+objectives:
+  - id: O1
+    text: See which programs run with ps aux and top, and stop one with kill
+  - id: O2
+    text: Read the memory, the disk space and the load with free -h, df -h and uptime
+  - id: O3
+    text: Start, stop and enable a service with systemctl, and read its log with journalctl
+  - id: O4
+    text: Make your own Python program start by itself at boot, with a service file
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: procs
+    type: theory
+    objective: O1
+    title: Processes
+    body: |
+      A program that runs is a **process**. Each one has a number, its
+      **PID** (process ID). Many run at the same time, also when you see
+      nothing.
+
+      `ps aux` lists them all, one per line:
+
+      ```text
+      USER     PID %CPU %MEM ... COMMAND
+      root     412  0.0  0.3 ... /usr/sbin/cron -f
+      pi      1432 97.9  1.2 ... python3 counter.py
+      ```
+
+      `%CPU` is how much of the processor it uses, `%MEM` how much memory.
+      `top` shows the busiest ones first.
+
+      ## Stop a process
+
+      - `kill 1432` asks process 1432 to stop. Most programs stop at once.
+      - `kill -9 1432` stops it by force. Use it only when `kill` did not
+        work: the program has no time to save its work.
+      - You may stop your own processes. Processes of `root` need `sudo`,
+        and most of them must not be stopped.
+
+      A program that runs in your own terminal stops with **Ctrl+C**.
+    keys:
+      - code: "ps aux"
+        means: "Every process, with PID, user, CPU and memory."
+      - code: "ps aux | grep python"
+        means: "Only the lines with `python`."
+      - code: "kill PID"
+        means: "Ask the process to stop."
+      - code: "kill -9 PID"
+        means: "Stop it by force: the last resort."
+
+  # 2. TERMINAL --------------------------------------------------------------
+  - id: runaway
+    type: terminal
+    objective: O1
+    title: A program that eats the processor
+    prompt: |
+      The Pi is slow. Someone started a Python program and forgot it.
+
+      1. Find the process that uses most of the CPU, with `ps aux` or `top`.
+      2. Stop it with `kill` and its PID.
+      3. Check with `ps aux` that it is gone.
+
+      Leave the processes of `root` alone.
+    start:
+      procs:
+        - { pid: 1432, user: pi, cpu: 97.9, mem: 1.2, cmd: "python3 counter.py" }
+        - { pid: 1450, user: pi, cpu: 0.1, mem: 0.8, cmd: "python3 weather.py" }
+    checks:
+      - expr: "ran('ps') or ran('top')"
+        pass: "You looked at the processes"
+        hint: "`ps aux` lists every process."
+      - expr: "not any('counter.py' in p for p in procs)"
+        pass: "The busy program is stopped"
+        hint: "Its PID is in the second column of `ps aux`. Then `kill` and that number."
+      - expr: "any('weather.py' in p for p in procs) and any('cron' in p for p in procs) and service('bluetooth')['active']"
+        pass: "The other programs still run"
+        hint: "Stop only the program with the high `%CPU`."
+    hints:
+      - "`ps aux`, and look at the `%CPU` column. Or `top`: the busiest process is first."
+      - "The line with 97.9 in `%CPU` is `python3 counter.py`. Its PID is 1432."
+      - "`kill 1432`, then `ps aux` again."
+    solution: ["ps aux", "kill 1432", "ps aux"]
+    after: >-
+      On a real Pi, a program like this often has a loop that never ends.
+      Stop it, then fix the loop. `ps aux | grep python` finds your Python
+      programs faster.
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: health
+    type: theory
+    objective: O2
+    title: Memory, disk and load
+    body: |
+      Three short commands tell you how the computer is:
+
+      ```text
+      $ free -h
+                     total        used        free      shared  buff/cache   available
+      Mem:           3.7Gi       431Mi       2.8Gi        12Mi       431Mi       3.3Gi
+
+      $ df -h
+      Filesystem      Size  Used Avail Use% Mounted on
+      /dev/mmcblk0p2   29G  5.1G   23G  19% /
+
+      $ uptime
+       10:00:00 up 2:14,  1 user,  load average: 0.08, 0.10, 0.09
+      ```
+
+      - `free -h`: the memory (RAM). Read **available**: what programs can
+        still use. `-h` means "for humans": Gi and Mi instead of long
+        numbers.
+      - `df -h`: the disks. On a Pi, `/` is the SD card. When `Use%` is near
+        100%, programs cannot save files any more.
+      - `uptime`: how long the Pi has run, and the **load**: how many
+        programs wanted the processor, over the last 1, 5 and 15 minutes. A
+        Pi 4 has 4 cores, so a load under 4 is fine.
+    keys:
+      - code: "free -h"
+        means: "Memory: look at `available`."
+      - code: "df -h"
+        means: "Disk space: look at `Use%` of `/`."
+      - code: "uptime"
+        means: "Time since the start, and the load."
+
+  # 4. DRILL -----------------------------------------------------------------
+  - id: read-health
+    type: drill
+    objective: O2
+    title: Read the numbers
+    items:
+      - kind: mcq
+        id: d-avail
+        objective: O2
+        code: |2
+                         total        used        free      shared  buff/cache   available
+          Mem:           3.7Gi       3.1Gi       150Mi        12Mi       450Mi       410Mi
+        prompt: "How much memory can new programs still use?"
+        options:
+          - text: "About 410 MB (`available`)"
+            correct: true
+            why: "`available` counts the free memory and the cache that can be given back."
+          - text: "About 150 MB (`free`)"
+            why: "`free` is too small: the cache (`buff/cache`) can be given back too. Read `available`."
+          - text: "3.7 GB (`total`)"
+            why: "That is all the memory, also the part in use."
+      - kind: mcq
+        id: d-disk
+        objective: O2
+        code: |
+          Filesystem      Size  Used Avail Use% Mounted on
+          /dev/mmcblk0p2   29G   28G  520M  98% /
+        prompt: "A program on this Pi cannot save its log any more. Why?"
+        options:
+          - text: "The SD card (`/`) is 98% full"
+            correct: true
+            why: "Only 520 MB are left. Delete old files, for example big logs."
+          - text: "The memory is full"
+            why: "This is `df`: it shows the disk, not the memory."
+          - text: "The program needs `sudo`"
+            why: "The numbers show a full disk. That is the first thing to fix."
+      - kind: mcq
+        id: d-load
+        objective: O2
+        prompt: "`uptime` on a Pi 4 (4 cores) says `load average: 3.98, 3.95, 3.60`. What does it mean?"
+        options:
+          - text: "The processor has been fully busy for the last 15 minutes"
+            correct: true
+            why: "About 4 programs wanted the processor all the time: one for each core. Look at `top`."
+          - text: "The Pi has run for 3.98 hours"
+            why: "The time is before the load: `up 2:14` means 2 hours 14 minutes."
+          - text: "4 users are logged in"
+            why: "The number of users is before `load average`."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: services
+    type: theory
+    objective: O3
+    title: Services and the journal
+    body: |
+      A **service** is a program that runs in the background, without a
+      terminal: the SSH server, the clock, a web server. A program called
+      **systemd** starts the services, watches them and keeps their log.
+
+      ```text
+      systemctl status ssh           is it running? and its last log lines
+      sudo systemctl start ssh       start it now
+      sudo systemctl stop ssh        stop it
+      sudo systemctl restart ssh     stop and start (after a change)
+      sudo systemctl enable ssh      start it at every boot
+      sudo systemctl disable ssh     not at boot any more
+      ```
+
+      `enable --now` does both: enable, and start now. Changes need `sudo`.
+      In `status`, `●` means running, `○` stopped, `×` failed.
+
+      ## The journal
+
+      systemd keeps the messages of every service in the **journal**:
+
+      ```text
+      journalctl -u ssh              the log of one service
+      journalctl -n 20               the last 20 lines of everything
+      journalctl -p err              only errors
+      journalctl -b                  only since the last boot
+      ```
+    keys:
+      - code: "systemctl status NAME"
+        means: "Running or not, and the last log lines."
+      - code: "enable --now NAME"
+        means: "With `sudo systemctl`: start it now and at every boot."
+      - code: "journalctl -u NAME"
+        means: "The log of one service."
+
+  # 6. TERMINAL --------------------------------------------------------------
+  - id: ssh
+    type: terminal
+    objective: O3
+    title: Turn on SSH
+    prompt: |
+      With **SSH** you can work on the Pi from another computer, without a
+      screen or a keyboard on the Pi. On a new Pi, SSH is off.
+
+      1. Look at the status of the service `ssh`.
+      2. Turn it on **now and at every boot**.
+      3. Check its status again, and read its log with `journalctl`.
+    checks:
+      - expr: "service('ssh')['active']"
+        pass: "`ssh` runs"
+        hint: "`sudo systemctl start ssh`, or `enable --now`."
+      - expr: "service('ssh')['enabled']"
+        pass: "`ssh` starts at every boot"
+        hint: "`sudo systemctl enable ssh`."
+      - expr: "ran('journalctl') and any('-u' in h and 'ssh' in h for h in history if 'journalctl' in h)"
+        pass: "You read the log of `ssh`"
+        hint: "`journalctl -u ssh`."
+    hints:
+      - "`systemctl status ssh` says `inactive (dead)` and `disabled`."
+      - "`sudo systemctl enable --now ssh` does both at once. Without `sudo`, it asks for authentication."
+      - "Then `journalctl -u ssh`: look for `Server listening on 0.0.0.0 port 22`."
+    solution: ["systemctl status ssh", "sudo systemctl enable --now ssh", "journalctl -u ssh"]
+    after: >-
+      `port 22` is the door that SSH listens on. From another computer, you
+      would now type `ssh pi@raspberrypi.local`. SSH is open to everyone in
+      your network, so give the Pi a strong password.
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: unit
+    type: theory
+    objective: O4
+    title: Your program as a service
+    body: |
+      A Pi in a box has no one to type `python3 logger.py`. A service file
+      makes systemd start it at boot, and start it again if it stops.
+
+      Service files are in `/etc/systemd/system/`, so they need
+      `sudo nano`:
+
+      ```text
+      [Unit]
+      Description=Weather logger
+
+      [Service]
+      ExecStart=/usr/bin/python3 -u /home/pi/logger.py
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+      ```
+
+      - `ExecStart` is the command. Write **full paths**: a service does
+        not start in your home directory.
+      - `-u` makes Python write each `print` at once. Without it, the prints
+        of a program that runs for a long time stay in a buffer and do not
+        reach the journal.
+      - `Restart=always` starts it again if it stops.
+      - `WantedBy=multi-user.target` is what `enable` needs: "start this at
+        a normal boot".
+
+      After you change a service file, run `sudo systemctl daemon-reload`,
+      so systemd reads it again.
+    keys:
+      - code: "/etc/systemd/system/"
+        means: "The place of service files. Write them with `sudo nano`."
+      - code: "ExecStart="
+        means: "The command, with full paths: `/usr/bin/python3 -u /home/pi/app.py`."
+      - code: "systemctl daemon-reload"
+        means: "With `sudo`: read the service files again, after a change."
+
+  # 8. TERMINAL --------------------------------------------------------------
+  - id: logger
+    type: terminal
+    objective: O4
+    title: Start the logger at boot
+    prompt: |
+      `logger.py` reads the temperature once a minute and prints it. It
+      should run on this Pi all the time, also after a power cut.
+
+      1. Write the service file `/etc/systemd/system/logger.service`, like
+         the one before, with `sudo nano`.
+      2. Start it now and at every boot.
+      3. Read its log: the temperatures must be there.
+      4. Restart the Pi with `sudo reboot`, and check that it runs again.
+    start:
+      files:
+        logger.py: |
+          import time
+
+          while True:
+              print("temperature 21.5")
+              time.sleep(60)
+    checks:
+      - expr: "'/home/pi/logger.py' in (read('/etc/systemd/system/logger.service') or '')"
+        pass: "`logger.service` runs `/home/pi/logger.py`"
+        hint: "`sudo nano /etc/systemd/system/logger.service`. `ExecStart=` needs the full path of the program."
+      - expr: "service('logger')['active'] and service('logger')['enabled']"
+        pass: "`logger` runs, and starts at every boot"
+        hint: "`sudo systemctl enable --now logger`."
+      - expr: "any('temperature' in line for line in journal('logger'))"
+        pass: "The temperatures are in the journal"
+        hint: "No temperatures? Add `-u` after `python3` in `ExecStart`, then `sudo systemctl daemon-reload` and `sudo systemctl restart logger`."
+      - expr: "boots >= 2 and service('logger')['active']"
+        pass: "After a restart of the Pi, it runs again"
+        hint: "`sudo reboot`, then `systemctl status logger`."
+    hints:
+      - "The file has three parts: `[Unit]` with `Description=`, `[Service]` with `ExecStart=`, `[Install]` with `WantedBy=multi-user.target`."
+      - "`ExecStart=/usr/bin/python3 -u /home/pi/logger.py`. Save with the button; nano must run with `sudo`."
+      - "`sudo systemctl enable --now logger`, `journalctl -u logger`, `sudo reboot`, `systemctl status logger`."
+    solution:
+      - "printf '[Unit]\\nDescription=Weather logger\\n\\n[Service]\\nExecStart=/usr/bin/python3 -u /home/pi/logger.py\\nRestart=always\\n\\n[Install]\\nWantedBy=multi-user.target\\n' | sudo tee /etc/systemd/system/logger.service"
+      - "sudo systemctl enable --now logger"
+      - "journalctl -u logger"
+      - "sudo reboot"
+      - "systemctl status logger"
+    after: >-
+      This is how a Pi in a box works: power on, and the program runs. The
+      journal keeps what it printed, so you can read it later over SSH.
+
+  # 9. TERMINAL --------------------------------------------------------------
+  - id: broken
+    type: terminal
+    objective: O4
+    title: A service that fails
+    prompt: |
+      `blink.service` should blink an LED from the moment the Pi starts. It
+      does not.
+
+      **Find out why** with `systemctl status blink` and
+      `journalctl -u blink`. Fix the service file, tell systemd to read it
+      again, and restart the service.
+    start:
+      files:
+        blink.py: |
+          from gpiozero import LED
+          from signal import pause
+
+          led = LED(17)
+          led.blink()
+          pause()
+        /etc/systemd/system/blink.service: |
+          [Unit]
+          Description=Blink the LED
+
+          [Service]
+          ExecStart=/usr/bin/python3 blink.py
+
+          [Install]
+          WantedBy=multi-user.target
+      setup: ["systemctl enable --now blink"]
+    checks:
+      - expr: "ran('systemctl') and (ran('journalctl') or any('status' in h for h in history))"
+        pass: "You read the status or the log"
+        hint: "`systemctl status blink`: read the last lines."
+      - expr: "'/home/pi/blink.py' in (read('/etc/systemd/system/blink.service') or '')"
+        pass: "The service file has the full path of `blink.py`"
+        hint: "The log says `can't open file '/blink.py'`: a service starts in `/`, not in your home directory."
+      - expr: "service('blink')['active']"
+        pass: "`blink` runs"
+        hint: "After the fix: `sudo systemctl daemon-reload`, then `sudo systemctl restart blink`."
+    hints:
+      - "`systemctl status blink` shows `failed`, and the log line `can't open file '/blink.py'`."
+      - "`sudo nano /etc/systemd/system/blink.service`, and change the line to `ExecStart=/usr/bin/python3 /home/pi/blink.py`."
+      - "`sudo systemctl daemon-reload`, then `sudo systemctl restart blink`, then `systemctl status blink`."
+    solution:
+      - "systemctl status blink"
+      - "printf '[Unit]\\nDescription=Blink the LED\\n\\n[Service]\\nExecStart=/usr/bin/python3 /home/pi/blink.py\\n\\n[Install]\\nWantedBy=multi-user.target\\n' | sudo tee /etc/systemd/system/blink.service"
+      - "sudo systemctl daemon-reload"
+      - "sudo systemctl restart blink"
+      - "systemctl status blink"
+    after: >-
+      `status` and `journalctl -u` are where every service problem starts.
+      The most common causes: a path that is not complete, a typing mistake
+      in the file, or a change without `daemon-reload`.
+
+  # 10. QUIZ ----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-kill9
+        objective: O1
+        prompt: "When should you use `kill -9`?"
+        options:
+          - text: "Only when `kill` alone did not stop the process"
+            correct: true
+            why: "`-9` gives the program no time to save or clean up."
+          - text: "Always, because it is faster"
+            why: "A program stopped by force can lose data. Ask first with `kill`."
+          - text: "To stop a service at boot"
+            why: "That is `sudo systemctl disable`."
+      - kind: mcq
+        id: q-enable
+        objective: O3
+        prompt: "What is the difference between `start` and `enable`?"
+        options:
+          - text: "`start` runs it now; `enable` makes it start at every boot"
+            correct: true
+            why: "`enable --now` does both."
+          - text: "There is no difference"
+            why: "After `start` alone, the service is off again after a reboot."
+          - text: "`enable` runs it now; `start` at boot"
+            why: "It is the other way round."
+      - kind: mcq
+        id: q-log
+        objective: O3
+        prompt: "A service fails. Where do you read its messages?"
+        options:
+          - text: "`journalctl -u NAME`, or the last lines of `systemctl status NAME`"
+            correct: true
+            why: "systemd keeps what the service printed in the journal."
+          - text: "`ps aux`"
+            why: "`ps` shows what runs now. A failed service is not there any more."
+          - text: "`cat NAME.service`"
+            why: "That is the service file: what systemd should do, not what happened."
+      - kind: mcq
+        id: q-reload
+        objective: O4
+        prompt: "You changed a service file. `systemctl restart` gives a warning that the file `changed on disk`. What is missing?"
+        options:
+          - text: "`sudo systemctl daemon-reload`"
+            correct: true
+            why: "systemd keeps the old file in memory until you tell it to read it again."
+          - text: "`sudo reboot`"
+            why: "A reboot works too, but `daemon-reload` is enough and much faster."
+          - text: "`chmod +x` on the service file"
+            why: "A service file is read, not run. It does not need `x`."
+      - kind: mcq
+        id: q-path
+        objective: O4
+        prompt: "Why `ExecStart=/usr/bin/python3 /home/pi/app.py`, and not `python3 app.py`?"
+        options:
+          - text: "A service does not start in your home directory, so `app.py` alone is not found"
+            correct: true
+            why: "It starts in `/`. A full path always works."
+          - text: "Services cannot run Python"
+            why: "They can run any program."
+          - text: "Full paths are faster"
+            why: "Speed is the same. Without the full path, the file is not found."
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-pid
+    objective: O1
+    prompt: "What is a PID?"
+    options:
+      - text: "The number of a running process"
+        correct: true
+        why: "`kill` needs it: `kill 1432`."
+      - text: "The name of a program file"
+        why: "The name is in the `COMMAND` column. The PID is a number."
+      - text: "The password of a user"
+        why: "PID means process ID."
+  - kind: mcq
+    id: r-ctrl-c
+    objective: O1
+    prompt: "A Python program in your terminal never ends. What is the quickest way to stop it?"
+    options:
+      - text: "Press Ctrl+C"
+        correct: true
+        why: "Ctrl+C stops the program that runs in this terminal."
+      - text: "`sudo reboot`"
+        why: "That restarts the whole computer. Ctrl+C stops only the program."
+      - text: "Close the editor"
+        why: "The program runs in the terminal, not in the editor."
+  - kind: mcq
+    id: r-free
+    objective: O2
+    prompt: "Which command shows the free memory in a form that is easy to read?"
+    options:
+      - text: "`free -h`"
+        correct: true
+        why: "`-h` writes Gi and Mi. Read the column `available`."
+      - text: "`df -h`"
+        why: "`df` shows the disk space, not the memory."
+      - text: "`top -h`"
+        why: "`top` shows the memory too, but `free -h` is the short answer."
+  - kind: mcq
+    id: r-status-mark
+    objective: O3
+    prompt: "`systemctl status logger` starts with `×`. What does it mean?"
+    options:
+      - text: "The service failed"
+        correct: true
+        why: "`●` running, `○` stopped, `×` failed. Read the log lines below it."
+      - text: "The service is turned off at boot"
+        why: "That is the word `disabled` in the `Loaded:` line."
+      - text: "The service runs"
+        why: "Running is `●`."
+  - kind: mcq
+    id: r-unbuffered
+    objective: O4
+    prompt: "A service runs, but its prints never show in `journalctl -u`. What helps?"
+    options:
+      - text: "`python3 -u` in `ExecStart`, so each print is written at once"
+        correct: true
+        why: "Without `-u`, Python keeps the prints in a buffer while the program runs."
+      - text: "`print` with more text"
+        why: "The length does not matter. The prints wait in a buffer."
+      - text: "`sudo journalctl`"
+        why: "The journal is fine. The prints never reached it."

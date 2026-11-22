@@ -33,6 +33,8 @@ function startState(step: TerminalStep): ShellState {
     cwd: start.cwd ? abs(start.cwd) : HOME,
     history: [],
     packages: start.packages ?? [],
+    // Everything else (processes, services, variables, the PC, scene commands) goes to shell.py as it is.
+    ...Object.fromEntries(Object.entries(start).filter(([k]) => !['files', 'dirs', 'modes', 'cwd', 'packages', 'history'].includes(k))),
   };
 }
 
@@ -48,7 +50,9 @@ interface Terminal {
  */
 export function createTerminal(initial: ShellState, checks: string[], onResult: (r: ShellResult, line: string) => void): Terminal {
   let state = initial;
-  let prompt = `pi@raspberrypi:${shown(state.cwd ?? HOME)} $`;
+  let prompt = state.at === 'pc' ? 'PS C:\\Users\\you>' : `pi@raspberrypi:${shown(state.cwd ?? HOME)} $`;
+  /** A question of a command (yes/no, a password, Y/n): the next line answers it. */
+  let ask: { text: string; secret: boolean } | null = null;
   let busy = false;
   let disposed = false;
   const typed: string[] = [];
@@ -68,6 +72,7 @@ export function createTerminal(initial: ShellState, checks: string[], onResult: 
   const editorName = h('span', { class: 'term-editor-name' });
   const editorText = h('textarea', { class: 'term-editor-text', spellcheck: 'false', 'aria-label': 'The text of the file' });
   let editorPath = '';
+  let editorRoot = false;
   const save = button('Save and exit (Ctrl+X)', { kind: 'primary', small: true, onClick: () => void closeEditor(true) });
   const cancel = button('Exit without saving', { kind: 'ghost', small: true, onClick: () => void closeEditor(false) });
   const editor = h(
@@ -77,9 +82,25 @@ export function createTerminal(initial: ShellState, checks: string[], onResult: 
     editorText,
     h('div', { class: 'term-editor-actions' }, save, cancel),
   );
-  const tree = h('div', { class: 'term-tree', 'aria-label': 'Your files and folders' });
-  const frame = h('div', { class: 'term-frame' }, h('div', { class: 'term-bar' }, h('i'), h('i'), h('i'), h('span', null, 'Terminal: pi@raspberrypi')), screen, line, editor);
-  const el = h('div', { class: 'term' }, frame, h('div', { class: 'term-side' }, h('h2', { class: 'term-side-title' }, icon('file', 16), 'Your files'), tree));
+  const tree = h('div', { class: 'term-tree', 'aria-label': 'The files and folders on the Pi' });
+  const title = h('span', null, '');
+  const frame = h('div', { class: 'term-frame' }, h('div', { class: 'term-bar' }, h('i'), h('i'), h('i'), title), screen, line, editor);
+  const el = h('div', { class: 'term' }, frame, h('div', { class: 'term-side' }, h('h2', { class: 'term-side-title' }, icon('file', 16), 'Files on the Pi'), tree));
+
+  /** The title bar says where the commands go: the PC, or the Pi (also over SSH). */
+  function setTitle(host: string | undefined, via: boolean): void {
+    title.textContent = host === 'pc' ? 'Windows PowerShell: your PC' : via ? 'pi@raspberrypi (SSH from your PC)' : 'Terminal: pi@raspberrypi';
+    frame.classList.toggle('is-pc', host === 'pc');
+  }
+  setTitle(state.at, Boolean(state.via));
+
+  function setAsk(next: { text: string; secret: boolean } | null | undefined): void {
+    ask = next ?? null;
+    promptEl.textContent = ask ? ask.text.trimEnd() : prompt;
+    // Like a real terminal, a password shows nothing while you type it.
+    input.classList.toggle('is-secret', Boolean(ask?.secret));
+    input.setAttribute('aria-label', ask ? ask.text : 'Type a command, then press Enter');
+  }
 
   function print(text: string, cls = ''): void {
     if (!text) return;
@@ -90,7 +111,8 @@ export function createTerminal(initial: ShellState, checks: string[], onResult: 
 
   /** The home directory as a tree. The working directory is marked. */
   function drawTree(changed: Set<string>): void {
-    const files = Object.keys(state.files ?? {});
+    const links = (state.links ?? {}) as Record<string, string>;
+    const files = [...Object.keys(state.files ?? {}), ...Object.keys(links)];
     const dirs = new Set([HOME, ...(state.dirs ?? [])]);
     const all = [...dirs, ...files].filter((p) => p === HOME || p.startsWith(`${HOME}/`));
     const kids = (d: string) =>
@@ -105,7 +127,7 @@ export function createTerminal(initial: ShellState, checks: string[], onResult: 
         'span',
         { class: `term-node${isDir ? ' is-dir' : ''}${here ? ' is-here' : ''}${changed.has(p) ? ' is-new' : ''}` },
         isDir ? '▸ ' : '',
-        `${name}${isDir && p !== HOME ? '/' : ''}`,
+        `${name}${isDir && p !== HOME ? '/' : ''}${p in links ? ` → ${links[p]}` : ''}`,
         here ? h('small', null, ' ← you are here') : null,
       );
       const children = isDir ? kids(p) : [];
@@ -125,16 +147,21 @@ export function createTerminal(initial: ShellState, checks: string[], onResult: 
       prompt = result.prompt;
       promptEl.textContent = prompt;
     }
+    setTitle(result.host, Boolean(state.via));
+    setAsk(result.ask);
   }
 
   async function submit(): Promise<void> {
     const text = input.value;
     if (busy || disposed) return;
-    print(`${prompt} ${text}`, 'is-cmd');
+    const answering = ask;
+    print(answering ? `${answering.text}${answering.secret ? '' : text}` : `${prompt} ${text}`, 'is-cmd');
     input.value = '';
-    if (!text.trim()) return;
-    typed.push(text);
-    back = 0;
+    if (!answering && !text.trim()) return;
+    if (!answering) {
+      typed.push(text);
+      back = 0;
+    }
     busy = true;
     line.classList.add('is-busy');
     const result = await runShell({ state, line: text, checks });
@@ -148,8 +175,9 @@ export function createTerminal(initial: ShellState, checks: string[], onResult: 
     onResult(result, text);
   }
 
-  function openEditor(file: { path: string; name: string; text: string }): void {
+  function openEditor(file: { path: string; name: string; text: string; root?: boolean }): void {
     editorPath = file.path;
+    editorRoot = Boolean(file.root);
     editorName.textContent = file.name;
     editorText.value = file.text;
     line.hidden = true;
@@ -164,10 +192,12 @@ export function createTerminal(initial: ShellState, checks: string[], onResult: 
     line.hidden = false;
     if (keep) {
       busy = true;
-      const result = await runShell({ state, write: { path: editorPath, text: editorText.value }, checks });
+      const result = await runShell({ state, write: { path: editorPath, text: editorText.value, root: editorRoot }, checks });
       busy = false;
       if (disposed) return;
-      print(`[ Wrote ${editorText.value.split('\n').length} lines to ${editorName.textContent} ]`, 'is-note');
+      // A file of the system (in /etc) can be saved only by nano started with sudo.
+      if (result.code !== 0) print(result.out, 'is-error');
+      else print(`[ Wrote ${editorText.value.split('\n').length} lines to ${editorName.textContent} ]`, 'is-note');
       apply(result);
       onResult(result, `nano ${editorName.textContent}`);
     }

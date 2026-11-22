@@ -38,6 +38,7 @@ modules:
       - { id: dictionaries, title: Dictionaries }
       - { id: tuples-and-sets, title: Tuples and sets }
       - { id: strings, title: Text in depth }
+      - { id: match-case, title: match and case }
       - { id: project-word-counter, title: "Project: word counter", kind: project }
 
   - title: Functions
@@ -46,10 +47,12 @@ modules:
       - { id: functions, title: Define and call }
       - { id: parameters-and-return, title: "Parameters, return, scope" }
       - { id: flexible-calls, title: "zip, *args and **kwargs" }
+      - { id: functions-as-values, title: Functions as values }
       - { id: decomposition, title: Split a problem }
       - { id: type-hints, title: Type hints }
       - { id: reading-docs, title: Reading the docs }
       - { id: standard-library, title: Modules and the standard library }
+      - { id: own-modules, title: Your own modules and packages }
       - { id: project-text-adventure, title: "Project: text adventure", kind: project }
 
   - title: Files, data and errors
@@ -78,8 +81,11 @@ modules:
       - { id: methods-and-state, title: Methods and state }
       - { id: composition-and-dataclasses, title: Composition and dataclasses }
       - { id: inheritance, title: "Inheritance and super()" }
+      - { id: classes-in-depth, title: Classes in depth }
+      - { id: exceptions-in-depth, title: Exceptions in depth }
       - { id: pytest, title: Tests with pytest }
       - { id: debugging-2, title: The debugger }
+      - { id: ai-assistant, title: Working with an AI assistant }
 
   - title: Desktop app
     goal: Build, test and package your own app.
@@ -105,6 +111,10 @@ paths:
           - { id: linux-files, title: Files and folders }
           - { id: linux-text, title: Read and search text }
           - { id: linux-scripts, title: "Permissions, scripts and sudo" }
+          - { id: linux-bash, title: Scripts that decide }
+          - { id: linux-services, title: "Processes, services and logs" }
+          - { id: linux-archives, title: "Archives, links and special files" }
+          - { id: linux-users, title: Network and users }
           - { id: linux-project, title: "Project: tidy up a Pi", kind: project }
   - id: pi
     title: Raspberry Pi and electronics
@@ -119,4 +129,29 @@ paths:
           - { id: pi-led, title: Light an LED }
           - { id: pi-button, title: Buttons and events }
           - { id: pi-sensors, title: "Brightness, sound and distance" }
+          - { id: pi-light, title: "Light, motion and knobs" }
+          - { id: pi-motors, title: Motors and a robot }
           - { id: pi-project, title: "Project: a pedestrian crossing", kind: project }
+      - title: A real Raspberry Pi
+        goal: Set up a real Pi, keep it healthy, and work on it from your PC.
+        lessons:
+          - { id: pi-setup, title: Set up a real Pi }
+          - { id: pi-remote, title: A Pi without a screen }
+  - id: data
+    title: Data and AI basics
+    short: Data
+    goal: Describe data, draw charts, and build your first AI models, with numpy.
+    needs: [csv-and-comprehensions]
+    modules:
+      - title: Data
+        goal: Describe a table of data, calculate with numpy, and show it in charts.
+        lessons:
+          - { id: data-basics, title: Describe data }
+          - { id: data-numpy, title: Arrays with numpy }
+          - { id: data-charts, title: Charts }
+      - title: First models
+        goal: Let the computer learn a rule from examples, measure it, and test it on new data.
+        lessons:
+          - { id: data-line, title: "A first model: a straight line" }
+          - { id: data-neighbours, title: "Sort into classes: nearest neighbours" }
+          - { id: data-real, title: "The real tools: pandas and scikit-learn" }

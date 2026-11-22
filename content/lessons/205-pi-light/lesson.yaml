@@ -1,0 +1,561 @@
+id: pi-light
+order: 205
+title: "Light, motion and knobs"
+summary: A street light that turns on in the dark, an alarm for movement, and a knob that sets the brightness of an LED.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Read the light with a LightSensor, and react when it gets dark or light
+  - id: O2
+    text: React to movement with a PIR MotionSensor, once for each movement
+  - id: O3
+    text: Read a knob through an MCP3008, and let it drive an LED with source
+  - id: O4
+    text: Wire these sensors with the right voltages
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: ldr
+    type: theory
+    objective: O1
+    title: A sensor for light
+    body: |
+      A **light-dependent resistor** (LDR) lets more current through when
+      more light falls on it. The Pi has no analogue inputs, so gpiozero
+      uses a trick: an LDR and a small **capacitor** (1 µF). It measures how
+      fast the capacitor fills through the LDR. Fast means bright.
+
+      Wiring: one leg of the LDR to **3V3**, one leg of the capacitor to
+      **GND**, and the other two legs together to one GPIO pin.
+
+      ```python
+      from gpiozero import LightSensor
+      ldr = LightSensor(4)
+      print(ldr.value)         # 0 is dark, 1 is bright
+      ldr.when_dark = ...      # a function for when it gets dark
+      ldr.when_light = ...     # and for when it gets light
+      ```
+
+      `light_detected` is `True` above the **threshold**, 0.1 by default.
+      `wait_for_dark()` waits until it is dark.
+
+      On the board, the slider is the light on the sensor.
+    keys:
+      - code: "LightSensor(4)"
+        means: "An LDR and a capacitor on GPIO 4."
+      - code: "ldr.value"
+        means: "0 dark, 1 bright."
+      - code: "ldr.when_dark = led.on"
+        means: "No brackets: give the function, do not call it."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: night
+    type: demo
+    objective: O1
+    title: A night light
+    visual: board
+    intro: |
+      Press **Run**, then move the light slider to the left, until it is
+      dark. Then make it light again.
+    code: |
+      from gpiozero import LightSensor, LED
+      from signal import pause
+
+      ldr = LightSensor(4)
+      led = LED(17)
+
+      ldr.when_dark = led.on
+      ldr.when_light = led.off
+      pause()
+    experiments:
+      - text: "Run it, and make it dark with the slider."
+        expr: "err is None and any(v <= 0.1 for t, v in history(4))"
+      - text: "Make the LED blink in the dark: `ldr.when_dark = led.blink`."
+        expr: "err is None and 'when_dark = led.blink' in src"
+      - text: "Print `dark` too: write a function `def dark():` with `led.on()` and `print(\"dark\")`, and use `ldr.when_dark = dark`."
+        expr: "err is None and 'def dark' in src and 'when_dark = dark' in src"
+    investigate:
+      - kind: spot
+        id: i-dark
+        prompt: "Which line makes the LED go on when it gets dark?"
+        code: |
+          from gpiozero import LightSensor, LED
+          from signal import pause
+
+          ldr = LightSensor(4)
+          led = LED(17)
+
+          ldr.when_dark = led.on
+          ldr.when_light = led.off
+          pause()
+        line: 7
+        wrong:
+          - line: 9
+            say: "`pause()` keeps the program running, so the events can come. It turns nothing on."
+          - line: 4
+            say: "This line makes the sensor. It does not decide anything."
+        explain: >-
+          Line 7 gives `led.on` to the sensor. The sensor calls it each time
+          the light falls below the threshold.
+      - kind: mcq
+        id: i-threshold
+        prompt: "The slider is at 0.15. Is the LED on?"
+        options:
+          - text: "No: 0.15 is above the threshold of 0.1, so it counts as light"
+            correct: true
+            why: "Dark means 0.1 or less. `LightSensor(4, threshold=0.2)` would change that."
+          - text: "Yes: 0.15 is dark"
+            why: "For the sensor, dark is 0.1 or less, the default threshold."
+          - text: "It blinks"
+            why: "This program only turns the LED on or off."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-street
+    type: exercise
+    fade: completion
+    objective: O1
+    board: true
+    title: A street light
+    prompt: |
+      **Complete the street light.** The lamp on GPIO 17 goes on when it gets
+      dark, and off when it gets light again. When it goes on, the program
+      prints `lamp on`.
+
+      Test it with the light slider on the board.
+    starter: |
+      from gpiozero import LightSensor, LED
+      from signal import pause
+
+      ldr = LightSensor(4)
+      lamp = LED(17)
+
+
+      def evening():
+          lamp.on()
+          print("lamp on")
+
+
+      ldr.when_dark = ___
+      ldr.when_light = ___
+      pause()
+    solution: |
+      from gpiozero import LightSensor, LED
+      from signal import pause
+
+      ldr = LightSensor(4)
+      lamp = LED(17)
+
+
+      def evening():
+          lamp.on()
+          print("lamp on")
+
+
+      ldr.when_dark = evening
+      ldr.when_light = lamp.off
+      pause()
+    after: >-
+      Street lights work like this: a light sensor, a threshold, and two
+      events. Real ones wait a little before they switch, so a passing cloud
+      or a car light does not make them blink.
+    cases:
+      - {}
+      - label: "evening at 2 s, morning at 5 s, evening again at 8 s"
+        gpio: { events: [{ at: 2, pin: 4, light: 0.05 }, { at: 5, pin: 4, light: 0.7 }, { at: 8, pin: 4, light: 0.02 }] }
+    checks:
+      - expr: "err is None and all(at(17, t + 0.01) == (1 if v <= 0.1 else 0) for t, v in history(4))"
+        pass: "The lamp is on in the dark, and off in the light"
+        hint: "`ldr.when_dark = evening` and `ldr.when_light = lamp.off`."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "Give the function without brackets: `evening`, not `evening()`."
+      - expr: "err is None and lines == ['lamp on'] * sum(1 for i, (t, v) in enumerate(history(4)) if v <= 0.1 and (i == 0 or history(4)[i - 1][1] > 0.1))"
+        pass: "It prints `lamp on` each time it gets dark"
+        hint: "The dark event must call `evening`, the function that prints."
+    hints:
+      - "The first `___` is the function for the evening: it is defined above."
+      - "No brackets: `ldr.when_dark = evening`. With brackets it would run at once."
+      - "For the morning, the lamp only needs to go off: `ldr.when_light = lamp.off`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: pir
+    type: theory
+    objective: O2
+    title: A sensor for movement
+    body: |
+      A **PIR sensor** (passive infrared) sees the warmth of people and
+      animals. When something warm moves in front of it, its output is on.
+
+      It has three pins: **VCC to 5V**, **GND to ground**, and **OUT to a
+      GPIO pin**. It needs 5 V to work, but its output gives only 3.3 V, so
+      it is safe for the Pi.
+
+      ```python
+      from gpiozero import MotionSensor
+      pir = MotionSensor(4)
+      pir.wait_for_motion()       # waits until something moves
+      pir.wait_for_no_motion()    # waits until the movement is over
+      pir.when_motion = ...       # or with events
+      ```
+
+      Two small screws on the sensor set its **sensitivity** and **how
+      long** its output stays on after a movement: from about 2.5 seconds to
+      a few minutes.
+
+      On the board, hold the button **Move here** to move in front of it.
+    keys:
+      - code: "MotionSensor(4)"
+        means: "A PIR: VCC to 5V, OUT to GPIO 4."
+      - code: "pir.wait_for_motion()"
+        means: "Wait until something moves."
+      - code: "pir.wait_for_no_motion()"
+        means: "Wait until the movement is over."
+
+  # 5. EXERCISE: debug -------------------------------------------------------
+  - id: ex-intruder
+    type: exercise
+    fade: debug
+    objective: O2
+    board: true
+    title: An alarm that does not stop
+    prompt: |
+      The alarm should print `Someone is here!` and beep **once for each
+      movement**.
+
+      **Run it, and hold Move here for two seconds.** It prints again and
+      again. Find out why, and fix it.
+    starter: |
+      from gpiozero import MotionSensor, Buzzer
+
+      pir = MotionSensor(4)
+      buzzer = Buzzer(17)
+
+      while True:
+          pir.wait_for_motion()
+          print("Someone is here!")
+          buzzer.beep(on_time=0.1, off_time=0.1, n=2, background=False)
+    solution: |
+      from gpiozero import MotionSensor, Buzzer
+
+      pir = MotionSensor(4)
+      buzzer = Buzzer(17)
+
+      while True:
+          pir.wait_for_motion()
+          print("Someone is here!")
+          buzzer.beep(on_time=0.1, off_time=0.1, n=2, background=False)
+          pir.wait_for_no_motion()
+    after: >-
+      `wait_for_motion()` waits only while there is no movement. While the
+      sensor still sees someone, it returns at once, and the loop goes
+      around again. `wait_for_no_motion()` at the end waits until the
+      movement is over.
+    cases:
+      - {}
+      - label: "two movements: 1 s to 4 s, and 6 s to 8 s"
+        gpio: { events: [{ at: 1, pin: 4, motion: true }, { at: 4, pin: 4, motion: false }, { at: 6, pin: 4, motion: true }, { at: 8, pin: 4, motion: false }] }
+    checks:
+      - expr: "err is None and lines == ['Someone is here!'] * sum(1 for e in gpio['inputs'] if e.get('motion'))"
+        pass: "It prints once for each movement"
+        hint: "After the beep, wait until the movement is over."
+        misconceptions:
+          - when: "err is None and len(lines) > sum(1 for e in gpio['inputs'] if e.get('motion'))"
+            say: "While the sensor still sees the movement, `wait_for_motion()` returns at once. Add `pir.wait_for_no_motion()` at the end of the loop."
+      - expr: "err is None and len(flashes(17)) == 2 * sum(1 for e in gpio['inputs'] if e.get('motion'))"
+        pass: "It beeps twice for each movement"
+        hint: "Keep the beep with `n=2`."
+    hints:
+      - "How long is `wait_for_motion()` when the sensor already sees someone?"
+      - "It returns at once. The loop needs to wait for the end of the movement too."
+      - "Add `pir.wait_for_no_motion()` as the last line of the loop."
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: adc
+    type: theory
+    objective: O3
+    title: A knob and an MCP3008
+    body: |
+      A **potentiometer** (a knob) gives any voltage between 0 and 3.3 V.
+      But the Pi has no analogue inputs: a GPIO pin knows only on and off.
+      An **MCP3008** chip turns a voltage into a number. It has **8
+      channels** (0 to 7), and it talks to the Pi over **SPI**, on GPIO 8,
+      9, 10 and 11.
+
+      Wiring the knob: the two outer legs to **3V3** and **GND**, the middle
+      leg to channel 0 of the MCP3008. Never 5 V: the chip would give the
+      Pi more than it can take. On a real Pi, turn on SPI first:
+      `sudo raspi-config`, then **Interface Options**, then **SPI**.
+
+      ```python
+      from gpiozero import MCP3008, PWMLED
+      pot = MCP3008(0)          # channel 0
+      print(pot.value)          # 0 to 1
+      print(pot.voltage)        # 0 to 3.3 V
+
+      led = PWMLED(21)
+      led.source = pot          # the LED follows the knob, all the time
+      ```
+
+      `led.source = pot` connects two devices: about 100 times a second, the
+      value of the knob becomes the value of the LED. Your program does not
+      need a loop for it.
+    keys:
+      - code: "MCP3008(0)"
+        means: "Channel 0 of the chip, on the SPI pins."
+      - code: "pot.value"
+        means: "0 to 1. `pot.voltage`: 0 to 3.3 V."
+      - code: "led.source = pot"
+        means: "The LED follows the knob."
+
+  # 7. DEMO -----------------------------------------------------------------
+  - id: dimmer
+    type: demo
+    objective: O3
+    title: A knob for the light
+    visual: board
+    intro: |
+      Press **Run**, then turn the knob with its slider. The LED follows.
+    code: |
+      from gpiozero import MCP3008, PWMLED
+      from signal import pause
+
+      pot = MCP3008(0)
+      led = PWMLED(21)
+
+      led.source = pot
+      pause()
+    experiments:
+      - text: "Run it, and turn the knob."
+        expr: "err is None and len(history(8)) > 1"
+      - text: "Make the LED blink instead, at the speed of the knob: delete `led.source = pot` and `pause()`, and write a loop `while True:` with `led.blink(on_time=pot.value, off_time=pot.value, n=1, background=False)`."
+        expr: "err is None and called('blink') and syntax('While') >= 1"
+      - text: "Add a second knob on channel 1: `pot2 = MCP3008(1)`, and print both values."
+        expr: "err is None and 'MCP3008(1)' in src"
+    investigate:
+      - kind: mcq
+        id: i-voltage
+        prompt: "The knob is in the middle: `pot.value` is 0.5. What is `pot.voltage`?"
+        options:
+          - text: "1.65 V"
+            correct: true
+            why: "Half of 3.3 V. `voltage` is `value` times the maximum voltage."
+          - text: "0.5 V"
+            why: "That is the value, from 0 to 1. The voltage goes up to 3.3."
+          - text: "2.5 V"
+            why: "That would be half of 5 V. The knob is wired to 3.3 V."
+      - kind: mcq
+        id: i-pins
+        prompt: "This program also wants an LED on GPIO 10. What happens?"
+        options:
+          - text: "An error: GPIO 10 is one of the SPI pins of the MCP3008"
+            correct: true
+            why: "GPIO 8, 9, 10 and 11 belong to the chip. Use another pin for the LED."
+          - text: "It works: the chip does not need pins"
+            why: "It talks to the Pi over SPI, on GPIO 8 to 11."
+          - text: "The LED shows the value of the knob"
+            why: "Two devices cannot use one pin."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-meter
+    type: exercise
+    fade: independent
+    objective: O3
+    board: true
+    title: A level meter
+    prompt: |
+      **Three LEDs show how far the knob is turned.** In a loop, every
+      0.1 s:
+
+      - the LED on GPIO 17 is on when the value is above **0.25**,
+      - the LED on GPIO 27 is on above **0.5**,
+      - the LED on GPIO 22 is on above **0.75**.
+
+      Each LED is off when the value is not above its limit. Test it with the
+      knob.
+    starter: |
+      from gpiozero import MCP3008, LED
+      from time import sleep
+
+      pot = MCP3008(0)
+      low = LED(17)
+      middle = LED(27)
+      high = LED(22)
+
+      # Write the loop here.
+    solution: |
+      from gpiozero import MCP3008, LED
+      from time import sleep
+
+      pot = MCP3008(0)
+      low = LED(17)
+      middle = LED(27)
+      high = LED(22)
+
+      while True:
+          level = pot.value
+          low.value = level > 0.25
+          middle.value = level > 0.5
+          high.value = level > 0.75
+          sleep(0.1)
+    after: >-
+      `led.value = level > 0.25` sets the LED to `True` or `False` in one
+      line. gpiozero also has `LEDBarGraph` for this: `graph.source = pot`.
+    cases:
+      - {}
+      - label: "the knob at 0.1, 0.4, 0.6, 0.9, then 0.3"
+        gpio: { events: [{ at: 1, channel: 0, analog: 0.1 }, { at: 2, channel: 0, analog: 0.4 }, { at: 3, channel: 0, analog: 0.6 }, { at: 4, channel: 0, analog: 0.9 }, { at: 5, channel: 0, analog: 0.3 }] }
+    checks:
+      - expr: "err is None and all(at(17, t + 0.25) == (1 if v > 0.25 else 0) for t, v in history(8) if t + 0.25 < end_time)"
+        pass: "GPIO 17 is on above 0.25"
+        hint: "`low.value = level > 0.25`, or an `if` with `low.on()` and `low.off()`."
+      - expr: "err is None and all(at(27, t + 0.25) == (1 if v > 0.5 else 0) and at(22, t + 0.25) == (1 if v > 0.75 else 0) for t, v in history(8) if t + 0.25 < end_time)"
+        pass: "GPIO 27 is on above 0.5, GPIO 22 above 0.75"
+        hint: "The same for `middle` with 0.5 and `high` with 0.75."
+        misconceptions:
+          - when: "err is None and any(at(27, t + 0.25) == 1 for t, v in history(8) if v == 0.5 and t + 0.25 < end_time)"
+            say: "At exactly 0.5 the middle LED must be off: above means `>`, not `>=`."
+      - expr: "err is None and ended == 'cap' and syntax('While') >= 1"
+        pass: "It checks again and again"
+        hint: "`while True:`, with `sleep(0.1)` at the end of the loop."
+    hints:
+      - "Start with `while True:` and read the knob once: `level = pot.value`."
+      - "An LED can take `True` or `False`: `low.value = level > 0.25`."
+      - "Three such lines, then `sleep(0.1)`."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O4
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-ldr-value
+        objective: O1
+        prompt: "`ldr.value` is `0.02`. What does it mean?"
+        options:
+          - text: "It is almost completely dark"
+            correct: true
+            why: "0 is dark, 1 is bright."
+          - text: "It is very bright"
+            why: "It is the other way round: bright is close to 1."
+          - text: "The sensor is broken"
+            why: "A small value is normal in the dark."
+      - kind: mcq
+        id: q-pir-power
+        objective: O4
+        prompt: "How is a PIR sensor wired?"
+        options:
+          - text: "VCC to 5V, GND to ground, OUT to a GPIO pin"
+            correct: true
+            why: "It needs 5 V to work, and its output gives a safe 3.3 V."
+          - text: "VCC to a GPIO pin"
+            why: "A GPIO pin is for the signal, not for power."
+          - text: "OUT to 5V"
+            why: "OUT is the signal: it goes to the GPIO pin."
+      - kind: mcq
+        id: q-adc
+        objective: O3
+        prompt: "Why do you need an MCP3008 for a knob?"
+        options:
+          - text: "The Pi has no analogue inputs: its pins know only on and off"
+            correct: true
+            why: "The MCP3008 turns the voltage of the knob into a number."
+          - text: "The knob needs more power"
+            why: "The knob gets 3.3 V. The chip is there to measure the voltage."
+          - text: "Only for more than 8 knobs"
+            why: "Even one knob needs it: the Pi cannot measure a voltage."
+      - kind: mcq
+        id: q-pot-5v
+        objective: O4
+        prompt: "Why must the knob be wired to 3V3, not to 5V?"
+        options:
+          - text: "The Pi can take at most 3.3 V on its pins"
+            correct: true
+            why: "Up to 3.3 V the readings go from 0 to 1, and nothing breaks."
+          - text: "5 V makes the knob turn by itself"
+            why: "The knob does not move. The voltage is the problem."
+          - text: "There is no reason"
+            why: "More than 3.3 V can damage the Pi."
+      - kind: mcq
+        id: q-source
+        objective: O3
+        prompt: "What does `led.source = pot` do?"
+        options:
+          - text: "The LED takes the value of the knob again and again, by itself"
+            correct: true
+            why: "About 100 times a second. No loop is needed."
+          - text: "It copies the value once"
+            why: "That would be `led.value = pot.value`."
+          - text: "It connects the pins with a wire"
+            why: "It connects the two in your program, not with a wire."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-ldr-wiring
+    objective: O4
+    prompt: "What does a LightSensor need besides the LDR?"
+    options:
+      - text: "A small capacitor (1 µF)"
+        correct: true
+        why: "gpiozero measures how fast it fills through the LDR."
+      - text: "An MCP3008"
+        why: "With the capacitor trick, the LDR works on one GPIO pin."
+      - text: "A 5 V power supply of its own"
+        why: "It is wired to 3V3 and GND of the Pi."
+  - kind: mcq
+    id: r-when-dark
+    objective: O1
+    prompt: "Which line turns the LED on in the dark?"
+    options:
+      - text: "`ldr.when_dark = led.on`"
+        correct: true
+        why: "The function, without brackets."
+      - text: "`ldr.when_dark = led.on()`"
+        why: "With brackets, the LED goes on at once, and the event gets `None`."
+      - text: "`led.on = ldr.when_dark`"
+        why: "It is the other way round: the sensor gets the function."
+  - kind: mcq
+    id: r-no-motion
+    objective: O2
+    prompt: "A loop with `pir.wait_for_motion()` prints many times for one movement. What is missing?"
+    options:
+      - text: "`pir.wait_for_no_motion()` at the end of the loop"
+        correct: true
+        why: "Then the loop waits until the movement is over."
+      - text: "A longer `sleep`"
+        why: "That only slows it down. Wait for the end of the movement instead."
+      - text: "A second sensor"
+        why: "One sensor is enough. The loop must wait for the end."
+  - kind: mcq
+    id: r-channels
+    objective: O3
+    prompt: "How many knobs can one MCP3008 read?"
+    options:
+      - text: "8, on the channels 0 to 7"
+        correct: true
+        why: "`MCP3008(0)` to `MCP3008(7)`."
+      - text: "1"
+        why: "It has 8 channels."
+      - text: "40, one for each pin"
+        why: "The 40 pins belong to the Pi. The chip has 8 channels."
+  - kind: mcq
+    id: r-spi
+    objective: O4
+    prompt: "What must you turn on in raspi-config for an MCP3008?"
+    options:
+      - text: "SPI, in Interface Options"
+        correct: true
+        why: "The chip talks to the Pi over SPI."
+      - text: "SSH"
+        why: "SSH is for logging in from another computer."
+      - text: "VNC"
+        why: "VNC shows the desktop on another computer. The chip needs SPI."

@@ -4,7 +4,7 @@ ZeroPy is a free Python course that runs as a Windows app. It takes you from
 your very first line of code to building and packaging your own small
 desktop app, in about 31 hours.
 
-- **46 short lessons** in 8 modules. You write real Python on almost every screen.
+- **52 short lessons** in 8 modules, plus three paths: Linux, Raspberry Pi, and Data and AI. You write real Python on almost every screen.
 - **Instant feedback.** Your code runs inside the app and is checked at once.
 - **Pictures that move with the code.** Variables, lists and loops are shown
   as 3D (or 2D) scenes, one line at a time.
@@ -28,13 +28,28 @@ desktop app, in about 31 hours.
   path opens (or open it yourself at any time). The first one: **Linux and
   the command line**, with a pretend Linux terminal in the app. You type
   real commands (`ls`, `cd`, `mkdir`, `grep`, pipes, scripts, `sudo apt`),
-  and a picture of your folders changes with each one. Nothing on your
-  computer changes.
+  and a picture of your folders changes with each one. Scripts with
+  variables, `if` and `for`; processes, services and logs (`ps`, `kill`,
+  `systemctl`, `journalctl`), up to your own Python program that starts at
+  boot; archives and links (`tar`, `zip`, `ln -s`), the network (`ip`,
+  `/etc/hosts`) and users and groups (`adduser`, `usermod`, `chown`).
+  Nothing on your computer changes.
 - **Raspberry Pi and electronics.** A pretend Raspberry Pi on screen: the
-  pin header, LEDs, a button you can press, a buzzer, traffic lights and a
-  distance sensor with a slider. You write real `gpiozero` code (the same
+  pin header, LEDs, a button you can press, a buzzer, traffic lights, a
+  distance sensor, a light sensor, a motion sensor, a knob, motors and a
+  two-wheel robot that drives on a floor. You write real `gpiozero` code (the same
   class names and pin numbers as on a real Pi), and the board plays it in
-  real time. Wiring and safety are part of the lessons.
+  real time. Wiring and safety are part of the lessons. Then a real Pi:
+  the parts, Raspberry Pi Imager, updates, power problems, and working
+  from your PC with `ssh` and `scp` (a pretend PowerShell and Pi, with the
+  real questions and messages).
+- **Data and AI basics.** Describe a table of data, calculate with real
+  `numpy` inside the app, and draw line, bar and scatter charts with the
+  names of `matplotlib`. Then build your first AI models yourself: a
+  straight line that predicts a number, and nearest neighbours that sort
+  into classes. Measure them on test data, and learn when a good score
+  lies. At the end, train a real model with `pandas` and `scikit-learn`
+  on your own computer.
 - **My knowledge.** From your answers, the app estimates how well you know
   each topic: not yet, learning, solid or mastered. Without practice a topic
   slowly drops again. Your weakest topics get a practice button.

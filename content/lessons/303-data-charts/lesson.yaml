@@ -1,0 +1,478 @@
+id: data-charts
+order: 303
+title: Charts
+summary: Show data as a line, bars, points or a histogram with matplotlib, choose the right chart, and keep it honest.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Draw a line chart and a bar chart with matplotlib.pyplot, with a title and a label on each axis
+  - id: O2
+    text: Draw points (scatter) and a histogram, and choose the chart that fits the question
+  - id: O3
+    text: Show several series in one chart, with labels and a legend
+  - id: O4
+    text: Keep a chart honest - bars from 0, labelled axes, units
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: pyplot
+    type: theory
+    objective: O1
+    title: matplotlib
+    body: |
+      **matplotlib** is the best-known chart library of Python. Its part
+      `pyplot` is imported as `plt`:
+
+      ```python
+      import matplotlib.pyplot as plt
+
+      days = [1, 2, 3, 4, 5]
+      temps = [12.5, 14.0, 13.2, 16.8, 18.1]
+      plt.plot(days, temps)          # a line: x values, then y values
+      plt.title("One week")
+      plt.xlabel("day")
+      plt.ylabel("temperature (°C)")
+      plt.show()                     # draw it
+      ```
+
+      `plt.plot(x, y, "o-")` adds points on the line. `plt.bar(names,
+      values)` draws bars, one for each name.
+
+      In this app, `plt` is a small copy of matplotlib with the same names:
+      the page draws the charts. On your computer, `pip install matplotlib`
+      gives the real one, and the same code opens a window.
+    keys:
+      - code: "plt.plot(x, y)"
+        means: "A line through the points (x, y)."
+      - code: "plt.bar(names, values)"
+        means: "One bar for each name."
+      - code: "plt.xlabel(...)  plt.show()"
+        means: "Label the axes, then draw."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: week
+    type: demo
+    visual: none
+    objective: O1
+    title: A line and bars
+    intro: |
+      Press **Run**: two charts of the same week. Then try the changes.
+    code: |
+      import matplotlib.pyplot as plt
+
+      days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+      temps = [12.5, 14.0, 13.2, 16.8, 18.1, 17.4, 15.0]
+      rain = [0.0, 2.5, 0.4, 0.0, 0.0, 5.1, 1.2]
+
+      plt.plot(days, temps, "o-")
+      plt.title("Temperature")
+      plt.xlabel("day")
+      plt.ylabel("°C")
+      plt.show()
+
+      plt.bar(days, rain, color="tab:blue")
+      plt.title("Rain")
+      plt.ylabel("mm")
+      plt.show()
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and len(charts) == 2"
+      - text: "Make the line red and dashed: the format `\"r--\"`."
+        expr: "err is None and charts[0]['series'][0]['color'] == '#d62728' and charts[0]['series'][0]['style'] == '--'"
+      - text: "Add `plt.grid(True)` before the first `plt.show()`."
+        expr: "err is None and charts[0]['grid']"
+    investigate:
+      - kind: mcq
+        id: i-show
+        prompt: "Why are there two charts, and not one with a line and bars?"
+        options:
+          - text: "`plt.show()` ends a chart; what comes after it starts a new one"
+            correct: true
+            why: "Without the first `plt.show()`, the line and the bars would share one chart."
+          - text: "A line and bars can never be in one chart"
+            why: "They can: draw both before one `plt.show()`."
+          - text: "`plt.title` starts a new chart"
+            why: "`title` only names the chart that is open."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-sales
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Ice cream sales
+    prompt: |
+      **Complete the bar chart** of the ice cream sales: one bar per month,
+      the title `Ice cream sales`, and the label `cups` on the vertical axis.
+    starter: |
+      import matplotlib.pyplot as plt
+
+      months = ["May", "Jun", "Jul", "Aug"]
+      cups = [120, 340, 510, 450]
+
+      plt.___(months, cups)
+      plt.title("___")
+      plt.___("cups")
+      plt.show()
+    solution: |
+      import matplotlib.pyplot as plt
+
+      months = ["May", "Jun", "Jul", "Aug"]
+      cups = [120, 340, 510, 450]
+
+      plt.bar(months, cups)
+      plt.title("Ice cream sales")
+      plt.ylabel("cups")
+      plt.show()
+    after: >-
+      Bars fit things that you can put next to each other: months, shops,
+      players. A line fits values that change over time.
+    checks:
+      - expr: "err is None and chart() is not None and chart()['series'][0]['kind'] == 'bar' and chart()['series'][0]['x'] == ['May', 'Jun', 'Jul', 'Aug']"
+        pass: "A bar for each month"
+        hint: "`plt.bar(months, cups)`."
+      - expr: "err is None and chart() is not None and chart()['title'] == 'Ice cream sales'"
+        pass: "The title is `Ice cream sales`"
+        hint: "`plt.title(\"Ice cream sales\")`."
+      - expr: "err is None and chart() is not None and chart()['ylabel'] == 'cups'"
+        pass: "The vertical axis says `cups`"
+        hint: "The vertical axis is the y axis: `plt.ylabel(\"cups\")`."
+        misconceptions:
+          - when: "err is None and chart() is not None and chart()['xlabel'] == 'cups'"
+            say: "`xlabel` is the axis across. The bars go up: that is the y axis, `ylabel`."
+    hints:
+      - "The first `___` is the kind of chart: bars."
+      - "The vertical axis is the y axis."
+      - "`plt.bar(months, cups)`, `plt.title(\"Ice cream sales\")`, `plt.ylabel(\"cups\")`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: choose
+    type: theory
+    objective: O2
+    title: The right chart for the question
+    body: |
+      | Question | Chart | pyplot |
+      |---|---|---|
+      | How does it change over time? | line | `plt.plot(x, y)` |
+      | How do some things compare? | bars | `plt.bar(names, values)` |
+      | Do two values go together? | points | `plt.scatter(x, y)` |
+      | How are the values spread? | histogram | `plt.hist(values, bins=5)` |
+
+      A **scatter** chart draws one point per row: for example hours of
+      study (x) and test score (y). If the points go up together, the two
+      values are related.
+
+      A **histogram** puts the values into **bins** (ranges of the same
+      width) and draws how many values fall into each bin: where most
+      values are, and how far they spread.
+
+      Several series in one chart: give each one a `label=`, then call
+      `plt.legend()`.
+    keys:
+      - code: "plt.scatter(x, y)"
+        means: "One point per pair: do they go together?"
+      - code: "plt.hist(values, bins=5)"
+        means: "How many values fall into each of 5 ranges."
+      - code: "label=..., plt.legend()"
+        means: "Name each series, and show the names."
+
+  # 5. DRILL -----------------------------------------------------------------
+  - id: which
+    type: drill
+    objective: O2
+    title: Which chart?
+    items:
+      - kind: mcq
+        id: d-time
+        objective: O2
+        prompt: "You measured the height of a plant every day for a month. Which chart?"
+        options:
+          - text: "A line"
+            correct: true
+            why: "A value that changes over time."
+          - text: "A histogram"
+            why: "A histogram shows how values spread, not how they change."
+          - text: "A pie"
+            why: "A pie shows parts of a whole."
+      - kind: mcq
+        id: d-relation
+        objective: O2
+        prompt: "Do taller people have bigger feet? You have the height and the shoe size of 50 people."
+        options:
+          - text: "Points: `plt.scatter(height, shoe)`"
+            correct: true
+            why: "One point per person shows if the two go together."
+          - text: "Bars, one per person"
+            why: "50 bars of shoe sizes would not show the link to height."
+          - text: "A line through all people"
+            why: "A line suggests an order in time. The people have none."
+      - kind: mcq
+        id: d-spread
+        objective: O2
+        prompt: "You want to see if most test scores are in the middle, or if there are two groups. Which chart?"
+        options:
+          - text: "A histogram of the scores"
+            correct: true
+            why: "It shows how many scores fall into each range."
+          - text: "A line of the scores in the order of the names"
+            why: "The order of the names means nothing here."
+          - text: "One bar for the mean"
+            why: "One number hides the spread."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-lengths
+    type: exercise
+    fade: debug
+    objective: O3
+    title: Two classes, one chart
+    prompt: |
+      The chart should show the test scores of two classes, as two lines
+      with points, with a legend. **Run it**, read the message, and fix it.
+      Then make the legend work.
+    starter: |
+      import matplotlib.pyplot as plt
+
+      tests = [1, 2, 3, 4, 5]
+      class_a = [61, 70, 68, 75, 80]
+      class_b = [55, 58, 66, 71]
+
+      plt.plot(tests, class_a, "o-")
+      plt.plot(tests, class_b, "o-")
+      plt.xlabel("test")
+      plt.ylabel("mean score")
+      plt.legend()
+      plt.show()
+    solution: |
+      import matplotlib.pyplot as plt
+
+      tests = [1, 2, 3, 4, 5]
+      class_a = [61, 70, 68, 75, 80]
+      class_b = [55, 58, 66, 71, 74]
+
+      plt.plot(tests, class_a, "o-", label="class A")
+      plt.plot(tests, class_b, "o-", label="class B")
+      plt.xlabel("test")
+      plt.ylabel("mean score")
+      plt.legend()
+      plt.show()
+    after: >-
+      x and y need one value for each point: 5 tests, 5 scores. And a legend
+      needs names: matplotlib warns when no series has a `label`.
+    checks:
+      - expr: "err is None and chart() is not None and len(chart()['series']) == 2 and all(len(s['y']) == 5 for s in chart()['series'])"
+        pass: "Two lines, with a score for each of the 5 tests"
+        hint: "`class_b` has only 4 scores. Class B got 74 in test 5."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "\"x and y must have same first dimension\": 5 tests, but 4 scores for class B. Add the fifth score, 74."
+      - expr: "err is None and chart() is not None and chart()['legend'] and [s['label'] for s in chart()['series']] == ['class A', 'class B']"
+        pass: "The legend names `class A` and `class B`"
+        hint: "Give each line a name: `label=\"class A\"` and `label=\"class B\"`."
+    hints:
+      - "Read the last line of the message: which sizes does it compare?"
+      - "`class_b` needs a fifth score: 74."
+      - "For the legend: `plt.plot(tests, class_a, \"o-\", label=\"class A\")`, and the same for B."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: honest
+    type: theory
+    objective: O4
+    title: Honest charts
+    body: |
+      A chart can tell the truth with the right numbers, or it can mislead
+      with the same numbers. Three rules:
+
+      - **Bars start at 0.** The length of a bar is the value. A bar chart
+        that starts at 95 makes 96 look twice as big as 95.
+      - **Label the axes, with units**: `°C`, `mm`, `cups`, `€`. A number
+        without a unit says nothing.
+      - **Show where the data comes from**, and how much there is. Five
+        points are not a trend.
+
+      `plt.ylim(0, 100)` sets the vertical axis by hand. Use it to show the
+      whole scale, not to hide it.
+    keys:
+      - code: "bars from 0"
+        means: "The length of a bar is the value."
+      - code: "plt.ylim(0, 100)"
+        means: "Set the vertical axis by hand."
+      - code: "\"°C\", \"mm\", \"€\""
+        means: "Every axis gets a unit."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-study
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Study and scores
+    prompt: |
+      Do students who study more get better scores? **Draw a scatter chart**
+      of `hours` (across) and `scores` (up), with:
+
+      - the title `Study and scores`,
+      - the labels `hours of study` and `score (%)`,
+      - the vertical axis from 0 to 100.
+    given: |
+      hours = [1, 2, 2, 3, 4, 5, 5, 6, 7, 8]
+      scores = [52, 55, 61, 58, 66, 70, 74, 72, 81, 88]
+    starter: |
+      import matplotlib.pyplot as plt
+
+      # hours and scores already exist.
+    solution: |
+      import matplotlib.pyplot as plt
+
+      plt.scatter(hours, scores)
+      plt.title("Study and scores")
+      plt.xlabel("hours of study")
+      plt.ylabel("score (%)")
+      plt.ylim(0, 100)
+      plt.show()
+    after: >-
+      The points go up together: more study, better scores. In the next
+      lesson, a model draws the best straight line through such points, and
+      predicts the score for a new number of hours.
+    checks:
+      - expr: "err is None and chart() is not None and chart()['series'][0]['kind'] == 'scatter' and chart()['series'][0]['x'] == [float(h) for h in pre['hours']] and chart()['series'][0]['y'] == [float(s) for s in pre['scores']]"
+        pass: "A point for each student: hours across, scores up"
+        hint: "`plt.scatter(hours, scores)`: x first, then y."
+        misconceptions:
+          - when: "err is None and chart() is not None and chart()['series'][0]['x'] == [float(s) for s in pre['scores']]"
+            say: "x and y are swapped: hours go across (x, first), scores go up (y, second)."
+          - when: "err is None and chart() is not None and chart()['series'][0]['kind'] == 'line'"
+            say: "This is a line. One point per student is `plt.scatter`."
+      - expr: "err is None and chart() is not None and chart()['title'] == 'Study and scores' and chart()['xlabel'] == 'hours of study' and chart()['ylabel'] == 'score (%)'"
+        pass: "The title and both labels"
+        hint: "`plt.title(...)`, `plt.xlabel(\"hours of study\")`, `plt.ylabel(\"score (%)\")`."
+      - expr: "err is None and chart() is not None and chart()['ylim'] == [0.0, 100.0]"
+        pass: "The vertical axis goes from 0 to 100"
+        hint: "`plt.ylim(0, 100)`."
+    hints:
+      - "One point per student: `plt.scatter(hours, scores)`."
+      - "Then the title and the two labels."
+      - "`plt.ylim(0, 100)`, and `plt.show()` at the end."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O4
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-axis-cut
+        objective: O4
+        prompt: "A bar chart shows 95 and 96, and its axis starts at 94. What is wrong?"
+        options:
+          - text: "The second bar looks twice as long, but it is only 1% more"
+            correct: true
+            why: "Bars must start at 0, so their length matches the value."
+          - text: "Nothing: the axis is closer to the data"
+            why: "For bars, cutting the axis changes the story."
+          - text: "The bars are too thin"
+            why: "Width is not the problem."
+      - kind: mcq
+        id: q-plot-order
+        objective: O1
+        prompt: "In `plt.plot(a, b)`, which values go across?"
+        options:
+          - text: "`a`: the first values are x, across"
+            correct: true
+            why: "x first, then y (up)."
+          - text: "`b`"
+            why: "`b` goes up: it is y."
+          - text: "Both: matplotlib chooses"
+            why: "The order decides."
+      - kind: mcq
+        id: q-legend
+        objective: O3
+        prompt: "`plt.legend()` shows nothing, and a warning says \"No artists with labels\". What is missing?"
+        options:
+          - text: "A `label=` in the `plot` calls"
+            correct: true
+            why: "The legend shows the labels of the series."
+          - text: "A `title`"
+            why: "The title is not part of the legend."
+          - text: "`plt.show()` before `plt.legend()`"
+            why: "`legend()` must come before `show()`."
+      - kind: mcq
+        id: q-hist
+        objective: O2
+        prompt: "What does `plt.hist(ages, bins=4)` show?"
+        options:
+          - text: "How many ages fall into each of 4 ranges of the same width"
+            correct: true
+            why: "A histogram counts values per bin."
+          - text: "The first 4 ages"
+            why: "It uses all ages."
+          - text: "4 lines"
+            why: "It draws one bar per bin."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-import
+    objective: O1
+    prompt: "How do you usually import matplotlib for charts?"
+    options:
+      - text: "`import matplotlib.pyplot as plt`"
+        correct: true
+        why: "Then `plt.plot`, `plt.show` and the others."
+      - text: "`import plt`"
+        why: "`plt` is the short name of `matplotlib.pyplot`."
+      - text: "`from matplotlib import chart`"
+        why: "The part for charts is `pyplot`."
+  - kind: mcq
+    id: r-show
+    objective: O1
+    prompt: "What does `plt.show()` do?"
+    options:
+      - text: "It draws the chart, and ends it"
+        correct: true
+        why: "After it, a new chart starts."
+      - text: "It saves the chart in a file"
+        why: "That is `plt.savefig` on your computer."
+      - text: "It prints the numbers"
+        why: "It draws."
+  - kind: mcq
+    id: r-scatter
+    objective: O2
+    prompt: "Which chart shows if two values go together?"
+    options:
+      - text: "A scatter chart"
+        correct: true
+        why: "One point per pair of values."
+      - text: "A histogram"
+        why: "That shows how one set of values spreads."
+      - text: "A bar chart"
+        why: "Bars compare things side by side."
+  - kind: mcq
+    id: r-label
+    objective: O3
+    prompt: "Two lines in one chart. How does the reader know which is which?"
+    options:
+      - text: "`label=` on each `plot`, and `plt.legend()`"
+        correct: true
+        why: "The legend shows each label with its color."
+      - text: "Two `plt.title` calls"
+        why: "A chart has one title."
+      - text: "Two `plt.show()` calls"
+        why: "That would make two charts."
+  - kind: mcq
+    id: r-zero
+    objective: O4
+    prompt: "Where must the axis of a bar chart start?"
+    options:
+      - text: "At 0"
+        correct: true
+        why: "The length of a bar shows the value."
+      - text: "At the smallest value"
+        why: "Then small differences look huge."
+      - text: "Anywhere: it does not matter"
+        why: "It changes how big the differences look."

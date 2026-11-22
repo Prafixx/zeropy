@@ -1,0 +1,760 @@
+id: parameters-and-return
+order: 20
+title: Parameters, return, scope
+summary: Optional and named values, several results, an early return, and why each call keeps its names to itself.
+minutes: 38
+outcomes: [A1, A2, A8]
+
+objectives:
+  - id: O1
+    text: Give a parameter a default value, and call a function with named arguments
+  - id: O2
+    text: Give back several values as a tuple, and end a call early with return
+  - id: O3
+    text: Explain that a name made inside a function is local, so the name outside does not change
+  - id: O4
+    text: Follow a function that calls another function
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O4
+    title: A call inside a call
+    question: A function can call another function. Who waits for whom?
+    code: |
+      def square(n):
+          return n * n
+
+      def total(a, b):
+          return square(a) + square(b)
+
+      t = total(2, 3)
+    beats:
+      - beat: define
+        line: 1
+        caption: "Two functions. Python remembers both blocks. Nothing runs yet."
+      - beat: outer
+        line: 7
+        caption: "`total(2, 3)` opens a desk with `a` and `b`."
+      - beat: inner
+        line: 5
+        caption: "`total` calls `square(a)`. Now `total` **waits**. A second desk opens, with its own name `n`."
+      - beat: back
+        line: 2
+        caption: "`square` gives back 4. Its desk closes, and `total` continues on line 5."
+      - beat: again
+        line: 5
+        caption: "Then `square(b)`: a new desk, and a new `n`, now 3."
+      - beat: backAgain
+        line: 2
+        caption: "9 comes back. Line 5 can now compute 4 + 9."
+      - beat: done
+        line: 7
+        caption: "`total` gives back 13 to `t`. The last desk closes. The newest desk always finishes **first**."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: options
+    type: theory
+    objective: O1
+    title: Optional and named values
+    body: |
+      ## A default value
+
+      ```
+      def greet(name, greeting="Hello"):
+          print(f"{greeting}, {name}!")
+
+      greet("Ana")           # Hello, Ana!
+      greet("Ben", "Hi")     # Hi, Ben!
+      ```
+
+      `greeting="Hello"` is a **default value**. A call can leave out this
+      argument, and then the parameter gets the default. Parameters with a
+      default come after the parameters without one.
+
+      ## Named arguments
+
+      A call can name the parameter: `greet(greeting="Hey", name="Cleo")`.
+      Then the order does not matter, and the call is easier to read. You
+      already know one: `print("a", "b", sep="-")`.
+    keys:
+      - code: 'def greet(name, greeting="Hello"):'
+        means: "`greeting` is optional. Without it, it is `\"Hello\"`."
+      - code: 'greet("Ana")'
+        means: "Only the first value. `greeting` gets the default."
+      - code: 'greet(name="Cleo", greeting="Hey")'
+        means: "Named arguments. The order does not matter."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-defaults
+    type: predict
+    objective: O1
+    title: Which value goes where?
+    item:
+      kind: predict
+      id: p-defaults
+      prompt: "**Type every line that this program prints.**"
+      code: |
+        def greet(name, greeting="Hello"):
+            print(f"{greeting}, {name}!")
+
+        greet("Ana")
+        greet("Ben", "Hi")
+        greet(greeting="Hey", name="Cleo")
+      explain: >-
+        The first call leaves out `greeting`, so it is `"Hello"`. The second
+        call gives two values in order. The third call names both, so the
+        order in the call does not matter.
+      misconceptions:
+        - answer: "Hello, Ana!\nHi, Ben!\nCleo, Hey!"
+          say: "Named arguments go to the parameter with that name, not by their place in the call."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O4
+    title: Watch the desks
+    intro: |
+      Press **Run**. While `square` runs, the desk of `total` waits. Then
+      try the changes below.
+    code: |
+      def square(n):
+          return n * n
+
+      def total(a, b):
+          return square(a) + square(b)
+
+      t = total(2, 3)
+      print(t)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "True"
+      - text: "Change the call to `total(4, 1)`. What is `t` now?"
+        expr: "err is None and ns.get('t') == 17"
+      - text: "Give `b` a default value: `def total(a, b=10):`. Then call `total(1)`."
+        expr: "err is None and ns.get('t') == 101"
+      - text: "At the end, add `print(n)`. Whose name was `n`?"
+        expr: "err == 'NameError' and 'n' in src.splitlines()[-1]"
+    investigate:
+      - kind: spot
+        id: i-inner
+        prompt: "Which line calls `square`?"
+        code: |
+          def square(n):
+              return n * n
+
+          def total(a, b):
+              return square(a) + square(b)
+
+          t = total(2, 3)
+          print(t)
+        line: 5
+        wrong:
+          - line: 7
+            say: "This line calls `total`. `square` is called from inside `total`."
+          - line: 1
+            say: "This line defines `square`. It does not run it."
+        explain: >-
+          `total` calls `square` twice on line 5. While `square` runs, the
+          call of `total` waits for its result.
+      - kind: mcq
+        id: i-how-many
+        prompt: "How many times does `square` run in this program?"
+        options:
+          - text: "Two times: once for `a`, once for `b`"
+            correct: true
+            why: "Line 5 has two calls: `square(a)` and `square(b)`."
+          - text: "One time"
+            why: "There are two calls of `square` on line 5."
+          - text: "Three times"
+            why: "`def` does not run a function. Only the two calls on line 5 do."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: results
+    type: theory
+    objective: O2
+    title: Several results, and an early end
+    body: |
+      ## Several values back
+
+      `return` gives back one value. With commas, that value is a tuple:
+
+      ```
+      def min_max(numbers):
+          return min(numbers), max(numbers)
+
+      low, high = min_max([4, 9, 2])    # low is 2, high is 9
+      ```
+
+      ## return ends the call
+
+      Python leaves the function at the first `return` that runs. The lines
+      after it do not run.
+
+      ```
+      def sign(n):
+          if n < 0:
+              return "negative"
+          return "not negative"
+      ```
+
+      ## Names stay inside
+
+      A name that a function creates belongs to the call: it is **local**.
+      Outside, a name with the same spelling is a different box, and the
+      function does not change it. To get a new value out, use `return`.
+    keys:
+      - code: "return low, high"
+        means: "Gives back one tuple with two values."
+      - code: "low, high = min_max(numbers)"
+        means: "Unpacks the tuple into two names."
+      - code: 'return "negative"'
+        means: "Ends the call here. Later lines do not run."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O3
+    title: Results and names
+    items:
+      - kind: predict
+        id: d-unpack
+        objective: O2
+        code: |
+          def min_max(numbers):
+              return min(numbers), max(numbers)
+
+          low, high = min_max([5, 1, 8])
+          print(high - low)
+          print(min_max([3]))
+        explain: "The first call gives back `(1, 8)`, so `high - low` is 7. With one number, the smallest and the largest are the same: `(3, 3)`."
+      - kind: predict
+        id: d-early
+        objective: O2
+        code: |
+          def grade(points):
+              if points >= 50:
+                  return "pass"
+              print("checking")
+              return "fail"
+
+          print(grade(70))
+          print(grade(20))
+        explain: >-
+          For 70 the first `return` runs, so the call ends and `checking` is
+          not printed. For 20 the condition is False: Python prints
+          `checking`, then returns `"fail"`.
+        misconceptions:
+          - answer: "checking\npass\nchecking\nfail"
+            say: "`return` ends the call. After `return \"pass\"`, the line with `print` does not run."
+      - kind: predict
+        id: d-local
+        objective: O3
+        prompt: "There are two names `x` here. **What does the program print?**"
+        code: |
+          x = 10
+
+          def change():
+              x = 5
+              print(x)
+
+          change()
+          print(x)
+        explain: >-
+          `x = 5` inside the function makes a local name: a box on the desk
+          of the call. The `x` outside is another box. It stays 10.
+        misconceptions:
+          - answer: "5\n5"
+            say: "The `x` inside the function is a box of the call. The `x` outside does not change."
+      - kind: diagnose
+        id: d-keyword
+        objective: O1
+        mode: read
+        code: |
+          def greet(name, greeting="Hello"):
+              print(f"{greeting}, {name}!")
+
+          greet(nam="Ana")
+        explain: "A named argument must use the exact name of a parameter. The message names the wrong word: `nam`."
+        fix:
+          - text: "Write `greet(name=\"Ana\")`"
+            correct: true
+            why: "Now the name matches the parameter."
+          - text: "Give `nam` a default value"
+            why: "The function has no parameter `nam`. The spelling in the call is wrong."
+          - text: "Delete `greeting=\"Hello\"`"
+            why: "The default is not the problem. The call uses a name that does not exist."
+      - kind: diagnose
+        id: d-unbound
+        objective: O3
+        mode: read
+        code: |
+          score = 0
+
+          def add_points(points):
+              score = score + points
+
+          add_points(5)
+          print(score)
+        explain: >-
+          The function changes `score`, so Python makes `score` a local name of
+          the call. On the right side, this local name has no value yet.
+        fix:
+          - text: "Give the score as a parameter and return the new score: `score = add_points(score, 5)`"
+            correct: true
+            why: "Values go in through parameters and come out with return. Nothing outside changes in secret."
+          - text: "Write `score = 0` inside the function, too"
+            why: "Then the function works on its own local `score`. The `score` outside stays 0."
+          - text: "Rename `points` to `score`"
+            why: "Then the parameter hides the outside name, and the result is still not given back."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-search
+    type: worked
+    objective: O2
+    title: Stop at the first match
+    problem: |
+      A function must find the position of the first negative number in a
+      list. If there is none, it gives back `-1`.
+    lines:
+      - goal: "Write the function"
+        code: |
+          def first_negative(numbers):
+              for i in range(len(numbers)):
+                  if numbers[i] < 0:
+                      return i
+        note: "The loop checks each place. At the first negative number, `return` ends the call at once, with the position."
+      - code: "    return -1"
+        note: "This line is after the loop, not inside it. It runs only when the loop finished without a match."
+      - goal: "Test it"
+        code: |
+          print(first_negative([4, -2, 7, -5]))   # 1
+          print(first_negative([3, 8]))          # -1
+        note: "Two calls. In the first, the loop stops early at position 1."
+    check:
+      kind: mcq
+      id: w-search
+      prompt: "What happens if `return -1` is moved **inside** the loop, under the `if`, at the same level as `if`?"
+      options:
+        - text: "The function gives back `-1` when the first number is not negative, without checking the others"
+          correct: true
+          why: "The first round of the loop always reaches a `return`. The loop never gets to the second number."
+        - text: "Nothing changes"
+          why: "Inside the loop, `return -1` runs in the first round, after the first number."
+        - text: "Python shows an error"
+          why: "It is correct Python. It is a logic error: the result is wrong."
+
+  # TRACE -----------------------------------------------------------------
+  - id: trace
+    type: drill
+    objective: O2
+    title: Be the computer
+    items:
+      - kind: trace
+        id: t-calls
+        objective: O2
+        code: |
+          def double(n):
+              return n * 2
+
+          x = 3
+          y = double(x)
+          x = double(y)
+          print(x, y)
+        names: [x, y]
+        explain: >-
+          The `def` only makes the function. Each call gives back twice its
+          argument: `double(3)` is 6, then `double(6)` is 12. The global `x`
+          changes only on line 6.
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O2
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-min-max
+        objective: O2
+        code: |
+          def min_max(numbers):
+              return min(numbers), max(numbers)
+          low, high = min_max([7, 2, 9])
+          print("Lowest:", low)
+          print("Highest:", high)
+        explain: >-
+          The function gives back two values as a tuple. The line `low, high =
+          ...` takes them apart: `low` gets 2 and `high` gets 9.
+      - kind: order
+        id: o-chain
+        objective: O4
+        code: |
+          def double(x):
+              return x * 2
+          def double_plus_one(x):
+              return double(x) + 1
+          print(double_plus_one(5))
+        explain: >-
+          A function can call another one. The two `def` blocks can come in any
+          order, because Python only needs `double` when the call runs, on the
+          last line. It prints 11.
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-discount
+    type: exercise
+    fade: completion
+    objective: O1
+    title: An optional discount
+    prompt: |
+      `final_price(amount, discount)` takes a percentage off a price. Most
+      prices have no discount.
+
+      **Replace `___`**, so that `final_price(80)` works and gives back 80.
+    starter: |
+      def final_price(amount, discount=___):
+          return amount - amount * discount / 100
+
+      print(final_price(80))
+      print(final_price(80, 25))
+      print(final_price(discount=10, amount=50))
+    solution: |
+      def final_price(amount, discount=0):
+          return amount - amount * discount / 100
+
+      print(final_price(80))
+      print(final_price(80, 25))
+      print(final_price(discount=10, amount=50))
+    after: >-
+      With the default 0, a call without a discount still works. The last
+      call names both arguments, so their order does not matter.
+    checks:
+      - expr: "callable(ns.get('final_price')) and final_price(80) == 80 and final_price(10) == 10"
+        pass: "Without a discount, the price stays the same"
+        hint: "Which discount changes nothing?"
+        misconceptions:
+          - when: "callable(ns.get('final_price')) and final_price(100) != 100"
+            say: "With this default, a call without a discount changes the price. The default must be the percentage that changes nothing."
+      - expr: "callable(ns.get('final_price')) and final_price(80, 25) == 60 and final_price(discount=10, amount=50) == 45"
+        pass: "With a discount, the price goes down"
+        hint: "Keep the `return` line as it is."
+    hints:
+      - "The default is the value that `discount` gets when the call leaves it out."
+      - "What percentage takes nothing off?"
+      - "Write `discount=0`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-negative
+    type: exercise
+    fade: debug
+    objective: O2
+    title: An answer that comes too early
+    prompt: |
+      `has_negative(numbers)` must give back `True` if the list has a
+      negative number, and `False` if not.
+
+      **Run it.** The second line says `False`, but `[3, -1]` has a
+      negative number.
+    starter: |
+      def has_negative(numbers):
+          for n in numbers:
+              if n < 0:
+                  return True
+              else:
+                  return False
+
+      print(has_negative([-4, 2]))
+      print(has_negative([3, -1]))
+      print(has_negative([]))
+    solution: |
+      def has_negative(numbers):
+          for n in numbers:
+              if n < 0:
+                  return True
+          return False
+
+      print(has_negative([-4, 2]))
+      print(has_negative([3, -1]))
+      print(has_negative([]))
+    after: >-
+      `False` is only sure after the loop checked every number. So
+      `return False` goes after the loop. `return True` can stay inside: one
+      negative number is enough.
+    checks:
+      - expr: "callable(ns.get('has_negative')) and has_negative([3, -1]) is True and has_negative([1, 2, -3]) is True and has_negative([-4, 2]) is True"
+        pass: "It finds a negative number anywhere in the list"
+        hint: "The function answers after the first number. Can it know the answer that early?"
+        misconceptions:
+          - when: "callable(ns.get('has_negative')) and has_negative([3, -1]) is False"
+            say: "The function decides after the first number. `return False` ends the call in the first round of the loop."
+      - expr: "callable(ns.get('has_negative')) and has_negative([3, 8]) is False and has_negative([]) is False"
+        pass: "It gives back `False` when there is no negative number, also for an empty list"
+        hint: "For an empty list the loop does not run. What does the function give back then?"
+        misconceptions:
+          - when: "callable(ns.get('has_negative')) and has_negative([]) is None"
+            say: "For an empty list the loop does not run, so no `return` runs, and the result is `None`. Put `return False` after the loop."
+    hints:
+      - "When can the function be sure that there is no negative number?"
+      - "Only after the loop has checked all numbers."
+      - "Delete `else:` and move `return False` after the loop, at the level of `for`."
+
+  # 9b. EXERCISE: debug (a list as a default) ------------------------------
+  - id: ex-basket
+    type: exercise
+    fade: debug
+    objective: O1
+    title: A basket that remembers
+    prompt: |
+      `new_basket(item)` must start a **new** basket with one item in it.
+      **Run it.** The second basket also has the milk from the first one.
+
+      Find out why, and fix it. A call with a basket, like
+      `new_basket("tea", ["jam"])`, must still add to that basket.
+    starter: |
+      def new_basket(item, basket=[]):
+          basket.append(item)
+          return basket
+
+
+      print(new_basket("milk"))
+      print(new_basket("eggs"))
+    solution: |
+      def new_basket(item, basket=None):
+          if basket is None:
+              basket = []
+          basket.append(item)
+          return basket
+
+
+      print(new_basket("milk"))
+      print(new_basket("eggs"))
+    after: >-
+      Python makes a default value **one time**, when the `def` line runs,
+      not at each call. For a number or a text this does not matter: they
+      cannot change. A list can change in place, so every call without
+      `basket` added to the same list. The rule: never use `[]` or `{}` as a
+      default. Use `None`, and make the new list inside the function.
+    checks:
+      - expr: "err is None and lines == [\"['milk']\", \"['eggs']\"]"
+        pass: "Each basket starts empty"
+        hint: "The second line must be `['eggs']`."
+        misconceptions:
+          - when: "lines[-1:] == [\"['milk', 'eggs']\"]"
+            say: "The list `[]` in the `def` line is made one time. Every call without `basket` adds to that same list."
+      - expr: "callable(ns.get('new_basket')) and new_basket('a') == ['a'] and new_basket('b') == ['b']"
+        pass: "Every call without a basket gives a new list"
+        hint: "Make the new list inside the function, when no basket was given."
+      - expr: "callable(ns.get('new_basket')) and (lambda b: new_basket('tea', b) is b and b == ['jam', 'tea'])(['jam'])"
+        pass: "A call with a basket adds to that basket"
+        hint: "Make a new list only when `basket is None`."
+        misconceptions:
+          - when: "callable(ns.get('new_basket')) and new_basket('tea', ['jam']) == ['tea']"
+            say: "The function always makes a new list, so the given basket is lost. Make one only when `basket is None`."
+    hints:
+      - "The default `[]` is made one time, when the `def` line runs. It is not made again at each call."
+      - "Use `None` as the default. Inside the function, make a new list when `basket is None`."
+      - "`def new_basket(item, basket=None):`, then `if basket is None:` and, inside it, `basket = []`."
+
+  # 10. EXERCISE: independent ------------------------------------------------
+  - id: ex-stats
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Three results at once
+    prompt: |
+      **Write a function `stats(numbers)` that gives back three values: the
+      smallest number, the largest number and the average.**
+
+      - `stats([2, 4, 9])` gives back `(2, 9, 5.0)`.
+
+      Then call it with `[4, 8, 6]`, unpack the result into three names,
+      and print the three values.
+    starter: |
+      # Define stats(numbers) here.
+    solution: |
+      def stats(numbers):
+          average = sum(numbers) / len(numbers)
+          return min(numbers), max(numbers), average
+
+      low, high, mean = stats([4, 8, 6])
+      print(low, high, mean)
+    after: >-
+      One call, three results. Unpacking gives each result a clear name.
+    checks:
+      - expr: "callable(ns.get('stats'))"
+        pass: "There is a function with the name `stats`"
+        hint: "Start with `def stats(numbers):`."
+      - expr: "callable(ns.get('stats')) and stats([2, 4, 9]) == (2, 9, 5.0) and stats([7]) == (7, 7, 7.0) and stats([-1, 1]) == (-1, 1, 0.0)"
+        pass: "It gives back the smallest, the largest and the average, in this order"
+        hint: "Use `min()`, `max()`, and `sum() / len()`. Give back all three with commas."
+        misconceptions:
+          - when: "callable(ns.get('stats')) and stats([2, 4, 9]) is None"
+            say: "The function gives back `None`. Use `return`, not `print`."
+          - when: "callable(ns.get('stats')) and stats([2, 4, 9]) == [2, 9, 5.0]"
+            say: "This is a list. Give back the values with commas, without brackets: `return a, b, c` makes a tuple."
+          - when: "callable(ns.get('stats')) and isinstance(stats([2, 4, 9]), tuple) and sorted(stats([2, 4, 9])) == [2, 5.0, 9] and stats([2, 4, 9]) != (2, 9, 5.0)"
+            say: "The three values are right, but the order is not. Give back the smallest, then the largest, then the average."
+      - expr: "err is None and called('stats') and len(lines) >= 1 and '4' in out and '8' in out"
+        pass: "The program calls `stats` and prints the results for `[4, 8, 6]`"
+        hint: "Write `low, high, mean = stats([4, 8, 6])`, then print the three names."
+    hints:
+      - "The average is `sum(numbers) / len(numbers)`."
+      - "Give back three values with commas: `return min(numbers), max(numbers), average`."
+      - "Unpack: `low, high, mean = stats([4, 8, 6])`, then `print(low, high, mean)`."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: predict
+        id: q-default
+        objective: O1
+        code: |
+          def power(base, exp=2):
+              return base ** exp
+
+          print(power(3))
+          print(power(2, 3))
+          print(power(exp=1, base=7))
+        explain: "Without `exp`, it is 2: 3 times 3 is 9. Then 2 to the power 3 is 8. The named call gives 7 to the power 1."
+      - kind: mcq
+        id: q-tuple
+        objective: O2
+        prompt: "A function ends with `return name, age`. What does a call give back?"
+        options:
+          - text: "One tuple with two values"
+            correct: true
+            why: "The commas make a tuple. You can unpack it: `n, a = person()`."
+          - text: "Only `name`"
+            why: "Both values come back, in one tuple."
+          - text: "An error: return takes one value"
+            why: "It is one value: a tuple."
+      - kind: predict
+        id: q-early
+        objective: O2
+        code: |
+          def first_long(words):
+              for word in words:
+                  if len(word) > 3:
+                      return word
+              return "none"
+
+          print(first_long(["a", "tree", "house"]))
+          print(first_long(["ox"]))
+        explain: "The loop stops at the first long word, `tree`, so `house` is never checked. In the second list no word is long, so the loop ends and `none` comes back."
+      - kind: mcq
+        id: q-local
+        objective: O3
+        prompt: "Outside a function, `total = 0`. Inside the function, `total = 99`. After a call, what is `total` outside?"
+        options:
+          - text: "0. The `total` inside was a local name of the call"
+            correct: true
+            why: "Assignment inside a function creates a name on its own desk."
+          - text: "99. The function changed it"
+            why: "The function has its own `total`. To change the value outside, return it and assign it there."
+          - text: "It is gone"
+            why: "The `total` outside is not touched. Only the local name is gone."
+      - kind: mcq
+        id: q-order
+        objective: O4
+        prompt: "`total` calls `square`. Which call ends first?"
+        options:
+          - text: "`square`. `total` waits until it gets the value back"
+            correct: true
+            why: "The newest desk finishes first. Then the waiting call continues."
+          - text: "`total`. It started first"
+            why: "`total` needs the result of `square` before it can continue."
+          - text: "Both end at the same time"
+            why: "One call runs at a time. `total` waits."
+      - kind: diagnose
+        id: q-many
+        objective: O1
+        mode: predict
+        code: |
+          def area(width, height=1):
+              return width * height
+
+          print(area(2, 3, 4))
+        explain: "`area` has two parameters, but the call gives three values. The default does not add room for more values."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-default
+    objective: O1
+    code: |
+      def label(text, mark="*"):
+          return mark + text + mark
+
+      print(label("hi"))
+      print(label("hi", mark="!"))
+    explain: "Without `mark`, it is `*`. The second call names it: `!`."
+  - kind: predict
+    id: r-list-default
+    objective: O1
+    code: |
+      def collect(x, seen=[]):
+          seen.append(x)
+          return seen
+
+      collect(1)
+      print(collect(2))
+    explain: "The default list is made one time, when `def` runs. Both calls add to it. Use `seen=None` and make the list inside the function."
+    misconceptions:
+      - answer: "[2]"
+        say: "That is what a new list would give. But `[]` in the `def` line is made only one time, so the first call's `1` is still in it."
+  - kind: predict
+    id: r-unpack
+    objective: O2
+    code: |
+      def divide(a, b):
+          return a // b, a % b
+
+      q, r = divide(17, 5)
+      print(q, r)
+    explain: "17 // 5 is 3 and 17 % 5 is 2. The tuple `(3, 2)` is unpacked into `q` and `r`."
+  - kind: mcq
+    id: r-return-ends
+    objective: O2
+    prompt: "What happens to the lines after a `return` that runs?"
+    options:
+      - text: "They do not run. The call ends at `return`"
+        correct: true
+        why: "That is why `return` inside a loop can stop the search early."
+      - text: "They run, then the value is given back"
+        why: "The value is given back at once, and the call ends."
+      - text: "Python shows an error"
+        why: "Lines after a `return` are allowed. They only run when that `return` does not."
+  - kind: predict
+    id: r-local
+    objective: O3
+    code: |
+      n = 1
+
+      def f():
+          n = 2
+          return n * 10
+
+      print(f())
+      print(n)
+    explain: "Inside, `n` is a local name with 2, so the call gives back 20. The `n` outside is still 1."
+  - kind: mcq
+    id: r-nested
+    objective: O4
+    prompt: "`total` calls `square` two times. How many desks are open at most at the same time?"
+    options:
+      - text: "Two: the desk of `total` and one desk of `square`"
+        correct: true
+        why: "The first `square` call ends before the second one starts."
+      - text: "Three: `total` and both calls of `square`"
+        why: "The calls of `square` run one after the other, not together."
+      - text: "One"
+        why: "`total` waits on its desk while `square` runs on a second desk."

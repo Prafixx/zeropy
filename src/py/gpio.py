@@ -1,13 +1,15 @@
 # A pretend Raspberry Pi for the Raspberry Pi lessons. Loaded after
 # harness.py. `import gpiozero` gives classes with the names and defaults
 # of the real library (gpiozero.readthedocs.io): LED, PWMLED, Buzzer,
-# Button, MotionSensor, DistanceSensor, CPUTemperature, TrafficLights.
+# Button, MotionSensor, DistanceSensor, CPUTemperature, TrafficLights,
+# LightSensor, MCP3008, Motor, Robot, and `source` (led.source = pot).
 #
 # Time is simulated. sleep() does not wait: it moves a clock forward, and
 # every change of a pin is written into a timeline with its time. The page
 # plays the timeline back. Inputs (a press, a distance) come from the case:
 # events with a time. A program that waits for an input that never comes,
 # or that runs longer than _CAP seconds, ends quietly (it is not an error).
+import collections
 import heapq
 import inspect
 import signal
@@ -44,6 +46,9 @@ class _Board:
         self.cpu = float(gpio.get("cpu", 47.2))
         self.end = None
         self.inputs = []
+        self.in_due = False  # a scheduled task runs: reading a value must not move the clock
+        self.light = float(gpio.get("light", 0.6))
+        self.analog = dict(gpio.get("analog") or {})
         for e in sorted(gpio.get("events") or [], key=lambda e: float(e.get("at", 0))):
             self.schedule(float(e.get("at", 0)), lambda e=e: self.apply_input(e))
 
@@ -75,7 +80,11 @@ class _Board:
             at, _, fn = heapq.heappop(self.queue)
             self.mark_out()
             self.now = max(self.now, at)
-            fn()
+            was, self.in_due = self.in_due, True
+            try:
+                fn()
+            finally:
+                self.in_due = was
             self.mark_out()
 
     def idle(self, until_true=None, timeout=None):
@@ -102,12 +111,14 @@ class _Board:
                 raise PinInvalidPin(f"{pin!r} is not a valid pin. Use a GPIO number from 0 to 27 (BCM numbering), like 17.")
             if pin in self.pins:
                 other = self.devices[self.pins[pin]]["kind"]
+                if kind == other == "MCP3008":
+                    continue  # the channels of one MCP3008 share its SPI pins
                 raise GPIOPinInUse(f"pin GPIO{pin} is already in use by the {other}")
         dev_id = len(self.devices)
         self.devices.append({"id": dev_id, "kind": kind, "pins": pins})
         for pin in pins.values():
             if pin is not None:
-                self.pins[pin] = dev_id
+                self.pins.setdefault(pin, dev_id)
         return dev_id
 
     def record(self, dev_id, value):
@@ -181,7 +192,7 @@ class _Device:
 
     def __init__(self, pins):
         for role, pin in pins.items():
-            if pin is None and role in ("pin", "echo", "trigger", "red", "green"):
+            if pin is None and role in ("pin", "echo", "trigger", "red", "green", "forward", "backward"):
                 raise GPIODeviceError(f"No pin given: {type(self).__name__} needs a GPIO number")
         self._zp_id = _board.add(self, self._zp_kind, pins)
         self._zp_closed = False
@@ -205,6 +216,51 @@ class _Device:
 
     def __exit__(self, *exc):
         self.close()
+
+    # ---- source and values: one device drives another (led.source = pot) ------------
+    source_delay = 0.01
+
+    def _zp_now(self):
+        return getattr(self, "_value", 0)
+
+    @property
+    def values(self):
+        """An endless stream of the value of the device."""
+        def stream():
+            while True:
+                if not _board.in_due:
+                    _board.advance(_board.now + _POLL)
+                yield self._zp_now()
+        return stream()
+
+    @property
+    def source(self):
+        return getattr(self, "_zp_source", None)
+
+    @source.setter
+    def source(self, value):
+        self._zp_source_gen = getattr(self, "_zp_source_gen", 0) + 1
+        self._zp_source = value
+        if value is None:
+            return
+        it = value.values if isinstance(value, _Device) else iter(value)
+        gen = self._zp_source_gen
+
+        def step():
+            if self._zp_source_gen != gen or self._zp_closed:
+                return
+            try:
+                v = next(it)
+            except StopIteration:
+                return
+            self.value = v
+            _board.schedule(_board.now + self.source_delay, step)
+
+        was, _board.in_due = _board.in_due, True
+        try:
+            step()
+        finally:
+            _board.in_due = was
 
     def __repr__(self):
         pins = ", ".join(f"GPIO{p}" for p in _board.devices[self._zp_id]["pins"].values() if p is not None)
@@ -622,6 +678,256 @@ class DistanceSensor(_Device):
     when_out_of_range = property(lambda s: s._when.get("out"), lambda s, f: s._when.__setitem__("out", f))
 
 
+class LightSensor(_Device):
+    """A light-dependent resistor (LDR) with a capacitor: 0 is dark, 1 is light."""
+
+    _zp_kind = "LightSensor"
+
+    def __init__(self, pin=None, queue_len=5, charge_time_limit=0.01, threshold=0.1, partial=False, pin_factory=None):
+        super().__init__({"pin": pin})
+        self.pin = _Pin(pin)
+        self.threshold = threshold
+        self.charge_time_limit = charge_time_limit
+        self._light = max(0.0, min(1.0, float(_board.light)))
+        self._when = {}
+        _board.record(self._zp_id, round(self._light, 3))
+
+    def _zp_matches(self, e):
+        return "light" in e and e.get("pin", _board.devices[self._zp_id]["pins"]["pin"]) == _board.devices[self._zp_id]["pins"]["pin"]
+
+    def _zp_input(self, e):
+        before = self._light > self.threshold
+        self._light = max(0.0, min(1.0, float(e["light"])))
+        _board.record(self._zp_id, round(self._light, 3))
+        after = self._light > self.threshold
+        if after and not before:
+            _call(self._when.get("light"), self)
+        elif before and not after:
+            _call(self._when.get("dark"), self)
+
+    def _zp_now(self):
+        return self._light
+
+    @property
+    def value(self):
+        _board.advance(_board.now + _POLL)
+        return self._light
+
+    @property
+    def light_detected(self):
+        return self.value > self.threshold
+
+    is_active = light_detected
+
+    def wait_for_light(self, timeout=None):
+        return _board.idle(lambda: self._light > self.threshold, timeout)
+
+    def wait_for_dark(self, timeout=None):
+        return _board.idle(lambda: self._light <= self.threshold, timeout)
+
+    when_light = property(lambda s: s._when.get("light"), lambda s, f: s._when.__setitem__("light", f))
+    when_dark = property(lambda s: s._when.get("dark"), lambda s, f: s._when.__setitem__("dark", f))
+    when_activated = when_light
+    when_deactivated = when_dark
+
+
+class SPIError(GPIOZeroError):
+    pass
+
+
+class SPIBadChannel(SPIError):
+    pass
+
+
+class MCP3008(_Device):
+    """An analogue-to-digital converter with 8 channels (0 to 7), on the SPI pins.
+    Here, a knob (potentiometer) is on each channel that the program reads."""
+
+    _zp_kind = "MCP3008"
+
+    def __init__(self, channel=0, differential=False, max_voltage=3.3, **spi_args):
+        if not isinstance(channel, int) or not 0 <= channel <= 7:
+            raise SPIBadChannel("channel must be between 0 and 7")
+        select = spi_args.get("select_pin", 7 if spi_args.get("device") == 1 else 8)
+        super().__init__({
+            "clock": spi_args.get("clock_pin", 11),
+            "mosi": spi_args.get("mosi_pin", 10),
+            "miso": spi_args.get("miso_pin", 9),
+            "select": select,
+        })
+        _board.devices[self._zp_id]["channel"] = channel
+        self.channel = channel
+        self.differential = differential
+        self.max_voltage = max_voltage
+        self.bits = 10
+        self._analog = max(0.0, min(1.0, float((_board.analog or {}).get(str(channel), 0.5))))
+        _board.record(self._zp_id, round(self._analog, 3))
+
+    def _zp_matches(self, e):
+        return "analog" in e and int(e.get("channel", 0)) == self.channel
+
+    def _zp_input(self, e):
+        self._analog = max(0.0, min(1.0, float(e["analog"])))
+        _board.record(self._zp_id, round(self._analog, 3))
+
+    def _zp_now(self):
+        return self._analog
+
+    @property
+    def value(self):
+        _board.advance(_board.now + _POLL)
+        return self._analog
+
+    @property
+    def voltage(self):
+        return self.value * self.max_voltage
+
+    @property
+    def raw_value(self):
+        return int(round(self.value * 1023))
+
+    def __repr__(self):
+        return f"<gpiozero.MCP3008 object using pins 11, 10, 9, {_board.devices[self._zp_id]['pins']['select']} channel {self.channel}>"
+
+
+class Motor(_Device):
+    """A DC motor on a motor controller (H-bridge): value -1 (full backward) to 1 (full forward)."""
+
+    _zp_kind = "Motor"
+
+    def __init__(self, forward=None, backward=None, *, enable=None, pwm=True, pin_factory=None):
+        if forward is None or backward is None:
+            raise GPIODeviceError("forward and backward pins must be provided")
+        super().__init__({"forward": forward, "backward": backward, "enable": enable})
+        self.pwm = pwm
+        self._value = 0.0
+        _board.record(self._zp_id, 0)
+
+    def _set(self, value):
+        value = round(float(value), 3)
+        if value != self._value:
+            self._value = value
+            _board.record(self._zp_id, value)
+
+    def _zp_now(self):
+        return self._value
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, v):
+        if not -1 <= v <= 1:
+            raise ValueError("Motor value must be between -1 and 1")
+        if not self.pwm and v not in (-1, 0, 1):
+            raise ValueError("Motor value must be -1, 0 or 1 with non-PWM Motors")
+        self._set(v)
+
+    @property
+    def is_active(self):
+        return self._value != 0
+
+    def forward(self, speed=1):
+        if not 0 <= speed <= 1:
+            raise ValueError("forward speed must be between 0 and 1")
+        if not self.pwm and speed not in (0, 1):
+            raise ValueError("forward speed must be 0 or 1 with non-PWM Motors")
+        self._set(speed)
+
+    def backward(self, speed=1):
+        if not 0 <= speed <= 1:
+            raise ValueError("backward speed must be between 0 and 1")
+        if not self.pwm and speed not in (0, 1):
+            raise ValueError("backward speed must be 0 or 1 with non-PWM Motors")
+        self._set(-speed)
+
+    def reverse(self):
+        self._set(-self._value)
+
+    def stop(self):
+        self._set(0)
+
+
+RobotValue = collections.namedtuple("RobotValue", ["left_motor", "right_motor"])
+
+
+class Robot:
+    """Two motors: a robot with a wheel on the left and one on the right."""
+
+    def __init__(self, left=None, right=None, *, pwm=True, pin_factory=None):
+        def motor(m, side):
+            if isinstance(m, Motor):
+                return m
+            if isinstance(m, tuple) and len(m) == 2:
+                return Motor(*m, pwm=pwm)
+            raise GPIODeviceError(f"{side} must be a Motor, for example Robot(left=Motor(4, 14), right=Motor(17, 18))")
+
+        self.left_motor = motor(left, "left")
+        self.right_motor = motor(right, "right")
+        self._zp_id = len(_board.devices)
+        _board.devices.append({"id": self._zp_id, "kind": "Robot", "pins": {},
+                               "left": self.left_motor._zp_id, "right": self.right_motor._zp_id})
+
+    @staticmethod
+    def _curve(name, value):
+        if not 0 <= value <= 1:
+            raise ValueError(f"{name} must be between 0 and 1")
+
+    def forward(self, speed=1, *, curve_left=0, curve_right=0):
+        self._curve("curve_left", curve_left)
+        self._curve("curve_right", curve_right)
+        if curve_left and curve_right:
+            raise ValueError("curve_left and curve_right can't be used at the same time")
+        self.left_motor.forward(speed * (1 - curve_left))
+        self.right_motor.forward(speed * (1 - curve_right))
+
+    def backward(self, speed=1, *, curve_left=0, curve_right=0):
+        self._curve("curve_left", curve_left)
+        self._curve("curve_right", curve_right)
+        if curve_left and curve_right:
+            raise ValueError("curve_left and curve_right can't be used at the same time")
+        self.left_motor.backward(speed * (1 - curve_left))
+        self.right_motor.backward(speed * (1 - curve_right))
+
+    def left(self, speed=1):
+        self.right_motor.forward(speed)
+        self.left_motor.backward(speed)
+
+    def right(self, speed=1):
+        self.left_motor.forward(speed)
+        self.right_motor.backward(speed)
+
+    def reverse(self):
+        self.left_motor.reverse()
+        self.right_motor.reverse()
+
+    def stop(self):
+        self.left_motor.stop()
+        self.right_motor.stop()
+
+    @property
+    def value(self):
+        return RobotValue(self.left_motor.value, self.right_motor.value)
+
+    @value.setter
+    def value(self, v):
+        left, right = v
+        self.left_motor.value = left
+        self.right_motor.value = right
+
+    @property
+    def is_active(self):
+        return self.left_motor.is_active or self.right_motor.is_active
+
+    def close(self):
+        self.left_motor.close()
+        self.right_motor.close()
+
+    def __repr__(self):
+        return "<gpiozero.Robot object containing 2 devices: left_motor, right_motor>"
+
+
 class CPUTemperature:
     """The temperature of the processor, in degrees Celsius. No wiring needed."""
 
@@ -676,6 +982,12 @@ def _make_gpiozero():
         "DistanceSensor": DistanceSensor,
         "CPUTemperature": CPUTemperature,
         "TrafficLights": TrafficLights,
+        "LightSensor": LightSensor,
+        "MCP3008": MCP3008,
+        "Motor": Motor,
+        "Robot": Robot,
+        "SPIError": SPIError,
+        "SPIBadChannel": SPIBadChannel,
         "GPIOZeroError": GPIOZeroError,
         "GPIODeviceError": GPIODeviceError,
         "GPIOPinInUse": GPIOPinInUse,
@@ -684,7 +996,7 @@ def _make_gpiozero():
     }.items():
         setattr(module, name, value)
     exc = types.ModuleType("gpiozero.exc")
-    for name in ("GPIOZeroError", "GPIODeviceError", "GPIOPinInUse", "PinInvalidPin", "GPIODeviceClosed"):
+    for name in ("GPIOZeroError", "GPIODeviceError", "GPIOPinInUse", "PinInvalidPin", "GPIODeviceClosed", "SPIError", "SPIBadChannel"):
         setattr(exc, name, getattr(module, name))
     module.exc = exc
     sys.modules["gpiozero"] = module
@@ -778,6 +1090,20 @@ class _GpioHook:
             ids = dev_ids(pin)
             return devices[ids[0]]["kind"] if ids else None
 
+        def value_of(dev_id, t):
+            value = 0
+            for e in data["timeline"]:
+                if e["id"] == dev_id and e["t"] <= t + 1e-9:
+                    value = e["value"]
+            return value
+
+        def robot_at(t):
+            """The speeds (left, right) of the robot at time t."""
+            robot = next((d for d in devices if d["kind"] == "Robot"), None)
+            if robot is None:
+                return None
+            return (value_of(robot["left"], t), value_of(robot["right"], t))
+
         return {
             "gpio": data,
             "history": history,
@@ -788,6 +1114,7 @@ class _GpioHook:
             "flashes": flashes,
             "cpu": data.get("cpu"),
             "device": device,
+            "robot_at": robot_at,
             "kinds": [d["kind"] for d in devices],
             "end_time": data["end"]["t"],
             "ended": data["end"]["why"],

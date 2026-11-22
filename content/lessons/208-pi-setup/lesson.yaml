@@ -1,0 +1,463 @@
+id: pi-setup
+order: 208
+title: Set up a real Pi
+summary: The parts to buy, an SD card made with Raspberry Pi Imager, the first updates, and how to see that the power supply is too weak.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Choose the parts for a Pi - the right power supply, an SD card, cables
+  - id: O2
+    text: Write Raspberry Pi OS to an SD card with Raspberry Pi Imager, with your own settings
+  - id: O3
+    text: Update a new Pi with apt, and turn it off safely
+  - id: O4
+    text: Find a power or heat problem with vcgencmd and the kernel log
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: parts
+    type: theory
+    objective: O1
+    title: What you need
+    body: |
+      ## The power supply
+
+      This part causes the most trouble. Each model needs its own:
+
+      | Model | Power supply | Connector |
+      |---|---|---|
+      | Raspberry Pi 5 | 5 V, 5 A (27 W) | USB-C |
+      | Raspberry Pi 4 | 5 V, 3 A (15 W) | USB-C |
+      | Raspberry Pi 3 | 5 V, 2.5 A | micro-USB |
+
+      A phone charger often gives less current than this. Then the Pi
+      restarts at random, or files on the SD card break. The official
+      power supply is the safe choice.
+
+      ## The SD card
+
+      The SD card is the disk of the Pi: the system and your files are on
+      it. Use at least **32 GB** for Raspberry Pi OS with a desktop (8 GB is
+      enough for Lite, the version without a desktop). If you are not sure
+      which card to buy, take an official Raspberry Pi card.
+
+      ## Screen, or no screen
+
+      With a screen, you need a keyboard, a mouse, and for a Pi 4 or 5 a
+      **micro-HDMI** cable (the small one). Without a screen, the Pi needs
+      a network (Wi-Fi or a cable), and you work on it from your PC. That is
+      the next lesson.
+    keys:
+      - code: "Pi 5: 5 V 5 A"
+        means: "27 W USB-C, like the official power supply."
+      - code: "Pi 4: 5 V 3 A"
+        means: "15 W USB-C."
+      - code: "32 GB"
+        means: "The smallest SD card for the desktop version."
+
+  # 2. DRILL -----------------------------------------------------------------
+  - id: choose
+    type: drill
+    objective: O1
+    title: The right parts
+    items:
+      - kind: mcq
+        id: d-psu
+        objective: O1
+        prompt: "Which power supply fits a Raspberry Pi 5?"
+        options:
+          - text: "5 V, 5 A, USB-C (27 W)"
+            correct: true
+            why: "That is what the Pi 5 needs. The official power supply gives it."
+          - text: "A 5 V, 1 A phone charger with USB-C"
+            why: "The plug fits, but 1 A is far too little. The Pi would restart or slow down."
+          - text: "12 V, 2 A"
+            why: "Every Pi needs 5 V. 12 V can break it."
+      - kind: mcq
+        id: d-reboots
+        objective: O1
+        prompt: "A Pi 4 restarts by itself while it works hard. What is the first thing to try?"
+        options:
+          - text: "Another power supply, one that gives 5 V and 3 A"
+            correct: true
+            why: "A weak power supply is the most common cause. Change it first."
+          - text: "Install the system again"
+            why: "Try that later. First the power supply, then another SD card."
+          - text: "A bigger SD card"
+            why: "The size of the card does not make a Pi restart."
+      - kind: mcq
+        id: d-sd
+        objective: O1
+        prompt: "You want Raspberry Pi OS with a desktop. Which SD card?"
+        options:
+          - text: "32 GB or more"
+            correct: true
+            why: "The desktop version needs at least 32 GB."
+          - text: "4 GB"
+            why: "Too small: even Lite, the version without a desktop, needs 8 GB."
+          - text: "Any card, the size does not matter"
+            why: "The system and your files must fit on it."
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: imager
+    type: theory
+    objective: O2
+    title: Raspberry Pi Imager
+    body: |
+      **Raspberry Pi Imager** is a free program for Windows, macOS and
+      Linux. It writes the system to the SD card. Put the card into your
+      PC, start Imager, and choose:
+
+      1. **Device**: your model, for example Raspberry Pi 4.
+      2. **OS**: Raspberry Pi OS (64-bit). Choose **Lite** for a Pi without
+         a screen.
+      3. **Storage**: the SD card. Check twice: writing **erases
+         everything** on it.
+
+      Then the **customisation**. Do it now, and the Pi is ready at the
+      first start:
+
+      - **Hostname**: the name of the Pi on your network, like
+        `raspberrypi`. You will reach it as `raspberrypi.local`.
+      - **Localisation**: your capital city, for the time zone and the
+        keyboard.
+      - **User**: a user name (small letters) and a strong password. There
+        is no ready-made user and no default password.
+      - **Wi-Fi**: the name and the password of your network.
+      - **Remote access**: turn on **SSH**, to log in from your PC.
+      - **Raspberry Pi Connect**: optional, to reach the Pi from a browser.
+
+      Last: **Write**, then "I understand, erase and write". Imager checks
+      the card after writing. Then put the card into the Pi and connect the
+      power. The first start takes a few minutes.
+    keys:
+      - code: "Device · OS · Storage"
+        means: "The model, the system, the SD card."
+      - code: "Customisation"
+        means: "Name, user and password, Wi-Fi, SSH: before you write."
+      - code: "erase and write"
+        means: "Everything on the card is lost."
+
+  # 4. DRILL -----------------------------------------------------------------
+  - id: imager-check
+    type: drill
+    objective: O2
+    title: Before you write
+    items:
+      - kind: mcq
+        id: d-erase
+        objective: O2
+        prompt: "Imager asks: \"I understand, erase and write\". What happens to the photos on the SD card?"
+        options:
+          - text: "They are lost: the whole card is written new"
+            correct: true
+            why: "Copy anything you want to keep before you write."
+          - text: "Imager keeps them in a folder"
+            why: "Imager erases the whole card."
+          - text: "Only the system files change"
+            why: "Imager writes a complete new disk."
+      - kind: mcq
+        id: d-user
+        objective: O2
+        prompt: "What is the user name and the password of a new Raspberry Pi OS?"
+        options:
+          - text: "The ones you choose in Imager (or at the first start)"
+            correct: true
+            why: "There is no default user any more, so nobody can guess it."
+          - text: "pi and raspberry"
+            why: "That was the old default. It is gone because everyone knew it."
+          - text: "admin and admin"
+            why: "There is no default password."
+      - kind: mcq
+        id: d-ssh-off
+        objective: O2
+        prompt: "The Pi has no screen, and you forgot to turn on SSH in Imager. What is the easy fix?"
+        options:
+          - text: "Write the card again with Imager, and turn on SSH in the customisation"
+            correct: true
+            why: "Without a screen and without SSH, you cannot reach the Pi. Writing again takes a few minutes."
+          - text: "Wait: SSH turns on by itself after a day"
+            why: "SSH stays off until you turn it on."
+          - text: "Use a bigger SD card"
+            why: "The card is fine. The setting is missing."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: first-days
+    type: theory
+    objective: O3
+    title: Updates and turning it off
+    body: |
+      ## Updates
+
+      A new Pi first gets the newest versions of its programs:
+
+      ```text
+      sudo apt update          get the list of new versions
+      sudo apt full-upgrade    install them
+      ```
+
+      `update` only reads the list; `full-upgrade` installs. apt shows what
+      it will do and asks `Continue? [Y/n]`: press Enter or type `y`. A
+      `-y` at the end answers yes by itself. After an update of the system
+      itself (the kernel), restart with `sudo reboot`.
+
+      `cat /etc/os-release` shows which system you have. The newest
+      Raspberry Pi OS is based on Debian 13, called **trixie**. The version
+      before it was **bookworm**. To move to a new version, write a new SD
+      card.
+
+      ## Turn it off
+
+      Do not just pull the cable: the Pi may be writing to the SD card, and
+      a file can break. Turn it off first:
+
+      ```text
+      sudo poweroff
+      ```
+
+      Then wait. On a Pi 4, the green light flashes, then it stays off: now
+      you may unplug it. On a Pi 5, the light turns red.
+    keys:
+      - code: "sudo apt update"
+        means: "Read the list of new versions."
+      - code: "sudo apt full-upgrade"
+        means: "Install them."
+      - code: "sudo poweroff"
+        means: "Turn off safely. Then unplug."
+
+  # 6. TERMINAL --------------------------------------------------------------
+  - id: update
+    type: terminal
+    objective: O3
+    title: The first updates
+    prompt: |
+      You sit at the keyboard of your new Pi. **Make it up to date.**
+
+      1. See which system it has, in `/etc/os-release`.
+      2. Install the new versions of its programs. Try `full-upgrade` before
+         `update` too, and compare.
+      3. Answer the question of apt.
+    checks:
+      - expr: "any('os-release' in h for h in history)"
+        pass: "You looked at the version of the system"
+        hint: "`cat /etc/os-release`."
+      - expr: "lists_updated"
+        pass: "apt read the list of new versions"
+        hint: "`sudo apt update`."
+      - expr: "updated"
+        pass: "The new versions are installed"
+        hint: "After `sudo apt update`: `sudo apt full-upgrade`, then answer `y`."
+    hints:
+      - "`cat /etc/os-release`: look at `PRETTY_NAME`."
+      - "`sudo apt full-upgrade` alone finds nothing: apt does not know about the new versions yet. First `sudo apt update`."
+      - "`sudo apt update`, then `sudo apt full-upgrade`, then press Enter or type `y`."
+    solution: ["cat /etc/os-release", "sudo apt update", "sudo apt full-upgrade", "y"]
+    after: >-
+      Do this every few weeks, or at least before you install something new.
+      An old system is the most common way into a computer for an attacker.
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: health
+    type: theory
+    objective: O4
+    title: Power and heat
+    body: |
+      A weak power supply and too much heat make a Pi slow, or make it
+      restart. Three ways to see it:
+
+      - On a Pi 4 and older, the **red light** is off or flickers when the
+        voltage is too low.
+      - The **kernel** (the core of Linux) writes `Undervoltage detected!`
+        into its log. Read it with `sudo dmesg`, or `journalctl -k`.
+      - **vcgencmd** asks the chip:
+
+      ```text
+      vcgencmd measure_temp     temp=52.1'C
+      vcgencmd get_throttled    throttled=0x0
+      ```
+
+      `throttled=0x0` means: all is well. Any other value is a warning. The
+      most common one, `0x50005`, means: the voltage is too low now, the Pi
+      is slowed down now, and both happened before too.
+
+      The Pi slows itself down above about 80 °C, and 85 °C is its limit. A
+      case with air holes, a heatsink or a fan helps.
+    keys:
+      - code: "vcgencmd get_throttled"
+        means: "`0x0` is good. Anything else: power or heat."
+      - code: "vcgencmd measure_temp"
+        means: "The temperature of the chip."
+      - code: "sudo dmesg"
+        means: "The log of the kernel. Add `| grep -i voltage` for the power warnings."
+
+  # 8. TERMINAL --------------------------------------------------------------
+  - id: power
+    type: terminal
+    objective: O4
+    title: Why does it restart?
+    prompt: |
+      A friend's Pi restarts now and then, and it feels slow. Find out why.
+
+      1. Measure the temperature.
+      2. Ask the chip if it was slowed down, and **save the answer in
+         `report.txt`**, to send to your friend.
+      3. Look for the warning in the log of the kernel.
+    start:
+      power: weak
+    checks:
+      - expr: "any('measure_temp' in h for h in history)"
+        pass: "You measured the temperature"
+        hint: "`vcgencmd measure_temp`."
+      - expr: "'throttled=' in (read('report.txt') or '')"
+        pass: "`report.txt` holds the answer of `get_throttled`"
+        hint: "`vcgencmd get_throttled > report.txt`."
+      - expr: "any(('dmesg' in h and 'sudo' in h) or ('journalctl' in h and '-k' in h) for h in history) and 'Undervoltage' in out"
+        pass: "You found the warning of the kernel"
+        hint: "`sudo dmesg | grep -i voltage`. `dmesg` needs `sudo`."
+    hints:
+      - "The temperature is normal. `vcgencmd get_throttled` shows something else."
+      - "`vcgencmd get_throttled > report.txt` saves the answer. `0x50005` is not good."
+      - "`sudo dmesg | grep -i voltage` shows the lines with `Undervoltage detected!`."
+    solution: ["vcgencmd measure_temp", "vcgencmd get_throttled > report.txt", "sudo dmesg | grep -i voltage"]
+    after: >-
+      The temperature was fine, the voltage was not: the power supply is too
+      weak. The fix costs a few euros: a power supply that gives the current
+      of the table. Then `get_throttled` says `0x0` again after a restart.
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-update-first
+        objective: O3
+        prompt: "`sudo apt full-upgrade` says `Upgrading: 0`, but you know there are new versions. What is missing?"
+        options:
+          - text: "`sudo apt update` before it"
+            correct: true
+            why: "Without `update`, apt uses its old list and does not know the new versions."
+          - text: "A restart"
+            why: "A restart does not bring the list of new versions."
+          - text: "More space on the SD card"
+            why: "apt would say that. It does not know about the new versions yet."
+      - kind: mcq
+        id: q-unplug
+        objective: O3
+        prompt: "Why `sudo poweroff` before you unplug the Pi?"
+        options:
+          - text: "The Pi may be writing to the SD card, and a file can break"
+            correct: true
+            why: "After `poweroff`, wait until the light shows that it is off."
+          - text: "It saves electricity"
+            why: "Unplugged, it uses nothing anyway. It is about the SD card."
+          - text: "The Pi forgets the Wi-Fi password otherwise"
+            why: "Settings are on the SD card. The risk is a broken file."
+      - kind: mcq
+        id: q-throttled
+        objective: O4
+        prompt: "`vcgencmd get_throttled` says `throttled=0x0`. What does it mean?"
+        options:
+          - text: "No power or heat problem since the start"
+            correct: true
+            why: "0x0: nothing to report."
+          - text: "The Pi is slowed down"
+            why: "Then a bit would be set, for example 0x50005."
+          - text: "The temperature is 0 °C"
+            why: "The temperature is `measure_temp`."
+      - kind: mcq
+        id: q-hot
+        objective: O4
+        prompt: "`vcgencmd measure_temp` says `temp=83.0'C` while a program runs. What happens?"
+        options:
+          - text: "The Pi slows itself down to cool off"
+            correct: true
+            why: "Above about 80 °C it slows down; 85 °C is the limit. A heatsink or a fan helps."
+          - text: "Nothing: that is normal"
+            why: "It is close to the limit, and the Pi is already slower."
+          - text: "It turns off at once"
+            why: "It slows down first, to protect itself."
+      - kind: mcq
+        id: q-lite
+        objective: O2
+        prompt: "Your Pi will sit in a box in the garden, with no screen. Which system?"
+        options:
+          - text: "Raspberry Pi OS Lite, with SSH turned on in Imager"
+            correct: true
+            why: "Lite has no desktop: less to update, more memory for your program."
+          - text: "Raspberry Pi OS Full, with every program"
+            why: "Without a screen, a desktop and its programs are of no use."
+          - text: "No system: a Pi in a box does not need one"
+            why: "Every Pi needs a system on its SD card."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-psu4
+    objective: O1
+    prompt: "Which power supply does a Raspberry Pi 4 need?"
+    options:
+      - text: "5 V, 3 A, USB-C"
+        correct: true
+        why: "15 W. The Pi 5 needs 5 A."
+      - text: "5 V, 1 A, micro-USB"
+        why: "The Pi 4 has USB-C, and needs 3 A."
+      - text: "Any USB charger"
+        why: "Many chargers give too little current."
+  - kind: mcq
+    id: r-hostname
+    objective: O2
+    prompt: "In Imager you set the hostname `garden`. How do you reach the Pi on your network?"
+    options:
+      - text: "`garden.local`"
+        correct: true
+        why: "The hostname with `.local` at the end."
+      - text: "`raspberrypi.local`"
+        why: "That is the name only if you keep the default."
+      - text: "`www.garden.com`"
+        why: "That would be a website on the internet."
+  - kind: mcq
+    id: r-apt-pair
+    objective: O3
+    prompt: "What is the difference between `apt update` and `apt full-upgrade`?"
+    options:
+      - text: "`update` reads the list of new versions; `full-upgrade` installs them"
+        correct: true
+        why: "Always in this order."
+      - text: "There is none"
+        why: "`update` installs nothing."
+      - text: "`update` installs, `full-upgrade` restarts"
+        why: "`full-upgrade` installs. A restart is `sudo reboot`."
+  - kind: mcq
+    id: r-undervoltage
+    objective: O4
+    prompt: "The kernel log says `Undervoltage detected!`. What should you change?"
+    options:
+      - text: "The power supply"
+        correct: true
+        why: "The voltage is too low: the power supply is too weak, or its cable is bad."
+      - text: "The SD card"
+        why: "A card cannot change the voltage."
+      - text: "The Wi-Fi password"
+        why: "This is about power."
+  - kind: mcq
+    id: r-dmesg
+    objective: O4
+    prompt: "`dmesg` says `read kernel buffer failed: Operation not permitted`. Why?"
+    options:
+      - text: "The log of the kernel needs `sudo`: `sudo dmesg`"
+        correct: true
+        why: "`journalctl -k` shows the same lines without `sudo`."
+      - text: "The kernel is broken"
+        why: "The message is about permission, not about the kernel."
+      - text: "`dmesg` is not installed"
+        why: "Then it would say `command not found`."

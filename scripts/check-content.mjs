@@ -3,7 +3,7 @@
 // Also runs every predict item, so no item can crash.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,10 +16,18 @@ import { validateLesson } from '../src/engine/validate.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const lessonsDir = join(root, 'content', 'lessons');
-const pyodide = await loadPyodide();
+// Pyodide as the page has it: the core and numpy from public/pyodide
+// (scripts/copy-pyodide.mjs puts them there).
+const lock = JSON.parse(readFileSync(join(root, 'node_modules', 'pyodide', 'pyodide-lock.json'), 'utf8'));
+if (!existsSync(join(root, 'public', 'pyodide', lock.packages.numpy.file_name))) {
+  execFileSync(process.execPath, [join(root, 'scripts', 'copy-pyodide.mjs')], { stdio: 'inherit' });
+}
+const pyodide = await loadPyodide({ indexURL: join(root, 'public', 'pyodide') + '/' });
+await pyodide.loadPackage('numpy', { messageCallback: () => undefined });
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'harness.py'), 'utf8'));
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'shell.py'), 'utf8'));
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'gpio.py'), 'utf8'));
+pyodide.runPython(readFileSync(join(root, 'src', 'py', 'plot.py'), 'utf8'));
 const shellFn = pyodide.globals.get('shell');
 const shell = (request) => JSON.parse(shellFn(JSON.stringify(request)));
 const run = pyodide.globals.get('run');
@@ -101,6 +109,7 @@ for (const folder of readdirSync(lessonsDir)) {
         cwd: start.cwd ? abs(start.cwd) : '/home/pi',
         history: [],
         packages: start.packages ?? [],
+        ...Object.fromEntries(Object.entries(start).filter(([k]) => !['files', 'dirs', 'modes', 'cwd', 'packages', 'history'].includes(k))),
       };
       const exprs = step.checks.map((c) => c.expr);
       const first = shell({ state, checks: exprs });

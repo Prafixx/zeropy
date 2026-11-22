@@ -223,6 +223,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
       bench.setOutput(result.stdout);
       bench.setFiles(result.files);
       bench.setWindow(result.gui);
+      bench.setCharts(result.plot);
       bench.showError(result.error);
       return;
     }
@@ -376,6 +377,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
     bench.setOutput(result.stdout);
     bench.setFiles(result.files);
     bench.setWindow(result.gui);
+    bench.setCharts(result.plot);
     bench.showError(result.error);
   }
 

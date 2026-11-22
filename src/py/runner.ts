@@ -3,9 +3,10 @@ import type { GuiEvent, GuiResult, RunRequest, RunResult, ShellRequest, ShellRes
 import harnessCode from './harness.py?raw';
 import shellCode from './shell.py?raw';
 import gpioCode from './gpio.py?raw';
+import plotCode from './plot.py?raw';
 
-// The pretend Linux shell and the pretend Raspberry Pi extend the harness.
-const harness = `${harnessCode}\n${shellCode}\n${gpioCode}`;
+// The pretend Linux shell, Raspberry Pi and matplotlib extend the harness.
+const harness = `${harnessCode}\n${shellCode}\n${gpioCode}\n${plotCode}`;
 
 export type PyStatus = 'idle' | 'loading' | 'ready' | 'failed';
 

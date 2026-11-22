@@ -1,0 +1,493 @@
+id: data-neighbours
+order: 305
+title: "Sort into classes: nearest neighbours"
+summary: A model that puts things into classes, by looking at the most similar examples. Measure it with accuracy, and see how it can fool you.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Tell classification (a class) from regression (a number)
+  - id: O2
+    text: Classify a new example by its nearest neighbours, with distances from numpy
+  - id: O3
+    text: Measure a classifier with accuracy on a test set, and know when accuracy fools you
+  - id: O4
+    text: Choose k, and see that k = 1 can learn the noise of the examples
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: classes
+    type: theory
+    objective: O1
+    title: A class instead of a number
+    body: |
+      The line of the last lesson predicted a **number**: litres of fuel.
+      That is **regression**. Many questions want a **class** instead: spam
+      or not spam, cat or dog, which kind of penguin. That is
+      **classification**.
+
+      A simple classifier: **k nearest neighbours**. For a new example,
+      find the `k` examples that are most similar, and take the class that
+      most of them have. "Tell me who your neighbours are..."
+
+      Here, two kinds of penguins, measured by the length of the bill and
+      of the flipper (in mm):
+
+      ```python
+      train = np.array([[39.1, 181], [38.6, 190], ..., [49.9, 213]])
+      labels = np.array(["Adelie", "Adelie", ..., "Gentoo"])
+      ```
+
+      Each row is one penguin, with 2 **features**. `labels` holds the class
+      of each row.
+    keys:
+      - code: "regression"
+        means: "Predict a number."
+      - code: "classification"
+        means: "Predict a class."
+      - code: "k nearest neighbours"
+        means: "Take the class of most of the k most similar examples."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: distance
+    type: theory
+    objective: O2
+    title: How similar? A distance
+    body: |
+      Two penguins are similar when their features are close. The distance
+      between two points, like on a map:
+
+      ```text
+      distance = √((bill₁ - bill₂)² + (flipper₁ - flipper₂)²)
+      ```
+
+      numpy does it for all penguins at once. `train - new` subtracts `new`
+      from **every row** (numpy repeats the row for you):
+
+      ```python
+      new = np.array([45.1, 207])
+      d = np.sqrt(((train - new) ** 2).sum(axis=1))   # one distance per penguin
+      np.argmin(d)          # the place of the smallest distance
+      np.argsort(d)[:3]     # the places of the 3 smallest, nearest first
+      labels[np.argsort(d)[:3]]    # their classes
+      ```
+
+      `argmin` and `argsort` give **places**, not values: use them as an
+      index into `labels`.
+    keys:
+      - code: "((train - new) ** 2).sum(axis=1)"
+        means: "Squared differences, summed per row."
+      - code: "np.argmin(d)"
+        means: "The place of the nearest example."
+      - code: "np.argsort(d)[:k]"
+        means: "The places of the k nearest."
+
+  # 3. DEMO -----------------------------------------------------------------
+  - id: nearest
+    type: demo
+    visual: none
+    objective: O2
+    title: Who are the neighbours?
+    intro: |
+      A new penguin has a bill of 45.1 mm and a flipper of 207 mm. Press
+      **Run**: the program finds its nearest neighbours. The chart shows
+      the training penguins (blue: Adelie, orange: Gentoo) and the new one.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+      train = np.array([[39.1, 181], [38.6, 190], [40.3, 195], [36.7, 193],
+                        [39.3, 190], [38.9, 184], [46.0, 209], [46.1, 211],
+                        [48.7, 210], [47.5, 217], [50.0, 220], [45.5, 215],
+                        [49.9, 213]])
+      labels = np.array(["Adelie"] * 7 + ["Gentoo"] * 6)
+      new = np.array([45.1, 207])
+
+      d = np.sqrt(((train - new) ** 2).sum(axis=1))
+      print("distances:", d.round(1))
+      print("nearest:", labels[np.argmin(d)])
+      print("3 nearest:", labels[np.argsort(d)[:3]])
+
+      colors = ["C0" if label == "Adelie" else "C1" for label in labels]
+      plt.scatter(train[:, 0], train[:, 1], c=colors)
+      plt.scatter([new[0]], [new[1]], color="red", marker="x", label="new penguin")
+      plt.xlabel("bill (mm)")
+      plt.ylabel("flipper (mm)")
+      plt.legend()
+      plt.show()
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and 'nearest: Adelie' in out"
+      - text: "Try a penguin with a bill of 38 mm and a flipper of 186 mm."
+        expr: "err is None and 'nearest: Adelie' in out and 'new=np.array([38' in src.replace(' ', '')"
+      - text: "Print the 5 nearest: `np.argsort(d)[:5]`."
+        expr: "err is None and '[:5]' in src"
+    investigate:
+      - kind: mcq
+        id: i-odd
+        prompt: "The nearest penguin is an Adelie, but the next two are Gentoo. What is special about the nearest one?"
+        options:
+          - text: "It is an unusual Adelie, with measurements like a Gentoo"
+            correct: true
+            why: "Row 6, `[46.0, 209]`, sits among the Gentoo penguins. Real data has such cases."
+          - text: "The distance was calculated wrong"
+            why: "It is the closest: 2.2 mm away."
+          - text: "Adelie and Gentoo are the same"
+            why: "They are two kinds. This one Adelie is unusual."
+      - kind: mcq
+        id: i-argmin
+        prompt: "What does `np.argmin(d)` give here?"
+        options:
+          - text: "6: the place of the smallest distance"
+            correct: true
+            why: "A place, so `labels[6]` gives its class."
+          - text: "2.2: the smallest distance"
+            why: "That is `d.min()`. `argmin` gives the place."
+          - text: "\"Adelie\""
+            why: "That is `labels[np.argmin(d)]`."
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-vote
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Let the neighbours vote
+    prompt: |
+      **Complete `classify(new, k)`**: it finds the `k` nearest training
+      penguins, and gives back the class that most of them have.
+
+      ```text
+      Adelie
+      Gentoo
+      ```
+    given: |
+      import numpy as np
+      from collections import Counter
+
+      train = np.array([[39.1, 181], [38.6, 190], [40.3, 195], [36.7, 193],
+                        [39.3, 190], [38.9, 184], [46.0, 209], [46.1, 211],
+                        [48.7, 210], [47.5, 217], [50.0, 220], [45.5, 215],
+                        [49.9, 213]])
+      labels = np.array(["Adelie"] * 7 + ["Gentoo"] * 6)
+    starter: |
+      # numpy (np), Counter, train and labels exist.
+
+
+      def classify(new, k):
+          d = np.sqrt(((train - new) ** 2).sum(axis=1))
+          near = ___
+          votes = Counter(labels[near])
+          return ___
+
+
+      new = np.array([45.1, 207])
+      print(classify(new, 1))
+      print(classify(new, 3))
+    solution: |
+      def classify(new, k):
+          d = np.sqrt(((train - new) ** 2).sum(axis=1))
+          near = np.argsort(d)[:k]
+          votes = Counter(labels[near])
+          return votes.most_common(1)[0][0]
+
+
+      new = np.array([45.1, 207])
+      print(classify(new, 1))
+      print(classify(new, 3))
+    after: >-
+      With one neighbour, the unusual Adelie decides. With three, the two
+      Gentoo outvote it. More neighbours make the model calmer about odd
+      examples.
+    checks:
+      - expr: "callable(ns.get('classify')) and classify(np.array([38.0, 186]), 1) == 'Adelie' and classify(np.array([49.0, 216]), 3) == 'Gentoo'"
+        pass: "It classifies clear cases right"
+        hint: "`near = np.argsort(d)[:k]`: the places of the k nearest."
+      - expr: "callable(ns.get('classify')) and classify(np.array([45.1, 207]), 1) == 'Adelie' and classify(np.array([45.1, 207]), 3) == 'Gentoo'"
+        pass: "k = 1 and k = 3 give different answers for the new penguin"
+        hint: "`return votes.most_common(1)[0][0]`: the class with the most votes."
+      - expr: "err is None and lines == ['Adelie', 'Gentoo']"
+        pass: "It prints Adelie, then Gentoo"
+        hint: "Keep the two prints."
+    hints:
+      - "The first `___`: the places of the `k` smallest distances."
+      - "`np.argsort(d)[:k]`."
+      - "The second: `votes.most_common(1)` is a list with one pair `(class, count)`: take `[0][0]`."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: accuracy
+    type: theory
+    objective: O3
+    title: Accuracy, and when it lies
+    body: |
+      **Accuracy** is the share of predictions that are right:
+
+      ```python
+      predicted = np.array([classify(p, 3) for p in test])
+      accuracy = (predicted == test_labels).mean()     # True counts as 1
+      ```
+
+      As always, measure on a **test set** that the model never saw.
+
+      Accuracy can fool you. If only 1 email in 100 is spam, a "model" that
+      **always** says "not spam" has an accuracy of 99%, and it never finds
+      one spam email. With rare classes, also count how many of the rare
+      ones the model really finds.
+
+      And **k**: with `k = 1`, one unusual example decides alone. The model
+      learns the **noise** of the examples, not the rule: that is
+      **overfitting**. A bigger `k` is calmer; a very big `k` ignores the
+      details. Compare a few values of `k` on the test set.
+    keys:
+      - code: "(predicted == true).mean()"
+        means: "Accuracy: the share that is right."
+      - code: "99% can be useless"
+        means: "With a rare class, always saying \"no\" scores high."
+      - code: "k = 1"
+        means: "One odd example decides: overfitting."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-perfect
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A perfect score that means nothing
+    prompt: |
+      The program measures the accuracy of the classifier with `k = 1`. It
+      prints `1.0`: perfect. Too good to be true. **Find the mistake**, fix
+      it, and print the real accuracy on the test penguins:
+
+      ```text
+      0.857
+      ```
+    given: |
+      import numpy as np
+      from collections import Counter
+
+      train = np.array([[39.1, 181], [38.6, 190], [40.3, 195], [36.7, 193],
+                        [39.3, 190], [38.9, 184], [46.0, 209], [46.1, 211],
+                        [48.7, 210], [47.5, 217], [50.0, 220], [45.5, 215],
+                        [49.9, 213]])
+      labels = np.array(["Adelie"] * 7 + ["Gentoo"] * 6)
+      test = np.array([[37.8, 188], [46.8, 215], [41.1, 198], [48.4, 214],
+                       [45.1, 207], [42.0, 201], [46.3, 210]])
+      test_labels = np.array(["Adelie", "Gentoo", "Adelie", "Gentoo",
+                              "Gentoo", "Adelie", "Gentoo"])
+
+
+      def classify(new, k):
+          d = np.sqrt(((train - new) ** 2).sum(axis=1))
+          votes = Counter(labels[np.argsort(d)[:k]])
+          return votes.most_common(1)[0][0]
+    starter: |
+      # train, labels, test, test_labels and classify exist.
+      predicted = np.array([classify(p, 1) for p in train])
+      accuracy = (predicted == labels).mean()
+      print(round(accuracy, 3))
+    solution: |
+      predicted = np.array([classify(p, 1) for p in test])
+      accuracy = (predicted == test_labels).mean()
+      print(round(accuracy, 3))
+    after: >-
+      Each training penguin is its own nearest neighbour, at distance 0, so
+      `k = 1` is always right on the training set. Only the test set shows
+      the truth: one test penguin was fooled by the unusual Adelie.
+    checks:
+      - expr: "err is None and lines == ['0.857']"
+        pass: "It prints the accuracy on the test penguins: 0.857"
+        hint: "Classify the `test` penguins, and compare with `test_labels`."
+        misconceptions:
+          - when: "err is None and lines == ['1.0']"
+            say: "1.0 comes from measuring on the training penguins: each one finds itself. Use `test` and `test_labels`."
+      - expr: "'test_labels' in src and 'for p in test' in src"
+        pass: "It measures on the test set"
+        hint: "`for p in test`, and `== test_labels`."
+    hints:
+      - "Which penguins does the program classify? Has the model seen them?"
+      - "Each training penguin is at distance 0 from itself."
+      - "`for p in test` and `(predicted == test_labels).mean()`."
+
+  # 7. EXERCISE: independent -------------------------------------------------
+  - id: ex-k
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Which k is best?
+    prompt: |
+      **Print the test accuracy for `k = 1`, `k = 3` and `k = 5`**, one line
+      each, rounded to 3 decimals:
+
+      ```text
+      k=1: 0.857
+      k=3: 1.0
+      k=5: 1.0
+      ```
+    given: |
+      import numpy as np
+      from collections import Counter
+
+      train = np.array([[39.1, 181], [38.6, 190], [40.3, 195], [36.7, 193],
+                        [39.3, 190], [38.9, 184], [46.0, 209], [46.1, 211],
+                        [48.7, 210], [47.5, 217], [50.0, 220], [45.5, 215],
+                        [49.9, 213]])
+      labels = np.array(["Adelie"] * 7 + ["Gentoo"] * 6)
+      test = np.array([[37.8, 188], [46.8, 215], [41.1, 198], [48.4, 214],
+                       [45.1, 207], [42.0, 201], [46.3, 210]])
+      test_labels = np.array(["Adelie", "Gentoo", "Adelie", "Gentoo",
+                              "Gentoo", "Adelie", "Gentoo"])
+
+
+      def classify(new, k):
+          d = np.sqrt(((train - new) ** 2).sum(axis=1))
+          votes = Counter(labels[np.argsort(d)[:k]])
+          return votes.most_common(1)[0][0]
+    starter: |
+      # train, labels, test, test_labels and classify exist.
+    solution: |
+      for k in [1, 3, 5]:
+          predicted = np.array([classify(p, k) for p in test])
+          accuracy = (predicted == test_labels).mean()
+          print(f"k={k}: {round(accuracy, 3)}")
+    after: >-
+      Here k = 3 and k = 5 are both right on all 7 test penguins. With so
+      few test examples, one penguin changes the accuracy by 14%: a real
+      test set needs many more examples to trust such numbers.
+    checks:
+      - expr: "err is None and lines == ['k=1: 0.857', 'k=3: 1.0', 'k=5: 1.0']"
+        pass: "The test accuracy for k = 1, 3 and 5"
+        hint: "A loop over `[1, 3, 5]`, and inside it the accuracy on `test`."
+        misconceptions:
+          - when: "err is None and lines == ['k=1: 1.0', 'k=3: 1.0', 'k=5: 1.0']"
+            say: "Measure on `test` and `test_labels`, not on the training penguins."
+      - expr: "syntax('For') + syntax('ListComp') >= 1"
+        pass: "It uses a loop"
+        hint: "`for k in [1, 3, 5]:`."
+    hints:
+      - "`for k in [1, 3, 5]:`."
+      - "Inside: `predicted = np.array([classify(p, k) for p in test])`."
+      - "Then `accuracy = (predicted == test_labels).mean()` and `print(f\"k={k}: {round(accuracy, 3)}\")`."
+
+  # 8. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-kind
+        objective: O1
+        prompt: "Which of these is classification?"
+        options:
+          - text: "Is this photo a cat or a dog?"
+            correct: true
+            why: "The answer is a class."
+          - text: "How many mm of rain will fall tomorrow?"
+            why: "A number: regression."
+          - text: "What will this flat cost?"
+            why: "A price is a number: regression."
+      - kind: mcq
+        id: q-rare
+        objective: O3
+        prompt: "1 in 100 patients has a rare illness. A model always says \"healthy\". What is its accuracy?"
+        options:
+          - text: "99%, and it is useless: it never finds the illness"
+            correct: true
+            why: "With rare classes, accuracy alone fools you."
+          - text: "0%"
+            why: "It is right for the 99 healthy patients."
+          - text: "50%"
+            why: "The classes are not half and half."
+      - kind: predict
+        id: q-argsort
+        objective: O2
+        code: |
+          import numpy as np
+
+          d = np.array([5.0, 1.0, 4.0, 2.0])
+          print(np.argmin(d))
+          print(np.argsort(d)[:2])
+        explain: "The smallest value, 1.0, is at place 1. Sorted, the places are 1, 3, 2, 0."
+        misconceptions:
+          - answer: "1.0\n[1. 2.]"
+            say: "`argmin` and `argsort` give places, not values."
+      - kind: mcq
+        id: q-k1
+        objective: O4
+        prompt: "Why can `k = 1` be a bad choice?"
+        options:
+          - text: "One unusual example decides alone: the model learns the noise"
+            correct: true
+            why: "That is overfitting. More neighbours outvote odd examples."
+          - text: "It is slower than k = 5"
+            why: "It is faster. The problem is the noise."
+          - text: "It cannot classify at all"
+            why: "It can: it takes the class of the one nearest example."
+
+  # 9. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-regression
+    objective: O1
+    prompt: "What does a regression model predict?"
+    options:
+      - text: "A number"
+        correct: true
+        why: "Like litres of fuel, or a price."
+      - text: "A class"
+        why: "That is classification."
+      - text: "A chart"
+        why: "A model predicts values."
+  - kind: mcq
+    id: r-knn
+    objective: O2
+    prompt: "How does k nearest neighbours classify a new example?"
+    options:
+      - text: "It takes the class that most of the k most similar examples have"
+        correct: true
+        why: "Similar means: a small distance between the features."
+      - text: "It draws the best line"
+        why: "That is the line model."
+      - text: "It always takes the first class"
+        why: "It asks the neighbours."
+  - kind: mcq
+    id: r-accuracy
+    objective: O3
+    prompt: "8 of 10 test predictions are right. What is the accuracy?"
+    options:
+      - text: "0.8"
+        correct: true
+        why: "The share that is right: 8 / 10."
+      - text: "8"
+        why: "Accuracy is a share, from 0 to 1."
+      - text: "0.2"
+        why: "That is the share that is wrong."
+  - kind: mcq
+    id: r-train-score
+    objective: O3
+    prompt: "A k = 1 model is 100% right on its training data. What does it prove?"
+    options:
+      - text: "Nothing: each example finds itself"
+        correct: true
+        why: "Measure on a test set."
+      - text: "The model is perfect"
+        why: "On new data it can be much worse."
+      - text: "The data is easy"
+        why: "k = 1 is always 100% on its own training data."
+  - kind: mcq
+    id: r-overfit
+    objective: O4
+    prompt: "What is overfitting?"
+    options:
+      - text: "The model learns the noise of its examples, and does worse on new data"
+        correct: true
+        why: "The test set shows it."
+      - text: "The model is too small"
+        why: "That is the other problem: it misses the rule."
+      - text: "The data has too many rows"
+        why: "More data usually helps."

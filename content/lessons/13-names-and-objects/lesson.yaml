@@ -549,6 +549,22 @@ steps:
           s = s + "!"
           print(t)
         explain: "Text cannot change. `s + \"!\"` makes a new text, and only `s` moves to it."
+      - kind: predict
+        id: q-same-rows
+        objective: O2
+        prompt: "A grid of three rows, made in a short way. **What does this program print?**"
+        code: |
+          grid = [[0] * 3] * 3
+          grid[0][0] = 9
+          print(grid)
+        explain: >-
+          `[[0] * 3] * 3` makes **one** row and puts it three times into the
+          list: three names for the same list. A change through one row is
+          seen in all three. Make a new row each time: start with `grid =
+          []`, and in a loop of three rounds, `grid.append([0] * 3)`.
+        misconceptions:
+          - answer: "[[9, 0, 0], [0, 0, 0], [0, 0, 0]]"
+            say: "That is what you wanted, but the three rows are one list. A change in one row shows in all of them."
 
   # 12. REVIEW ---------------------------------------------------------------
   - id: review
@@ -615,3 +631,27 @@ review:
         why: "That would need a change in place. Numbers cannot change; `x = 4` only moves the name `x`."
       - text: "An error"
         why: "Moving a name is always allowed."
+  - kind: mcq
+    id: r-shadow
+    objective: O1
+    prompt: "A program has `max = 10` on line 1. Later, `max([3, 8])` stops with `TypeError: 'int' object is not callable`. Why?"
+    options:
+      - text: "Line 1 moved the name `max` to the number 10, so `max` is not the function any more"
+        correct: true
+        why: "`=` can put any name on any object, also the name of a function. Choose another name, like `limit`."
+      - text: "`max` cannot take a list"
+        why: "`max([3, 8])` is 8 in a program that keeps the name `max` free."
+      - text: "`max = 10` makes a copy of the function"
+        why: "`=` never copies. It moves the name `max` to the number 10."
+  - kind: mcq
+    id: r-same-rows
+    objective: O2
+    prompt: "Why is `[[0] * 3] * 3` a problem for a grid?"
+    options:
+      - text: "The three rows are the same list: a change in one shows in all"
+        correct: true
+        why: "`* 3` copies the reference, not the row. Make each row new."
+      - text: "It makes only one row"
+        why: "It makes three places, but they all point at one row."
+      - text: "It is a syntax error"
+        why: "It runs. The problem only shows when you change a value."

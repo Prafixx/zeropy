@@ -6,6 +6,7 @@
 // to t, so the playback simply goes on.
 import { place } from '@/kit/motion';
 import type { GpioDevice, GpioInput, GpioRun } from '../types';
+// Light sensor, knob (MCP3008), motor and robot cards: milestone 55.
 import { h } from '../ui';
 
 /** GPIO numbers of the 40-pin header, by physical pin (1 to 40). Others: power or ground. */
@@ -22,7 +23,54 @@ const NAMES: Record<string, string> = {
   MotionSensor: 'Motion sensor',
   DistanceSensor: 'Distance sensor',
   CPUTemperature: 'CPU temperature',
+  LightSensor: 'Light sensor',
+  MCP3008: 'Knob (MCP3008)',
+  Motor: 'Motor',
+  Robot: 'Robot',
 };
+
+interface Card {
+  el: HTMLElement;
+  set(value: number): void;
+  /** Parts that depend on time, not on one value (the robot on its floor). */
+  tick?(t: number): void;
+}
+
+/** The floor of the robot, in cm: 2 m by 1.2 m. A wheel at full speed: 40 cm/s. */
+const FLOOR = { w: 200, h: 120, speed: 40 };
+
+/** Where the robot is at time t: it starts in the middle, facing right, and drives with its two motors. */
+export function robotPose(timeline: GpioRun['timeline'], left: number, right: number, t: number): { x: number; y: number; a: number; trail: [number, number][]; bump: boolean } {
+  let x = FLOOR.w / 2;
+  let y = FLOOR.h / 2;
+  let a = 0;
+  let l = 0;
+  let r = 0;
+  let bump = false;
+  const trail: [number, number][] = [[x, y]];
+  const events = timeline.filter((e) => e.id === left || e.id === right);
+  let k = 0;
+  const dt = 0.02;
+  for (let now = 0; now < t; now += dt) {
+    while (k < events.length && events[k].t <= now + 1e-9) {
+      if (events[k].id === left) l = events[k].value;
+      else r = events[k].value;
+      k++;
+    }
+    const step = Math.min(dt, t - now);
+    const v = ((l + r) / 2) * FLOOR.speed;
+    // Left faster than right: the robot turns clockwise (to the right). Full spin: 180 degrees a second.
+    a += ((l - r) / 2) * Math.PI * step;
+    const nx = x + v * Math.cos(a) * step;
+    const ny = y + v * Math.sin(a) * step;
+    x = Math.max(8, Math.min(FLOOR.w - 8, nx));
+    y = Math.max(8, Math.min(FLOOR.h - 8, ny));
+    bump = bump || x !== nx || y !== ny;
+    const last = trail[trail.length - 1];
+    if (Math.hypot(last[0] - x, last[1] - y) > 3) trail.push([x, y]);
+  }
+  return { x, y, a, trail, bump };
+}
 
 export interface BoardPlayer {
   el: HTMLElement;
@@ -39,6 +87,37 @@ export interface BoardOptions {
   onInput(inputs: GpioInput[], at: number): void;
   /** The output that is printed by the time the playback reached. */
   onOutput(text: string): void;
+}
+
+/**
+ * A slider that the learner moves. The value is taken at the moment of the
+ * move (not later), one input is sent when the slider rests, and while the
+ * learner uses it the playback does not move it back. Phones often do not
+ * give a range slider the focus, so focus alone cannot tell.
+ */
+function sliderTouch(slider: HTMLInputElement, preview: (v: number) => void, send: (v: number) => void): { busy(): boolean } {
+  let timer = 0;
+  let until = 0;
+  let holding = false;
+  slider.addEventListener('pointerdown', () => (holding = true));
+  const release = (): void => {
+    holding = false;
+    until = performance.now() + 400;
+  };
+  slider.addEventListener('pointerup', release);
+  slider.addEventListener('pointercancel', release);
+  slider.addEventListener('input', () => {
+    const v = Number(slider.value) / 100;
+    until = performance.now() + 400;
+    preview(v);
+    window.clearTimeout(timer);
+    // One input when the slider rests, not one for every pixel.
+    timer = window.setTimeout(() => {
+      until = performance.now() + 400;
+      send(v);
+    }, 150);
+  });
+  return { busy: () => holding || performance.now() < until || document.activeElement === slider };
 }
 
 function pinLabel(pin: number | null | undefined): string {
@@ -67,7 +146,7 @@ export function createBoard(options: BoardOptions): BoardPlayer {
   let frame = 0;
   let disposed = false;
   let shownUntil = -1;
-  const cards = new Map<number, { el: HTMLElement; set(value: number): void }>();
+  const cards = new Map<number, Card>();
 
   /** The header: every pin, and the GPIO pins in use light up with their part. */
   function drawHeader(devices: GpioDevice[]): void {
@@ -92,7 +171,28 @@ export function createBoard(options: BoardOptions): BoardPlayer {
     options.onInput(given, at);
   }
 
-  function card(d: GpioDevice): { el: HTMLElement; set(value: number): void } {
+  /** A part with a slider: the light on a light sensor, or a knob on an MCP3008. */
+  function sliderCard(look: HTMLElement, label: HTMLElement, what: string, send: (v: number) => Omit<GpioInput, 'at'>, show: (v: number) => string): Card {
+    const read = h('b', { class: 'pi-reading' }, show(0.5));
+    const slider = h('input', { type: 'range', min: '0', max: '100', step: '1', value: '50', class: 'pi-slider', 'aria-label': what });
+    const touch = sliderTouch(slider, (v) => {
+      read.textContent = show(v);
+      look.style.setProperty('--level', String(v));
+    }, (v) => input(send(v)));
+    const el = h('div', { class: 'pi-part pi-part-wide' }, look, label, read, slider);
+    return {
+      el,
+      set(v) {
+        if (!touch.busy()) {
+          slider.value = String(Math.round(v * 100));
+          read.textContent = show(v);
+          look.style.setProperty('--level', String(v));
+        }
+      },
+    };
+  }
+
+  function card(d: GpioDevice): Card {
     const pins = Object.entries(d.pins)
       .filter(([, p]) => p !== null)
       .map(([role, p]) => (role === 'pin' ? pinLabel(p) : `${role} ${pinLabel(p)}`))
@@ -157,21 +257,84 @@ export function createBoard(options: BoardOptions): BoardPlayer {
     if (d.kind === 'DistanceSensor') {
       const read = h('b', { class: 'pi-reading' }, '100 cm');
       const slider = h('input', { type: 'range', min: '0', max: '100', step: '1', value: '100', class: 'pi-slider', 'aria-label': 'Distance to the sensor in centimeters' });
-      let timer = 0;
-      slider.addEventListener('input', () => {
-        read.textContent = `${slider.value} cm`;
-        window.clearTimeout(timer);
-        // One input when the slider rests, not one for every pixel.
-        timer = window.setTimeout(() => input({ echo: d.pins.echo ?? undefined, distance: Number(slider.value) / 100 }), 150);
-      });
+      const touch = sliderTouch(slider, (v) => (read.textContent = `${Math.round(v * 100)} cm`), (v) => input({ echo: d.pins.echo ?? undefined, distance: v }));
       const el = h('div', { class: 'pi-part pi-part-wide' }, h('span', { class: 'pi-eyes' }, h('i'), h('i')), label, read, slider);
       return {
         el,
         set(v) {
-          if (document.activeElement !== slider) {
+          if (!touch.busy()) {
             slider.value = String(Math.round(v * 100));
             read.textContent = `${Math.round(v * 100)} cm`;
           }
+        },
+      };
+    }
+    if (d.kind === 'LightSensor') {
+      return sliderCard(
+        h('span', { class: 'pi-sun', 'aria-hidden': 'true' }),
+        label,
+        'Light on the sensor, from dark to bright',
+        (v) => ({ pin: d.pins.pin ?? undefined, light: v }),
+        (v) => (v <= 0.1 ? `dark (${v.toFixed(2)})` : `light ${v.toFixed(2)}`),
+      );
+    }
+    if (d.kind === 'MCP3008') {
+      const channel = d.channel ?? 0;
+      return sliderCard(
+        h('span', { class: 'pi-knob', 'aria-hidden': 'true' }, h('i')),
+        h('span', { class: 'pi-part-name' }, 'Knob', h('small', null, `MCP3008 channel ${channel}`)),
+        `Turn the knob on channel ${channel}`,
+        (v) => ({ channel, analog: v }),
+        (v) => `${v.toFixed(2)} · ${(v * 3.3).toFixed(2)} V`,
+      );
+    }
+    if (d.kind === 'Motor') {
+      const wheel = h('span', { class: 'pi-wheel', 'aria-hidden': 'true' }, h('i'), h('i'));
+      const read = h('b', { class: 'pi-reading' }, 'stopped');
+      const el = h('div', { class: 'pi-part' }, wheel, label, read);
+      return {
+        el,
+        set(v) {
+          const speed = Math.abs(v);
+          wheel.classList.toggle('is-on', speed > 0);
+          wheel.classList.toggle('is-back', v < 0);
+          // Full speed: one turn in 0.5 s. Half speed: one turn in 1 s.
+          wheel.style.setProperty('--turn', `${speed > 0 ? 0.5 / speed : 0}s`);
+          read.textContent = speed === 0 ? 'stopped' : `${v > 0 ? 'forward' : 'backward'} ${Math.round(speed * 100)}%`;
+          el.setAttribute('aria-label', `Motor on ${pins}: ${read.textContent}`);
+        },
+      };
+    }
+    if (d.kind === 'Robot') {
+      const ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', `0 0 ${FLOOR.w} ${FLOOR.h}`);
+      svg.setAttribute('class', 'pi-floor');
+      svg.setAttribute('role', 'img');
+      const trail = document.createElementNS(ns, 'polyline');
+      trail.setAttribute('class', 'pi-trail');
+      const bot = document.createElementNS(ns, 'g');
+      bot.setAttribute('class', 'pi-bot');
+      const body = document.createElementNS(ns, 'rect');
+      for (const [k, v] of Object.entries({ x: '-8', y: '-7', width: '16', height: '14', rx: '3' })) body.setAttribute(k, v);
+      const nose = document.createElementNS(ns, 'path');
+      nose.setAttribute('d', 'M 9 -4 L 14 0 L 9 4 Z');
+      bot.append(body, nose);
+      svg.append(trail, bot);
+      const where = h('b', { class: 'pi-reading' }, '');
+      const el = h('div', { class: 'pi-part pi-part-wide pi-part-floor' }, svg, h('span', { class: 'pi-part-name' }, 'Robot', h('small', null, 'on a floor of 2 m × 1.2 m')), where);
+      let last = -1;
+      return {
+        el,
+        set: () => undefined,
+        tick(t) {
+          if (!run || Math.abs(t - last) < 0.03) return;
+          last = t;
+          const pose = robotPose(run.timeline, d.left ?? -1, d.right ?? -1, t);
+          bot.setAttribute('transform', `translate(${pose.x.toFixed(1)} ${pose.y.toFixed(1)}) rotate(${((pose.a * 180) / Math.PI).toFixed(1)})`);
+          trail.setAttribute('points', pose.trail.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' '));
+          where.textContent = pose.bump ? 'bumped into the wall' : '';
+          svg.setAttribute('aria-label', `The robot is at ${Math.round(pose.x)} cm from the left and ${Math.round(pose.y)} cm from the top${pose.bump ? ', at a wall' : ''}.`);
         },
       };
     }
@@ -206,7 +369,10 @@ export function createBoard(options: BoardOptions): BoardPlayer {
     if (!run) return;
     const values = new Map<number, number>();
     for (const e of run.timeline) if (e.t <= t) values.set(e.id, e.value);
-    cards.forEach((c, id) => c.set(values.get(id) ?? 0));
+    cards.forEach((c, id) => {
+      c.set(values.get(id) ?? 0);
+      c.tick?.(t);
+    });
     let pos = 0;
     for (const o of run.outs) if (o.t <= t) pos = o.pos;
     const end = t >= run.end.t;
@@ -268,6 +434,8 @@ export function createBoard(options: BoardOptions): BoardPlayer {
         kinds.has('Button') ? 'press the button' : '',
         kinds.has('MotionSensor') ? 'move in front of the sensor' : '',
         kinds.has('DistanceSensor') ? 'move the slider' : '',
+        kinds.has('LightSensor') ? 'make it dark or light with the slider' : '',
+        kinds.has('MCP3008') ? 'turn the knob' : '',
       ].filter(Boolean);
       status.textContent = ways.length ? `Running. Try it: ${ways.join(', ')}.` : 'Running.';
       skip.hidden = run.end.why === 'waiting' || run.end.t <= 2;

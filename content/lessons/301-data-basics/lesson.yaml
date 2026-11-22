@@ -1,0 +1,513 @@
+id: data-basics
+order: 301
+title: Describe data
+summary: Read a table of data, describe it with a few numbers, find missing values, and count categories.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Read a table from a CSV file, and turn a column into a list of numbers
+  - id: O2
+    text: Describe data with mean, median, stdev, min and max, and know when the median is better
+  - id: O3
+    text: Find missing and wrong values, and leave them out before you calculate
+  - id: O4
+    text: Count the values of a column with collections.Counter
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: table
+    type: theory
+    objective: O1
+    title: A table of data
+    body: |
+      Data is often a **table**: one **row** for each thing you measured,
+      one **column** for each kind of value. In a CSV file:
+
+      ```text
+      day,temp,rain,sky
+      Mon,12.5,0.0,sun
+      Tue,14.0,2.5,rain
+      ```
+
+      You know `csv.DictReader`: it gives one dictionary per row. A
+      **column** is then a list, made with a comprehension. CSV gives texts,
+      so turn them into numbers:
+
+      ```python
+      temps = [float(row["temp"]) for row in rows]
+      ```
+
+      Then a few numbers describe the whole column:
+
+      ```python
+      import statistics
+      statistics.mean(temps)      # the average
+      statistics.median(temps)    # the middle value, after sorting
+      statistics.stdev(temps)     # how far values are from the mean, usually
+      min(temps), max(temps)      # the smallest and the biggest
+      ```
+    keys:
+      - code: "[float(r[\"temp\"]) for r in rows]"
+        means: "A column, as numbers."
+      - code: "statistics.mean(xs)"
+        means: "The average."
+      - code: "statistics.stdev(xs)"
+        means: "The usual distance from the mean: the spread."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: station
+    type: demo
+    objective: O2
+    title: One week of weather
+    intro: |
+      The file `station.csv` holds one week of a weather station (see the
+      files). Press **Run**: a few lines describe the whole week.
+    files:
+      station.csv: |
+        day,temp,rain,sky
+        Mon,12.5,0.0,sun
+        Tue,14.0,2.5,rain
+        Wed,13.2,0.4,clouds
+        Thu,16.8,0.0,sun
+        Fri,18.1,0.0,sun
+        Sat,17.4,5.1,rain
+        Sun,15.0,1.2,clouds
+    code: |
+      import csv
+      import statistics
+
+      with open("station.csv", encoding="utf-8") as file:
+          rows = list(csv.DictReader(file))
+
+      temps = [float(row["temp"]) for row in rows]
+      print("days:", len(temps))
+      print("mean:", round(statistics.mean(temps), 1))
+      print("median:", statistics.median(temps))
+      print("spread (stdev):", round(statistics.stdev(temps), 1))
+      print("coldest:", min(temps), "warmest:", max(temps))
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and len(lines) == 5"
+      - text: "Describe the rain too: make a list `rain` of the column `rain`, and print its sum."
+        expr: "err is None and 'rain' in ns and abs(sum(ns['rain']) - 9.2) < 1e-9"
+      - text: "Print the day of the warmest temperature: find the row whose `temp` is the max."
+        expr: "err is None and 'Fri' in out"
+    investigate:
+      - kind: mcq
+        id: i-median
+        prompt: "Why is the median 15.0?"
+        options:
+          - text: "Sorted, the seven temperatures have 15.0 in the middle place"
+            correct: true
+            why: "12.5, 13.2, 14.0, 15.0, 16.8, 17.4, 18.1: three below it, three above it."
+          - text: "It is the average"
+            why: "The average is the mean, 15.3."
+          - text: "It is the temperature of the middle day, Thursday"
+            why: "The median uses the sorted values, not the order of the days."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-outlier
+    type: predict
+    objective: O2
+    title: One big value
+    item:
+      kind: predict
+      id: p-outlier
+      prompt: "Five people tell you how many minutes they walk each day. One walks very much. **What does this program print?**"
+      code: |
+        import statistics
+
+        minutes = [20, 30, 30, 40, 400]
+        print(statistics.mean(minutes))
+        print(statistics.median(minutes))
+      explain: >-
+        One value of 400 pulls the mean up to 104, more than four of the five
+        people walk. The median, 30, is the middle value: one big value does
+        not move it. With values far from the others (**outliers**), the
+        median often describes "a normal person" better.
+      misconceptions:
+        - answer: "30\n30"
+          say: "The mean adds up all values, also the 400: 520 / 5 is 104."
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-rain
+    type: exercise
+    fade: completion
+    objective: O1
+    title: How much rain?
+    prompt: |
+      **Complete the program**: it reads `station.csv`, makes a list `rain`
+      with the numbers of the column `rain`, and prints the total and the
+      mean, rounded to 2 decimals:
+
+      ```text
+      total: 9.2
+      mean: 1.31
+      ```
+    files:
+      station.csv: |
+        day,temp,rain,sky
+        Mon,12.5,0.0,sun
+        Tue,14.0,2.5,rain
+        Wed,13.2,0.4,clouds
+        Thu,16.8,0.0,sun
+        Fri,18.1,0.0,sun
+        Sat,17.4,5.1,rain
+        Sun,15.0,1.2,clouds
+    starter: |
+      import csv
+      import statistics
+
+      with open("station.csv", encoding="utf-8") as file:
+          rows = list(csv.DictReader(file))
+
+      rain = [___ for row in rows]
+      print("total:", round(sum(rain), 2))
+      print("mean:", round(___, 2))
+    solution: |
+      import csv
+      import statistics
+
+      with open("station.csv", encoding="utf-8") as file:
+          rows = list(csv.DictReader(file))
+
+      rain = [float(row["rain"]) for row in rows]
+      print("total:", round(sum(rain), 2))
+      print("mean:", round(statistics.mean(rain), 2))
+    after: >-
+      Two lines describe a whole week. The same lines work for a year of
+      data: 365 rows, the same code.
+    checks:
+      - expr: "err is None and isinstance(ns.get('rain'), list) and ns['rain'] == [0.0, 2.5, 0.4, 0.0, 0.0, 5.1, 1.2]"
+        pass: "`rain` holds the seven numbers of the column"
+        hint: "`float(row[\"rain\"])`: the column, as a number."
+        misconceptions:
+          - when: "err is None and isinstance(ns.get('rain'), list) and ns['rain'][:1] == ['0.0']"
+            say: "The values are texts. Turn each one into a number: `float(row[\"rain\"])`."
+          - when: "err == 'TypeError'"
+            say: "`sum` and `mean` need numbers. CSV gives texts: use `float(...)`."
+      - expr: "err is None and lines == ['total: 9.2', 'mean: 1.31']"
+        pass: "It prints the total and the mean"
+        hint: "`statistics.mean(rain)`."
+    hints:
+      - "The first `___` is one value of a row, as a number."
+      - "`float(row[\"rain\"])`."
+      - "The second `___`: `statistics.mean(rain)`."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: missing
+    type: theory
+    objective: O3
+    title: Holes in the data
+    body: |
+      Real data has **holes**: a sensor was off, a person did not answer.
+      In a CSV file, a hole is often an empty value, or a word like `n/a`:
+
+      ```text
+      day,temp
+      Mon,12.5
+      Tue,
+      Wed,n/a
+      ```
+
+      `float("")` stops with `ValueError: could not convert string to
+      float: ''`. So check each value first, and **leave the holes out**:
+
+      ```python
+      temps = [float(r["temp"]) for r in rows if r["temp"] not in ("", "n/a")]
+      missing = len(rows) - len(temps)
+      ```
+
+      Never write a hole as 0: a temperature of 0 °C is a real value, and
+      it would pull the mean down. Always say how many values were missing.
+    keys:
+      - code: "if value not in (\"\", \"n/a\")"
+        means: "Keep only real values."
+      - code: "len(rows) - len(values)"
+        means: "How many were missing."
+      - code: "a hole is not 0"
+        means: "0 is a value. Leave holes out."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-holes
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A sensor that was off
+    prompt: |
+      The sensor was off on two days. **Run it**, read the message, and fix
+      the program: it leaves out the empty values and prints:
+
+      ```text
+      mean: 15.4
+      missing: 2
+      ```
+    files:
+      week.csv: |
+        day,temp
+        Mon,12.5
+        Tue,
+        Wed,13.2
+        Thu,16.8
+        Fri,
+        Sat,17.4
+        Sun,17.1
+    starter: |
+      import csv
+      import statistics
+
+      with open("week.csv", encoding="utf-8") as file:
+          rows = list(csv.DictReader(file))
+
+      temps = [float(row["temp"]) for row in rows]
+      print("mean:", round(statistics.mean(temps), 1))
+      print("missing:", len(rows) - len(temps))
+    solution: |
+      import csv
+      import statistics
+
+      with open("week.csv", encoding="utf-8") as file:
+          rows = list(csv.DictReader(file))
+
+      temps = [float(row["temp"]) for row in rows if row["temp"] != ""]
+      print("mean:", round(statistics.mean(temps), 1))
+      print("missing:", len(rows) - len(temps))
+    after: >-
+      The mean of the five real days is 15.4. Had you written the holes as
+      0, the mean would be 11.0: a cold week that never happened.
+    checks:
+      - expr: "err is None and lines == ['mean: 15.4', 'missing: 2']"
+        pass: "It prints the mean of the real days, and 2 missing"
+        hint: "Keep a value only when it is not empty: `if row[\"temp\"] != \"\"`."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "`float(\"\")` cannot work: leave out the empty values with an `if` in the comprehension."
+          - when: "err is None and lines[:1] == ['mean: 11.0']"
+            say: "The holes became 0, so the mean is too low. Leave them out instead."
+      - expr: "isinstance(ns.get('temps'), list) and len(ns['temps']) == 5"
+        pass: "`temps` holds only the five real values"
+        hint: "The comprehension needs an `if` at the end."
+    hints:
+      - "Read the last line of the message: which text could not become a number?"
+      - "An empty text. A comprehension can leave values out with an `if` at the end."
+      - "`[float(row[\"temp\"]) for row in rows if row[\"temp\"] != \"\"]`."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: counter
+    type: theory
+    objective: O4
+    title: Count categories
+    body: |
+      Some columns are not numbers but **categories**: `sun`, `rain`,
+      `clouds`. A mean makes no sense for them. You count them:
+
+      ```python
+      from collections import Counter
+
+      skies = Counter(row["sky"] for row in rows)
+      print(skies)                    # Counter({'sun': 3, 'rain': 2, 'clouds': 2})
+      print(skies["rain"])            # 2
+      print(skies.most_common(1))     # [('sun', 3)]
+      ```
+
+      A `Counter` is a dictionary of counts. `most_common(n)` gives the `n`
+      biggest counts, as a list of pairs.
+    keys:
+      - code: "Counter(values)"
+        means: "How often each value is there."
+      - code: "counts.most_common(2)"
+        means: "The two most common, with their counts."
+      - code: "counts[\"rain\"]"
+        means: "The count of one value (0 if it is not there)."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-sky
+    type: exercise
+    fade: independent
+    objective: O4
+    title: The usual weather
+    prompt: |
+      `month.csv` has two weeks of weather. **Count the values of the column
+      `sky`**, and print the most common one and its count, like:
+
+      ```text
+      most common: sun (6 days)
+      ```
+
+      Then print how many days had `rain`.
+    files:
+      month.csv: |
+        day,sky
+        1,sun
+        2,rain
+        3,sun
+        4,clouds
+        5,sun
+        6,rain
+        7,clouds
+        8,sun
+        9,sun
+        10,rain
+        11,clouds
+        12,sun
+        13,rain
+        14,clouds
+    starter: |
+      import csv
+      from collections import Counter
+
+      with open("month.csv", encoding="utf-8") as file:
+          rows = list(csv.DictReader(file))
+
+      # Count the skies, then print the two lines.
+    solution: |
+      import csv
+      from collections import Counter
+
+      with open("month.csv", encoding="utf-8") as file:
+          rows = list(csv.DictReader(file))
+
+      skies = Counter(row["sky"] for row in rows)
+      sky, days = skies.most_common(1)[0]
+      print(f"most common: {sky} ({days} days)")
+      print("rain:", skies["rain"])
+    after: >-
+      `most_common(1)` gives a list with one pair, so `[0]` takes the pair,
+      and `sky, days = ...` unpacks it.
+    checks:
+      - expr: "err is None and lines[:1] == ['most common: sun (6 days)']"
+        pass: "It prints the most common sky and its count"
+        hint: "`skies.most_common(1)[0]` is the pair `('sun', 6)`."
+      - expr: "err is None and len(lines) >= 2 and lines[1].split()[-1] == '4'"
+        pass: "It prints the 4 days of rain"
+        hint: "`skies[\"rain\"]`."
+      - expr: "called('Counter')"
+        pass: "It uses a Counter"
+        hint: "`Counter(row[\"sky\"] for row in rows)`."
+    hints:
+      - "`skies = Counter(row[\"sky\"] for row in rows)`."
+      - "`skies.most_common(1)` is `[('sun', 6)]`: take `[0]`, and unpack it."
+      - "`print(f\"most common: {sky} ({days} days)\")`, then `print(\"rain:\", skies[\"rain\"])`."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-median-house
+        objective: O2
+        prompt: "In a street, nine houses cost about 300 000 €, and one castle costs 9 000 000 €. Which number tells better what a normal house costs?"
+        options:
+          - text: "The median"
+            correct: true
+            why: "The middle value is a normal house. The castle does not move it."
+          - text: "The mean"
+            why: "The castle pulls the mean up to about 1 170 000 €: no house costs that."
+          - text: "The max"
+            why: "That is the castle."
+      - kind: predict
+        id: q-stdev
+        objective: O2
+        code: |
+          import statistics
+
+          calm = [10, 10, 11, 9, 10]
+          wild = [2, 18, 10, 0, 20]
+          print(statistics.mean(calm), statistics.mean(wild))
+          print(statistics.stdev(calm) < statistics.stdev(wild))
+        explain: "Both have the mean 10, but the values of `wild` are far from it: a bigger stdev, a bigger spread."
+      - kind: mcq
+        id: q-hole-zero
+        objective: O3
+        prompt: "Three of 30 temperatures are missing. A friend writes them as 0. What happens?"
+        options:
+          - text: "The mean is too low: 0 looks like a real, cold day"
+            correct: true
+            why: "Leave holes out, and say how many there were."
+          - text: "Nothing: 0 is like nothing"
+            why: "0 is a value. It changes the mean."
+          - text: "The program stops"
+            why: "0 is a normal number: the program runs, with a wrong answer."
+      - kind: predict
+        id: q-counter
+        objective: O4
+        code: |
+          from collections import Counter
+
+          votes = Counter(["pizza", "pasta", "pizza", "soup", "pizza", "pasta"])
+          print(votes.most_common(2))
+          print(votes["salad"])
+        explain: "Pizza 3 times, pasta 2. A value that is not there has the count 0."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-column
+    objective: O1
+    prompt: "`rows` is a list of dictionaries from `csv.DictReader`. Which line gives the column `price` as numbers?"
+    options:
+      - text: "`[float(r[\"price\"]) for r in rows]`"
+        correct: true
+        why: "One value from each row, turned into a number."
+      - text: "`rows[\"price\"]`"
+        why: "`rows` is a list: it has places 0, 1, 2..., not a key `price`."
+      - text: "`float(rows)`"
+        why: "A list cannot become one number."
+  - kind: mcq
+    id: r-outlier
+    objective: O2
+    prompt: "When is the median better than the mean?"
+    options:
+      - text: "When a few values are far from the others"
+        correct: true
+        why: "The median is the middle value: outliers do not move it."
+      - text: "Always"
+        why: "Without outliers, the mean is fine and uses every value."
+      - text: "Never"
+        why: "With outliers, the mean can be far from any normal value."
+  - kind: mcq
+    id: r-spread
+    objective: O2
+    prompt: "What does a big `stdev` tell you?"
+    options:
+      - text: "The values are far apart: a big spread"
+        correct: true
+        why: "A small stdev: the values are close to the mean."
+      - text: "The values are big"
+        why: "[100, 100, 100] has big values and a stdev of 0."
+      - text: "There are many values"
+        why: "The number of values is `len`."
+  - kind: mcq
+    id: r-missing
+    objective: O3
+    prompt: "A column has empty values. What do you do before you take the mean?"
+    options:
+      - text: "Leave them out, and count how many were missing"
+        correct: true
+        why: "The mean of the real values, and an honest count of the holes."
+      - text: "Write 0 into them"
+        why: "0 is a real value: it changes the mean."
+      - text: "Nothing: `float` handles them"
+        why: "`float(\"\")` stops with a ValueError."
+  - kind: mcq
+    id: r-counter
+    objective: O4
+    prompt: "What does `Counter([\"a\", \"b\", \"a\"])[\"a\"]` give?"
+    options:
+      - text: "`2`"
+        correct: true
+        why: "`\"a\"` is there two times."
+      - text: "`1`"
+        why: "That is the count of `\"b\"`."
+      - text: "`[\"a\", \"a\"]`"
+        why: "A Counter holds counts, not the values."

@@ -1,0 +1,532 @@
+id: data-line
+order: 304
+title: "A first model: a straight line"
+summary: A model learns a rule from examples. Measure how wrong it is, let numpy find the best line, and test it on data it has never seen.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Name the parts of a model - feature, label, prediction - and the line y' = b + w·x
+  - id: O2
+    text: Measure how wrong a model is with a loss - MAE and MSE
+  - id: O3
+    text: Find the best line with np.polyfit, and predict with it
+  - id: O4
+    text: Test a model on data it has not seen, with a training set and a test set
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: model
+    type: theory
+    objective: O1
+    title: Learn a rule from examples
+    body: |
+      **Machine learning** means: software finds a rule in examples, and then
+      uses the rule for new cases. The rule is the **model**.
+
+      Example: heavier cars use more fuel. For 12 cars we know the weight
+      (in tonnes) and the fuel (litres per 100 km).
+
+      - The **feature** is what we know: the weight, `x`.
+      - The **label** is what we want to predict: the fuel, `y`.
+      - The model gives a **prediction**, `y'` ("y prime").
+
+      The simplest model is a straight line:
+
+      ```text
+      y' = b + w · x
+      ```
+
+      `w` is the **weight** of the feature: how much `y` grows when `x`
+      grows by 1 (the slope). `b` is the **bias**: where the line starts
+      (at x = 0). **Training** is finding the `w` and `b` that fit the
+      examples best. Then the model can predict the fuel of a car it has
+      never seen.
+    keys:
+      - code: "feature x, label y"
+        means: "What we know, and what we want to predict."
+      - code: "y' = b + w · x"
+        means: "A line: bias plus weight times the feature."
+      - code: "training"
+        means: "Finding the best w and b from examples."
+
+  # 2. PREDICT ---------------------------------------------------------------
+  - id: predict-car
+    type: predict
+    objective: O1
+    title: Ask the model
+    item:
+      kind: predict
+      id: p-car
+      prompt: "A model has `b = 2` and `w = 4.6`. **What does it predict for a car of 1.5 tonnes?**"
+      code: |
+        b = 2
+        w = 4.6
+        weight = 1.5
+        print(round(b + w * weight, 1))
+      explain: "4.6 × 1.5 is 6.9, plus 2 is 8.9 litres per 100 km. A model is a calculation."
+
+  # 3. DEMO -----------------------------------------------------------------
+  - id: try-line
+    type: demo
+    visual: none
+    objective: O2
+    title: How good is a line?
+    intro: |
+      The points are the 12 cars. The line is a guess: `w = 4.0`, `b = 2.5`.
+      Press **Run**: the chart shows the line, and **MAE** says how far its
+      predictions are from the truth, on average. Then change `w` and `b`,
+      and make the MAE smaller.
+    code: |
+      import numpy as np
+      import matplotlib.pyplot as plt
+
+      x = np.array([0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
+      y = np.array([6.1, 6.5, 7.2, 7.4, 8.1, 8.3, 9.0, 9.1, 9.9, 10.2, 10.6, 11.4])
+
+      w = 4.0
+      b = 2.5
+      predicted = b + w * x
+      mae = np.abs(y - predicted).mean()
+      print("MAE:", round(mae, 3), "litres")
+
+      plt.scatter(x, y, label="cars")
+      plt.plot(x, predicted, "r-", label="model")
+      plt.xlabel("weight (t)")
+      plt.ylabel("fuel (l/100 km)")
+      plt.legend()
+      plt.show()
+    experiments:
+      - text: "Run it as it is: the MAE is 0.35."
+        expr: "err is None and 'MAE: 0.35' in out"
+      - text: "Change `w` and `b` until the MAE is below 0.2."
+        expr: "err is None and isinstance(ns.get('mae'), float) and ns['mae'] < 0.2"
+      - text: "Get below 0.13. (Hint: try `w = 4.6`.)"
+        expr: "err is None and isinstance(ns.get('mae'), float) and ns['mae'] < 0.13"
+    investigate:
+      - kind: mcq
+        id: i-mae
+        prompt: "What does `np.abs(y - predicted).mean()` calculate?"
+        options:
+          - text: "How far each prediction is from the truth, without the sign, on average"
+            correct: true
+            why: "`abs` removes the minus: too high and too low both count as wrong."
+          - text: "The average fuel of the cars"
+            why: "That is `y.mean()`."
+          - text: "The best `w`"
+            why: "It only measures the line that you chose."
+      - kind: mcq
+        id: i-abs
+        prompt: "Why `abs`? What if we took the plain mean of `y - predicted`?"
+        options:
+          - text: "Errors above and below would cancel out: a bad line could get 0"
+            correct: true
+            why: "+1 and -1 give a mean of 0. The loss must count distance, not direction."
+          - text: "Nothing changes"
+            why: "Negative and positive errors would cancel each other."
+          - text: "It would be faster"
+            why: "Speed is not the point: the meaning is."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: loss
+    type: theory
+    objective: O2
+    title: The loss
+    body: |
+      A **loss** is a number that says how wrong a model is. Training tries
+      to make it as small as possible. Two common ones:
+
+      ```python
+      mae = np.abs(y - predicted).mean()        # mean absolute error
+      mse = ((y - predicted) ** 2).mean()        # mean squared error
+      ```
+
+      - **MAE**: the average distance. "On average, the model is 0.12 litres
+        off." Easy to explain.
+      - **MSE**: the average of the squared distances. A big error counts
+        much more: an error of 2 counts 4, an error of 3 counts 9. Use it
+        when big errors are much worse than small ones.
+
+      `np.sqrt(mse)` (RMSE) brings MSE back to the unit of `y`.
+    keys:
+      - code: "np.abs(y - p).mean()"
+        means: "MAE: the average distance."
+      - code: "((y - p) ** 2).mean()"
+        means: "MSE: big errors count much more."
+      - code: "smaller loss, better fit"
+        means: "Training makes the loss small."
+
+  # 5. EXERCISE: completion --------------------------------------------------
+  - id: ex-loss
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Two losses
+    prompt: |
+      **Complete `mae` and `mse`.** Each gets two arrays, the true values and
+      the predictions, and gives back one number.
+
+      ```text
+      0.5
+      0.5
+      1.0
+      1.0
+      ```
+    starter: |
+      import numpy as np
+
+
+      def mae(true, predicted):
+          return ___
+
+
+      def mse(true, predicted):
+          return ___
+
+
+      true = np.array([3.0, 5.0])
+      print(mae(true, np.array([3.5, 4.5])))
+      print(mse(true, np.array([2.0, 5.0])))
+      print(mae(true, np.array([2.0, 6.0])))
+      print(mse(true, np.array([2.0, 6.0])))
+    solution: |
+      import numpy as np
+
+
+      def mae(true, predicted):
+          return np.abs(true - predicted).mean()
+
+
+      def mse(true, predicted):
+          return ((true - predicted) ** 2).mean()
+
+
+      true = np.array([3.0, 5.0])
+      print(mae(true, np.array([3.5, 4.5])))
+      print(mse(true, np.array([2.0, 5.0])))
+      print(mae(true, np.array([2.0, 6.0])))
+      print(mse(true, np.array([2.0, 6.0])))
+    after: >-
+      Errors of 1 and 1 give an MAE of 1 and an MSE of 1. Errors of 0 and 2
+      give the same MAE, 1, but an MSE of 2: the big error counts more.
+    checks:
+      - expr: "callable(ns.get('mae')) and float(mae(np.array([1.0, 2.0, 3.0]), np.array([2.0, 2.0, 1.0]))) == 1.0"
+        pass: "`mae` is the average distance"
+        hint: "`np.abs(true - predicted).mean()`."
+        misconceptions:
+          - when: "callable(ns.get('mae')) and float(mae(np.array([1.0, 2.0, 3.0]), np.array([2.0, 2.0, 1.0]))) == 1/3"
+            say: "Without `abs`, the errors above and below cancel. Take `np.abs(...)` first."
+      - expr: "callable(ns.get('mse')) and float(mse(np.array([1.0, 2.0, 3.0]), np.array([2.0, 2.0, 1.0]))) == 5/3"
+        pass: "`mse` is the average squared distance"
+        hint: "`((true - predicted) ** 2).mean()`."
+      - expr: "err is None and lines == ['0.5', '0.5', '1.0', '1.0']"
+        pass: "It prints the four losses"
+        hint: "Keep the prints as they are."
+    hints:
+      - "`true - predicted` gives one error per value."
+      - "MAE: `np.abs(...)`, then `.mean()`."
+      - "MSE: `(...) ** 2`, then `.mean()`."
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: fit
+    type: theory
+    objective: O3
+    title: Let numpy find the line
+    body: |
+      Trying `w` and `b` by hand works for 12 cars, not for a real problem.
+      `np.polyfit` finds the line with the **smallest MSE**, in one call:
+
+      ```python
+      w, b = np.polyfit(x, y, 1)      # 1: a straight line
+      print(w, b)                     # about 4.63 and 1.94
+      new = b + w * 1.45              # the fuel of a new car of 1.45 t
+      ```
+
+      `polyfit` gives the values from the highest power down: first `w`,
+      then `b`. This is training: the computer learns `w` and `b` from the
+      examples. Using the line for a new car is **inference** (a
+      prediction).
+
+      A line only fits data that is close to a line. Look at the chart
+      first: if the points make a curve, a straight line is the wrong model.
+    keys:
+      - code: "w, b = np.polyfit(x, y, 1)"
+        means: "The best line: first the slope w, then b."
+      - code: "b + w * new_x"
+        means: "Predict for a new example."
+      - code: "look first"
+        means: "A line fits only data close to a line."
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-fit
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A prediction that makes no sense
+    prompt: |
+      The program trains a line on the cars and predicts the fuel of a car
+      of 1.45 tonnes. It should print `8.65`. **Run it**: it prints `7.44`,
+      with no error. Find the mistake, and fix it.
+    starter: |
+      import numpy as np
+
+      x = np.array([0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
+      y = np.array([6.1, 6.5, 7.2, 7.4, 8.1, 8.3, 9.0, 9.1, 9.9, 10.2, 10.6, 11.4])
+
+      b, w = np.polyfit(x, y, 1)
+      print(round(b + w * 1.45, 2))
+    solution: |
+      import numpy as np
+
+      x = np.array([0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
+      y = np.array([6.1, 6.5, 7.2, 7.4, 8.1, 8.3, 9.0, 9.1, 9.9, 10.2, 10.6, 11.4])
+
+      w, b = np.polyfit(x, y, 1)
+      print(round(b + w * 1.45, 2))
+    after: >-
+      No error, and a wrong answer: the most dangerous kind of bug. Read the
+      docs for the order of the results, and check a prediction with common
+      sense. A car of 1.45 t is between the cars of 1.4 and 1.5 t, so its
+      fuel must be between 8.3 and 9.0.
+    checks:
+      - expr: "err is None and lines == ['8.65']"
+        pass: "It predicts 8.65 litres for 1.45 t"
+        hint: "`polyfit` gives the slope first."
+        misconceptions:
+          - when: "err is None and lines == ['7.44']"
+            say: "w and b are swapped. `np.polyfit(x, y, 1)` gives the slope first: `w, b = ...`."
+      - expr: "isinstance(ns.get('w'), float) and abs(ns['w'] - 4.629) < 0.001"
+        pass: "`w` is the slope, about 4.63"
+        hint: "`w, b = np.polyfit(x, y, 1)`."
+    hints:
+      - "Is the answer possible? The cars of 1.4 and 1.5 t use 8.3 and 9.0 litres."
+      - "Look at the order of `b, w` on the left of `polyfit`."
+      - "`polyfit` gives the highest power first: the slope. `w, b = np.polyfit(x, y, 1)`."
+
+  # 8. THEORY ----------------------------------------------------------------
+  - id: split
+    type: theory
+    objective: O4
+    title: Test on new data
+    body: |
+      A model that is good on its own examples is not yet a good model. It
+      must be good on **new** data. So, before training, keep some examples
+      apart:
+
+      - the **training set**: the model learns from it,
+      - the **test set**: you measure the model on it, **after** training.
+
+      The model never sees the test set while it learns. If it is good there
+      too, it learned a real rule, not only the examples. Like a student:
+      exercises to learn, a new test to show what was learned.
+
+      ```python
+      test = np.arange(len(x)) % 4 == 0      # every fourth car is a test car
+      train_x, train_y = x[~test], y[~test]  # ~ swaps True and False
+      test_x, test_y = x[test], y[test]
+      ```
+
+      Taking every fourth car spreads the test cars over all weights. The
+      test cars must never be in the training set too.
+    keys:
+      - code: "training set"
+        means: "The model learns from it."
+      - code: "test set"
+        means: "Kept apart: it measures the model at the end."
+      - code: "x[~test]"
+        means: "`~` swaps True and False: all the other cars."
+
+  # 9. EXERCISE: independent -------------------------------------------------
+  - id: ex-test
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Train, then test
+    prompt: |
+      **Split the cars**: every fourth car (`np.arange(len(x)) % 4 == 0`) is
+      a test car, the others are the training cars.
+
+      Then train a line on the **training cars only**, and print the MAE of
+      the line on the **test cars**, rounded to 3 decimals:
+
+      ```text
+      test MAE: 0.105
+      ```
+    given: |
+      import numpy as np
+
+      x = np.array([0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
+      y = np.array([6.1, 6.5, 7.2, 7.4, 8.1, 8.3, 9.0, 9.1, 9.9, 10.2, 10.6, 11.4])
+    starter: |
+      # numpy is imported as np; x and y exist.
+    solution: |
+      test = np.arange(len(x)) % 4 == 0
+      train_x, train_y = x[~test], y[~test]
+      test_x, test_y = x[test], y[test]
+
+      w, b = np.polyfit(train_x, train_y, 1)
+      predicted = b + w * test_x
+      print("test MAE:", round(np.abs(test_y - predicted).mean(), 3))
+    after: >-
+      The model is about 0.1 litres off for cars it never saw. That is a
+      fair measure. Measured on its own training cars, a model always looks
+      better than it is.
+    cases:
+      - {}
+      - label: "other cars"
+        setup: |
+          import numpy as np
+
+          x = np.array([1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4])
+          y = np.array([6.0, 7.1, 7.9, 9.2, 10.1, 10.8, 12.2, 12.9])
+    checks:
+      - expr: "err is None and len(lines) == 1 and lines[0] == 'test MAE: ' + str(round(float(np.abs(pre['y'][np.arange(len(pre['x'])) % 4 == 0] - (np.polyfit(pre['x'][np.arange(len(pre['x'])) % 4 != 0], pre['y'][np.arange(len(pre['x'])) % 4 != 0], 1)[1] + np.polyfit(pre['x'][np.arange(len(pre['x'])) % 4 != 0], pre['y'][np.arange(len(pre['x'])) % 4 != 0], 1)[0] * pre['x'][np.arange(len(pre['x'])) % 4 == 0])).mean()), 3))"
+        pass: "The MAE of a line trained on the training cars, measured on the test cars"
+        hint: "Train with `np.polyfit(train_x, train_y, 1)`, then predict `test_x` and compare with `test_y`."
+        misconceptions:
+          - when: "err is None and len(lines) == 1 and lines[0] == 'test MAE: ' + str(round(float(np.abs(pre['y'][np.arange(len(pre['x'])) % 4 == 0] - (np.polyfit(pre['x'], pre['y'], 1)[1] + np.polyfit(pre['x'], pre['y'], 1)[0] * pre['x'][np.arange(len(pre['x'])) % 4 == 0])).mean()), 3))"
+            say: "The line was trained on all cars, the test cars too. Train on `train_x` and `train_y` only."
+      - expr: "'polyfit' in src and '~' in src or 'polyfit' in src and '!=' in src"
+        pass: "It trains with polyfit, on the cars that are not test cars"
+        hint: "`train_x = x[~test]`: `~` swaps True and False."
+    hints:
+      - "`test = np.arange(len(x)) % 4 == 0`, then `x[~test]` and `x[test]`."
+      - "`w, b = np.polyfit(train_x, train_y, 1)`."
+      - "`predicted = b + w * test_x`, and the MAE with `test_y`."
+
+  # 10. QUIZ ----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O4
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-label
+        objective: O1
+        prompt: "A model predicts the price of a flat from its size. What is the label?"
+        options:
+          - text: "The price"
+            correct: true
+            why: "The label is what the model predicts. The size is the feature."
+          - text: "The size"
+            why: "The size is what we know: the feature."
+          - text: "The model"
+            why: "The model is the rule between them."
+      - kind: mcq
+        id: q-w
+        objective: O1
+        prompt: "In `y' = 2 + 4.6 · x`, what does 4.6 tell you?"
+        options:
+          - text: "Each extra tonne adds 4.6 litres per 100 km"
+            correct: true
+            why: "w is the slope: how much y grows when x grows by 1."
+          - text: "A car of 0 t uses 4.6 litres"
+            why: "That is b, here 2."
+          - text: "The model is 4.6 litres off"
+            why: "That would be the loss."
+      - kind: predict
+        id: q-mse
+        objective: O2
+        code: |
+          import numpy as np
+
+          true = np.array([10.0, 10.0])
+          a = np.array([9.0, 11.0])
+          b = np.array([10.0, 12.0])
+          print(np.abs(true - a).mean(), np.abs(true - b).mean())
+          print(((true - a) ** 2).mean(), ((true - b) ** 2).mean())
+        explain: "Both have an MAE of 1. But b has one error of 2: squared it is 4, so its MSE is 2."
+      - kind: mcq
+        id: q-own-data
+        objective: O4
+        prompt: "A model has a tiny loss on its training data, and a big loss on the test data. What happened?"
+        options:
+          - text: "It learned the examples by heart, not a rule that works for new data"
+            correct: true
+            why: "This is **overfitting**. The test set shows it."
+          - text: "The test data is wrong"
+            why: "The test data is new data: that is what the model must handle."
+          - text: "Nothing: the training loss counts"
+            why: "Only the loss on new data tells how good the model is."
+      - kind: mcq
+        id: q-polyfit
+        objective: O3
+        prompt: "What does `np.polyfit(x, y, 1)` give?"
+        options:
+          - text: "The slope w and the bias b of the line with the smallest MSE"
+            correct: true
+            why: "In that order: first w, then b."
+          - text: "The predictions for x"
+            why: "You make those yourself: `b + w * x`."
+          - text: "The MAE"
+            why: "It gives the line, not its loss."
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-feature
+    objective: O1
+    prompt: "What is a feature?"
+    options:
+      - text: "A value we know, that the model uses to predict"
+        correct: true
+        why: "Like the weight of a car."
+      - text: "The value the model predicts"
+        why: "That is the label."
+      - text: "A mistake of the model"
+        why: "That is the error."
+  - kind: mcq
+    id: r-train
+    objective: O1
+    prompt: "What happens in training?"
+    options:
+      - text: "The computer finds the w and b that make the loss small on the examples"
+        correct: true
+        why: "Then the model can predict new cases."
+      - text: "The model predicts new cases"
+        why: "That is inference, after training."
+      - text: "You type the rule yourself"
+        why: "The point is that the computer finds it in the data."
+  - kind: mcq
+    id: r-mae
+    objective: O2
+    prompt: "A model has an MAE of 0.3 litres. What does that mean?"
+    options:
+      - text: "On average, its predictions are 0.3 litres away from the truth"
+        correct: true
+        why: "MAE is the average distance."
+      - text: "It is right 30% of the time"
+        why: "MAE is a distance, not a percentage."
+      - text: "Every prediction is exactly 0.3 too high"
+        why: "It is an average: some are closer, some further."
+  - kind: mcq
+    id: r-order
+    objective: O3
+    prompt: "Which line takes the result of `np.polyfit(x, y, 1)` the right way?"
+    options:
+      - text: "`w, b = np.polyfit(x, y, 1)`"
+        correct: true
+        why: "The slope first, then the bias."
+      - text: "`b, w = np.polyfit(x, y, 1)`"
+        why: "Swapped: no error, but wrong predictions."
+      - text: "`line = np.polyfit(x, y)`"
+        why: "The third value, 1 for a line, is needed."
+  - kind: mcq
+    id: r-test
+    objective: O4
+    prompt: "Why keep a test set apart, before training?"
+    options:
+      - text: "To measure the model on data it has never seen"
+        correct: true
+        why: "That is what it must do in real use."
+      - text: "To train faster"
+        why: "It is about an honest measure, not speed."
+      - text: "Test data is not needed"
+        why: "Without it, you only know how well the model knows its examples."

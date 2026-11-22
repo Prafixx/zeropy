@@ -160,11 +160,20 @@ export interface GpioInput {
   /** A distance sensor (its echo pin), in meters. */
   echo?: number;
   distance?: number;
+  /** A light sensor (on `pin`): 0 dark to 1 light. */
+  light?: number;
+  /** A knob on an MCP3008 channel: 0 to 1. */
+  channel?: number;
+  analog?: number;
 }
 
 export interface GpioCase {
   events?: GpioInput[];
   cpu?: number;
+  /** The light on a light sensor at the start (0.6 if not given). */
+  light?: number;
+  /** The knob of each MCP3008 channel at the start, by channel (0.5 if not given). */
+  analog?: Record<string, number>;
 }
 
 export interface GpioDevice {
@@ -173,6 +182,10 @@ export interface GpioDevice {
   pins: Record<string, number | null>;
   /** For the LEDs of TrafficLights. */
   color?: string;
+  /** MCP3008: the channel. Robot: the ids of its left and right motors. */
+  channel?: number;
+  left?: number;
+  right?: number;
 }
 
 /** What a Pi program did, with times: the page plays it back. */
@@ -344,7 +357,10 @@ export interface DebuggerStep extends StepBase {
  * Work in a pretend Linux terminal (src/py/shell.py). The checks are Python
  * expressions over the shell: exists("notes"), isdir("p"), read("f"),
  * lines("f"), mode("f"), executable("f"), listdir("."), cwd ("~/p"),
- * history, ran("grep"), out (the output of the last command), packages.
+ * history, ran("grep"), out (the output of the last command), packages,
+ * code (its exit status), vars, run("./x.sh a") (output and exit status of a
+ * line, run on a copy), service("ssh") (state, active, enabled, failed),
+ * journal("ssh"), procs (the command of every process), boots.
  * Paths in checks are relative to the home directory, /home/pi.
  */
 export interface TerminalStep extends StepBase {
@@ -548,13 +564,43 @@ export interface ShellState {
   cwd?: string;
   history?: string[];
   packages?: string[];
+  /** Shell variables, and the names that are exported. */
+  vars?: Record<string, string>;
+  exported?: string[];
+  /** Exit status of the last command ($?). */
+  last?: number;
+  /** Extra processes (a program that uses the CPU, for example). */
+  procs?: { pid: number; cmd: string; user?: string; cpu?: number; mem?: number; tty?: string; stubborn?: boolean }[];
+  /** Services by name: state, enabled, pid, the loaded unit file... (shell.py owns the shape). */
+  services?: Record<string, Record<string, unknown>>;
+  /** The journal: [seconds, ident, unit, text, priority]. */
+  journal?: unknown[][];
+  clock?: number;
+  boots?: number;
+  nextPid?: number;
+  bootAt?: number;
+  /** Lesson start only: commands that set the scene, run as root before the first command. */
+  setup?: string[];
+  /** The real Pi: "weak" makes the power supply too weak (undervoltage). */
+  power?: 'good' | 'weak';
+  temp?: number;
+  /** The password of the user pi (asked by ssh, scp and passwd). */
+  password?: string;
+  /** Where the commands go: the Pi, or PowerShell on your PC. via: logged in over SSH. */
+  at?: 'pi' | 'pc';
+  via?: boolean;
+  /** Your PC: files (paths with \ under C:\Users\you), folders, the working folder, known SSH hosts. */
+  pc?: { files?: Record<string, string>; dirs?: string[]; cwd?: string; history?: string[]; known?: string[] };
+  /** A question that waits for the next line (shell.py owns the shape). */
+  pending?: Record<string, unknown> | null;
+  [key: string]: unknown;
 }
 
 export interface ShellRequest {
   state: ShellState;
   line?: string;
-  /** Text saved in the editor (nano). */
-  write?: { path: string; text: string };
+  /** Text saved in the editor (nano). root: nano was started with sudo. */
+  write?: { path: string; text: string; root?: boolean };
   /** Python expressions over the state (see shell.py check_env). */
   checks?: string[];
 }
@@ -565,7 +611,11 @@ export interface ShellResult {
   state: ShellState;
   prompt: string;
   clear: boolean;
-  editor: { path: string; name: string; text: string } | null;
+  editor: { path: string; name: string; text: string; root?: boolean } | null;
+  /** A question for the next line, like a password (secret: nothing is shown while typing). */
+  ask?: { text: string; secret: boolean } | null;
+  /** Where the next command goes: "pi" or "pc". */
+  host?: string;
   checks: boolean[];
 }
 
@@ -583,4 +633,36 @@ export interface RunResult {
   files?: Record<string, string>;
   /** A program that used gpiozero: its devices and timeline (first case). */
   gpio?: GpioRun | null;
+  /** A program that used matplotlib.pyplot: its figures (first case). */
+  plot?: ChartFigure[] | null;
+}
+
+/** One series of a chart (src/py/plot.py). */
+export interface ChartSeries {
+  kind: 'line' | 'scatter' | 'bar' | 'hist';
+  /** Numbers, or the names of the bars. */
+  x?: (number | string)[];
+  y: number[];
+  /** hist: the borders of the bins. */
+  edges?: number[];
+  color: string;
+  /** scatter: one colour per point. */
+  colors?: string[] | null;
+  marker?: string | null;
+  style?: string | null;
+  label?: string | null;
+}
+
+/** One figure: what plt.show() draws. */
+export interface ChartFigure {
+  title: string;
+  xlabel: string;
+  ylabel: string;
+  series: ChartSeries[];
+  lines: { y: number; color: string; style?: string; label?: string | null }[];
+  legend: boolean;
+  grid: boolean;
+  xlim: [number, number] | null;
+  ylim: [number, number] | null;
+  shown: boolean;
 }

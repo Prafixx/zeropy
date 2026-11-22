@@ -1,0 +1,475 @@
+id: linux-bash
+order: 105
+title: Scripts that decide
+summary: Variables, values from the command line, if, for and exit codes - shell scripts that check and repeat for you.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Keep a value in a variable, and use it with $ and the right quotes
+  - id: O2
+    text: Give a script values from the command line ($1, $#), and end it with an exit status
+  - id: O3
+    text: "Decide with if and [ ]: does a file exist, is a number bigger"
+  - id: O4
+    text: Repeat commands for many files or numbers with for, and use the output of a command with $( )
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: vars
+    type: theory
+    objective: O1
+    title: Variables in the shell
+    body: |
+      The shell has variables too. Make one with `=`, and read it with `$`:
+
+      ```text
+      city=Oslo
+      echo $city
+      ```
+
+      **No spaces around `=`.** `city = Oslo` is a different command: the
+      shell looks for a program called `city`, and says `command not found`.
+
+      ## Quotes
+
+      - **Double quotes** `"..."` keep the text as one word, and `$city`
+        inside them is replaced by the value.
+      - **Single quotes** `'...'` keep the text exactly as it is: `$city`
+        stays `$city`.
+
+      Write `"$city"` with double quotes when you use a variable. A value
+      with a space in it, like `New York`, then stays one word.
+    keys:
+      - code: "city=Oslo"
+        means: "Make a variable. No spaces around `=`."
+      - code: 'echo "Weather in $city"'
+        means: "`Weather in Oslo`."
+      - code: "echo 'Weather in $city'"
+        means: "`Weather in $city`: single quotes change nothing."
+      - code: "${city}s"
+        means: "Braces show where the name ends: `Oslos`."
+
+  # 2. TERMINAL --------------------------------------------------------------
+  - id: set-vars
+    type: terminal
+    objective: O1
+    title: Your first variables
+    prompt: |
+      1. Make a variable `city` with the name of a city.
+      2. Make a variable `msg` with the text `Weather in ` and the city. Use
+         `$city` for the city: do not type its name again.
+      3. Print `msg` with `echo`.
+
+      Try `city = Oslo` too, with spaces, and read the message.
+    checks:
+      - expr: "bool(vars.get('city'))"
+        pass: "A variable `city` holds a city"
+        hint: "`city=Oslo`, with no spaces around `=`."
+      - expr: "vars.get('msg') == 'Weather in ' + vars.get('city', '?') and any('$city' in h or '${city}' in h for h in history)"
+        pass: "`msg` is made from `$city`"
+        hint: "`msg=\"Weather in $city\"`: double quotes, so `$city` becomes its value."
+      - expr: "bool(vars.get('msg')) and out == vars.get('msg') + '\\n' and ran('echo')"
+        pass: "`echo` prints `msg`"
+        hint: "`echo \"$msg\"`."
+    hints:
+      - "`city=Oslo`. With spaces, the shell thinks `city` is a command."
+      - "Single quotes would keep `$city` as text. Use double quotes: `msg=\"Weather in $city\"`."
+      - "`echo \"$msg\"`."
+    solution: ["city=Oslo", "msg=\"Weather in $city\"", "echo \"$msg\""]
+    after: >-
+      Change the city with `city=Rome` and run `echo "Weather in $city"`
+      again: the same command, a new result. That is what variables are
+      for.
+
+  # 3. DRILL -----------------------------------------------------------------
+  - id: quotes
+    type: drill
+    objective: O1
+    title: Quotes and spaces
+    items:
+      - kind: mcq
+        id: d-space
+        objective: O1
+        prompt: "`name = Ana` says `name: command not found`. Why?"
+        options:
+          - text: "With spaces, the shell runs a command `name` with the words `=` and `Ana`"
+            correct: true
+            why: "A variable needs `name=Ana`, with no spaces."
+          - text: "`name` is a reserved word"
+            why: "Any name works. The spaces are the problem."
+          - text: "A text needs quotes: `name = \"Ana\"`"
+            why: "Quotes do not help: the spaces still make it a command. Write `name=Ana`."
+      - kind: mcq
+        id: d-single
+        objective: O1
+        prompt: "What does `echo 'Home: $HOME'` print?"
+        options:
+          - text: "`Home: $HOME`"
+            correct: true
+            why: "Single quotes keep everything as it is, also the `$`."
+          - text: "`Home: /home/pi`"
+            why: "That is what double quotes give: `echo \"Home: $HOME\"`."
+          - text: "An error"
+            why: "Any text may be in single quotes."
+      - kind: mcq
+        id: d-double
+        objective: O1
+        code: |
+          name=Ana
+          echo "Hello, $name"
+        prompt: "What does this print?"
+        options:
+          - text: "`Hello, Ana`"
+            correct: true
+            why: "In double quotes, `$name` is replaced by its value."
+          - text: "`Hello, $name`"
+            why: "That needs single quotes."
+          - text: "`Hello, name`"
+            why: "Without `$`, it would be the word `name`. With `$`, it is the value."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: decide
+    type: theory
+    objective: O3
+    title: Values from outside, and decisions
+    body: |
+      ## Values for a script
+
+      `./greet.sh Ana Ben` gives the script two values. Inside it, `$1` is
+      `Ana`, `$2` is `Ben`, and `$#` is how many there are (2).
+
+      The first line `#!/bin/bash` says: run this file with bash. Use it
+      in every script.
+
+      ## The exit status
+
+      Every command ends with a number, its **exit status**: `0` means it
+      worked, anything else means a problem. `$?` holds the status of the
+      last command. A script ends with `exit 0` or `exit 1`.
+
+      ## if
+
+      ```text
+      if [ -f "$1" ]; then
+          echo "$1 is here"
+      else
+          echo "$1 is missing"
+      fi
+      ```
+
+      `[ ... ]` is a test: it ends with status 0 (true) or 1 (false). The
+      spaces inside the brackets are needed. `then` goes after a `;` or on
+      its own line, and `fi` (if, backwards) ends the block.
+    keys:
+      - code: '[ -f "$f" ]   [ -d "$d" ]'
+        means: "Is it a file? Is it a directory?"
+      - code: '[ -z "$1" ]'
+        means: "Is the text empty (no value given)?"
+      - code: '[ "$a" = "$b" ]'
+        means: "Are the two texts the same?"
+      - code: '[ "$n" -gt 5 ]'
+        means: "Numbers: -eq, -ne, -lt, -le, -gt, -ge."
+
+  # 5. TERMINAL --------------------------------------------------------------
+  - id: greet
+    type: terminal
+    objective: O2
+    title: A script that takes a name
+    prompt: |
+      **Write a script `greet.sh` that greets the name it gets:**
+      `./greet.sh Ana` prints `Hello, Ana!`.
+
+      1. Write it with `nano greet.sh`. Use `$1` for the name.
+      2. Make it runnable, and run it with a name.
+    checks:
+      - expr: "'$1' in (read('greet.sh') or '')"
+        pass: "`greet.sh` uses `$1`"
+        hint: "The line in the script: `echo \"Hello, $1!\"`."
+      - expr: "executable('greet.sh')"
+        pass: "`greet.sh` may be run (`x`)"
+        hint: "`chmod +x greet.sh`."
+      - expr: "isfile('greet.sh') and run('./greet.sh Mia') == ('Hello, Mia!\\n', 0) and any(h.startswith('./greet.sh ') for h in history)"
+        pass: "`./greet.sh NAME` prints `Hello, NAME!`"
+        hint: "Run it with a name after it: `./greet.sh Ana`. The output must be exactly `Hello, Ana!`."
+    hints:
+      - "`nano greet.sh`. The first line: `#!/bin/bash`."
+      - "The second line: `echo \"Hello, $1!\"`. Save it."
+      - "`chmod +x greet.sh`, then `./greet.sh Ana`."
+    solution: ["printf '#!/bin/bash\\necho \"Hello, $1!\"\\n' > greet.sh", "chmod +x greet.sh", "./greet.sh Ana"]
+    after: >-
+      Try `./greet.sh` with no name: it prints `Hello, !`. A good script
+      checks first. The next step shows how.
+
+  # 6. TERMINAL --------------------------------------------------------------
+  - id: check
+    type: terminal
+    objective: O3
+    title: A check that always says no
+    prompt: |
+      `check.sh` should say if a file is there, with exit status 0, or
+      missing, with exit status 1.
+
+      **Run `./check.sh notes.txt`.** The file is there, but the script says
+      it is missing. Read the first line of the output, fix the script with
+      `nano check.sh`, and run it again. Then try `echo $?`.
+    start:
+      files:
+        notes.txt: "Buy milk\n"
+        check.sh: |
+          #!/bin/bash
+          if [-f "$1"]; then
+              echo "$1 is here"
+          else
+              echo "$1 is missing"
+              exit 1
+          fi
+      modes:
+        check.sh: "755"
+    checks:
+      - expr: "run('./check.sh notes.txt') == ('notes.txt is here\\n', 0)"
+        pass: "`./check.sh notes.txt` says it is here, with status 0"
+        hint: "The message says `[-f: command not found`: the shell needs a space after `[`."
+      - expr: "run('./check.sh nope.txt') == ('nope.txt is missing\\n', 1)"
+        pass: "For a missing file it says missing, with status 1"
+        hint: "Keep the `else` part with `exit 1`."
+      - expr: "any(h.startswith('./check.sh') for h in history[1:]) and run('./check.sh notes.txt')[1] == 0"
+        pass: "You ran the fixed script"
+        hint: "After the fix, run `./check.sh notes.txt` again."
+    hints:
+      - "Read the line `./check.sh: line 2: [-f: command not found`. Which word did the shell not know?"
+      - "`[` is a command, so it needs spaces around it, like any command: `[ -f \"$1\" ]`."
+      - "Line 2 must be: `if [ -f \"$1\" ]; then`."
+    solution:
+      - "./check.sh notes.txt"
+      - "printf '#!/bin/bash\\nif [ -f \"$1\" ]; then\\n    echo \"$1 is here\"\\nelse\\n    echo \"$1 is missing\"\\n    exit 1\\nfi\\n' > check.sh"
+      - "./check.sh notes.txt"
+    after: >-
+      The script did not stop at the error: the failed test counted as
+      "false", so the `else` part ran. Read the first message, not only the
+      last line. And remember: spaces inside `[ ]`.
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: loops
+    type: theory
+    objective: O4
+    title: Repeat, count and use results
+    body: |
+      ## for
+
+      `for` runs the same commands once for each word:
+
+      ```text
+      for f in *.log; do
+          echo "found $f"
+      done
+      ```
+
+      `*.log` becomes the names of all `.log` files, and `f` takes each one
+      in turn. `done` ends the loop. Numbers work too: `for i in 1 2 3` or
+      `for i in $(seq 5)`.
+
+      ## $( ): the output of a command
+
+      `$(command)` runs the command and puts its output in that place:
+
+      ```text
+      count=$(ls *.log | wc -l)
+      echo "$count logs"
+      ```
+
+      `$(( ))` calculates with whole numbers: `$((count + 1))`.
+    keys:
+      - code: 'for f in *.txt; do ... done'
+        means: "Once for each `.txt` file."
+      - code: "$(date)"
+        means: "The output of `date`, in this place."
+      - code: "$((n * 2))"
+        means: "Whole-number arithmetic."
+
+  # 8. TERMINAL --------------------------------------------------------------
+  - id: backup
+    type: terminal
+    objective: O4
+    title: Back up every log
+    prompt: |
+      **Write a script `backup.sh`.** It copies every `.log` file into a
+      directory `backup` (make it with `mkdir -p`), prints `saved NAME` for
+      each file, and at the end `N files saved`. For the files here:
+
+      ```text
+      saved app.log
+      saved sensor.log
+      saved wifi.log
+      3 files saved
+      ```
+
+      Make it runnable and run it.
+    start:
+      files:
+        app.log: "08:00 INFO start\n"
+        sensor.log: "08:01 ERROR no data\n"
+        wifi.log: "08:02 INFO connected\n"
+        notes.txt: "not a log\n"
+    checks:
+      - expr: "'for' in (read('backup.sh') or '') and executable('backup.sh')"
+        pass: "`backup.sh` has a `for` loop and may be run"
+        hint: "A loop: `for f in *.log; do` ... `done`. Then `chmod +x backup.sh`."
+      - expr: "isdir('backup') and sorted(listdir('backup')) == ['app.log', 'sensor.log', 'wifi.log']"
+        pass: "`backup` holds the three logs, and nothing else"
+        hint: "Run the script. Inside the loop: `cp \"$f\" backup/`."
+      - expr: "run('./backup.sh')[0].splitlines() == ['saved app.log', 'saved sensor.log', 'saved wifi.log', '3 files saved']"
+        pass: "It prints a line for each file, and the count"
+        hint: "Inside the loop `echo \"saved $f\"`. After `done`: `echo \"$(ls backup | wc -l) files saved\"`."
+    hints:
+      - "Start with `#!/bin/bash` and `mkdir -p backup`."
+      - "The loop: `for f in *.log; do`, then `cp \"$f\" backup/` and `echo \"saved $f\"`, then `done`."
+      - "The last line counts the files: `echo \"$(ls backup | wc -l) files saved\"`."
+    solution:
+      - "printf '#!/bin/bash\\nmkdir -p backup\\nfor f in *.log; do\\n    cp \"$f\" backup/\\n    echo \"saved $f\"\\ndone\\necho \"$(ls backup | wc -l) files saved\"\\n' > backup.sh"
+      - "chmod +x backup.sh"
+      - "./backup.sh"
+    after: >-
+      Three files or three thousand: the script is the same. Next time,
+      one command does the whole job.
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-status
+        objective: O2
+        prompt: "A command ends, and `echo $?` prints `0`. What does it mean?"
+        options:
+          - text: "The command worked"
+            correct: true
+            why: "0 is success. Any other number is a problem."
+          - text: "The command printed nothing"
+            why: "`$?` is the exit status, not the output."
+          - text: "The command failed"
+            why: "It is the other way: 0 means it worked."
+      - kind: mcq
+        id: q-args
+        objective: O2
+        prompt: "`./copy.sh a.txt b.txt c.txt`. What is `$#` inside the script?"
+        options:
+          - text: "`3`"
+            correct: true
+            why: "`$#` is the number of values: three names."
+          - text: "`a.txt`"
+            why: "That is `$1`, the first value."
+          - text: "`c.txt`"
+            why: "That is `$3`. `$#` counts them."
+      - kind: mcq
+        id: q-brackets
+        objective: O3
+        prompt: "Which line is right?"
+        options:
+          - text: "`if [ -d \"$dir\" ]; then`"
+            correct: true
+            why: "Spaces inside the brackets, and `;` before `then`."
+          - text: "`if [-d \"$dir\"]; then`"
+            why: "Without spaces, the shell looks for a command `[-d`."
+          - text: "`if [ -d \"$dir\" ] then`"
+            why: "`then` needs a `;` or a new line before it."
+      - kind: mcq
+        id: q-numbers
+        objective: O3
+        prompt: "How do you test if the number in `$n` is bigger than 10?"
+        options:
+          - text: "`[ \"$n\" -gt 10 ]`"
+            correct: true
+            why: "Numbers use `-gt` (greater than), `-lt`, `-eq` and the others."
+          - text: "`[ \"$n\" > 10 ]`"
+            why: "In a test, `>` is a redirect: it writes into a file called `10`."
+          - text: "`[ \"$n\" = 10 ]`"
+            why: "`=` asks if the texts are the same."
+      - kind: mcq
+        id: q-loop
+        objective: O4
+        code: |
+          for f in *.jpg; do
+              echo "$f"
+          done
+        prompt: "There are three `.jpg` files. How many lines does this print?"
+        options:
+          - text: "3"
+            correct: true
+            why: "`*.jpg` gives three names, so the loop runs three times."
+          - text: "1"
+            why: "The loop runs once for each name."
+          - text: "It prints `*.jpg`"
+            why: "Only when no file matches. Here three files match."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-assign
+    objective: O1
+    prompt: "Which line makes a variable `size` with the value `10`?"
+    options:
+      - text: "`size=10`"
+        correct: true
+        why: "No spaces around `=`."
+      - text: "`size = 10`"
+        why: "With spaces, the shell runs a command `size`."
+      - text: "`$size=10`"
+        why: "`$` reads a variable. To make one, write the name without `$`."
+  - kind: mcq
+    id: r-dollar1
+    objective: O2
+    prompt: "`./hello.sh Mia` runs. What is `$1` inside the script?"
+    options:
+      - text: "`Mia`"
+        correct: true
+        why: "`$1` is the first value after the name of the script."
+      - text: "`./hello.sh`"
+        why: "That is `$0`, the name of the script."
+      - text: "`1`"
+        why: "That would be `$#`, the number of values."
+  - kind: mcq
+    id: r-exit
+    objective: O2
+    prompt: "Why should a script that finds a problem end with `exit 1`?"
+    options:
+      - text: "Other commands and scripts see in `$?` that it failed"
+        correct: true
+        why: "Then `./check.sh && ./backup.sh` runs the backup only after a good check."
+      - text: "It closes the terminal"
+        why: "In a script, `exit` ends only the script."
+      - text: "It prints the error"
+        why: "`exit` prints nothing. It sets the exit status."
+  - kind: mcq
+    id: r-file-test
+    objective: O3
+    prompt: "What does `[ -f report.txt ]` test?"
+    options:
+      - text: "If `report.txt` exists and is a file"
+        correct: true
+        why: "`-d` tests a directory, `-e` anything that exists."
+      - text: "If `report.txt` is empty"
+        why: "That is `-s` (not empty) or `-z` for a text."
+      - text: "If you may run `report.txt`"
+        why: "That is `-x`."
+  - kind: mcq
+    id: r-subst
+    objective: O4
+    prompt: "What does `n=$(ls | wc -l)` do?"
+    options:
+      - text: "It puts the number of files in `n`"
+        correct: true
+        why: "`$( )` runs the commands, and their output becomes the value."
+      - text: "It puts the text `ls | wc -l` in `n`"
+        why: "That needs quotes: `n='ls | wc -l'`."
+      - text: "It lists the files on the screen"
+        why: "The output goes into `n`, not to the screen."

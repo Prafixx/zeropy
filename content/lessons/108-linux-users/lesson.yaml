@@ -1,0 +1,434 @@
+id: linux-users
+order: 108
+title: Network and users
+summary: Find the address, the router and the open ports of the Pi, give names to computers, and add a user with the right groups.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Read the network of the Pi - its address, its router and its open ports - with ip and ss
+  - id: O2
+    text: Give a computer a name in /etc/hosts, and test it with ping and getent
+  - id: O3
+    text: Read users and groups with id, groups and /etc/passwd, and know why groups like gpio matter
+  - id: O4
+    text: Add a user with adduser, add groups with usermod -aG, and change the owner of a file with chown
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: network
+    type: theory
+    objective: O1
+    title: The Pi on the network
+    body: |
+      A Pi has **interfaces**: `lo` (the loopback, the Pi talking to
+      itself, 127.0.0.1), `eth0` (the cable) and `wlan0` (Wi-Fi).
+
+      ```text
+      ip addr        the interfaces and their addresses (short: ip a)
+      ip route       where packets go: "default via 192.168.1.1" is the router
+      ss -tln        the ports where programs listen (t TCP, l listening, n numbers)
+      ```
+
+      In `ip addr`, look for `inet`: `inet 192.168.1.42/24` is the address
+      of the Pi; `/24` means that all addresses `192.168.1.x` are in the
+      same home network.
+
+      A **port** is a numbered door of a computer: SSH listens on 22, a web
+      server on 80. `ss -tln` shows which doors are open.
+
+      Names like `raspberrypi.com` become addresses through **DNS**. The DNS
+      server of the Pi is in `/etc/resolv.conf`, often your router.
+    keys:
+      - code: "ip addr"
+        means: "The address of each interface (`inet`)."
+      - code: "ip route"
+        means: "The router: the line `default via`."
+      - code: "ss -tln"
+        means: "The open ports. 22 is SSH."
+
+  # 2. TERMINAL --------------------------------------------------------------
+  - id: whereami
+    type: terminal
+    objective: O1
+    title: Where is the Pi?
+    prompt: |
+      1. Find the address of the Pi on Wi-Fi (`wlan0`).
+      2. Find the address of the router, and **save it** in `router.txt`.
+      3. Turn on SSH (`sudo systemctl start ssh`), and see the new open port
+         with `ss`.
+    checks:
+      - expr: "any(h.startswith('ip a') for h in history)"
+        pass: "You looked at the addresses"
+        hint: "`ip addr`, and look for `inet` under `wlan0`."
+      - expr: "'192.168.1.1' in (read('router.txt') or '').split()"
+        pass: "`router.txt` holds the address of the router"
+        hint: "`ip route` shows it after `default via`. Then `echo 192.168.1.1 > router.txt`, or `ip route | grep default > router.txt`."
+      - expr: "service('ssh')['active'] and ran('ss') and ':22' in out"
+        pass: "SSH runs, and `ss` shows port 22"
+        hint: "`sudo systemctl start ssh`, then `ss -tln`."
+    hints:
+      - "`ip addr show wlan0` shows only Wi-Fi: the address is after `inet`."
+      - "`ip route`: the first line says `default via 192.168.1.1`."
+      - "`ip route | grep default > router.txt`, then `sudo systemctl start ssh` and `ss -tln`."
+    solution: ["ip addr show wlan0", "ip route | grep default > router.txt", "sudo systemctl start ssh", "ss -tln"]
+    after: >-
+      `0.0.0.0:22` means: SSH listens on every address of the Pi. Before you
+      open a port, ask yourself who should reach it: in your home network,
+      everyone on your Wi-Fi can.
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: hosts
+    type: theory
+    objective: O2
+    title: Names for computers
+    body: |
+      Before it asks DNS, Linux reads **`/etc/hosts`**: one line per
+      computer, an address and its names.
+
+      ```text
+      127.0.0.1       localhost
+      127.0.1.1       raspberrypi
+      192.168.1.50    nas
+      ```
+
+      With the last line, `ping nas` and `ssh pi@nas` work, also without
+      DNS. Good for computers at home that have a fixed address.
+
+      `/etc/hosts` belongs to root. Remember: `sudo echo ... >> /etc/hosts`
+      fails, because the `>>` is done by your shell, not by sudo. Use
+      `sudo nano /etc/hosts`, or:
+
+      ```text
+      echo "192.168.1.50 nas" | sudo tee -a /etc/hosts
+      ```
+
+      `getent hosts nas` shows the address that a name gets. `ping -c 3`
+      stops after 3 answers.
+    keys:
+      - code: "/etc/hosts"
+        means: "Address, then names. Read before DNS."
+      - code: "... | sudo tee -a FILE"
+        means: "Add a line to a file of root."
+      - code: "getent hosts NAME"
+        means: "Which address does this name get?"
+
+  # 4. TERMINAL --------------------------------------------------------------
+  - id: nas
+    type: terminal
+    objective: O2
+    title: A name for the NAS
+    prompt: |
+      Your network disk (a NAS) has the fixed address `192.168.1.50`.
+
+      1. Try `ping -c 2 nas`: read the message.
+      2. Give it the name `nas` in `/etc/hosts`.
+      3. Check the name with `getent hosts nas`, and ping it again.
+    checks:
+      - expr: "hosts('nas') == '192.168.1.50'"
+        pass: "`/etc/hosts` has the line for `nas`"
+        hint: "`echo \"192.168.1.50 nas\" | sudo tee -a /etc/hosts`."
+        misconceptions:
+          - when: "any(h.startswith('sudo echo') for h in history) and hosts('nas') is None"
+            say: "`sudo echo ... >> /etc/hosts` fails: the `>>` runs as you, not as root. Use `| sudo tee -a /etc/hosts`."
+      - expr: "'127.0.1.1' in (read('/etc/hosts') or '') and 'localhost' in (read('/etc/hosts') or '')"
+        pass: "The old lines of `/etc/hosts` are still there"
+        hint: "Add with `tee -a` (append). `tee` without `-a` replaces the whole file."
+      - expr: "ran('getent') and ran('ping') and hosts('nas') == '192.168.1.50' and 'PING nas (192.168.1.50)' in out"
+        pass: "`ping nas` reaches 192.168.1.50"
+        hint: "`getent hosts nas`, then `ping -c 2 nas`."
+    hints:
+      - "Without a line in `/etc/hosts`, the Pi does not know the name: `Name or service not known`."
+      - "`echo \"192.168.1.50 nas\" | sudo tee -a /etc/hosts`. Careful: `-a`, or the other lines are gone."
+      - "Then `getent hosts nas` and `ping -c 2 nas`."
+    solution: ["ping -c 2 nas", "echo '192.168.1.50 nas' | sudo tee -a /etc/hosts", "getent hosts nas", "ping -c 2 nas"]
+    after: >-
+      A name is easier to remember than an address, and if the NAS gets a
+      new address, you change one line, not every script.
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: users
+    type: theory
+    objective: O3
+    title: Users and groups
+    body: |
+      Every file belongs to a **user** and a **group**, and every program
+      runs as a user. That is how Linux decides who may do what.
+
+      ```text
+      id             your number (uid), and your groups
+      groups ana     the groups of ana
+      ```
+
+      The users are in **`/etc/passwd`**, one line each, with fields
+      separated by `:`:
+
+      ```text
+      pi:x:1000:1000:,,,:/home/pi:/bin/bash
+      ```
+
+      Name, `x` (the password is in `/etc/shadow`, which only root may
+      read), user number, group number, a comment, the home folder, the
+      shell. `cut -d: -f1 /etc/passwd` shows only the names.
+
+      **Groups give rights.** On a Pi: `gpio` for the pins, `i2c` and `spi`
+      for sensors, `video` for the camera, `sudo` to use sudo. The first
+      user is in all of them. A new user is in none, so their GPIO programs
+      fail with `Permission denied`.
+    keys:
+      - code: "id"
+        means: "Who am I, and in which groups?"
+      - code: "cut -d: -f1 /etc/passwd"
+        means: "The names of all users."
+      - code: "gpio, i2c, spi, sudo"
+        means: "Groups that give rights on a Pi."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: read-users
+    type: drill
+    objective: O3
+    title: Read the lines
+    items:
+      - kind: mcq
+        id: d-passwd
+        objective: O3
+        prompt: "`ana:x:1001:1001:Ana Lee,,,:/home/ana:/bin/bash`. What is the home folder of ana?"
+        options:
+          - text: "`/home/ana`"
+            correct: true
+            why: "The sixth field. The seventh is her shell."
+          - text: "`1001`"
+            why: "That is her user number (uid)."
+          - text: "`/bin/bash`"
+            why: "That is the shell that starts when she logs in."
+      - kind: mcq
+        id: d-x
+        objective: O3
+        prompt: "What does the `x` in the second field of `/etc/passwd` mean?"
+        options:
+          - text: "The password is in `/etc/shadow`, which only root may read"
+            correct: true
+            why: "`/etc/passwd` can be read by everyone, so the password is not there."
+          - text: "The user has no password"
+            why: "The x means: look in /etc/shadow."
+          - text: "The user is disabled"
+            why: "It only says where the password is."
+      - kind: mcq
+        id: d-gpio
+        objective: O3
+        prompt: "A new user `ben` runs a gpiozero program and gets `Permission denied`. What is missing?"
+        options:
+          - text: "ben is not in the group `gpio`"
+            correct: true
+            why: "`sudo usermod -aG gpio ben`, then ben logs in again."
+          - text: "ben needs to install gpiozero"
+            why: "It is installed for everyone. The right to the pins is missing."
+          - text: "The program needs `chmod +x`"
+            why: "Python runs it with `python3`. The pins need the group."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: manage
+    type: theory
+    objective: O4
+    title: A new user
+    body: |
+      Each person gets their own user: their own files, their own password.
+
+      ```text
+      sudo adduser ana               new user, with a home folder and a password
+      sudo usermod -aG gpio,i2c ana  add ana to the groups gpio and i2c
+      sudo chown ana:ana report.txt  ana becomes the owner (user:group)
+      sudo deluser ana               remove the user
+      ```
+
+      `adduser` asks for the password (two times, nothing shows while you
+      type), then for a name and some details: press Enter to skip them.
+      Then `Is the information correct? [Y/n]`: press Enter.
+
+      **Careful with `usermod`:** `-aG` **adds** groups. `-G` alone
+      **replaces** all groups of the user with the new list: ana would lose
+      the groups she had. A new group counts from the next login of the
+      user.
+    keys:
+      - code: "sudo adduser NAME"
+        means: "A new user: answers the questions."
+      - code: "sudo usermod -aG G NAME"
+        means: "Add groups. Never forget the `a`."
+      - code: "sudo chown USER:GROUP F"
+        means: "A new owner for the file."
+
+  # 8. TERMINAL --------------------------------------------------------------
+  - id: ana
+    type: terminal
+    objective: O4
+    title: A user for Ana
+    prompt: |
+      Ana will build robots on this Pi too.
+
+      1. Add the user `ana`, with the password `robot-ana-26`. Press Enter
+         for the details.
+      2. Give her the groups `gpio` and `i2c`, **and keep her other groups**.
+      3. Make her the owner of `robot.py` (user and group `ana`).
+      4. Check with `groups ana` and `ls -l robot.py`.
+    start:
+      files:
+        robot.py: "from gpiozero import Robot, Motor\n"
+    checks:
+      - expr: "'ana' in users and has_password('ana')"
+        pass: "The user `ana` exists, with a password"
+        hint: "`sudo adduser ana`, then the password two times."
+      - expr: "groups_of('ana') is not None and 'gpio' in groups_of('ana') and 'i2c' in groups_of('ana')"
+        pass: "ana is in `gpio` and `i2c`"
+        hint: "`sudo usermod -aG gpio,i2c ana`."
+      - expr: "groups_of('ana') is not None and 'users' in groups_of('ana')"
+        pass: "ana kept her other group (`users`)"
+        hint: "With `-G` alone, the old groups are gone. Add `users` back: `sudo usermod -aG users ana`."
+      - expr: "owner('robot.py') == 'ana:ana'"
+        pass: "`robot.py` belongs to ana"
+        hint: "`sudo chown ana:ana robot.py`."
+    hints:
+      - "`sudo adduser ana`. The password shows nothing while you type. Press Enter for the 5 details, and Enter for `[Y/n]`."
+      - "`sudo usermod -aG gpio,i2c ana`: `-a` keeps the groups she has."
+      - "`sudo chown ana:ana robot.py`, then `groups ana` and `ls -l robot.py`."
+    solution: ["sudo adduser ana", "robot-ana-26", "robot-ana-26", "", "", "", "", "", "", "sudo usermod -aG gpio,i2c ana", "sudo chown ana:ana robot.py", "groups ana", "ls -l robot.py"]
+    after: >-
+      Ana logs in with `ssh ana@raspberrypi.local`. Her files are in
+      `/home/ana`, and only she can read them: a new home folder on Raspberry
+      Pi OS is `drwx------`.
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O4
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-router
+        objective: O1
+        prompt: "`ip route` says `default via 192.168.1.1 dev wlan0`. What is 192.168.1.1?"
+        options:
+          - text: "The router: everything outside your network goes through it"
+            correct: true
+            why: "`default` is the way for all addresses that are not in your network."
+          - text: "The address of the Pi"
+            why: "The Pi's address is in `ip addr` (`inet`), here after `src`."
+          - text: "A DNS name"
+            why: "It is an address, and the router."
+      - kind: mcq
+        id: q-port22
+        objective: O1
+        prompt: "`ss -tln` shows `0.0.0.0:22`. What does it mean?"
+        options:
+          - text: "A program (SSH) listens on port 22, on every address of the Pi"
+            correct: true
+            why: "0.0.0.0 means all interfaces."
+          - text: "Port 22 is closed"
+            why: "ss lists ports that are open (listening)."
+          - text: "22 users are logged in"
+            why: "22 is the port number of SSH."
+      - kind: mcq
+        id: q-tee
+        objective: O2
+        prompt: "Why does `sudo echo \"1.2.3.4 box\" >> /etc/hosts` fail?"
+        options:
+          - text: "The `>>` is done by your own shell, which is not root"
+            correct: true
+            why: "Only `echo` runs as root. `| sudo tee -a /etc/hosts` writes as root."
+          - text: "echo cannot write to files"
+            why: "With `>>` the shell writes. The shell has no right to /etc/hosts."
+          - text: "/etc/hosts cannot be changed"
+            why: "root can change it: with `sudo nano` or `sudo tee -a`."
+      - kind: mcq
+        id: q-aG
+        objective: O4
+        prompt: "ana is in `users` and `video`. Then `sudo usermod -G gpio ana`. Her groups now?"
+        options:
+          - text: "Only `gpio` (and her own group `ana`)"
+            correct: true
+            why: "`-G` without `-a` replaces the list. Use `-aG` to add."
+          - text: "users, video and gpio"
+            why: "That needs `-aG`."
+          - text: "Nothing changed"
+            why: "The groups changed: the old ones are gone."
+      - kind: mcq
+        id: q-chown
+        objective: O4
+        prompt: "`chown ana report.txt` (without sudo) says `Operation not permitted`. Why?"
+        options:
+          - text: "Only root may give a file to another user"
+            correct: true
+            why: "`sudo chown ana report.txt`."
+          - text: "ana does not exist"
+            why: "Then it would say `invalid user`."
+          - text: "The file is open"
+            why: "Changing the owner needs root, nothing else."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-ip-addr
+    objective: O1
+    prompt: "Where does `ip addr` show the address of an interface?"
+    options:
+      - text: "After `inet`, like `inet 192.168.1.42/24`"
+        correct: true
+        why: "`inet6` is the IPv6 address."
+      - text: "After `link/ether`"
+        why: "That is the hardware (MAC) address."
+      - text: "After `mtu`"
+        why: "mtu is the largest packet size."
+  - kind: mcq
+    id: r-hosts-first
+    objective: O2
+    prompt: "What does Linux read before it asks DNS for a name?"
+    options:
+      - text: "`/etc/hosts`"
+        correct: true
+        why: "One line per computer: address and names."
+      - text: "`/etc/passwd`"
+        why: "That is the list of users."
+      - text: "`/etc/hostname`"
+        why: "That is only the name of this computer."
+  - kind: mcq
+    id: r-cut
+    objective: O3
+    prompt: "What does `cut -d: -f1 /etc/passwd` print?"
+    options:
+      - text: "The first field of each line: the user names"
+        correct: true
+        why: "`-d:` splits at `:`, `-f1` keeps field 1."
+      - text: "The first line"
+        why: "That is `head -n 1`."
+      - text: "The passwords"
+        why: "They are not in /etc/passwd."
+  - kind: mcq
+    id: r-groups-why
+    objective: O3
+    prompt: "Why are users in groups like `gpio`?"
+    options:
+      - text: "Groups give rights: gpio may use the pins"
+        correct: true
+        why: "A user outside the group gets Permission denied."
+      - text: "To sort the users by name"
+        why: "Groups are about rights."
+      - text: "Groups make the Pi faster"
+        why: "They only decide who may do what."
+  - kind: mcq
+    id: r-add-user
+    objective: O4
+    prompt: "Which command adds a new user `leo` with a home folder and a password?"
+    options:
+      - text: "`sudo adduser leo`"
+        correct: true
+        why: "It asks for the password and the details."
+      - text: "`adduser leo`"
+        why: "Only root may add users: it needs sudo."
+      - text: "`sudo mkdir /home/leo`"
+        why: "That only makes a folder, not a user."

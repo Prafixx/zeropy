@@ -21,7 +21,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-CHECK_VERSION = "11"
+CHECK_VERSION = "12"
 # The seal shows the page that the block came from this script unchanged.
 # It is not a secret: it only catches a block that was typed or edited by hand.
 SALT = "zeropy-local-v1"
@@ -201,7 +201,7 @@ def _quiet_input(prompt=""):
     return _input()
 builtins.input = _quiet_input
 runpy.run_path(sys.argv[1], run_name="__main__")
-sys.stderr.write("\\nzeropy-import: " + ("yes" if sys.argv[2] in sys.modules else "no") + "\\n")
+sys.stderr.write("\\nzeropy-import: " + ("yes" if all(m in sys.modules for m in sys.argv[2].split(",")) else "no") + "\\n")
 """
 
 
@@ -1026,6 +1026,48 @@ MUTANTS = [
 ]
 
 
+CARS_HEADER = "weight,fuel"
+
+
+def task_data():
+    """Data and AI: pandas and scikit-learn in a venv, cars.csv, and model.py."""
+    facts = python_facts()
+    tips = []
+    venv_facts(facts, tips)
+    packages = installed_packages() or {}
+    facts.append(("pandas", packages.get("pandas", "no")))
+    facts.append(("sklearn", packages.get("scikit-learn", "no")))
+    if "pandas" not in packages or "scikit-learn" not in packages:
+        tips.append("pandas or scikit-learn is not installed here. With the venv active: pip install pandas scikit-learn")
+
+    data = Path("cars.csv")
+    facts.append(("cars_exists", yes_no(data.is_file())))
+    if data.is_file():
+        lines = [line.strip() for line in read_text(data).splitlines() if line.strip()]
+        facts.append(("cars_header", yes_no(bool(lines) and lines[0].replace(" ", "") == CARS_HEADER)))
+        facts.append(("cars_rows", str(max(0, len(lines) - 1))))
+    else:
+        tips.append("There is no cars.csv in this folder.")
+
+    program = Path("model.py")
+    facts.append(("model_exists", yes_no(program.is_file())))
+    if not program.is_file():
+        tips.append("There is no model.py in this folder.")
+        return facts, tips
+    ok, out, used = run_script(program, "pandas,sklearn", timeout=90)
+    facts.append(("model_ok", ok))
+    facts.append(("model_libs", yes_no(used)))
+    found = re.search(r"MAE\D*?(\d+(?:\.\d+)?)", out)
+    facts.append(("mae", found.group(1) if found else "none"))
+    if ok != "yes":
+        tips.append("model.py stops with an error. Run python model.py and read the message.")
+    elif not used:
+        tips.append("model.py does not use both pandas and scikit-learn (sklearn).")
+    elif not found:
+        tips.append("model.py does not print a line with MAE and a number, like: MAE: 0.21")
+    return facts, tips
+
+
 def facts_value(facts, key):
     return next((value for k, value in facts if k == key), None)
 
@@ -1043,6 +1085,7 @@ TASKS = {
     "todo": task_todo,
     "build": task_build,
     "capstone": task_capstone,
+    "data": task_data,
 }
 
 

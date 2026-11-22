@@ -1,0 +1,446 @@
+id: linux-archives
+order: 107
+title: "Archives, links and special files"
+summary: Pack a folder into one file and unpack it again, make shortcuts with links, and look into /proc and /dev.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Pack a folder with tar, compressed with gzip, and list and unpack an archive
+  - id: O2
+    text: Make and open zip files, for people with Windows or macOS
+  - id: O3
+    text: Make a symbolic link, change where it points, and tell it from a hard link
+  - id: O4
+    text: Know the special folders /tmp, /proc and /dev
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: tar
+    type: theory
+    objective: O1
+    title: Many files in one
+    body: |
+      An **archive** is one file that holds many files and folders: easy to
+      copy, to send, or to keep as a backup. On Linux the tool is **tar**,
+      usually with **gzip** to make it smaller. Such a file ends in
+      `.tar.gz`.
+
+      ```text
+      tar -czf logs.tar.gz logs      make an archive of the folder logs
+      tar -tzf logs.tar.gz           list what is in it
+      tar -xzf logs.tar.gz           unpack it here
+      tar -xzf logs.tar.gz -C old    unpack it into the folder old
+      ```
+
+      The letters: **c** create, **t** list, **x** extract (unpack),
+      **z** with gzip, **v** show each name (verbose), **f** the archive
+      file. `f` comes last, because the name of the file follows it.
+
+      `gzip notes.txt` compresses one file into `notes.txt.gz` (the
+      original is gone); `gunzip notes.txt.gz` brings it back.
+    keys:
+      - code: "tar -czf a.tar.gz dir"
+        means: "Create, gzip, file name."
+      - code: "tar -tzf a.tar.gz"
+        means: "List the names in it."
+      - code: "tar -xzf a.tar.gz"
+        means: "Unpack it here."
+
+  # 2. TERMINAL --------------------------------------------------------------
+  - id: backup
+    type: terminal
+    objective: O1
+    title: A backup of the logs
+    prompt: |
+      **Pack the folder `logs` into `logs-backup.tar.gz`**, then list what
+      is in the archive, without unpacking it.
+    start:
+      files:
+        logs/monday.log: "08:00 start\n08:10 temperature 9.5\n"
+        logs/tuesday.log: "08:00 start\n08:20 ERROR no sensor\n"
+        logs/wednesday.log: "08:00 start\n"
+        notes.txt: "Back up the logs every week.\n"
+    checks:
+      - expr: "archive_kind('logs-backup.tar.gz') == 'tar.gz'"
+        pass: "`logs-backup.tar.gz` is a tar archive with gzip"
+        hint: "`tar -czf logs-backup.tar.gz logs`: c, z, f, then the names."
+      - expr: "members('logs-backup.tar.gz') == ['logs/', 'logs/monday.log', 'logs/tuesday.log', 'logs/wednesday.log']"
+        pass: "It holds the folder `logs` and its three files"
+        hint: "Give the folder after the name of the archive: `... logs-backup.tar.gz logs`."
+      - expr: "any('tar' in h and 't' in h.split()[1] for h in history if len(h.split()) > 1 and h.split()[0] == 'tar') and 'logs/tuesday.log' in out"
+        pass: "You listed the archive"
+        hint: "`tar -tzf logs-backup.tar.gz`."
+    hints:
+      - "The letters for create: `c`, with gzip: `z`, and the file name: `f`."
+      - "`tar -czf logs-backup.tar.gz logs`. The order matters: the archive name comes right after `f`."
+      - "Then `tar -tzf logs-backup.tar.gz`: `t` lists."
+    solution: ["tar -czf logs-backup.tar.gz logs", "tar -tzf logs-backup.tar.gz"]
+    after: >-
+      `ls -l` shows that the archive is smaller than the files: gzip found
+      repeated text. A backup is only a backup when it is somewhere else
+      too: copy it to another computer with `scp`.
+
+  # 3. TERMINAL --------------------------------------------------------------
+  - id: restore
+    type: terminal
+    objective: O1
+    title: Unpack what a friend sent
+    prompt: |
+      A friend sent you `project.tar.gz`. Before you unpack something,
+      **look inside**: an archive can hold many files, and unpacking can
+      overwrite yours.
+
+      1. List what is in it.
+      2. Make a folder `friend`, and unpack the archive **into it**.
+    start:
+      files:
+        project/main.py: "print('my old version')\n"
+      setup:
+        - "mkdir -p /tmp/f/project"
+        - "printf 'print(\"hello from my friend\")\\n' > /tmp/f/project/main.py"
+        - "printf 'gpiozero\\n' > /tmp/f/project/requirements.txt"
+        - "tar -czf /home/pi/project.tar.gz -C /tmp/f project"
+        - "rm -r /tmp/f"
+    checks:
+      - expr: "any(h.startswith('tar') and 't' in h.split()[1] for h in history if len(h.split()) > 1)"
+        pass: "You looked inside first"
+        hint: "`tar -tzf project.tar.gz`."
+      - expr: "isfile('friend/project/main.py') and 'friend' in read('friend/project/main.py')"
+        pass: "The project of your friend is in `friend`"
+        hint: "`mkdir friend`, then `tar -xzf project.tar.gz -C friend`."
+      - expr: "read('project/main.py') == \"print('my old version')\\n\""
+        pass: "Your own `project/main.py` is unchanged"
+        hint: "Unpacking here would overwrite your `project` folder. Unpack into `friend` with `-C friend`."
+    hints:
+      - "`tar -tzf project.tar.gz` lists the names: it has a folder `project`, like yours."
+      - "So unpack it into another folder: `mkdir friend`."
+      - "`tar -xzf project.tar.gz -C friend`."
+    solution: ["tar -tzf project.tar.gz", "mkdir friend", "tar -xzf project.tar.gz -C friend"]
+    after: >-
+      tar overwrites files with the same name without a question. Looking
+      inside first, and unpacking into an empty folder, keeps your work safe.
+
+  # 4. DRILL -----------------------------------------------------------------
+  - id: letters
+    type: drill
+    objective: O1
+    title: The letters of tar
+    items:
+      - kind: mcq
+        id: d-extract
+        objective: O1
+        prompt: "Which command unpacks `site.tar.gz`?"
+        options:
+          - text: "`tar -xzf site.tar.gz`"
+            correct: true
+            why: "x extract, z gzip, f the file."
+          - text: "`tar -czf site.tar.gz`"
+            why: "c creates a new archive: it would even fail here, with no files to pack."
+          - text: "`tar -tzf site.tar.gz`"
+            why: "t only lists the names."
+      - kind: mcq
+        id: d-f-last
+        objective: O1
+        prompt: "Why does `tar -cfz backup.tar.gz logs` go wrong?"
+        options:
+          - text: "The name of the archive must come right after `f`; here tar takes `z` as the name"
+            correct: true
+            why: "Put `f` last: `tar -czf backup.tar.gz logs`."
+          - text: "z is not allowed with c"
+            why: "`-czf` is fine. The order of `f` is the problem."
+          - text: "It works the same"
+            why: "tar would make an archive called `z`."
+      - kind: mcq
+        id: d-zip
+        objective: O2
+        prompt: "A friend with Windows wants your project folder. Which archive is easiest for them?"
+        options:
+          - text: "`zip -r project.zip project`"
+            correct: true
+            why: "Windows and macOS open zip files with a double click."
+          - text: "`tar -czf project.tar.gz project`"
+            why: "Newer Windows can open it, but zip is the safe choice for everyone."
+          - text: "`gzip project`"
+            why: "gzip compresses single files, not folders."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: links
+    type: theory
+    objective: O3
+    title: zip, and links
+    body: |
+      ## zip
+
+      ```text
+      zip -r photos.zip photos       pack a folder (-r: with everything in it)
+      unzip -l photos.zip            list
+      unzip photos.zip               unpack
+      ```
+
+      If a file is already there, `unzip` asks: `[y]es, [n]o, [A]ll,
+      [N]one`. `unzip -o` overwrites without a question.
+
+      ## Symbolic links
+
+      A **symbolic link** is a small file that points at another file or
+      folder, like a shortcut:
+
+      ```text
+      ln -s logs/day3.log latest.log     latest.log points at logs/day3.log
+      ln -sf logs/day4.log latest.log    point it somewhere else (-f: replace)
+      ls -l latest.log
+      lrwxrwxrwx 1 pi pi 13 Nov 21 10:00 latest.log -> logs/day3.log
+      ```
+
+      `cat latest.log` reads the file it points at. `rm latest.log` removes
+      only the link. If the target is deleted, the link is **broken**.
+
+      A **hard link** (`ln` without `-s`) is a second name for the same
+      data: the data stays as long as one of its names exists. It cannot
+      point at a folder. In daily work, use symbolic links.
+    keys:
+      - code: "ln -s TARGET NAME"
+        means: "A link NAME that points at TARGET."
+      - code: "ln -sf NEW NAME"
+        means: "Point the link somewhere else."
+      - code: "l ... -> target"
+        means: "How `ls -l` shows a link."
+
+  # 6. TERMINAL --------------------------------------------------------------
+  - id: latest
+    type: terminal
+    objective: O3
+    title: Always the newest log
+    prompt: |
+      A program writes one log per day into `logs`. You want one name that
+      always means "the newest log".
+
+      1. Make a link `latest.log` that points at `logs/day3.log`, and read
+         the log through the link.
+      2. Then `day4.log` is the newest: point `latest.log` at
+         `logs/day4.log`.
+    start:
+      files:
+        logs/day1.log: "day 1: all good\n"
+        logs/day2.log: "day 2: all good\n"
+        logs/day3.log: "day 3: sensor slow\n"
+        logs/day4.log: "day 4: battery low\n"
+    checks:
+      - expr: "any('day3' in h and h.startswith('ln') for h in history) and any(h.startswith('cat latest.log') for h in history)"
+        pass: "You made the link to day 3 and read it"
+        hint: "`ln -s logs/day3.log latest.log`, then `cat latest.log`."
+      - expr: "link('latest.log') == 'logs/day4.log'"
+        pass: "`latest.log` now points at `logs/day4.log`"
+        hint: "`ln -sf logs/day4.log latest.log`: `-f` replaces the old link."
+      - expr: "isfile('logs/day3.log') and read('logs/day3.log') == 'day 3: sensor slow\\n'"
+        pass: "The logs themselves are unchanged"
+        hint: "Change only the link, not the files in `logs`."
+    hints:
+      - "`ln -s` first the target, then the name of the link: `ln -s logs/day3.log latest.log`."
+      - "A second `ln -s` says `File exists`. Add `-f`."
+      - "`ln -sf logs/day4.log latest.log`, then `ls -l latest.log` shows the arrow."
+    solution: ["ln -s logs/day3.log latest.log", "cat latest.log", "ln -sf logs/day4.log latest.log", "ls -l latest.log"]
+    after: >-
+      Raspberry Pi OS uses links like this everywhere. `systemctl enable`
+      makes one too: a link in a folder of `/etc/systemd/system` that points
+      at the service file.
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: special
+    type: theory
+    objective: O4
+    title: Folders that are not what they seem
+    body: |
+      On Linux, almost **everything is a file**. Some folders are special:
+
+      - **`/tmp`**: temporary files. Every user may write there, and it can
+        be emptied when the computer restarts. Never keep work there.
+      - **`/proc`**: not on the SD card at all. The kernel makes these files
+        when you read them: `/proc/cpuinfo` (the processor and the model of
+        the Pi), `/proc/meminfo` (memory), `/proc/uptime`. `ls -l` shows
+        the size 0.
+      - **`/dev`**: the devices, as files. `/dev/mmcblk0` is the SD card,
+        `/dev/mmcblk0p1` and `p2` its parts. `/dev/null` swallows
+        everything you write into it. `/dev/gpiomem` gives programs the GPIO
+        pins.
+
+      In `ls -l /dev`, the first letter is `c` (a character device, byte by
+      byte) or `b` (a block device, like a disk).
+    keys:
+      - code: "/proc/cpuinfo"
+        means: "The processor, and the model of the Pi."
+      - code: "/dev/mmcblk0"
+        means: "The SD card, as a file."
+      - code: "/tmp"
+        means: "Temporary: can be empty after a restart."
+
+  # 8. TERMINAL --------------------------------------------------------------
+  - id: explore
+    type: terminal
+    objective: O4
+    title: Ask the Pi about itself
+    prompt: |
+      A friend asks which Pi you have, and how much memory it has.
+
+      1. Find the line with the **model** in `/proc/cpuinfo`, and save it
+         in `report.txt`.
+      2. Add the line with the **total memory** (`MemTotal`) from
+         `/proc/meminfo` to `report.txt`.
+      3. Look at the SD card in `/dev` with `ls -l`.
+    checks:
+      - expr: "'Raspberry Pi 4' in (read('report.txt') or '')"
+        pass: "`report.txt` has the model"
+        hint: "`grep Model /proc/cpuinfo > report.txt`."
+      - expr: "'MemTotal' in (read('report.txt') or '') and 'Raspberry Pi 4' in (read('report.txt') or '')"
+        pass: "`report.txt` has the total memory too"
+        hint: "`grep MemTotal /proc/meminfo >> report.txt`: two `>` add to the file."
+      - expr: "any('/dev' in h and h.startswith('ls') for h in history)"
+        pass: "You looked at the devices"
+        hint: "`ls -l /dev/mmcblk0*`."
+    hints:
+      - "`grep` finds the line: `grep Model /proc/cpuinfo`."
+      - "`>` writes a new file; `>>` adds to it. The second line needs `>>`."
+      - "`grep MemTotal /proc/meminfo >> report.txt`, then `ls -l /dev/mmcblk0*`."
+    solution: ["grep Model /proc/cpuinfo > report.txt", "grep MemTotal /proc/meminfo >> report.txt", "cat report.txt", "ls -l /dev/mmcblk0*"]
+    after: >-
+      The memory is in kB: 3885260 kB is about 3.7 GB, a Pi 4 with 4 GB (a
+      part is kept for the graphics). Many small Linux tools read `/proc`
+      too: `free` and `uptime` do.
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-list-first
+        objective: O1
+        prompt: "Why list an archive with `tar -tzf` before you unpack it?"
+        options:
+          - text: "To see what it holds, and avoid overwriting your own files"
+            correct: true
+            why: "tar overwrites files with the same name without a question."
+          - text: "Unpacking does not work without it"
+            why: "It works, but you do not know what comes out."
+          - text: "It makes the archive smaller"
+            why: "Listing changes nothing."
+      - kind: mcq
+        id: q-gzip-gone
+        objective: O1
+        prompt: "After `gzip report.txt`, where is `report.txt`?"
+        options:
+          - text: "It is now `report.txt.gz`; the original is gone"
+            correct: true
+            why: "`gunzip report.txt.gz` brings it back. `gzip -k` keeps the original."
+          - text: "It is still there, next to `report.txt.gz`"
+            why: "Only with `gzip -k`."
+          - text: "In `/tmp`"
+            why: "gzip replaces the file in the same folder."
+      - kind: mcq
+        id: q-rm-link
+        objective: O3
+        prompt: "`latest.log -> logs/day4.log`. What does `rm latest.log` remove?"
+        options:
+          - text: "Only the link; `logs/day4.log` stays"
+            correct: true
+            why: "The link is a separate small file."
+          - text: "The log `logs/day4.log`"
+            why: "rm removes the link, not its target."
+          - text: "Both"
+            why: "Only the link is removed."
+      - kind: mcq
+        id: q-broken
+        objective: O3
+        prompt: "`cat latest.log` says `No such file or directory`, but `ls` shows `latest.log`. Why?"
+        options:
+          - text: "The link is broken: its target was moved or deleted"
+            correct: true
+            why: "`ls -l latest.log` shows where it points."
+          - text: "The file has no read permission"
+            why: "That would be `Permission denied`."
+          - text: "ls is wrong"
+            why: "The link exists. Its target does not."
+      - kind: mcq
+        id: q-proc
+        objective: O4
+        prompt: "`ls -l /proc/cpuinfo` shows the size 0, but `cat` shows many lines. How?"
+        options:
+          - text: "/proc is made by the kernel at the moment you read it, not stored on the SD card"
+            correct: true
+            why: "Its files have no fixed content, so no size."
+          - text: "The file is compressed"
+            why: "Nothing is compressed in /proc."
+          - text: "ls is broken"
+            why: "It is normal for /proc."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-czf
+    objective: O1
+    prompt: "What do the letters of `tar -czf` mean?"
+    options:
+      - text: "create, gzip, file"
+        correct: true
+        why: "The name of the archive follows `f`."
+      - text: "copy, zip, folder"
+        why: "c is create, z is gzip, f is the archive file."
+      - text: "check, zero, force"
+        why: "c create, z gzip, f file."
+  - kind: mcq
+    id: r-into
+    objective: O1
+    prompt: "How do you unpack `a.tar.gz` into the folder `old`?"
+    options:
+      - text: "`tar -xzf a.tar.gz -C old`"
+        correct: true
+        why: "`-C` changes into the folder first."
+      - text: "`tar -xzf old a.tar.gz`"
+        why: "The archive name comes right after `f`; the folder goes after `-C`."
+      - text: "`cd a.tar.gz`"
+        why: "An archive is a file, not a folder."
+  - kind: mcq
+    id: r-unzip-o
+    objective: O2
+    prompt: "What does `unzip -o photos.zip` do?"
+    options:
+      - text: "It unpacks and overwrites existing files without asking"
+        correct: true
+        why: "Without `-o`, unzip asks for each file that exists."
+      - text: "It only lists the names"
+        why: "That is `unzip -l`."
+      - text: "It makes a new zip file"
+        why: "That is `zip`."
+  - kind: mcq
+    id: r-ln-order
+    objective: O3
+    prompt: "Which line makes a link `site` that points at `/var/www/html`?"
+    options:
+      - text: "`ln -s /var/www/html site`"
+        correct: true
+        why: "First the target, then the name of the link: like `cp`."
+      - text: "`ln -s site /var/www/html`"
+        why: "That is the other way round."
+      - text: "`ln site /var/www/html`"
+        why: "Without `-s` it is a hard link, and the order is wrong."
+  - kind: mcq
+    id: r-dev-null
+    objective: O4
+    prompt: "What happens to what you write into `/dev/null`?"
+    options:
+      - text: "It disappears"
+        correct: true
+        why: "Useful to hide output: `command 2>/dev/null`."
+      - text: "It goes to the SD card"
+        why: "/dev/null keeps nothing."
+      - text: "It is printed again"
+        why: "Nothing comes back."

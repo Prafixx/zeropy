@@ -202,7 +202,8 @@ export function validateLesson(data: unknown): string[] {
           out.push(`${where}: check ${j + 1} needs "expr", "pass" and "hint"`);
         }
       });
-      if (!Array.isArray(step.solution) || step.solution.length === 0 || !step.solution.every((l) => text(l))) {
+      // A line may be empty: the answer Enter to a question (like adduser's details). The first may not.
+      if (!Array.isArray(step.solution) || step.solution.length === 0 || !text(step.solution[0]) || !step.solution.every((l) => typeof l === 'string')) {
         out.push(`${where}: terminal needs a solution: a list of commands`);
       }
       if (step.start !== undefined && !isRec(step.start)) out.push(`${where}: terminal start must be a mapping`);

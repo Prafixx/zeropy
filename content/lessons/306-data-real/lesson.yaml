@@ -1,0 +1,471 @@
+id: data-real
+order: 306
+title: "The real tools: pandas and scikit-learn"
+summary: The tools that data people use every day. Read a table with pandas and train a model with scikit-learn, on your own computer.
+minutes: 45
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Know what pandas and scikit-learn do, and how they match the numpy code of this path
+  - id: O2
+    text: Give a model a 2D table of features (X) and a 1D column of answers (y)
+  - id: O3
+    text: Split data into a training and a test set, like train_test_split
+  - id: O4
+    text: Install pandas and scikit-learn in a venv, and train and test a real model
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: tools
+    type: theory
+    objective: O1
+    title: The tools everyone uses
+    body: |
+      You built a line model and a neighbours model by hand, with numpy.
+      Real projects use two libraries that do the same, with less code:
+
+      - **pandas** reads and cleans tables. A table is a `DataFrame`.
+      - **scikit-learn** (`sklearn`) has many models, all used the same way.
+
+      ```python
+      import pandas as pd
+      from sklearn.linear_model import LinearRegression
+
+      cars = pd.read_csv("cars.csv")     # a table with the columns weight, fuel
+      X = cars[["weight"]]               # the features: a table (2D)
+      y = cars["fuel"]                   # the answers: one column (1D)
+
+      model = LinearRegression()
+      model.fit(X, y)                    # learn w and b
+      model.predict(X)                   # predictions, like w * x + b
+      ```
+
+      Every scikit-learn model has `fit` and `predict`. Change
+      `LinearRegression()` to `KNeighborsClassifier(n_neighbors=3)`, and the
+      rest of the program stays the same.
+
+      Both libraries are too big for this app. You install them on your own
+      computer at the end of this lesson.
+    keys:
+      - code: "pd.read_csv(\"cars.csv\")"
+        means: "Read a CSV file into a DataFrame."
+      - code: "model.fit(X, y)"
+        means: "Learn from the examples."
+      - code: "model.predict(X)"
+        means: "Predict for new examples."
+
+  # 2. EXERCISE: debug -------------------------------------------------------
+  - id: ex-shape
+    type: exercise
+    fade: debug
+    objective: O2
+    title: X must be a table
+    prompt: |
+      scikit-learn wants the features as a **table**: one row per example,
+      one column per feature. Even with only one feature. The `fit` below
+      checks it like scikit-learn does, and the program stops with its
+      error message. **Fix `X`**, so the program prints:
+
+      ```text
+      (12, 1)
+      (4.629, 1.937)
+      ```
+    given: |
+      import numpy as np
+
+      weights = np.array([0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
+      fuel = np.array([6.1, 6.5, 7.2, 7.4, 8.1, 8.3, 9.0, 9.1, 9.9, 10.2, 10.6, 11.4])
+
+
+      def fit(X, y):
+          X = np.asarray(X)
+          if X.ndim != 2:
+              raise ValueError("Expected 2D array, got 1D array instead. "
+                               "Reshape your data using array.reshape(-1, 1)")
+          w, b = np.polyfit(X[:, 0], y, 1)
+          return round(float(w), 3), round(float(b), 3)
+    starter: |
+      # numpy (np), weights, fuel and fit exist.
+      X = weights
+      print(X.shape)
+      print(fit(X, fuel))
+    solution: |
+      X = weights.reshape(-1, 1)
+      print(X.shape)
+      print(fit(X, fuel))
+    after: >-
+      `reshape(-1, 1)` means "one column, and as many rows as needed". You
+      will see this exact message from scikit-learn one day: now you know
+      the fix. With pandas, `cars[["weight"]]` (two brackets) gives a table,
+      and `cars["weight"]` gives one column.
+    checks:
+      - expr: "err is None and lines == ['(12, 1)', '(4.629, 1.937)']"
+        pass: "X is a table with 12 rows and 1 column, and fit works"
+        hint: "`X = weights.reshape(-1, 1)`."
+        misconceptions:
+          - when: "err is None and bool(lines) and lines[0] == '(1, 12)'"
+            say: "That is 1 row with 12 columns: one example with 12 features. You need 12 rows with 1 column: `reshape(-1, 1)`."
+      - expr: "'X = weights' in src"
+        pass: "X is made from weights"
+        hint: "Keep `X = weights...`, and change only how it is shaped."
+    hints:
+      - "Read the error message to the end: it says what to do."
+      - "`.shape` of a table with 12 rows and 1 column is `(12, 1)`."
+      - "`X = weights.reshape(-1, 1)`."
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: split-theory
+    type: theory
+    objective: O3
+    title: train_test_split
+    body: |
+      In the line lesson you took every fourth car as the test set.
+      scikit-learn **shuffles** first, so the test set is a fair mix:
+
+      ```python
+      from sklearn.model_selection import train_test_split
+      from sklearn.metrics import mean_absolute_error
+
+      X_train, X_test, y_train, y_test = train_test_split(
+          X, y, test_size=0.25, random_state=0)
+      model.fit(X_train, y_train)
+      print("MAE:", mean_absolute_error(y_test, model.predict(X_test)))
+      ```
+
+      `test_size=0.25` keeps a quarter for the test. `random_state=0` makes
+      the shuffle the same each time, so you get the same result again.
+
+      How does the split work inside? It shuffles the **places** 0, 1, 2...
+      and takes the first ones for the test. The same places pick from `X`
+      and from `y`, so each example keeps its answer.
+    keys:
+      - code: "train_test_split(X, y, test_size=0.25)"
+        means: "Shuffle, then keep a quarter as the test set."
+      - code: "random_state=0"
+        means: "The same shuffle each time."
+      - code: "mean_absolute_error(true, predicted)"
+        means: "The MAE, as in the line lesson."
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-split
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Your own train_test_split
+    prompt: |
+      **Complete `split()`**: shuffle the places, take the first `n_test`
+      for the test set and the rest for training, and pick the same places
+      from `X` and from `y`.
+
+      ```text
+      9 3
+      True
+      True
+      ```
+    given: |
+      import numpy as np
+
+      X = np.array([0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]).reshape(-1, 1)
+      y = X[:, 0] * 10
+    starter: |
+      # numpy (np), X and y (= 10 times X) exist.
+
+
+      def split(X, y, test_size, seed):
+          order = np.random.default_rng(seed).permutation(len(X))
+          n_test = int(np.ceil(len(X) * test_size))
+          test = ___
+          train = ___
+          return X[train], X[test], y[train], y[test]
+
+
+      X_train, X_test, y_train, y_test = split(X, y, 0.25, 0)
+      print(len(X_train), len(X_test))
+      print(sorted(np.concatenate([X_train, X_test])[:, 0]) == sorted(X[:, 0]))
+      print(bool((X_test[:, 0] * 10 == y_test).all()))
+    solution: |
+      def split(X, y, test_size, seed):
+          order = np.random.default_rng(seed).permutation(len(X))
+          n_test = int(np.ceil(len(X) * test_size))
+          test = order[:n_test]
+          train = order[n_test:]
+          return X[train], X[test], y[train], y[test]
+
+
+      X_train, X_test, y_train, y_test = split(X, y, 0.25, 0)
+      print(len(X_train), len(X_test))
+      print(sorted(np.concatenate([X_train, X_test])[:, 0]) == sorted(X[:, 0]))
+      print(bool((X_test[:, 0] * 10 == y_test).all()))
+    after: >-
+      Every car is in exactly one of the two sets, and every answer stays
+      with its car. That is what `train_test_split` does for you.
+    checks:
+      - expr: "callable(ns.get('split')) and [len(p) for p in split(X, y, 0.25, 0)] == [9, 3, 9, 3] and [len(p) for p in split(X, y, 0.5, 1)] == [6, 6, 6, 6]"
+        pass: "The sets have the right sizes"
+        hint: "`test = order[:n_test]` and `train = order[n_test:]`."
+      - expr: "callable(ns.get('split')) and all(sorted(np.concatenate([a, b])[:, 0]) == sorted(X[:, 0]) and (a[:, 0] * 10 == c).all() and (b[:, 0] * 10 == d).all() for a, b, c, d in [split(X, y, 0.25, s) for s in [0, 1, 2]])"
+        pass: "Every car is in one set, with its own answer"
+        hint: "Use the same `train` and `test` places for `X` and for `y`."
+      - expr: "err is None and lines == ['9 3', 'True', 'True']"
+        pass: "It prints 9 3, True, True"
+        hint: "Keep the three prints."
+    hints:
+      - "`order` holds the 12 places in a random order."
+      - "The test set: the first `n_test` places, `order[:n_test]`."
+      - "Training: all the other places, `order[n_test:]`."
+
+  # 5. LOCAL ----------------------------------------------------------------
+  - id: real
+    type: local
+    objective: O4
+    title: A real model on your computer
+    prompt: |
+      **Train and test a real model with pandas and scikit-learn.**
+
+      1. A new folder `cars` in `python-course`. Make a venv in it and
+         activate it (as in the lesson "Packages with venv and pip").
+      2. `pip install pandas scikit-learn`. It downloads about 50 MB.
+      3. Make `cars.csv` with the data of the line lesson:
+
+         ```text
+         weight,fuel
+         0.9,6.1
+         1.0,6.5
+         1.1,7.2
+         1.2,7.4
+         1.3,8.1
+         1.4,8.3
+         1.5,9.0
+         1.6,9.1
+         1.7,9.9
+         1.8,10.2
+         1.9,10.6
+         2.0,11.4
+         ```
+
+      4. Make `model.py`:
+
+         ```python
+         import pandas as pd
+         from sklearn.linear_model import LinearRegression
+         from sklearn.metrics import mean_absolute_error
+         from sklearn.model_selection import train_test_split
+
+         cars = pd.read_csv("cars.csv")
+         print(cars.describe())
+
+         X = cars[["weight"]]
+         y = cars["fuel"]
+         X_train, X_test, y_train, y_test = train_test_split(
+             X, y, test_size=0.25, random_state=0)
+
+         model = LinearRegression()
+         model.fit(X_train, y_train)
+         print("w:", round(model.coef_[0], 3), "b:", round(model.intercept_, 3))
+         predicted = model.predict(X_test)
+         print("MAE:", round(mean_absolute_error(y_test, predicted), 3))
+         ```
+
+      5. `python model.py`. Read the table of `describe()`: count, mean,
+         min and max, as in the first lesson of this path.
+      6. Download `check.py` **again** (this task is new) and run
+         `python check.py data` in the folder `cars`.
+
+      If you like, try `KNeighborsRegressor(n_neighbors=3)` from
+      `sklearn.neighbors` instead of `LinearRegression()`, and compare the
+      MAE. (It has no `coef_`: remove that print.)
+    task: data
+    needs: 12
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      venv_exists: "yes"
+      in_venv: "yes"
+      venv_here: "yes"
+      pandas: "3.0.1"
+      sklearn: "1.8.0"
+      cars_exists: "yes"
+      cars_header: "yes"
+      cars_rows: "12"
+      model_exists: "yes"
+      model_ok: "yes"
+      model_libs: "yes"
+      mae: "0.23"
+    checks:
+      - expr: "report.get('in_venv') == 'yes' and report.get('venv_here') == 'yes'"
+        pass: "The folder has its own venv, and it is active"
+        hint: "In `cars`: `python -m venv .venv`, then activate it, then run the check again."
+        misconceptions:
+          - when: "report.get('venv_exists') == 'no'"
+            say: "There is no `.venv` in this folder. Run the check in `cars`, after `python -m venv .venv`."
+          - when: "report.get('in_venv') == 'no'"
+            say: "The venv is not active. Activate it, then run the check again."
+      - expr: "report.get('pandas', 'no') != 'no' and report.get('sklearn', 'no') != 'no'"
+        pass: "pandas and scikit-learn are installed in the venv"
+        hint: "With the venv active: `pip install pandas scikit-learn`."
+        misconceptions:
+          - when: "report.get('pandas', 'no') != 'no' and report.get('sklearn', 'no') == 'no'"
+            say: "pandas is there, scikit-learn is not. The package name for pip is `scikit-learn`, the name in Python is `sklearn`."
+      - expr: "report.get('cars_header') == 'yes' and report.get('cars_rows', '0').isdigit() and int(report.get('cars_rows', '0')) >= 10"
+        pass: "cars.csv has the header weight,fuel and the 12 cars"
+        hint: "Make `cars.csv` in `cars`, with the first line `weight,fuel` and one car per line."
+        misconceptions:
+          - when: "report.get('cars_exists') == 'no'"
+            say: "There is no `cars.csv` in this folder. Save it next to `model.py`."
+          - when: "report.get('cars_header') == 'no'"
+            say: "The first line of `cars.csv` must be exactly `weight,fuel`."
+      - expr: "report.get('model_ok') == 'yes' and report.get('model_libs') == 'yes'"
+        pass: "model.py runs, and uses pandas and scikit-learn"
+        hint: "Run `python model.py` and read the error message from the bottom."
+        misconceptions:
+          - when: "report.get('model_exists') == 'no'"
+            say: "There is no `model.py` in this folder."
+          - when: "report.get('model_ok') == 'timeout'"
+            say: "model.py did not end in 90 seconds. Does it wait for `input()`?"
+      - expr: "report.get('mae', 'none') != 'none' and float(report.get('mae')) < 1"
+        pass: "It prints the MAE on the test set, and it is small"
+        hint: "Keep the line `print(\"MAE:\", ...)`."
+        misconceptions:
+          - when: "report.get('mae', 'none') != 'none' and float(report.get('mae')) >= 1"
+            say: "The MAE is 1 litre or more: much worse than the line of the lesson. Check the numbers in `cars.csv`."
+    hints:
+      - "Do the steps one at a time. After `pip install`, `pip list` shows what is installed."
+      - "Run `check.py` in the folder `cars`, with the venv active."
+      - "An error in `model.py`? Read the last line of the message first."
+
+  # 6. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-brackets
+        objective: O2
+        prompt: "`cars` is a pandas DataFrame. Which one is a good `X` for `model.fit(X, y)`?"
+        options:
+          - text: "`cars[[\"weight\"]]`"
+            correct: true
+            why: "Two brackets: a table with one column (2D)."
+          - text: "`cars[\"weight\"]`"
+            why: "One bracket gives one column (1D): good for `y`, not for `X`."
+          - text: "`cars`"
+            why: "That includes `fuel`, the answer the model should predict."
+      - kind: predict
+        id: q-reshape
+        objective: O2
+        code: |
+          import numpy as np
+
+          a = np.array([1, 2, 3, 4, 5, 6])
+          print(a.shape)
+          print(a.reshape(-1, 1).shape)
+          print(a.reshape(2, -1).shape)
+        explain: "`-1` means \"as many as needed\". 6 values in 1 column are 6 rows. 6 values in 2 rows are 3 columns."
+      - kind: mcq
+        id: q-same
+        objective: O1
+        prompt: "You change `LinearRegression()` to `KNeighborsRegressor()`. What else must change in the program?"
+        options:
+          - text: "Often nothing: both have `fit` and `predict`"
+            correct: true
+            why: "All scikit-learn models are used the same way."
+          - text: "The CSV file"
+            why: "The data stays the same."
+          - text: "Everything"
+            why: "That is the point of scikit-learn: one way for all models."
+      - kind: mcq
+        id: q-random
+        objective: O3
+        prompt: "Why `random_state=0` in `train_test_split`?"
+        options:
+          - text: "So the shuffle is the same each run, and the results can be repeated"
+            correct: true
+            why: "Any number works. The same number gives the same split."
+          - text: "So there is no shuffle"
+            why: "It still shuffles, the same way each time."
+          - text: "So the test set is empty"
+            why: "`test_size` sets the size of the test set."
+      - kind: mcq
+        id: q-pip-name
+        objective: O4
+        prompt: "Which command installs scikit-learn?"
+        options:
+          - text: "`pip install scikit-learn`"
+            correct: true
+            why: "In Python you then write `import sklearn`."
+          - text: "`pip install sklearn`"
+            why: "That old name does not install the library. Use `scikit-learn`."
+          - text: "`import scikit-learn`"
+            why: "`import` uses a library that is already installed. And the name in Python is `sklearn`."
+
+  # 7. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-pandas
+    objective: O1
+    prompt: "What is pandas for?"
+    options:
+      - text: "Reading, cleaning and describing tables of data"
+        correct: true
+        why: "A table in pandas is a DataFrame."
+      - text: "Training models"
+        why: "That is scikit-learn."
+      - text: "Drawing windows and buttons"
+        why: "That is tkinter."
+  - kind: mcq
+    id: r-fit
+    objective: O1
+    prompt: "What does `model.fit(X_train, y_train)` do?"
+    options:
+      - text: "The model learns from the training examples"
+        correct: true
+        why: "For a line: it finds `w` and `b`."
+      - text: "It predicts the answers"
+        why: "That is `predict`."
+      - text: "It measures the error"
+        why: "That is a metric, like `mean_absolute_error`."
+  - kind: mcq
+    id: r-shape
+    objective: O2
+    prompt: "You have 100 houses and 3 features for each. What is the shape of `X`?"
+    options:
+      - text: "(100, 3)"
+        correct: true
+        why: "One row per example, one column per feature."
+      - text: "(3, 100)"
+        why: "Rows are examples: 100 rows."
+      - text: "(300,)"
+        why: "That is all values in one flat array."
+  - kind: mcq
+    id: r-split
+    objective: O3
+    prompt: "What does `train_test_split(X, y, test_size=0.2)` give back?"
+    options:
+      - text: "X_train, X_test, y_train, y_test: 80% for training, 20% for the test"
+        correct: true
+        why: "In this order. Shuffled first."
+      - text: "A trained model"
+        why: "It only splits the data."
+      - text: "The MAE"
+        why: "It only splits the data."
+  - kind: mcq
+    id: r-predict-order
+    objective: O4
+    prompt: "In which order does a model program work?"
+    options:
+      - text: "Read the data, split it, fit on training, measure on test"
+        correct: true
+        why: "The test set stays unseen until the end."
+      - text: "Fit on all data, then split it"
+        why: "Then the test examples were seen in training."
+      - text: "Measure first, then fit"
+        why: "There is nothing to measure before the model learns."

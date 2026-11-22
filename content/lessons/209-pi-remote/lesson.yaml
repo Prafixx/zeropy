@@ -1,0 +1,438 @@
+id: pi-remote
+order: 209
+title: A Pi without a screen
+summary: Find the Pi on your network, log in from your PC with SSH, copy files with scp, and keep the door safe.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Find a Pi on your network by its name or its address
+  - id: O2
+    text: Log in to the Pi from your PC with ssh, and log out again
+  - id: O3
+    text: Copy files between your PC and the Pi with scp
+  - id: O4
+    text: Keep remote access safe - a strong password, keys, Raspberry Pi Connect
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: find
+    type: theory
+    objective: O1
+    title: Where is the Pi?
+    body: |
+      Every computer on your home network has an **IP address**, like
+      `192.168.1.42`. Your router gives it out. Addresses that start with
+      `192.168.` work only inside your home.
+
+      You do not need to know the number: the Pi also answers to its
+      **hostname** with `.local` at the end. With the hostname of Imager,
+      that is `raspberrypi.local`.
+
+      ```text
+      ping raspberrypi.local
+      ```
+
+      `ping` sends a small message and waits for the answer. An answer means:
+      the Pi is on, it is on your network, and you know its address.
+
+      If the name does not work: look at the list of devices on the page of
+      your router, or use a network app on your phone. On the Pi itself,
+      `hostname -I` prints its address.
+
+      The terminal in the next steps is **PowerShell on your PC** (Windows
+      10 and 11 have `ssh` and `scp`). Its prompt is `PS C:\Users\you>`.
+    keys:
+      - code: "ping raspberrypi.local"
+        means: "Is the Pi there? And what is its address?"
+      - code: "192.168.1.42"
+        means: "An address inside your home network."
+      - code: "hostname -I"
+        means: "On the Pi: its own address."
+
+  # 2. TERMINAL --------------------------------------------------------------
+  - id: ping
+    type: terminal
+    objective: O1
+    title: Find the Pi
+    prompt: |
+      This is the terminal of **your PC**. Your new Pi is on, with the
+      hostname `raspberrypi`.
+
+      1. Try `ls`, then a Linux command like `nano`: read the answer.
+      2. Find the Pi with `ping`, and read its IP address.
+      3. Try a wrong name too, like `raspberrypi.locl`.
+    start:
+      at: pc
+      pc:
+        files:
+          notes.txt: "Pi: hostname raspberrypi\n"
+    checks:
+      - expr: "pc_ran('ping') and any('raspberrypi.local' in h for h in pc_history)"
+        pass: "You pinged `raspberrypi.local`: it answers from `192.168.1.42`"
+        hint: "`ping raspberrypi.local`. The address is in square brackets."
+      - expr: "any(h.lower().startswith('ping ') and 'raspberrypi.local' not in h.lower() for h in pc_history)"
+        pass: "You saw what a wrong name gives"
+        hint: "`ping raspberrypi.locl`, with a typing mistake."
+    hints:
+      - "On the PC, Linux commands like `nano` do not exist: PowerShell says `not recognized`."
+      - "`ping raspberrypi.local`: the address is in square brackets."
+      - "A wrong name gives `could not find host`."
+    solution: ["ls", "ping raspberrypi.local", "ping raspberrypi.locl"]
+    after: >-
+      Note the address: `192.168.1.42`. When `.local` does not work in a
+      network, `ssh pi@192.168.1.42` works the same way.
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: ssh
+    type: theory
+    objective: O2
+    title: Log in with SSH
+    body: |
+      **SSH** (secure shell) opens a terminal of the Pi on your PC. Every
+      command you type runs on the Pi. The connection is encrypted.
+
+      ```text
+      ssh pi@raspberrypi.local
+      ```
+
+      `pi` is the user name you chose in Imager, `raspberrypi.local` the
+      Pi. What happens the first time:
+
+      1. SSH has never seen this Pi. It shows its **fingerprint** and asks
+         `Are you sure you want to continue connecting (yes/no/[fingerprint])?`
+         Type `yes`. Your PC remembers the Pi, and asks only once.
+      2. It asks for the password. **You see nothing while you type it**,
+         not even stars. That is normal: type it and press Enter.
+      3. The prompt changes to `pi@raspberrypi:~ $`. You are on the Pi.
+
+      `exit` logs out: you are back on your PC.
+
+      Two common errors: `Could not resolve hostname` means a wrong name;
+      `Connection refused` means that SSH is off on the Pi.
+    keys:
+      - code: "ssh pi@raspberrypi.local"
+        means: "Log in as `pi` on the Pi."
+      - code: "yes"
+        means: "The first time only: you trust this Pi."
+      - code: "exit"
+        means: "Log out, back to your PC."
+
+  # 4. TERMINAL --------------------------------------------------------------
+  - id: login
+    type: terminal
+    objective: O2
+    title: Your first SSH login
+    prompt: |
+      In Imager you chose the user `pi` and the password `sky-blue-42`.
+
+      1. Log in to the Pi from your PC.
+      2. On the Pi, print its address with `hostname -I`, and see how long it
+         has run with `uptime`.
+      3. Log out, back to your PC.
+    start:
+      at: pc
+      password: sky-blue-42
+      setup: ["systemctl enable --now ssh"]
+    checks:
+      - expr: "logins >= 1"
+        pass: "You logged in to the Pi"
+        hint: "`ssh pi@raspberrypi.local`, then `yes`, then the password. You see nothing while you type it."
+      - expr: "ran('hostname') and ran('uptime')"
+        pass: "You ran `hostname -I` and `uptime` on the Pi"
+        hint: "After the login, the prompt is `pi@raspberrypi:~ $`: type the commands there."
+      - expr: "logins >= 1 and at == 'pc'"
+        pass: "You are back on your PC"
+        hint: "`exit`."
+    hints:
+      - "Without `pi@`, SSH uses the user name of your PC, `you`, and the Pi has no such user."
+      - "The first time, type `yes`. Then type the password `sky-blue-42` and press Enter, even if you see nothing."
+      - "`hostname -I`, `uptime`, then `exit`."
+    solution: ["ssh pi@raspberrypi.local", "yes", "sky-blue-42", "hostname -I", "uptime", "exit"]
+    after: >-
+      This is how most people work with a Pi: it sits somewhere without a
+      screen, and they log in from a PC or a laptop. Everything from the
+      Linux path works the same over SSH.
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: scp
+    type: theory
+    objective: O3
+    title: Copy files with scp
+    body: |
+      `scp` copies files over SSH. Run it **on your PC**, not on the Pi.
+      The side with a colon `:` is the Pi:
+
+      ```text
+      scp blink.py pi@raspberrypi.local:           to the Pi, into the home folder
+      scp blink.py pi@raspberrypi.local:project/   into the folder project
+      scp pi@raspberrypi.local:data.csv .          from the Pi, to here (.)
+      scp -r project pi@raspberrypi.local:         a whole folder (-r)
+      ```
+
+      Nothing after the colon means the home folder of the user on the Pi.
+      Without the colon, `scp` copies on your PC only: you get a file
+      called `pi@raspberrypi.local`.
+
+      `scp` asks for the password each time. Keys (later in this lesson)
+      make that unnecessary.
+    keys:
+      - code: "scp file PI:"
+        means: "From the PC to the Pi. PI is `pi@raspberrypi.local`. Mind the colon."
+      - code: "scp PI:file ."
+        means: "From the Pi to here, on the PC."
+      - code: "scp -r folder PI:"
+        means: "A whole folder."
+
+  # 6. TERMINAL --------------------------------------------------------------
+  - id: copy
+    type: terminal
+    objective: O3
+    title: Send a program, fetch the data
+    prompt: |
+      On your PC you wrote `blink.py`. On the Pi, a logger wrote
+      `data/temps.csv`. The password is `sky-blue-42`.
+
+      1. Copy `blink.py` from your PC into the home folder on the Pi.
+      2. Copy `temps.csv` from the folder `data` on the Pi to your PC.
+      3. Check both with `ls` on the PC, and with `ssh` on the Pi.
+    start:
+      at: pc
+      password: sky-blue-42
+      setup: ["systemctl enable --now ssh"]
+      pc:
+        known: [raspberrypi.local]
+        files:
+          blink.py: |
+            from gpiozero import LED
+            from signal import pause
+
+            LED(17).blink()
+            pause()
+      files:
+        data/temps.csv: |
+          time,temp
+          09:00,19.5
+          10:00,21.0
+    checks:
+      - expr: "isfile('blink.py') and 'LED(17)' in read('blink.py')"
+        pass: "`blink.py` is on the Pi"
+        hint: "`scp blink.py pi@raspberrypi.local:`, with the colon at the end."
+      - expr: "'temps.csv' in pc_files and '21.0' in pc_files['temps.csv']"
+        pass: "`temps.csv` is on your PC"
+        hint: "`scp pi@raspberrypi.local:data/temps.csv .`, with a space and a dot at the end."
+    hints:
+      - "The side with the colon is the Pi. Without a colon, scp copies on your PC only."
+      - "To the Pi: `scp blink.py pi@raspberrypi.local:`. Then the password."
+      - "From the Pi: `scp pi@raspberrypi.local:data/temps.csv .` The dot means: here, on the PC."
+    solution: ["scp blink.py pi@raspberrypi.local:", "sky-blue-42", "scp pi@raspberrypi.local:data/temps.csv .", "sky-blue-42", "ls"]
+    after: >-
+      Write code on your PC with a good editor, copy it with `scp`, and run
+      it on the Pi over SSH. Many people work like this.
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: safe
+    type: theory
+    objective: O4
+    title: Keep the door safe
+    body: |
+      SSH is a door into your Pi. Keep it closed to strangers:
+
+      - **A strong password**: long, not used anywhere else. Change it on
+        the Pi with `passwd`: it asks for the old password, then twice for
+        the new one. You see nothing while you type.
+      - **Keys instead of a password**: `ssh-keygen -t ed25519` on your PC
+        makes a pair of keys. The public half goes to the Pi, into
+        `~/.ssh/authorized_keys` (`ssh-copy-id pi@raspberrypi.local` on
+        macOS and Linux does it for you). Then SSH needs no password, and a
+        guessed password does not help an attacker.
+      - **Do not open SSH to the internet** on your router. To reach the Pi
+        from outside your home, use **Raspberry Pi Connect**: free with a
+        Raspberry Pi ID, from a browser at `connect.raspberrypi.com`, with
+        a remote shell (and screen sharing on the desktop version). Turn it
+        on in Imager, or on the Pi with `rpi-connect on` and
+        `rpi-connect signin`.
+      - **Keep it updated**: `sudo apt update` and `sudo apt full-upgrade`.
+    keys:
+      - code: "passwd"
+        means: "Change your password, on the Pi."
+      - code: "ssh-keygen -t ed25519"
+        means: "Make a key pair, on your PC."
+      - code: "Raspberry Pi Connect"
+        means: "Reach the Pi from anywhere, in a browser, without opening the router."
+
+  # 8. TERMINAL --------------------------------------------------------------
+  - id: password
+    type: terminal
+    objective: O4
+    title: A new password
+    prompt: |
+      `sky-blue-42` was written on a note next to the Pi. **Change it.**
+
+      1. Log in to the Pi.
+      2. Change the password with `passwd` to a new one of at least 8
+         characters (and do not write it on a note).
+      3. Log out, and log in again with the new password.
+      4. Log out.
+    start:
+      at: pc
+      password: sky-blue-42
+      setup: ["systemctl enable --now ssh"]
+      pc:
+        known: [raspberrypi.local]
+    checks:
+      - expr: "password_changed"
+        pass: "The password is changed"
+        hint: "On the Pi: `passwd`. First the old password, then the new one two times."
+      - expr: "logins_after_change >= 1"
+        pass: "You logged in with the new password"
+        hint: "`exit`, then `ssh pi@raspberrypi.local` and the new password."
+      - expr: "logins_after_change >= 1 and at == 'pc'"
+        pass: "You are back on your PC"
+        hint: "`exit`."
+    hints:
+      - "`ssh pi@raspberrypi.local`, then `sky-blue-42`."
+      - "`passwd` asks three times: the current password, the new one, and the new one again. Nothing shows while you type."
+      - "Then `exit`, `ssh pi@raspberrypi.local` with the new password, and `exit`."
+    solution: ["ssh pi@raspberrypi.local", "sky-blue-42", "passwd", "sky-blue-42", "green-tree-58", "green-tree-58", "exit", "ssh pi@raspberrypi.local", "green-tree-58", "exit"]
+    after: >-
+      The old password does not work any more. If you forget the new one,
+      you need a screen and a keyboard on the Pi, or a new SD card from
+      Imager. Keep it in a password manager.
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-refused
+        objective: O2
+        prompt: "`ssh pi@raspberrypi.local` says `Connection refused`. What is the most likely cause?"
+        options:
+          - text: "SSH is off on the Pi"
+            correct: true
+            why: "The Pi is there, but nothing listens on the SSH door. Turn SSH on in Imager, or with `sudo systemctl enable --now ssh`."
+          - text: "The password is wrong"
+            why: "Then SSH would ask again: `Permission denied, please try again`."
+          - text: "The name is wrong"
+            why: "Then it says `Could not resolve hostname`."
+      - kind: mcq
+        id: q-invisible
+        objective: O2
+        prompt: "You type your password for SSH, and nothing appears. What is wrong?"
+        options:
+          - text: "Nothing: the password is not shown while you type"
+            correct: true
+            why: "Type it and press Enter."
+          - text: "The keyboard does not work in SSH"
+            why: "It works. The terminal only hides what you type."
+          - text: "You must type it in quotes"
+            why: "Type the password as it is."
+      - kind: mcq
+        id: q-colon
+        objective: O3
+        prompt: "`scp notes.txt pi@raspberrypi.local` runs without an error, but the file is not on the Pi. Why?"
+        options:
+          - text: "The colon is missing: it made a file `pi@raspberrypi.local` on the PC"
+            correct: true
+            why: "Write `pi@raspberrypi.local:` with the colon."
+          - text: "scp needs `sudo`"
+            why: "Copying into your home folder needs no `sudo`."
+          - text: "The Pi was off"
+            why: "Then scp would show an error."
+      - kind: mcq
+        id: q-where-scp
+        objective: O3
+        prompt: "Where do you type `scp blink.py pi@raspberrypi.local:`?"
+        options:
+          - text: "On your PC, in the folder of `blink.py`"
+            correct: true
+            why: "scp runs where the file is, and sends it to the Pi."
+          - text: "On the Pi, after `ssh`"
+            why: "The Pi cannot see the files of your PC."
+          - text: "In nano"
+            why: "nano is an editor. scp is a command."
+      - kind: mcq
+        id: q-internet
+        objective: O4
+        prompt: "You want to reach your Pi from school. What is the safe way?"
+        options:
+          - text: "Raspberry Pi Connect, in a browser"
+            correct: true
+            why: "Connect needs no open port on your router."
+          - text: "Open port 22 on the router to the internet"
+            why: "Then everyone on the internet can try passwords on your Pi."
+          - text: "Write the password on the Pi, so a friend can help"
+            why: "A password on a note is no password."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-local
+    objective: O1
+    prompt: "The hostname of a Pi is `weather`. Which name reaches it on your network?"
+    options:
+      - text: "`weather.local`"
+        correct: true
+        why: "The hostname, with `.local`."
+      - text: "`weather.com`"
+        why: "That is a website on the internet."
+      - text: "`localhost`"
+        why: "`localhost` is always the computer you type on."
+  - kind: mcq
+    id: r-ssh-form
+    objective: O2
+    prompt: "Which command logs in to the Pi as the user `ana`?"
+    options:
+      - text: "`ssh ana@raspberrypi.local`"
+        correct: true
+        why: "user@computer."
+      - text: "`ssh raspberrypi.local@ana`"
+        why: "The user comes first, then `@`, then the computer."
+      - text: "`login ana raspberrypi`"
+        why: "The command is `ssh`."
+  - kind: mcq
+    id: r-fingerprint
+    objective: O2
+    prompt: "Why does SSH ask `Are you sure you want to continue connecting` only the first time?"
+    options:
+      - text: "Then your PC remembers the fingerprint of the Pi"
+        correct: true
+        why: "Next time it checks that it talks to the same Pi."
+      - text: "Then it remembers your password"
+        why: "SSH asks for the password every time, unless you use keys."
+      - text: "The question comes every time"
+        why: "Only the first time, or when the Pi changes."
+  - kind: mcq
+    id: r-from-pi
+    objective: O3
+    prompt: "Which line copies `log.txt` from the Pi to the folder you are in on your PC?"
+    options:
+      - text: "`scp pi@raspberrypi.local:log.txt .`"
+        correct: true
+        why: "From the Pi (with the colon) to here (the dot)."
+      - text: "`scp log.txt pi@raspberrypi.local:`"
+        why: "That copies from the PC to the Pi."
+      - text: "`ssh pi@raspberrypi.local log.txt`"
+        why: "That runs a command called `log.txt` on the Pi."
+  - kind: mcq
+    id: r-keys
+    objective: O4
+    prompt: "Why are SSH keys safer than a password?"
+    options:
+      - text: "An attacker cannot guess a key, and you need no password to log in"
+        correct: true
+        why: "The private key stays on your PC. The Pi only has the public half."
+      - text: "Keys make the connection faster"
+        why: "Speed is the same. Keys are about safety."
+      - text: "Keys turn SSH off"
+        why: "Keys replace the password. SSH stays on."

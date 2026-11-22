@@ -1,0 +1,483 @@
+id: functions-as-values
+order: 22
+title: Functions as values
+summary: Give a function to another function, sort by any rule, and write small functions in one line.
+minutes: 35
+outcomes: [A1, A3]
+
+objectives:
+  - id: O1
+    text: Use a function as a value - store it in a name, and give it to another function without calling it
+  - id: O2
+    text: Sort, and find the largest or smallest, by a rule with key=
+  - id: O3
+    text: Write short functions with lambda, and use map and filter
+  - id: O4
+    text: Write a function that makes and returns a new function (a closure)
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: values
+    type: theory
+    objective: O1
+    title: A function is a value
+    body: |
+      A function is a value, like a number or a list. Its name is a label
+      on it, and you can use it without calling it:
+
+      ```python
+      say = print       # no (): the function itself, not a call
+      say("hi")         # the same as print("hi")
+      ```
+
+      The most useful case: **give a function to another function**.
+      `sorted()`, `max()` and `min()` take a `key`: a function that says
+      what to compare.
+
+      ```python
+      words = ["pear", "fig", "banana"]
+      sorted(words)             # ['banana', 'fig', 'pear']: A to Z
+      sorted(words, key=len)    # ['fig', 'pear', 'banana']: by length
+      max(words, key=len)       # 'banana'
+      ```
+
+      With `key=len`, `sorted` calls `len` on each word and sorts by the
+      results. Write `len` **without** brackets: `sorted` calls it, not you.
+      Add `reverse=True` to sort from large to small.
+
+      Methods are functions too: `str.upper` is the method `upper` of text,
+      as a value. `str.upper("hi")` is the same as `"hi".upper()`.
+    keys:
+      - code: "say = print"
+        means: "The function itself, under a new name."
+      - code: "sorted(words, key=len)"
+        means: "Sort by the result of `len` for each word."
+      - code: "max(items, key=f)"
+        means: "The item with the largest `f(item)`."
+
+  # 2. PREDICT ---------------------------------------------------------------
+  - id: predict-key
+    type: predict
+    objective: O2
+    title: Sorted by what?
+    item:
+      kind: predict
+      id: p-key
+      prompt: "**What does this program print?**"
+      code: |
+        names = ["Bo", "Alexandra", "Kim", "Lea"]
+        print(sorted(names, key=len))
+        print(max(names, key=len))
+      explain: >-
+        `key=len` sorts by the length of each name: 2, 3, 3, 9. `Kim` and
+        `Lea` both have 3 letters, so they keep their order. `max` with the
+        same key gives the longest name.
+      misconceptions:
+        - answer: "['Alexandra', 'Bo', 'Kim', 'Lea']\nLea"
+          say: "That is the order from A to Z. With `key=len`, the length decides."
+
+  # 3. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O2
+    title: Sort by your own rule
+    intro: |
+      Each student is a tuple: a name and a score. Your own function says
+      what to sort by. Press **Run**, then try the changes.
+    code: |
+      students = [("Ana", 7), ("Ben", 9), ("Cleo", 4)]
+
+      def score(student):
+          return student[1]
+
+      ranking = sorted(students, key=score, reverse=True)
+      print(ranking)
+      best = max(students, key=score)
+      print(best[0], "is first")
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and 'Ben is first' in lines"
+      - text: "Remove `reverse=True`. Who comes first now?"
+        expr: "err is None and 'reverse' not in src and ns.get('ranking', [None])[0] == ('Cleo', 4)"
+      - text: "Print the student with the lowest score: `min(students, key=score)`."
+        expr: "err is None and \"('Cleo', 4)\" in out"
+      - text: "Add a student `(\"Dan\", 10)` to the list."
+        expr: "err is None and 'Dan is first' in lines"
+    investigate:
+      - kind: spot
+        id: i-give
+        prompt: "On which line is the function `score` given to another function, without being called?"
+        code: |
+          students = [("Ana", 7), ("Ben", 9), ("Cleo", 4)]
+
+          def score(student):
+              return student[1]
+
+          ranking = sorted(students, key=score, reverse=True)
+          print(ranking)
+          best = max(students, key=score)
+          print(best[0], "is first")
+        line: 6
+        wrong:
+          - line: 3
+            say: "This line makes the function. It is given to `sorted` later."
+          - line: 4
+            say: "This line runs inside `score`, each time `sorted` calls it."
+        explain: >-
+          `key=score` hands the function to `sorted`, which calls it once
+          for each student. Line 8 does the same for `max`.
+      - kind: mcq
+        id: i-calls
+        prompt: "How many times does `sorted` call `score` in this program?"
+        options:
+          - text: "Three times: once for each student"
+            correct: true
+            why: "`sorted` needs the key of every item to compare them."
+          - text: "Once"
+            why: "Each student needs its own key."
+          - text: "Never: `score` is not called"
+            why: "Your code does not call it, but `sorted` does."
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-prices
+    type: exercise
+    fade: completion
+    objective: O2
+    title: From cheap to expensive
+    prompt: |
+      Each product is a tuple `(name, price)`. **Replace the `___`**, so
+      that `by_price` is the list from the cheapest to the most expensive,
+      and `dearest` is the most expensive product.
+    starter: |
+      products = [("tea", 2.5), ("cake", 4.0), ("milk", 1.2)]
+
+      def price(product):
+          return product[1]
+
+      by_price = sorted(products, key=___)
+      dearest = max(products, key=___)
+      print(by_price)
+      print(dearest[0])
+    solution: |
+      products = [("tea", 2.5), ("cake", 4.0), ("milk", 1.2)]
+
+      def price(product):
+          return product[1]
+
+      by_price = sorted(products, key=price)
+      dearest = max(products, key=price)
+      print(by_price)
+      print(dearest[0])
+    after: >-
+      `price` is written once and used twice. Any function that takes one
+      item and gives back something to compare can be a key.
+    cases:
+      - {}
+      - label: "other products"
+        set: { products: [["pen", 1.5], ["ink", 3.0], ["clip", 0.1], ["pad", 2.0]] }
+    checks:
+      - expr: "err is None and by_price == sorted(products, key=lambda p: p[1])"
+        pass: "`by_price` goes from the cheapest to the most expensive"
+        hint: "`key=price`, without brackets."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "Give the function itself: `key=price`. With `price()`, Python calls it at once, without a product."
+          - when: "err is None and by_price == sorted(products)"
+            say: "This is sorted by the name. Give the key: `key=price`."
+      - expr: "err is None and dearest == max(products, key=lambda p: p[1])"
+        pass: "`dearest` is the most expensive product"
+        hint: "`max(products, key=price)`."
+    hints:
+      - "Both `___` are the same: the function that gives the price."
+      - "Write its name without brackets."
+      - "`key=price` in both lines."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: lambda
+    type: theory
+    objective: O3
+    title: lambda, map, filter
+    body: |
+      ## lambda: a function in one line
+
+      For a key used once, a whole `def` is long. `lambda` writes a small
+      function in one expression:
+
+      ```python
+      sorted(students, key=lambda s: s[1])     # the same as def score(s): return s[1]
+      ```
+
+      `lambda s: s[1]` means: a function that takes `s` and gives back
+      `s[1]`. It has no name, and it can only hold one expression.
+
+      ## map and filter
+
+      - `map(f, items)`: `f` on every item.
+      - `filter(f, items)`: only the items where `f` gives `True`.
+
+      ```python
+      list(map(lambda n: n * 2, [1, 2, 3]))       # [2, 4, 6]
+      list(filter(lambda n: n > 1, [1, 2, 3]))    # [2, 3]
+      ```
+
+      Both give back a "lazy" object, not a list: `list(...)` makes the list.
+      A comprehension does the same, and is often clearer:
+      `[n * 2 for n in nums]`. You will read both kinds in other people's
+      code.
+    keys:
+      - code: "lambda s: s[1]"
+        means: "A small function: takes `s`, gives back `s[1]`."
+      - code: "list(map(f, items))"
+        means: "`f` on every item."
+      - code: "list(filter(f, items))"
+        means: "Only the items where `f` is true."
+
+  # 6. WORKED ----------------------------------------------------------------
+  - id: worked
+    type: worked
+    objective: O4
+    title: A function that makes functions
+    problem: |
+      Make `make_multiplier(n)`: it gives back a **new function** that
+      multiplies its argument by `n`. Then make a "double" and a "triple".
+    lines:
+      - goal: Make the outer function
+        code: "def make_multiplier(n):"
+        note: "It gets `n`, and it will give back a function."
+      - goal: Make and give back the inner function
+        code: "    def multiply(x):"
+        note: "A function inside a function. It can use `n` from outside."
+      - code: "        return x * n"
+        note: "`n` comes from the call of `make_multiplier`."
+      - code: "    return multiply"
+        note: "No brackets: give back the function itself, not its result."
+      - goal: Use it
+        code: "double = make_multiplier(2)"
+        note: "`double` is a function, and it remembers `n = 2`."
+      - code: "triple = make_multiplier(3)"
+        note: "A second function, with its own `n = 3`."
+      - code: "print(double(5), triple(5))"
+        note: "It prints `10 15`."
+    check:
+      kind: mcq
+      id: w-remember
+      prompt: "`make_multiplier(2)` has ended. How does `double` still know `n`?"
+      options:
+        - text: "The inner function keeps the names it uses from the outer call: this is a closure"
+          correct: true
+          why: "Each call of `make_multiplier` makes a new function, with its own `n`."
+        - text: "`n` is a global variable"
+          why: "`n` is a parameter of `make_multiplier`, not global."
+        - text: "It does not: `double(5)` stops with an error"
+          why: "It works: it prints 10."
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-len
+    type: exercise
+    fade: debug
+    objective: O1
+    title: A key with brackets
+    prompt: |
+      The program should sort the words by length and print
+      `['to', 'sea', 'ship', 'ocean']`. **Run it**, read the message, and
+      fix it.
+    starter: |
+      words = ["ship", "to", "ocean", "sea"]
+      print(sorted(words, key=len()))
+    solution: |
+      words = ["ship", "to", "ocean", "sea"]
+      print(sorted(words, key=len))
+    after: >-
+      `len()` calls the function now, with no word at all: that is the
+      error. `key=len` gives the function to `sorted`, which calls it for
+      each word.
+    checks:
+      - expr: "err is None and lines == [\"['to', 'sea', 'ship', 'ocean']\"]"
+        pass: "It prints the words from short to long"
+        hint: "Give the function, do not call it: `key=len`."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "Read the message: `len()` was called with nothing. Write `key=len`, without brackets: `sorted` calls it for you."
+    hints:
+      - "Read the last line of the message: which function was called, and with what?"
+      - "`len()` runs at once, before `sorted` has started."
+      - "`key=len`."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-discount
+    type: exercise
+    fade: independent
+    objective: O4
+    title: A discount maker
+    prompt: |
+      **Write `make_discount(percent)`.** It gives back a function that takes
+      a price and gives back the price after the discount:
+      `make_discount(20)(50)` is `40.0`.
+
+      Then use it with `map` on the list `prices`, and print the result:
+
+      ```
+      [8.0, 20.0, 2.0]
+      ```
+    starter: |
+      prices = [10, 25, 2.5]
+
+      # Write make_discount here.
+
+
+      sale = make_discount(20)
+      print(list(map(sale, prices)))
+    solution: |
+      prices = [10, 25, 2.5]
+
+
+      def make_discount(percent):
+          def apply(price):
+              return price * (100 - percent) / 100
+          return apply
+
+
+      sale = make_discount(20)
+      print(list(map(sale, prices)))
+    after: >-
+      `make_discount` is a small factory: one line makes a 20% sale, another
+      a 50% sale, each a function of its own. AI libraries use the same idea,
+      for example to make a function from a few settings.
+    checks:
+      - expr: "callable(ns.get('make_discount')) and raises(make_discount, 10) is None and callable(make_discount(10))"
+        pass: "`make_discount(...)` gives back a function"
+        hint: "Inside, `def apply(price): ...`, and at the end `return apply`, without brackets."
+        misconceptions:
+          - when: "callable(ns.get('make_discount')) and raises(make_discount, 10) is None and not callable(make_discount(10))"
+            say: "`make_discount` gives back a value, not a function. Make an inner function, and give back its name: `return apply`."
+      - expr: "callable(ns.get('make_discount')) and raises(make_discount, 10) is None and callable(make_discount(10)) and make_discount(10)(100) == 90 and make_discount(50)(9) == 4.5 and make_discount(0)(7) == 7"
+        pass: "The function takes the discount off the price"
+        hint: "`price * (100 - percent) / 100`."
+      - expr: "err is None and lines == ['[8.0, 20.0, 2.0]']"
+        pass: "It prints the prices of the sale"
+        hint: "Keep the two lines at the end."
+    hints:
+      - "The outer function gets `percent`. Inside it, write a function that gets `price`."
+      - "The inner function gives back `price * (100 - percent) / 100`."
+      - "The outer function ends with `return apply` (the name of the inner function), without brackets."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-brackets
+        objective: O1
+        prompt: "What is the difference between `f` and `f()`?"
+        options:
+          - text: "`f` is the function itself; `f()` calls it and is its result"
+            correct: true
+            why: "Give `f` to another function; call `f()` when you want the result now."
+          - text: "There is none"
+            why: "With brackets, the function runs now."
+          - text: "`f()` is the function, `f` is an error"
+            why: "`f` alone is valid: it is the function as a value."
+      - kind: mcq
+        id: q-key
+        objective: O2
+        prompt: "What does `min(words, key=len)` give?"
+        options:
+          - text: "The shortest word"
+            correct: true
+            why: "`min` compares the results of `len`."
+          - text: "The length of the shortest word"
+            why: "`min` gives back the item itself, not its key."
+          - text: "The first word from A to Z"
+            why: "That would be `min(words)` without a key."
+      - kind: mcq
+        id: q-lambda
+        objective: O3
+        prompt: "Which `lambda` gives back the last letter of a word?"
+        options:
+          - text: "`lambda w: w[-1]`"
+            correct: true
+            why: "It takes `w` and gives back `w[-1]`."
+          - text: "`lambda: w[-1]`"
+            why: "This lambda takes no argument, so `w` is unknown."
+          - text: "`lambda w: return w[-1]`"
+            why: "A lambda has no `return`: its expression is the result."
+      - kind: mcq
+        id: q-map
+        objective: O3
+        prompt: "`print(map(str.upper, [\"a\", \"b\"]))` prints `<map object at ...>`. Why?"
+        options:
+          - text: "`map` gives back a lazy object; `list(...)` makes the list"
+            correct: true
+            why: "`print(list(map(str.upper, [\"a\", \"b\"])))` prints `['A', 'B']`."
+          - text: "`str.upper` does not work with `map`"
+            why: "It works. The result is only not a list yet."
+          - text: "The list is empty"
+            why: "The values are there; `map` gives them one by one when asked."
+      - kind: mcq
+        id: q-closure
+        objective: O4
+        prompt: "What does `make_multiplier(3)` give back?"
+        options:
+          - text: "A function that multiplies by 3"
+            correct: true
+            why: "Call it to use it: `make_multiplier(3)(4)` is 12."
+          - text: "The number 3"
+            why: "It gives back the inner function."
+          - text: "Nothing: it only prints"
+            why: "It gives back the function `multiply`."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: predict
+    id: r-sort-key
+    objective: O2
+    code: |
+      nums = [-5, 3, -1, 4]
+      print(sorted(nums, key=abs))
+    explain: >-
+      `abs` gives the distance from 0: 5, 3, 1, 4. Sorted by that: -1, 3,
+      4, -5. The items themselves stay as they are.
+  - kind: mcq
+    id: r-filter
+    objective: O3
+    prompt: "What is `list(filter(lambda n: n % 2 == 0, [1, 2, 3, 4]))`?"
+    options:
+      - text: "`[2, 4]`"
+        correct: true
+        why: "Only the numbers where the function gives `True`: the even ones."
+      - text: "`[False, True, False, True]`"
+        why: "That would be `map`. `filter` keeps the items themselves."
+      - text: "`[1, 3]`"
+        why: "`n % 2 == 0` is true for even numbers."
+  - kind: mcq
+    id: r-give
+    objective: O1
+    prompt: "`button.when_pressed = beep()` and `sorted(w, key=len())` have the same mistake. Which?"
+    options:
+      - text: "The brackets call the function now, instead of giving it"
+        correct: true
+        why: "Give the function itself: `beep`, `len`."
+      - text: "They miss an import"
+        why: "Both functions exist. The brackets are the problem."
+      - text: "There is no mistake"
+        why: "Both call the function too early."
+  - kind: mcq
+    id: r-comprehension
+    objective: O3
+    prompt: "Which comprehension does the same as `list(map(lambda n: n * n, nums))`?"
+    options:
+      - text: "`[n * n for n in nums]`"
+        correct: true
+        why: "A comprehension is often the clearer way to write `map`."
+      - text: "`[n for n in nums if n * n]`"
+        why: "That is a filter: it keeps the numbers, it does not square them."
+      - text: "`{n: n * n for n in nums}`"
+        why: "That makes a dictionary."

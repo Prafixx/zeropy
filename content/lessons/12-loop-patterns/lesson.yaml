@@ -2,7 +2,7 @@ id: loop-patterns
 order: 12
 title: Loop patterns
 summary: Walk through a list once and collect an answer - a total, a count, the biggest value, a new list.
-minutes: 30
+minutes: 33
 outcomes: [A1, A4, A8]
 
 objectives:
@@ -172,6 +172,27 @@ steps:
         explain: >-
           Line 4 changes nothing, so it has no row. When the `if` is False,
           the next row is the `for` line again, with the next temperature.
+      - kind: predict
+        id: i-remove
+        prompt: >-
+          Another way: take the cool days out of `temps` itself, with
+          `remove`. **What does this program print?**
+        code: |
+          temps = [18, 15, 31, 22, 29]
+          for t in temps:
+              if t < 24:
+                  temps.remove(t)
+          print(temps)
+        explain: >-
+          `15` stays in the list. The loop reads place 0, then place 1, and
+          so on. When `18` leaves place 0, every value moves one place to the
+          left: `15` is now at place 0, and the next round reads place 1,
+          which is `31`. The loop never sees `15`. So never add or remove
+          values in the list that the loop walks through. Build a new list,
+          like `hot`.
+        misconceptions:
+          - answer: "[31, 29]"
+            say: "That is what the program should print, but the loop skips `15`. After `18` leaves, `15` moves to place 0, and the loop goes on at place 1."
 
   # 5. WORKED EXAMPLE --------------------------------------------------------
   - id: example-lowest
@@ -505,6 +526,44 @@ steps:
       - "The loop: `for p in prices:` and inside it `if p < 10:`."
       - "Inside the `if`: `cheap.append(p)`. After the loop, two `print` lines."
 
+
+  # 10b. THEORY ---------------------------------------------------------------
+  - id: grid
+    type: theory
+    objective: O3
+    title: Lists in a list
+    body: |
+      A list can hold lists. Then it is a **grid**, like a table with rows
+      and columns:
+
+      ```
+      seats = [
+          ["A1", "A2", "A3"],
+          ["B1", "B2", "B3"],
+      ]
+      print(seats[1])       # the row B: ['B1', 'B2', 'B3']
+      print(seats[1][2])    # row 1, then place 2 in that row: B3
+      ```
+
+      The first index chooses the row, the second the place in that row.
+      A loop in a loop visits every value:
+
+      ```
+      for row in seats:
+          for seat in row:
+              print(seat)
+      ```
+
+      `len(seats)` is the number of rows (2), `len(seats[0])` the number of
+      places in a row (3).
+    keys:
+      - code: "grid[r][c]"
+        means: "Row `r`, then place `c` in that row."
+      - code: "for row in grid:"
+        means: "Each row is a list."
+      - code: "len(grid[0])"
+        means: "How many places one row has."
+
   # 11. QUIZ -----------------------------------------------------------------
   - id: quiz
     type: quiz
@@ -573,6 +632,31 @@ steps:
           print(max(scores))
         explain: "`max` needs at least one value. An empty list has no biggest value, so Python stops with a `ValueError`."
         distractors: [IndexError, TypeError, NameError, ZeroDivisionError]
+      - kind: diagnose
+        id: q-shadow-sum
+        objective: O4
+        mode: predict
+        code: |
+          prices = [4, 6, 5]
+          sum = 0
+          for p in prices:
+              sum = sum + p
+          print(sum)
+          print(sum(prices) / len(prices))
+        explain: >-
+          The loop works, and line 5 prints 15. But line 2 gave the name
+          `sum` to a number, so `sum` is not the function any more. On line
+          6, `sum(prices)` tries to call the number 15, and a number cannot
+          be called.
+        distractors: [NameError, ValueError, IndexError, SyntaxError]
+        fix:
+          - text: "Give the total another name, like `total`"
+            correct: true
+            why: "Then `sum` is still the function. Never use `sum`, `max`, `min`, `len` or `list` as your own names."
+          - text: "Write `sum = sum(prices)` before line 6"
+            why: "`sum` is a number at that point, so this line has the same error."
+          - text: "Put `prices` in quotes: `sum(\"prices\")`"
+            why: "The problem is not the value in the brackets. The name `sum` points at a number."
       - kind: predict
         id: q-sum
         objective: O4
@@ -581,6 +665,22 @@ steps:
           print(sum(nums))
           print(max(nums) - min(nums))
         explain: "The total is 15. The biggest value is 6, the smallest is 4, so the difference is 2."
+      - kind: predict
+        id: q-grid
+        objective: O3
+        code: |
+          grid = [[1, 2, 3], [4, 5, 6]]
+          print(grid[0][2])
+          total = 0
+          for row in grid:
+              total = total + row[1]
+          print(total)
+        explain: >-
+          `grid[0][2]` is row 0, place 2: 3. The loop adds place 1 of each
+          row: 2 + 5 is 7.
+        misconceptions:
+          - answer: "2\n7"
+            say: "Places start at 0: place 2 of the row `[1, 2, 3]` is 3."
 
   # 12. REVIEW ---------------------------------------------------------------
   - id: review
@@ -623,6 +723,18 @@ review:
       print(big)
     explain: "Only 12 and 15 are bigger than 10, so the new list holds those two."
   - kind: mcq
+    id: r-remove-loop
+    objective: O3
+    prompt: "A loop runs `nums.remove(n)` for every negative `n` in `nums`. For `[-1, -2, 3]` the result is `[-2, 3]`. Why?"
+    options:
+      - text: "When `-1` leaves, `-2` moves to its place, and the loop goes on at the next place"
+        correct: true
+        why: "The loop skips the value after each one it removes. Build a new list with the values to keep."
+      - text: "`remove` takes out only the last negative number"
+        why: "`remove` takes out the value it is given. Here the loop never gave it `-2`."
+      - text: "The `if` is wrong: `-2` is not below 0"
+        why: "`-2` is below 0. The loop never checked it."
+  - kind: mcq
     id: r-reset
     objective: O1
     prompt: "A loop gives a total that is always only the last value. What is the most likely mistake?"
@@ -646,3 +758,15 @@ review:
         why: "That is the total. The division by the length makes it the average."
       - text: "`5`"
         why: "That is `max`. Here the total is divided by the number of values."
+  - kind: mcq
+    id: r-grid
+    objective: O3
+    prompt: "`board = [[\"x\", \"o\"], [\"o\", \"x\"]]`. What is `board[1][0]`?"
+    options:
+      - text: "`\"o\"`"
+        correct: true
+        why: "Row 1 is `[\"o\", \"x\"]`, and place 0 of it is `\"o\"`."
+      - text: "`\"x\"`"
+        why: "That is `board[1][1]` or `board[0][0]`."
+      - text: "`[\"o\", \"x\"]`"
+        why: "That is `board[1]`: the whole row."

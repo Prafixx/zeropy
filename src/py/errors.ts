@@ -141,6 +141,15 @@ const BY_MESSAGE: { type: string; pattern: RegExp; explain: Explanation }[] = [
     },
   },
   {
+    // Often a name of a built-in function was used for a value: sum = 0, list = [...].
+    type: 'TypeError',
+    pattern: /object is not callable/,
+    explain: {
+      what: 'The code calls a value with ( ), but the value is not a function. Often a variable has the name of a function, like sum = 0 or list = [...]: then the name points at the value, not at the function.',
+      tryThis: 'Look at the name before the ( . If your code gives that name a value, choose another name, like total instead of sum. Also check for a missing * : 3(x + 1) must be 3 * (x + 1).',
+    },
+  },
+  {
     type: 'TypeError',
     pattern: /is not JSON serializable/,
     explain: {
