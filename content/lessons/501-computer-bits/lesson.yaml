@@ -1,0 +1,440 @@
+id: computer-bits
+order: 501
+title: Bits and bytes
+summary: Everything in a computer is made of bits - zeros and ones. Count in binary, convert numbers by hand and with Python, and see how much fits in a byte.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Read and write numbers in binary with place values (1, 2, 4, 8 ...)
+  - id: O2
+    text: Convert between decimal and binary - by hand in a loop, and with bin(), int(text, 2) and format()
+  - id: O3
+    text: Know that n bits give 2**n values, a byte is 8 bits, and how sizes like KB and MB are counted
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: binary
+    type: theory
+    objective: O1
+    title: Only two digits
+    body: |
+      A computer stores everything with tiny switches that are **on** or
+      **off**: `1` or `0`. One such digit is a **bit**. (Like the LED of
+      the Pi path: on or off.)
+
+      With bits you count in **binary**. In decimal, each place is worth 10
+      times the place on its right: 1, 10, 100. In binary, each place is
+      worth **2 times**:
+
+      ```text
+      place:   128  64  32  16   8   4   2   1
+      bits:      0   0   0   0   1   1   0   1
+      ```
+
+      Add the places that have a 1: `8 + 4 + 1 = 13`. So `1101` in binary
+      is 13.
+
+      Counting goes like this: `0`, `1`, `10`, `11`, `100`, `101`... Just
+      as 9 + 1 needs a new place in decimal (10), 1 + 1 needs a new place in
+      binary (`10`).
+    keys:
+      - code: "bit"
+        means: "One binary digit: 0 or 1."
+      - code: "1, 2, 4, 8, 16 ..."
+        means: "The values of the places, from the right."
+      - code: "1101 = 8 + 4 + 1 = 13"
+        means: "Add the places that have a 1."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: convert
+    type: demo
+    visual: none
+    objective: O2
+    title: Python counts in binary too
+    intro: |
+      Press **Run**: Python converts both ways. Then try your own numbers.
+    code: |
+      print(bin(13))              # decimal to binary text
+      print(int("1101", 2))       # binary text to a number
+      print(format(13, "08b"))    # 8 places, with zeros in front
+      print(0b1101)               # a binary number in code
+
+      for n in range(9):
+          print(n, format(n, "04b"))
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and lines[0] == '0b1101'"
+      - text: "What is your age in binary? Change `13` in the first line."
+        expr: "err is None and lines[0] != '0b1101'"
+      - text: "Count up to 16 in the loop. How many places does 16 need?"
+        expr: "err is None and any(l.startswith('16 ') for l in lines)"
+    investigate:
+      - kind: mcq
+        id: i-prefix
+        prompt: "`bin(13)` gives `'0b1101'`. What is `0b`?"
+        options:
+          - text: "A mark that says: the digits after it are binary"
+            correct: true
+            why: "Python writes `0b` in front, so `0b1101` is not read as one thousand one hundred and one."
+          - text: "Two more bits"
+            why: "It is not part of the number. `format(13, \"b\")` gives the bits without it."
+          - text: "A mistake of Python"
+            why: "It is on purpose. You can write numbers like `0b1101` in your code."
+      - kind: mcq
+        id: i-16
+        prompt: "In the loop, 15 is `1111`. How does 16 look?"
+        options:
+          - text: "`10000`: a new place, worth 16"
+            correct: true
+            why: "Like 9 + 1 = 10 in decimal: all places are full, so a new place starts."
+          - text: "`1111` plus one more 1: `11111`"
+            why: "`11111` is 16 + 8 + 4 + 2 + 1 = 31."
+          - text: "`2222`"
+            why: "Binary has only the digits 0 and 1."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-to-binary
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Binary by hand
+    prompt: |
+      How does `bin()` work? Divide by 2 again and again. The **rest** of
+      each division (`n % 2`) is the next bit, **from the right**:
+
+      ```text
+      13 // 2 = 6, rest 1
+       6 // 2 = 3, rest 0
+       3 // 2 = 1, rest 1
+       1 // 2 = 0, rest 1      →  1101
+      ```
+
+      **Complete `to_binary(n)`** without `bin()` or `format()`:
+
+      ```text
+      1101
+      0
+      11111111
+      ```
+    starter: |
+      def to_binary(n):
+          if n == 0:
+              return "0"
+          bits = ""
+          while n > 0:
+              bits = ___ + bits
+              n = ___
+          return bits
+
+
+      print(to_binary(13))
+      print(to_binary(0))
+      print(to_binary(255))
+    solution: |
+      def to_binary(n):
+          if n == 0:
+              return "0"
+          bits = ""
+          while n > 0:
+              bits = str(n % 2) + bits
+              n = n // 2
+          return bits
+
+
+      print(to_binary(13))
+      print(to_binary(0))
+      print(to_binary(255))
+    after: >-
+      Each rest goes in front, because the first rest is the rightmost
+      bit. The same steps work for any base: with `% 10` and `// 10` you
+      get the decimal digits.
+    checks:
+      - expr: "callable(ns.get('to_binary')) and all(to_binary(n) == format(n, 'b') for n in [1, 2, 5, 13, 64, 100, 255, 1000, 4097])"
+        pass: "It gives the bits of any number"
+        hint: "`bits = str(n % 2) + bits` and `n = n // 2`."
+        misconceptions:
+          - when: "callable(ns.get('to_binary')) and to_binary(13) == '1011'"
+            say: "The bits are the wrong way round: 1011 instead of 1101. Put each new bit in front: `str(n % 2) + bits`."
+      - expr: "callable(ns.get('to_binary')) and to_binary(0) == '0'"
+        pass: "0 gives \"0\""
+        hint: "Keep the first `if`."
+      - expr: "'bin(' not in src and 'format(' not in src and syntax('While') >= 1"
+        pass: "It works by hand, with a loop"
+        hint: "Use `%` and `//` in the loop, not `bin()` or `format()`."
+      - expr: "err is None and lines == ['1101', '0', '11111111']"
+        pass: "It prints 1101, 0 and 11111111"
+        hint: "Keep the three prints."
+    hints:
+      - "The rest of `n // 2` is `n % 2`: 0 or 1."
+      - "It is a number: make it text with `str()` before you join it."
+      - "`bits = str(n % 2) + bits`, then `n = n // 2`."
+
+  # 4. EXERCISE: independent -------------------------------------------------
+  - id: ex-from-binary
+    type: exercise
+    fade: independent
+    objective: O2
+    title: And back
+    prompt: |
+      **Write `from_binary(bits)`** without `int(..., 2)`. Read the bits from
+      the left. For each bit: double what you have, and add the bit.
+
+      ```text
+      1101:  0*2+1 = 1,  1*2+1 = 3,  3*2+0 = 6,  6*2+1 = 13
+      ```
+
+      ```text
+      13
+      255
+      0
+      ```
+    starter: |
+      # Your function here
+
+
+      print(from_binary("1101"))
+      print(from_binary("11111111"))
+      print(from_binary("0"))
+    solution: |
+      def from_binary(bits):
+          value = 0
+          for bit in bits:
+              value = value * 2 + int(bit)
+          return value
+
+
+      print(from_binary("1101"))
+      print(from_binary("11111111"))
+      print(from_binary("0"))
+    after: >-
+      Doubling moves every bit one place to the left. That is why a 0 added
+      on the right of a binary number doubles it: `110` is 6, `1100` is 12.
+    checks:
+      - expr: "callable(ns.get('from_binary')) and all(from_binary(format(n, 'b')) == n for n in [0, 1, 2, 6, 13, 100, 255, 1024, 12345])"
+        pass: "It reads any binary text"
+        hint: "`value = value * 2 + int(bit)` for each bit."
+      - expr: "callable(ns.get('from_binary')) and from_binary('0001101') == 13"
+        pass: "Zeros in front change nothing"
+        hint: "Start with `value = 0`."
+      - expr: "',2)' not in src.replace(' ', '')"
+        pass: "It works by hand"
+        hint: "Do not use `int(bits, 2)`: double and add in a loop."
+      - expr: "err is None and lines == ['13', '255', '0']"
+        pass: "It prints 13, 255 and 0"
+        hint: "Keep the three prints."
+    hints:
+      - "Start with `value = 0`, and loop over the characters: `for bit in bits:`."
+      - "Each bit is text, `\"1\"` or `\"0\"`: `int(bit)` makes it a number."
+      - "`value = value * 2 + int(bit)`, then `return value` after the loop."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: bytes
+    type: theory
+    objective: O3
+    title: Bytes, and how much fits
+    body: |
+      With 1 bit you have 2 values (0 and 1). Each more bit **doubles** the
+      number of values:
+
+      ```text
+      bits:     1   2   3    4 ...    8 ...     16          32
+      values:   2   4   8   16 ...  256 ...  65536   4294967296
+      ```
+
+      So `n` bits give `2 ** n` values. Computers group bits by 8: a **byte**
+      holds 256 values, from 0 to 255. A letter of English text is one byte.
+
+      To know how many bits you need for some values, use `bit_length()`:
+      it says how many bits a number needs. For 26 letters you count 0 to
+      25, and `(25).bit_length()` is 5. So for `n` values you need
+      `(n - 1).bit_length()` bits.
+
+      Sizes go up by about 1000:
+
+      | Name | Bytes |
+      |---|---|
+      | kilobyte (kB) | 1 000 |
+      | megabyte (MB) | 1 000 000 |
+      | gigabyte (GB) | 1 000 000 000 |
+
+      Because of the 2s, there are also sizes by 1024: a **kibibyte**
+      (KiB) is 1024 bytes, a mebibyte (MiB) 1024 KiB. Windows shows KiB but
+      writes "KB": so a disk of 500 GB shows as about 465 "GB".
+    keys:
+      - code: "2 ** n"
+        means: "How many values n bits can hold."
+      - code: "1 byte = 8 bits"
+        means: "256 values: 0 to 255."
+      - code: "(n - 1).bit_length()"
+        means: "Bits needed for n values."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-bits-needed
+    type: exercise
+    fade: debug
+    objective: O3
+    title: One bit too many
+    prompt: |
+      `bits_needed(n)` should say how many bits are needed for `n`
+      different values. For 26 letters it says 5, which is right. But for
+      256 values it says 9, and one byte (8 bits) is enough. **Fix it**:
+
+      ```text
+      26 values: 5 bits
+      256 values: 8 bits
+      1000 values: 10 bits
+      ```
+    starter: |
+      def bits_needed(n):
+          return n.bit_length()
+
+
+      for n in [26, 256, 1000]:
+          print(f"{n} values: {bits_needed(n)} bits")
+    solution: |
+      def bits_needed(n):
+          return (n - 1).bit_length()
+
+
+      for n in [26, 256, 1000]:
+          print(f"{n} values: {bits_needed(n)} bits")
+    after: >-
+      The values are counted from 0: 256 values are 0 to 255, and 255 is
+      `11111111`, 8 bits. 256 itself would need 9 bits, but it is not one
+      of the values.
+    checks:
+      - expr: "callable(ns.get('bits_needed')) and all(bits_needed(n) == (n - 1).bit_length() for n in [2, 3, 4, 5, 8, 9, 26, 255, 256, 257, 1000, 1024, 1025])"
+        pass: "The right number of bits, also for 2, 4, 8, 256 and 1024"
+        hint: "Count from 0: the largest value is `n - 1`."
+        misconceptions:
+          - when: "callable(ns.get('bits_needed')) and bits_needed(256) == 8 and bits_needed(26) != 5"
+            say: "256 is right now, but 26 is not. The biggest value is always `n - 1`: `(n - 1).bit_length()`."
+      - expr: "err is None and lines == ['26 values: 5 bits', '256 values: 8 bits', '1000 values: 10 bits']"
+        pass: "It prints the three lines"
+        hint: "Keep the loop."
+    hints:
+      - "Which numbers does a byte hold? 0 to 255, or 1 to 256?"
+      - "The biggest of `n` values, counted from 0, is `n - 1`."
+      - "`return (n - 1).bit_length()`."
+
+  # 7. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-read
+        objective: O1
+        prompt: "What is `10110` in decimal?"
+        options:
+          - text: "22"
+            correct: true
+            why: "16 + 4 + 2 = 22."
+          - text: "10110"
+            why: "Read it with the places 16, 8, 4, 2, 1."
+          - text: "13"
+            why: "That is `1101`."
+      - kind: predict
+        id: q-format
+        objective: O2
+        code: |
+          print(format(6, "b"))
+          print(format(6, "08b"))
+          print(int("110", 2) * 2)
+        explain: "6 is 4 + 2: `110`. With `08b`, zeros fill 8 places. `int(\"110\", 2)` is 6, times 2 is 12."
+      - kind: mcq
+        id: q-values
+        objective: O3
+        prompt: "How many different values do 4 bits hold?"
+        options:
+          - text: "16"
+            correct: true
+            why: "2 ** 4 = 16: from 0000 to 1111."
+          - text: "4"
+            why: "Each bit doubles the values: 2 × 2 × 2 × 2."
+          - text: "15"
+            why: "15 is the largest value, `1111`. With 0 there are 16."
+      - kind: mcq
+        id: q-byte
+        objective: O3
+        prompt: "What is the largest number in one byte?"
+        options:
+          - text: "255"
+            correct: true
+            why: "`11111111`: 128 + 64 + 32 + 16 + 8 + 4 + 2 + 1."
+          - text: "256"
+            why: "256 values, from 0 to 255."
+          - text: "8"
+            why: "8 is the number of bits."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-bit
+    objective: O1
+    prompt: "What is a bit?"
+    options:
+      - text: "One binary digit: 0 or 1"
+        correct: true
+        why: "A switch that is on or off."
+      - text: "8 binary digits"
+        why: "That is a byte."
+      - text: "A small number from 0 to 9"
+        why: "That is a decimal digit."
+  - kind: mcq
+    id: r-places
+    objective: O1
+    prompt: "What are the values of the binary places, from the right?"
+    options:
+      - text: "1, 2, 4, 8, 16, ..."
+        correct: true
+        why: "Each place is worth 2 times the one on its right."
+      - text: "1, 10, 100, 1000, ..."
+        why: "That is decimal."
+      - text: "1, 2, 3, 4, ..."
+        why: "Each place doubles."
+  - kind: mcq
+    id: r-int2
+    objective: O2
+    prompt: "How do you turn the text `\"1010\"` into the number 10?"
+    options:
+      - text: "`int(\"1010\", 2)`"
+        correct: true
+        why: "The 2 says: read it as binary."
+      - text: "`int(\"1010\")`"
+        why: "That reads it as decimal: one thousand and ten."
+      - text: "`bin(\"1010\")`"
+        why: "`bin()` goes the other way, from a number to binary text."
+  - kind: mcq
+    id: r-2n
+    objective: O3
+    prompt: "How many values do 10 bits hold?"
+    options:
+      - text: "1024"
+        correct: true
+        why: "2 ** 10 = 1024."
+      - text: "100"
+        why: "Each bit doubles the values."
+      - text: "20"
+        why: "That would be adding, not doubling."
+  - kind: mcq
+    id: r-kib
+    objective: O3
+    prompt: "How many bytes is one kibibyte (KiB)?"
+    options:
+      - text: "1024"
+        correct: true
+        why: "2 ** 10. A kilobyte (kB) is 1000."
+      - text: "1000"
+        why: "That is a kilobyte."
+      - text: "8"
+        why: "8 is the bits in one byte."

@@ -1,0 +1,514 @@
+id: computer-numbers
+order: 504
+title: The limits of numbers
+summary: Numbers in a chip have a fixed number of bits. See what happens at the edge - numbers that wrap around - and why 0.1 + 0.2 is not exactly 0.3.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Explain what happens when a number with a fixed number of bits gets too big (overflow), and how negative numbers are stored
+  - id: O2
+    text: Explain why most decimal fractions are not exact as floats, and compare floats safely
+  - id: O3
+    text: Count money exactly, with whole cents or Decimal, and know how round() rounds
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: fixed
+    type: theory
+    objective: O1
+    title: When the bits run out
+    body: |
+      A CPU calculates with a **fixed** number of bits: 8, 16, 32 or 64.
+      An 8-bit number holds 0 to 255. What is 200 + 100? The answer, 300,
+      needs 9 bits. The ninth bit is lost, and the 8 bits left hold 44:
+
+      ```text
+        200 = 1100 1000
+      + 100 = 0110 0100
+      = 300 = 1 0010 1100   →  0010 1100 = 44
+      ```
+
+      This is **overflow**: like the counter of an old car that goes from
+      99999 back to 00000. In Python it is `(200 + 100) % 256`. The CPU
+      sets a **carry flag**, so a program can see that it happened.
+
+      **Negative numbers** use the same bits in another way (**two's
+      complement**): in 8 bits, 0 to 127 stay as they are, and 128 to 255
+      mean -128 to -1. So 255 is -1, and 127 + 1 "is" -128.
+
+      This is real: in 2014 a video on YouTube was watched more than
+      2 147 483 647 times, the largest 32-bit number with a sign. YouTube had
+      to change its counter to 64 bits. Clocks that count seconds since 1970
+      in 32 bits run out on 19 January **2038**.
+
+      Python's own `int` has no limit: it uses more bits when it needs
+      them. `2 ** 100` is exact.
+    keys:
+      - code: "(a + b) % 256"
+        means: "What 8 bits keep of a sum."
+      - code: "overflow"
+        means: "The result needs more bits than there are."
+      - code: "255 as signed 8 bits"
+        means: "-1 (two's complement)."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: counter
+    type: demo
+    visual: none
+    objective: O1
+    title: An 8-bit counter
+    intro: |
+      Press **Run**: a counter of 8 bits goes up by 50 each step. Watch what
+      happens after 250. The last column reads the same 8 bits as a number
+      with a sign.
+    code: |
+      value = 0
+      for step in range(8):
+          signed = value - 256 if value >= 128 else value
+          print(f"{value:3}  {value:08b}  {signed:4}")
+          value = (value + 50) % 256
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and len(lines) == 8"
+      - text: "Make it a 4-bit counter: `% 16`, and go up by 3."
+        expr: "err is None and '% 16' in src"
+      - text: "Go down instead: `value - 50`. What comes after 0?"
+        expr: "err is None and '- 50' in src"
+    investigate:
+      - kind: mcq
+        id: i-wrap
+        prompt: "After 250 comes 44. Why 44?"
+        options:
+          - text: "250 + 50 = 300, and 300 % 256 = 44: the ninth bit is lost"
+            correct: true
+            why: "8 bits keep only the rest after 256."
+          - text: "The counter starts again at 0, then adds 44"
+            why: "It wraps around: 300 - 256 = 44."
+          - text: "44 is a random number"
+            why: "It is exactly 300 - 256."
+      - kind: mcq
+        id: i-signed
+        prompt: "The bits of 200 are `11001000`. Why is the last column -56?"
+        options:
+          - text: "With a sign, the first bit 1 means negative: 200 - 256 = -56"
+            correct: true
+            why: "The same 8 bits, read another way."
+          - text: "200 is too big for 8 bits"
+            why: "200 fits. Read with a sign, it means -56."
+          - text: "The program has a bug"
+            why: "That is how a CPU stores -56."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-add8
+    type: exercise
+    fade: completion
+    objective: O1
+    title: An 8-bit adder with a carry flag
+    prompt: |
+      **Complete `add8(a, b)`**. It adds like an 8-bit CPU: it gives back
+      the 8-bit result, and a flag that is `True` when the sum did not fit.
+
+      ```text
+      (155, False)
+      (44, True)
+      (0, True)
+      ```
+    starter: |
+      def add8(a, b):
+          total = a + b
+          result = ___
+          carry = ___
+          return result, carry
+
+
+      print(add8(100, 55))
+      print(add8(200, 100))
+      print(add8(255, 1))
+    solution: |
+      def add8(a, b):
+          total = a + b
+          result = total % 256
+          carry = total > 255
+          return result, carry
+
+
+      print(add8(100, 55))
+      print(add8(200, 100))
+      print(add8(255, 1))
+    after: >-
+      255 + 1 gives 0 with the carry set. A CPU that adds 16-bit numbers
+      with an 8-bit adder adds the low bytes first, then the high bytes
+      plus this carry, just like your adder in the last lesson.
+    checks:
+      - expr: "callable(ns.get('add8')) and all(add8(a, b)[0] == (a + b) % 256 for a, b in [(0, 0), (100, 55), (200, 100), (255, 255), (128, 128)])"
+        pass: "The result keeps 8 bits"
+        hint: "`result = total % 256`."
+      - expr: "callable(ns.get('add8')) and add8(255, 0)[1] is False and add8(255, 1)[1] is True and add8(128, 127)[1] is False and add8(128, 128)[1] is True"
+        pass: "The carry flag is True only when the sum is over 255"
+        hint: "`carry = total > 255`."
+        misconceptions:
+          - when: "callable(ns.get('add8')) and add8(128, 127)[1] is True"
+            say: "255 still fits in 8 bits. The carry is for sums over 255: `total > 255`."
+      - expr: "err is None and lines == ['(155, False)', '(44, True)', '(0, True)']"
+        pass: "It prints the three results"
+        hint: "Keep the three prints."
+    hints:
+      - "8 bits keep the rest after 256."
+      - "`result = total % 256`."
+      - "`carry = total > 255`: True or False."
+
+  # 4. EXERCISE: debug -------------------------------------------------------
+  - id: ex-signed
+    type: exercise
+    fade: debug
+    objective: O1
+    title: The temperature sensor
+    prompt: |
+      A sensor sends the temperature as one byte with a sign (two's
+      complement). `to_signed(byte)` turns it into a Python number. It works
+      for most bytes, but 128 gives 128 instead of -128. **Fix it**:
+
+      ```text
+      20 → 20
+      236 → -20
+      128 → -128
+      ```
+    starter: |
+      def to_signed(byte):
+          if byte > 128:
+              return byte - 256
+          return byte
+
+
+      for byte in [20, 236, 128]:
+          print(byte, "→", to_signed(byte))
+    solution: |
+      def to_signed(byte):
+          if byte >= 128:
+              return byte - 256
+          return byte
+
+
+      for byte in [20, 236, 128]:
+          print(byte, "→", to_signed(byte))
+    after: >-
+      128 is `10000000`: the first bit is 1, so it is negative. The border
+      is easy to miss: test the numbers at the edge (127, 128, 255, 0),
+      where most of these bugs hide.
+    checks:
+      - expr: "callable(ns.get('to_signed')) and [to_signed(b) for b in [0, 1, 127, 128, 129, 200, 255]] == [0, 1, 127, -128, -127, -56, -1]"
+        pass: "All bytes are right, also 127 and 128"
+        hint: "From 128 on, the first bit is 1: `byte >= 128`."
+        misconceptions:
+          - when: "callable(ns.get('to_signed')) and to_signed(127) == -129"
+            say: "Now 127 is wrong. Only from 128 on is a byte negative."
+      - expr: "err is None and lines == ['20 → 20', '236 → -20', '128 → -128']"
+        pass: "It prints the three lines"
+        hint: "Keep the loop."
+    hints:
+      - "Look at the border: which bytes have the first bit set?"
+      - "128 is `10000000`."
+      - "`if byte >= 128:`."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: floats
+    type: theory
+    objective: O2
+    title: 0.1 + 0.2
+    body: |
+      Try it: `0.1 + 0.2` gives `0.30000000000000004`, and
+      `0.1 + 0.2 == 0.3` is `False`.
+
+      A `float` stores a fraction in **binary**, with 53 bits. Some
+      fractions are short in binary: 0.5 is `0.1`, 0.25 is `0.01`. But
+      0.1 is like 1/3 in decimal: it never ends (`0.0001100110011...`). So
+      Python stores the nearest binary fraction, which is a tiny bit off.
+      `print(0.1)` hides it; `f"{0.1:.20f}"` shows it:
+      `0.10000000000000000555`.
+
+      Most of the time this does not matter. But **never compare floats
+      with `==`**:
+
+      ```python
+      import math
+
+      math.isclose(0.1 + 0.2, 0.3)     # True: close enough
+      round(0.1 + 0.2, 2) == 0.3       # True
+      ```
+
+      Floats also have a largest number (about `1.8e308`; bigger is
+      `inf`), and above `2 ** 53` they cannot hold every whole number.
+    keys:
+      - code: "0.1 + 0.2 == 0.3"
+        means: "False: floats are binary, 0.1 is not exact."
+      - code: "math.isclose(a, b)"
+        means: "Compare floats safely."
+      - code: "f\"{x:.20f}\""
+        means: "Show the digits that print hides."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-close
+    type: exercise
+    fade: debug
+    objective: O2
+    title: The machine that never gives a ticket
+    prompt: |
+      A parking machine adds the coins, and gives the ticket when they are
+      exactly the price. With 0.10 and 0.20 for a price of 0.30, it waits
+      forever. **Fix the test**, so floats are compared safely:
+
+      ```text
+      ticket
+      ticket
+      pay more
+      ```
+    starter: |
+      def enough(coins, price):
+          return sum(coins) == price
+
+
+      for coins, price in [([0.10, 0.20], 0.30), ([1.0, 0.5], 1.5), ([0.10, 0.10], 0.30)]:
+          print("ticket" if enough(coins, price) else "pay more")
+    solution: |
+      import math
+
+
+      def enough(coins, price):
+          return sum(coins) >= price or math.isclose(sum(coins), price)
+
+
+      for coins, price in [([0.10, 0.20], 0.30), ([1.0, 0.5], 1.5), ([0.10, 0.10], 0.30)]:
+          print("ticket" if enough(coins, price) else "pay more")
+    after: >-
+      A machine should also give the ticket when you pay **more**: `>=`.
+      But `>=` alone is not enough: 0.70 + 0.10 is 0.7999999999999999, a
+      tiny bit under 0.80. `isclose` catches that.
+    checks:
+      - expr: "callable(ns.get('enough')) and enough([0.1, 0.2], 0.3) and enough([0.1, 0.1, 0.1], 0.3) and enough([0.7, 0.1], 0.8)"
+        pass: "Sums that are the price give a ticket"
+        hint: "`math.isclose(sum(coins), price)`."
+      - expr: "callable(ns.get('enough')) and not enough([0.1, 0.1], 0.3) and not enough([], 0.5) and not enough([0.29], 0.3)"
+        pass: "Too little gives no ticket"
+        hint: "Do not round too much: 0.29 is not enough for 0.30."
+        misconceptions:
+          - when: "callable(ns.get('enough')) and enough([0.29], 0.3)"
+            say: "Rounding to one decimal makes 0.29 equal to 0.3. Use `math.isclose`, which only forgives tiny float errors."
+      - expr: "callable(ns.get('enough')) and enough([2.0], 1.5) and enough([1.0, 1.0], 0.3)"
+        pass: "Paying more also gives a ticket"
+        hint: "`sum(coins) >= price or math.isclose(sum(coins), price)`."
+      - expr: "err is None and lines == ['ticket', 'ticket', 'pay more']"
+        pass: "It prints ticket, ticket, pay more"
+        hint: "Keep the loop."
+    hints:
+      - "`sum([0.1, 0.2])` is 0.30000000000000004. Is that `== 0.3`?"
+      - "`import math`, then `math.isclose(a, b)` for \"equal\"."
+      - "Also allow more: `sum(coins) >= price or math.isclose(sum(coins), price)`."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: money
+    type: theory
+    objective: O3
+    title: Exact money
+    body: |
+      For money, "close enough" is not enough: the cents must add up. Two
+      exact ways:
+
+      - Count in **whole cents**: `2.30` is `230`. Ints are exact. Show
+        them with `f"{c // 100}.{c % 100:02d}"`.
+      - Use **Decimal**, which counts in decimal:
+
+      ```python
+      from decimal import Decimal
+
+      Decimal("0.1") + Decimal("0.2") == Decimal("0.3")     # True
+      ```
+
+      Give `Decimal` a **text**: `Decimal(0.1)` copies the float with its
+      error.
+
+      And `round()` has a surprise: `round(2.5)` is 2, and `round(0.5)` is 0.
+      Halves go to the **even** number ("banker's rounding"), so that
+      rounding many numbers does not always push up.
+    keys:
+      - code: "230 cents"
+        means: "Money as an int: exact."
+      - code: "Decimal(\"0.1\")"
+        means: "An exact decimal (from text!)."
+      - code: "round(2.5) == 2"
+        means: "Halves round to the even number."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-cents
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A receipt in cents
+    prompt: |
+      Prices come as texts like `"2.30"`, `"0.05"` or `"4"`. **Write
+      `cents(price)`**, which turns one into whole cents **without
+      `float()`**, and print the total of the receipt as `16.85`.
+
+      ```text
+      [230, 5, 400, 1050]
+      16.85
+      ```
+    starter: |
+      prices = ["2.30", "0.05", "4", "10.5"]
+
+      # Your function, then the total
+    solution: |
+      prices = ["2.30", "0.05", "4", "10.5"]
+
+
+      def cents(price):
+          whole, _, part = price.partition(".")
+          return int(whole) * 100 + int((part + "00")[:2])
+
+
+      print([cents(p) for p in prices])
+      total = sum(cents(p) for p in prices)
+      print(f"{total // 100}.{total % 100:02d}")
+    after: >-
+      Banks, shops and games keep money in whole cents for exactly this
+      reason. The decimal point only appears when the number is shown.
+    checks:
+      - expr: "callable(ns.get('cents')) and [cents(p) for p in ['2.30', '0.05', '4', '10.5', '0.99', '100.00']] == [230, 5, 400, 1050, 99, 10000]"
+        pass: "cents() reads every kind of price"
+        hint: "Cut at the point: `whole, _, part = price.partition(\".\")`. Fill `part` to 2 digits: `(part + \"00\")[:2]`."
+        misconceptions:
+          - when: "callable(ns.get('cents')) and cents('10.5') == 1005"
+            say: "\"10.5\" is 10 and 50 cents, not 5 cents. Fill the part after the point to two digits."
+      - expr: "'float(' not in src"
+        pass: "No float() anywhere"
+        hint: "Use `int()` on the parts before and after the point."
+      - expr: "err is None and lines == ['[230, 5, 400, 1050]', '16.85']"
+        pass: "It prints the cents and the total"
+        hint: "`print([cents(p) for p in prices])`, then the total as `f\"{total // 100}.{total % 100:02d}\"`."
+    hints:
+      - "`\"2.30\".partition(\".\")` gives `(\"2\", \".\", \"30\")`."
+      - "Whole part × 100, plus the first two digits after the point (filled with zeros)."
+      - "Show the total with `f\"{total // 100}.{total % 100:02d}\"`."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-overflow
+        objective: O1
+        prompt: "An 8-bit counter shows 255. You add 1. What does it show?"
+        options:
+          - text: "0, with the carry flag set"
+            correct: true
+            why: "256 needs 9 bits. The 8 bits left are all 0."
+          - text: "256"
+            why: "256 does not fit in 8 bits."
+          - text: "An error"
+            why: "Hardware does not stop. It wraps around."
+      - kind: predict
+        id: q-float
+        objective: O2
+        code: |
+          import math
+
+          print(0.5 + 0.25 == 0.75)
+          print(0.1 + 0.2 == 0.3)
+          print(math.isclose(0.1 + 0.2, 0.3))
+        explain: "0.5 and 0.25 are exact in binary, so the first sum is exact. 0.1 and 0.2 are not: the sum is a tiny bit off, but close."
+      - kind: mcq
+        id: q-decimal
+        objective: O3
+        prompt: "Which one is exact?"
+        options:
+          - text: "`Decimal(\"0.1\")`"
+            correct: true
+            why: "From text, Decimal stores 0.1 exactly."
+          - text: "`Decimal(0.1)`"
+            why: "The float 0.1 is already off; Decimal copies the error."
+          - text: "`float(\"0.1\")`"
+            why: "A float cannot hold 0.1 exactly."
+      - kind: mcq
+        id: q-round
+        objective: O3
+        prompt: "What is `round(2.5)` in Python?"
+        options:
+          - text: "2: halves go to the even number"
+            correct: true
+            why: "And `round(3.5)` is 4."
+          - text: "3"
+            why: "Python does not always round halves up."
+          - text: "2.5"
+            why: "`round` with one argument gives a whole number."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-overflow
+    objective: O1
+    prompt: "What is overflow?"
+    options:
+      - text: "A result that needs more bits than the number has; the extra bits are lost"
+        correct: true
+        why: "200 + 100 in 8 bits gives 44."
+      - text: "A program that uses too much memory"
+        why: "Overflow is about the bits of one number."
+      - text: "A division by zero"
+        why: "That is another error."
+  - kind: mcq
+    id: r-twos
+    objective: O1
+    prompt: "In 8 bits with a sign, what does `11111111` mean?"
+    options:
+      - text: "-1"
+        correct: true
+        why: "255 - 256 = -1."
+      - text: "255"
+        why: "Without a sign it is 255. With a sign, -1."
+      - text: "-127"
+        why: "Two's complement: from 128 on, subtract 256."
+  - kind: mcq
+    id: r-python-int
+    objective: O1
+    prompt: "Can a Python `int` overflow?"
+    options:
+      - text: "No: it uses more bits when it needs them"
+        correct: true
+        why: "`2 ** 100` is exact. Floats and other languages do have limits."
+      - text: "Yes, at 255"
+        why: "That is an 8-bit number."
+      - text: "Yes, at 2 147 483 647"
+        why: "That is the 32-bit limit of other languages."
+  - kind: mcq
+    id: r-isclose
+    objective: O2
+    prompt: "How do you test if two floats are equal?"
+    options:
+      - text: "`math.isclose(a, b)`"
+        correct: true
+        why: "`==` fails on tiny errors like 0.30000000000000004."
+      - text: "`a == b`"
+        why: "Float errors make `==` unsafe."
+      - text: "`a is b`"
+        why: "`is` tests if they are the same object."
+  - kind: mcq
+    id: r-cents
+    objective: O3
+    prompt: "Why do shops keep prices in whole cents?"
+    options:
+      - text: "Ints are exact; floats like 0.1 are not"
+        correct: true
+        why: "The point is added only when the price is shown."
+      - text: "Cents are faster to type"
+        why: "The reason is exactness."
+      - text: "Floats cannot hold money"
+        why: "They can, but not exactly."

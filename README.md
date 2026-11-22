@@ -4,7 +4,7 @@ ZeroPy is a free Python course that runs as a Windows app. It takes you from
 your very first line of code to building and packaging your own small
 desktop app, in about 31 hours.
 
-- **52 short lessons** in 8 modules, plus four paths: Linux, Raspberry Pi, Data and AI, and the web. You write real Python on almost every screen.
+- **52 short lessons** in 8 modules, plus five paths: Linux, Raspberry Pi, Data and AI, the web, and how computers work. You write real Python on almost every screen.
 - **Instant feedback.** Your code runs inside the app and is checked at once.
 - **Pictures that move with the code.** Variables, lists and loops are shown
   as 3D (or 2D) scenes, one line at a time.
@@ -55,6 +55,10 @@ desktop app, in about 31 hours.
   app: pages, forms, templates and a JSON API, with a small browser that
   shows each page and the HTTP messages behind it. At the end, run your
   site on your own computer or a Raspberry Pi, and open it from your phone.
+- **How computers work.** Bits and bytes, letters and colours as numbers,
+  logic gates that add, numbers that overflow and floats that are not
+  exact, and memory as a row of bytes. At the end you build a tiny CPU in
+  Python, and write a program for it.
 - **My knowledge.** From your answers, the app estimates how well you know
   each topic: not yet, learning, solid or mastered. Without practice a topic
   slowly drops again. Your weakest topics get a practice button.

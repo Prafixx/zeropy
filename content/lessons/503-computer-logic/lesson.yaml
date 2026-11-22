@@ -1,0 +1,481 @@
+id: computer-logic
+order: 503
+title: Logic gates
+summary: Inside a chip, tiny gates combine bits - AND, OR, NOT, XOR. Use them on bits and on whole numbers, and build the part of a CPU that adds.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Know the truth tables of AND, OR, NOT and XOR, and write them in Python
+  - id: O2
+    text: Use the bit operators & | ^ << >> on numbers, for example to read flags like file permissions
+  - id: O3
+    text: Build a half adder and a full adder from gates, and add binary numbers with them
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: gates
+    type: theory
+    objective: O1
+    title: Four gates
+    body: |
+      A chip has billions of **gates**: tiny circuits that take bits in and
+      give one bit out. Four of them are enough to understand a CPU:
+
+      ```text
+       a b │ AND  OR  XOR      a │ NOT
+       0 0 │  0    0   0       0 │  1
+       0 1 │  0    1   1       1 │  0
+       1 0 │  0    1   1
+       1 1 │  1    1   0
+      ```
+
+      - **AND**: 1 only when **both** are 1.
+      - **OR**: 1 when **at least one** is 1.
+      - **XOR** ("exclusive or"): 1 when they are **different**.
+      - **NOT**: the opposite.
+
+      You know three of them from `if`: `and`, `or`, `not`. For bits as
+      the numbers 0 and 1, Python has the **bit operators**: `a & b`
+      (AND), `a | b` (OR), `a ^ b` (XOR).
+    keys:
+      - code: "a & b"
+        means: "AND: 1 only if both are 1."
+      - code: "a | b"
+        means: "OR: 1 if at least one is 1."
+      - code: "a ^ b"
+        means: "XOR: 1 if they are different."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: tables
+    type: demo
+    visual: none
+    objective: O1
+    title: Truth tables from loops
+    intro: |
+      Press **Run**: two loops try every pair of bits, and print what each
+      gate gives. Compare with the table of the step before.
+    code: |
+      print("a b  AND OR XOR")
+      for a in (0, 1):
+          for b in (0, 1):
+              print(a, b, "  ", a & b, " ", a | b, " ", a ^ b)
+
+      print("NOT 0 =", 1 - 0, " NOT 1 =", 1 - 1)
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and lines[0] == 'a b  AND OR XOR'"
+      - text: "Add a column for NAND: NOT AND, `1 - (a & b)`."
+        expr: "err is None and '1 - (a & b)' in src.replace('1-(a&b)', '1 - (a & b)')"
+      - text: "Use `True` and `False` instead of 1 and 0 in the loops. What changes?"
+        expr: "err is None and 'True' in out"
+    investigate:
+      - kind: mcq
+        id: i-not
+        prompt: "Why is NOT written as `1 - a` here?"
+        options:
+          - text: "For a bit, 1 - 0 is 1 and 1 - 1 is 0: the opposite"
+            correct: true
+            why: "Python's `~` works on whole numbers in another way (it gives -1 for 0), so `1 - a` is simpler for one bit."
+          - text: "Python has no NOT"
+            why: "It has `not` for True and False. For a bit as 0 or 1, `1 - a` gives 0 or 1."
+          - text: "It is faster"
+            why: "It is about getting 0 or 1 back."
+      - kind: mcq
+        id: i-xor-diff
+        prompt: "Which other Python test gives the same as XOR for two bits?"
+        options:
+          - text: "`a != b`"
+            correct: true
+            why: "XOR is 1 exactly when the bits are different."
+          - text: "`a == b`"
+            why: "That is the opposite of XOR."
+          - text: "`a or b`"
+            why: "OR is also 1 for 1 and 1. XOR is not."
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: numbers
+    type: theory
+    objective: O2
+    title: Gates on whole numbers
+    body: |
+      `&`, `|` and `^` also work on whole numbers: they work **bit by bit**,
+      on each place:
+
+      ```text
+        6 = 110            6 = 110            6 = 110
+      & 3 = 011          | 3 = 011          ^ 3 = 011
+          = 010 = 2          = 111 = 7          = 101 = 5
+      ```
+
+      `<<` moves the bits to the left, `>>` to the right: `5 << 1` is 10
+      (doubled), `20 >> 2` is 5 (halved twice).
+
+      A **mask** reads one bit: `n & 1` is 1 for odd numbers. Many settings
+      are **flags**: one bit each. You saw them in the Linux path:
+      permissions `rwx` are 3 bits, worth 4, 2 and 1. So `chmod 6` is
+      `110`: read and write, no execute. To test for write: `mode & 2`.
+    keys:
+      - code: "6 & 3 == 2"
+        means: "AND on each place of the bits."
+      - code: "n << 1"
+        means: "Move bits left: doubles n."
+      - code: "mode & 4"
+        means: "A mask: is the bit worth 4 set?"
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-perms
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Read the permissions
+    prompt: |
+      A permission is a number from 0 to 7: read is worth 4, write 2,
+      execute 1. **Complete `describe(mode)`**, like `ls -l` shows it:
+
+      ```text
+      7 rwx
+      6 rw-
+      5 r-x
+      0 ---
+      ```
+    starter: |
+      def describe(mode):
+          r = "r" if mode & 4 else "-"
+          w = ___
+          x = ___
+          return r + w + x
+
+
+      for mode in [7, 6, 5, 0]:
+          print(mode, describe(mode))
+    solution: |
+      def describe(mode):
+          r = "r" if mode & 4 else "-"
+          w = "w" if mode & 2 else "-"
+          x = "x" if mode & 1 else "-"
+          return r + w + x
+
+
+      for mode in [7, 6, 5, 0]:
+          print(mode, describe(mode))
+    after: >-
+      `chmod 755` is three such numbers: 7 for the owner, 5 for the group,
+      5 for everyone else. Now you can read them bit by bit.
+    checks:
+      - expr: "callable(ns.get('describe')) and [describe(m) for m in range(8)] == ['---', '--x', '-w-', '-wx', 'r--', 'r-x', 'rw-', 'rwx']"
+        pass: "All 8 modes are right"
+        hint: "`w` uses the mask 2, `x` the mask 1."
+        misconceptions:
+          - when: "callable(ns.get('describe')) and describe(1) == '-w-'"
+            say: "Execute and write are swapped: write is worth 2, execute 1."
+      - expr: "err is None and lines == ['7 rwx', '6 rw-', '5 r-x', '0 ---']"
+        pass: "It prints the four lines"
+        hint: "Keep the loop."
+    hints:
+      - "Copy the line of `r`, and change the letter and the mask."
+      - "`w = \"w\" if mode & 2 else \"-\"`."
+      - "`x = \"x\" if mode & 1 else \"-\"`."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: adders
+    type: theory
+    objective: O3
+    title: Adding with gates
+    body: |
+      How does a CPU add? Look at the sum of two bits:
+
+      ```text
+       a b │ sum carry
+       0 0 │  0    0
+       0 1 │  1    0
+       1 0 │  1    0
+       1 1 │  0    1        (1 + 1 = 10 in binary)
+      ```
+
+      The `sum` column is **XOR**, the `carry` column is **AND**. Two gates
+      add two bits: a **half adder**.
+
+      To add longer numbers, each place must also add the carry from the
+      place on its right: three bits in. A **full adder** is two half
+      adders and an OR:
+
+      ```python
+      def full_adder(a, b, carry_in):
+          s = a ^ b
+          total = s ^ carry_in
+          carry_out = (a & b) | (s & carry_in)
+          return total, carry_out
+      ```
+
+      Put full adders in a row, from the right place to the left place,
+      each passing its carry on: that adds whole numbers. A real CPU has 64
+      of them in a row.
+    keys:
+      - code: "a ^ b, a & b"
+        means: "Half adder: sum and carry of two bits."
+      - code: "full_adder(a, b, carry)"
+        means: "Adds three bits: one place of a sum."
+      - code: "carry"
+        means: "What goes on to the next place on the left."
+
+  # 6. EXERCISE: completion --------------------------------------------------
+  - id: ex-full
+    type: exercise
+    fade: completion
+    objective: O3
+    title: A full adder
+    prompt: |
+      **Complete `full_adder`** with gates only (`&`, `|`, `^`). The loop
+      checks all 8 cases against real adding:
+
+      ```text
+      all 8 cases are right
+      ```
+    starter: |
+      def full_adder(a, b, carry_in):
+          s = ___
+          total = ___
+          carry_out = (a & b) | (s & carry_in)
+          return total, carry_out
+
+
+      ok = 0
+      for a in (0, 1):
+          for b in (0, 1):
+              for c in (0, 1):
+                  total, carry = full_adder(a, b, c)
+                  if carry * 2 + total == a + b + c:
+                      ok += 1
+      print(f"all {ok} cases are right" if ok == 8 else f"only {ok} of 8 cases are right")
+    solution: |
+      def full_adder(a, b, carry_in):
+          s = a ^ b
+          total = s ^ carry_in
+          carry_out = (a & b) | (s & carry_in)
+          return total, carry_out
+
+
+      ok = 0
+      for a in (0, 1):
+          for b in (0, 1):
+              for c in (0, 1):
+                  total, carry = full_adder(a, b, c)
+                  if carry * 2 + total == a + b + c:
+                      ok += 1
+      print(f"all {ok} cases are right" if ok == 8 else f"only {ok} of 8 cases are right")
+    after: >-
+      `carry * 2 + total` reads the two output bits as one binary number,
+      `carry total`. For 1 + 1 + 1 it is `11`: three.
+    checks:
+      - expr: "callable(ns.get('full_adder')) and all(full_adder(a, b, c) == ((a + b + c) % 2, (a + b + c) // 2) for a in (0, 1) for b in (0, 1) for c in (0, 1))"
+        pass: "All 8 cases give the right sum and carry"
+        hint: "`s = a ^ b`, then `total = s ^ carry_in`."
+      - expr: "'+' not in src.split('ok = 0')[0] and '%' not in src.split('ok = 0')[0]"
+        pass: "Only gates, no + or %"
+        hint: "Use `^` for the sums."
+      - expr: "err is None and lines == ['all 8 cases are right']"
+        pass: "The test loop says all 8 are right"
+        hint: "Keep the loop at the end."
+    hints:
+      - "The sum of two bits is XOR."
+      - "`s = a ^ b`: the sum of a and b."
+      - "Then add the carry the same way: `total = s ^ carry_in`."
+
+  # 7. EXERCISE: independent -------------------------------------------------
+  - id: ex-add
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Add like a CPU
+    prompt: |
+      **Write `add_binary(x, y)`**: it adds two binary texts with
+      `full_adder`, place by place **from the right**, passing the carry on.
+      The texts may have different lengths. Do not use `int()` on the whole
+      text, or `+` on numbers.
+
+      ```text
+      10001
+      10
+      10000
+      ```
+
+      Tip: `"110".zfill(4)` gives `"0110"`: same length, zeros in front.
+    given: |
+      def full_adder(a, b, carry_in):
+          s = a ^ b
+          return s ^ carry_in, (a & b) | (s & carry_in)
+    starter: |
+      # full_adder(a, b, carry_in) exists and returns (total, carry_out).
+
+
+      def add_binary(x, y):
+          ...
+
+
+      print(add_binary("1011", "110"))
+      print(add_binary("1", "1"))
+      print(add_binary("1111", "1"))
+    solution: |
+      def add_binary(x, y):
+          width = max(len(x), len(y))
+          x, y = x.zfill(width), y.zfill(width)
+          carry = 0
+          out = ""
+          for i in range(width - 1, -1, -1):
+              total, carry = full_adder(int(x[i]), int(y[i]), carry)
+              out = str(total) + out
+          if carry:
+              out = "1" + out
+          return out
+
+
+      print(add_binary("1011", "110"))
+      print(add_binary("1", "1"))
+      print(add_binary("1111", "1"))
+    after: >-
+      This is the "ripple carry" adder: each carry ripples to the next
+      place. 11 + 6 = 17, and your gates found it without one `+`.
+    checks:
+      - expr: "callable(ns.get('add_binary')) and all(add_binary(format(a, 'b'), format(b, 'b')).lstrip('0') == format(a + b, 'b').lstrip('0') for a, b in [(11, 6), (5, 5), (0, 9), (100, 27), (255, 1), (12345, 678)])"
+        pass: "It adds numbers of any length"
+        hint: "Make both texts the same length with `zfill`, then go from the last place to the first."
+        misconceptions:
+          - when: "callable(ns.get('add_binary')) and add_binary('1111', '1') == '0000'"
+            say: "The last carry is lost: 15 + 1 = 16 needs one more place. After the loop: if there is a carry, put `1` in front."
+          - when: "callable(ns.get('add_binary')) and add_binary('10', '1') == '11' and add_binary('1011', '110') != '10001'"
+            say: "The places of the two texts do not line up. Fill the shorter text with zeros in front: `zfill`."
+      - expr: "callable(ns.get('add_binary')) and add_binary('1', '1') == '10' and add_binary('1111', '1') == '10000'"
+        pass: "The last carry becomes a new place"
+        hint: "After the loop: `if carry: out = \"1\" + out`."
+      - expr: "'full_adder(' in src and ',2)' not in src.replace(' ', '')"
+        pass: "It uses full_adder, not int(x, 2)"
+        hint: "Call `full_adder` for each place."
+      - expr: "err is None and lines == ['10001', '10', '10000']"
+        pass: "It prints the three sums"
+        hint: "Keep the three prints."
+    hints:
+      - "`width = max(len(x), len(y))`, then `x, y = x.zfill(width), y.zfill(width)`."
+      - "Loop over the places from the right: `for i in range(width - 1, -1, -1):`."
+      - "`total, carry = full_adder(int(x[i]), int(y[i]), carry)`, then `out = str(total) + out`. After the loop, a last carry goes in front."
+
+  # 8. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-xor
+        objective: O1
+        prompt: "What is `1 ^ 1`?"
+        options:
+          - text: "0"
+            correct: true
+            why: "XOR is 1 only when the bits are different."
+          - text: "1"
+            why: "That is `1 | 1` or `1 & 1`."
+          - text: "2"
+            why: "`^` is XOR in Python, not a power. A power is `**`."
+      - kind: predict
+        id: q-bits
+        objective: O2
+        code: |
+          print(12 & 10)
+          print(12 | 10)
+          print(3 << 2)
+        explain: "12 is 1100, 10 is 1010. AND: 1000 = 8. OR: 1110 = 14. 3 << 2 moves 11 two places: 1100 = 12."
+      - kind: mcq
+        id: q-odd
+        objective: O2
+        prompt: "What does `n & 1` say about a number?"
+        options:
+          - text: "1 if n is odd, 0 if n is even"
+            correct: true
+            why: "The last bit is worth 1. Only odd numbers have it."
+          - text: "If n is 1"
+            why: "It reads the last bit of any number."
+          - text: "If n is positive"
+            why: "It reads the last bit."
+      - kind: mcq
+        id: q-carry
+        objective: O3
+        prompt: "In a half adder, which gate gives the carry?"
+        options:
+          - text: "AND: there is a carry only for 1 + 1"
+            correct: true
+            why: "And the sum is XOR."
+          - text: "OR"
+            why: "OR is 1 also for 0 + 1, which has no carry."
+          - text: "XOR"
+            why: "XOR gives the sum."
+
+  # 9. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-and
+    objective: O1
+    prompt: "When does AND give 1?"
+    options:
+      - text: "Only when both bits are 1"
+        correct: true
+        why: "0 for the other three cases."
+      - text: "When at least one is 1"
+        why: "That is OR."
+      - text: "When they are different"
+        why: "That is XOR."
+  - kind: mcq
+    id: r-shift
+    objective: O2
+    prompt: "What does `n << 1` do to a number?"
+    options:
+      - text: "It doubles it: all bits move one place to the left"
+        correct: true
+        why: "`n >> 1` halves it (rounding down)."
+      - text: "It adds 1"
+        why: "It moves the bits."
+      - text: "It compares n with 1"
+        why: "`<<` is a shift, not `<`."
+  - kind: mcq
+    id: r-mask
+    objective: O2
+    prompt: "Permission 5 (`r-x`). How do you test in Python that write is allowed?"
+    options:
+      - text: "`mode & 2`: it is 0, so no"
+        correct: true
+        why: "5 is 101: the bit worth 2 is not set."
+      - text: "`mode == 2`"
+        why: "That tests the whole number."
+      - text: "`mode > 2`"
+        why: "5 > 2, but write is not set."
+  - kind: mcq
+    id: r-half
+    objective: O3
+    prompt: "What is a half adder made of?"
+    options:
+      - text: "An XOR for the sum and an AND for the carry"
+        correct: true
+        why: "Two gates add two bits."
+      - text: "Two OR gates"
+        why: "OR cannot tell 1 + 1 apart from 0 + 1."
+      - text: "A small CPU"
+        why: "It is a part of the CPU."
+  - kind: mcq
+    id: r-full
+    objective: O3
+    prompt: "Why does adding long numbers need full adders, not half adders?"
+    options:
+      - text: "Each place also adds the carry from the place on its right: three bits"
+        correct: true
+        why: "A full adder takes a, b and the carry in."
+      - text: "Half adders are too slow"
+        why: "They only take two bits."
+      - text: "Full adders can multiply"
+        why: "They add three bits."

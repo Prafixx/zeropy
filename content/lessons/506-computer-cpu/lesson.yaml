@@ -1,0 +1,547 @@
+id: computer-cpu
+order: 506
+title: "Project: a tiny CPU"
+summary: Build the heart of a computer in Python - a CPU with registers, a program counter and the fetch, decode, execute loop - then write a program for it.
+minutes: 50
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Explain the fetch - decode - execute cycle, registers and the program counter
+  - id: O2
+    text: Build a CPU in Python that runs instructions to set, add, subtract, show and jump
+  - id: O3
+    text: Write a program in machine instructions with a loop, using a jump and a condition
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: brief
+    type: theory
+    objective: O1
+    title: The plan
+    body: |
+      A CPU does one simple thing, billions of times per second:
+
+      1. **Fetch**: read the next instruction from memory. A register
+         called the **program counter** (`pc`) holds its address.
+      2. **Decode**: find out what the instruction means.
+      3. **Execute**: do it, for example add two **registers** (the few
+         very fast places to keep values inside the CPU).
+
+      Then again, with the next instruction. You build such a CPU. Its
+      memory holds a program, a list of instructions; each instruction is a
+      tuple:
+
+      | Instruction | What it does |
+      |---|---|
+      | `("SET", "A", 7)` | register A = 7 |
+      | `("ADD", "A", "B")` | A = A + B (8 bits: `% 256`) |
+      | `("SUB", "A", "B")` | A = A - B (8 bits: `% 256`) |
+      | `("OUT", "A")` | show A: add it to the outputs |
+      | `("JMP", 2)` | go on at instruction 2 |
+      | `("JNZ", "A", 2)` | if A is not 0, go on at instruction 2 |
+      | `("HALT",)` | stop |
+
+      There are four registers: A, B, C and D. In four steps:
+
+      1. **The cycle**: fetch, decode, and the instructions SET, OUT and
+         HALT.
+      2. **Calculate**: ADD and SUB.
+      3. **Jumps**: JMP and JNZ, for loops.
+      4. **A program**: multiply two numbers, with only adding.
+    keys:
+      - code: "pc"
+        means: "The program counter: the address of the next instruction."
+      - code: "fetch, decode, execute"
+        means: "What a CPU does again and again."
+      - code: "register"
+        means: "A fast place for one value, inside the CPU."
+
+  # 2. PROJECT STEP 1 ---------------------------------------------------------
+  - id: m1-cycle
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 1: the cycle"
+    prompt: |
+      `run(program)` has the fetch part and HALT. **Add SET and OUT**:
+
+      - `("SET", "A", 7)` puts 7 into the register A (keep 8 bits:
+        `% 256`).
+      - `("OUT", "A")` adds the value of A to `outputs`.
+
+      An instruction that the CPU does not know must stop it with a
+      `ValueError`: keep the `else`.
+
+      ```text
+      [7, 42]
+      ```
+    starter: |
+      def run(program):
+          registers = {"A": 0, "B": 0, "C": 0, "D": 0}
+          pc = 0
+          outputs = []
+          while True:
+              instruction = program[pc]        # fetch
+              pc += 1
+              op = instruction[0]              # decode
+              if op == "HALT":                 # execute
+                  return outputs
+              # SET and OUT here
+              else:
+                  raise ValueError(f"unknown instruction: {op}")
+
+
+      program = [
+          ("SET", "A", 7),
+          ("OUT", "A"),
+          ("SET", "B", 42),
+          ("OUT", "B"),
+          ("HALT",),
+      ]
+      print(run(program))
+    solution: |
+      def run(program):
+          registers = {"A": 0, "B": 0, "C": 0, "D": 0}
+          pc = 0
+          outputs = []
+          while True:
+              instruction = program[pc]        # fetch
+              pc += 1
+              op = instruction[0]              # decode
+              if op == "HALT":                 # execute
+                  return outputs
+              elif op == "SET":
+                  registers[instruction[1]] = instruction[2] % 256
+              elif op == "OUT":
+                  outputs.append(registers[instruction[1]])
+              else:
+                  raise ValueError(f"unknown instruction: {op}")
+
+
+      program = [
+          ("SET", "A", 7),
+          ("OUT", "A"),
+          ("SET", "B", 42),
+          ("OUT", "B"),
+          ("HALT",),
+      ]
+      print(run(program))
+    checks:
+      - &set-out
+        expr: "callable(ns.get('run')) and run([('SET', 'A', 7), ('OUT', 'A'), ('HALT',)]) == [7] and run([('SET', 'D', 3), ('SET', 'C', 9), ('OUT', 'C'), ('OUT', 'D'), ('HALT',)]) == [9, 3]"
+        pass: "SET and OUT work, with every register"
+        hint: "`elif op == \"SET\": registers[instruction[1]] = instruction[2] % 256`, and `elif op == \"OUT\": outputs.append(registers[instruction[1]])`."
+        misconceptions:
+          - when: "callable(ns.get('run')) and run([('SET', 'A', 7), ('OUT', 'A'), ('HALT',)]) == ['A']"
+            say: "OUT adds the name of the register. Add its value: `registers[instruction[1]]`."
+      - &set-wrap
+        expr: "callable(ns.get('run')) and run([('SET', 'A', 300), ('OUT', 'A'), ('HALT',)]) == [44] and run([('OUT', 'B'), ('HALT',)]) == [0]"
+        pass: "SET keeps 8 bits, and registers start at 0"
+        hint: "`instruction[2] % 256`."
+      - &unknown
+        expr: "callable(ns.get('run')) and raises(run, [('FLY', 'A')]) == 'ValueError'"
+        pass: "An unknown instruction stops with ValueError"
+        hint: "Keep the `else` at the end, and put SET and OUT before it as `elif`."
+      - expr: "err is None and lines[-1] == '[7, 42]'"
+        pass: "The program shows [7, 42]"
+        hint: "Keep the program and the print at the end."
+    hints:
+      - "Each instruction is a tuple: `instruction[0]` is the name, then the parts."
+      - "For SET: `instruction[1]` is the register, `instruction[2]` the value."
+      - "`elif op == \"SET\": registers[instruction[1]] = instruction[2] % 256` and `elif op == \"OUT\": outputs.append(registers[instruction[1]])`, before the `else`."
+
+  # 3. PROJECT STEP 2 ---------------------------------------------------------
+  - id: m2-math
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 2: calculate"
+    prompt: |
+      **Add ADD and SUB.** Both work on two registers and keep the result
+      in the first one, with 8 bits (`% 256`), like an 8-bit CPU:
+
+      - `("ADD", "A", "B")`: A = A + B
+      - `("SUB", "A", "B")`: A = A - B
+
+      Change the program at the end to:
+
+      ```python
+      program = [
+          ("SET", "A", 7),
+          ("SET", "B", 5),
+          ("ADD", "A", "B"),
+          ("OUT", "A"),
+          ("SET", "C", 2),
+          ("SUB", "A", "C"),
+          ("OUT", "A"),
+          ("HALT",),
+      ]
+      ```
+
+      ```text
+      [12, 10]
+      ```
+    solution: |
+      def run(program):
+          registers = {"A": 0, "B": 0, "C": 0, "D": 0}
+          pc = 0
+          outputs = []
+          while True:
+              instruction = program[pc]        # fetch
+              pc += 1
+              op = instruction[0]              # decode
+              if op == "HALT":                 # execute
+                  return outputs
+              elif op == "SET":
+                  registers[instruction[1]] = instruction[2] % 256
+              elif op == "OUT":
+                  outputs.append(registers[instruction[1]])
+              elif op == "ADD":
+                  registers[instruction[1]] = (registers[instruction[1]] + registers[instruction[2]]) % 256
+              elif op == "SUB":
+                  registers[instruction[1]] = (registers[instruction[1]] - registers[instruction[2]]) % 256
+              else:
+                  raise ValueError(f"unknown instruction: {op}")
+
+
+      program = [
+          ("SET", "A", 7),
+          ("SET", "B", 5),
+          ("ADD", "A", "B"),
+          ("OUT", "A"),
+          ("SET", "C", 2),
+          ("SUB", "A", "C"),
+          ("OUT", "A"),
+          ("HALT",),
+      ]
+      print(run(program))
+    checks:
+      - *set-out
+      - *unknown
+      - &add-sub
+        expr: "callable(ns.get('run')) and run([('SET', 'A', 7), ('SET', 'B', 5), ('ADD', 'A', 'B'), ('OUT', 'A'), ('OUT', 'B'), ('SUB', 'B', 'A'), ('OUT', 'B'), ('HALT',)]) == [12, 5, 249]"
+        pass: "ADD and SUB change the first register only"
+        hint: "`registers[instruction[1]] = (registers[instruction[1]] + registers[instruction[2]]) % 256`."
+      - &wrap
+        expr: "callable(ns.get('run')) and run([('SET', 'A', 250), ('SET', 'B', 10), ('ADD', 'A', 'B'), ('OUT', 'A'), ('HALT',)]) == [4] and run([('SET', 'A', 3), ('SET', 'B', 5), ('SUB', 'A', 'B'), ('OUT', 'A'), ('HALT',)]) == [254]"
+        pass: "8 bits: 250 + 10 gives 4, and 3 - 5 gives 254"
+        hint: "`% 256` after adding and after subtracting."
+        misconceptions:
+          - when: "callable(ns.get('run')) and run([('SET', 'A', 3), ('SET', 'B', 5), ('SUB', 'A', 'B'), ('OUT', 'A'), ('HALT',)]) == [-2]"
+            say: "A register has 8 bits and no sign: -2 is stored as 254. Use `% 256`."
+      - expr: "err is None and lines[-1] == '[12, 10]'"
+        pass: "The program shows [12, 10]"
+        hint: "Use the new program from the task."
+    hints:
+      - "ADD and SUB look like SET, but read two registers."
+      - "`a = instruction[1]`, `b = instruction[2]`: `registers[a] = (registers[a] + registers[b]) % 256`."
+      - "The same with `-` for SUB. Put both before the `else`."
+
+  # 4. PROJECT STEP 3 ---------------------------------------------------------
+  - id: m3-jumps
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 3: jumps"
+    prompt: |
+      Without jumps, a CPU can only run straight down. **Add JMP and JNZ**:
+
+      - `("JMP", 2)`: go on at instruction 2. A jump only changes `pc`.
+      - `("JNZ", "A", 2)`: go on at instruction 2 **if A is not 0**.
+        Otherwise just go on.
+
+      Then run this countdown. It counts from 3 down to 1 with a loop:
+
+      ```python
+      program = [
+          ("SET", "A", 3),     # 0
+          ("SET", "B", 1),     # 1
+          ("OUT", "A"),        # 2  <- the loop starts here
+          ("SUB", "A", "B"),   # 3
+          ("JNZ", "A", 2),     # 4  back to 2 while A is not 0
+          ("HALT",),           # 5
+      ]
+      ```
+
+      ```text
+      [3, 2, 1]
+      ```
+    solution: |
+      def run(program):
+          registers = {"A": 0, "B": 0, "C": 0, "D": 0}
+          pc = 0
+          outputs = []
+          while True:
+              instruction = program[pc]        # fetch
+              pc += 1
+              op = instruction[0]              # decode
+              if op == "HALT":                 # execute
+                  return outputs
+              elif op == "SET":
+                  registers[instruction[1]] = instruction[2] % 256
+              elif op == "OUT":
+                  outputs.append(registers[instruction[1]])
+              elif op == "ADD":
+                  registers[instruction[1]] = (registers[instruction[1]] + registers[instruction[2]]) % 256
+              elif op == "SUB":
+                  registers[instruction[1]] = (registers[instruction[1]] - registers[instruction[2]]) % 256
+              elif op == "JMP":
+                  pc = instruction[1]
+              elif op == "JNZ":
+                  if registers[instruction[1]] != 0:
+                      pc = instruction[2]
+              else:
+                  raise ValueError(f"unknown instruction: {op}")
+
+
+      program = [
+          ("SET", "A", 3),     # 0
+          ("SET", "B", 1),     # 1
+          ("OUT", "A"),        # 2  <- the loop starts here
+          ("SUB", "A", "B"),   # 3
+          ("JNZ", "A", 2),     # 4  back to 2 while A is not 0
+          ("HALT",),           # 5
+      ]
+      print(run(program))
+    checks:
+      - *set-out
+      - *add-sub
+      - *wrap
+      - &jmp
+        expr: "callable(ns.get('run')) and run([('SET', 'A', 1), ('JMP', 3), ('SET', 'A', 2), ('OUT', 'A'), ('HALT',)]) == [1]"
+        pass: "JMP skips to another instruction"
+        hint: "`elif op == \"JMP\": pc = instruction[1]`."
+      - &jnz
+        expr: "callable(ns.get('run')) and run([('SET', 'A', 3), ('SET', 'B', 1), ('OUT', 'A'), ('SUB', 'A', 'B'), ('JNZ', 'A', 2), ('HALT',)]) == [3, 2, 1] and run([('SET', 'A', 0), ('JNZ', 'A', 0), ('OUT', 'A'), ('HALT',)]) == [0]"
+        pass: "JNZ jumps only while the register is not 0"
+        hint: "`elif op == \"JNZ\": if registers[instruction[1]] != 0: pc = instruction[2]`."
+        misconceptions:
+          - when: "callable(ns.get('run')) and run([('SET', 'A', 3), ('SET', 'B', 1), ('OUT', 'A'), ('SUB', 'A', 'B'), ('JNZ', 'A', 2), ('HALT',)]) == [3, 1]"
+            say: "Every other number is missing: the jump goes one too far. Set `pc = instruction[2]`, not `instruction[2] + 1`: the fetch reads `program[pc]` before it adds 1."
+      - expr: "err is None and lines[-1] == '[3, 2, 1]'"
+        pass: "The countdown shows [3, 2, 1]"
+        hint: "Use the countdown program from the task."
+    hints:
+      - "A jump only sets `pc`: the next fetch reads from there."
+      - "`elif op == \"JMP\": pc = instruction[1]`."
+      - "`elif op == \"JNZ\":` then `if registers[instruction[1]] != 0: pc = instruction[2]`."
+
+  # 5. PROJECT STEP 4 ---------------------------------------------------------
+  - id: m4-multiply
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O3
+    title: "Step 4: a program for your CPU"
+    prompt: |
+      Your CPU cannot multiply. But it can **add in a loop**: 6 × 7 is 6
+      added 7 times.
+
+      **Write `multiply(x, y)`**: it gives back a **program** (a list of
+      instructions) that shows `x × y` with one OUT. `y` is at least 1, and
+      the result is at most 255.
+
+      A plan: A = x, B = y (the counter), C = 0 (the result), D = 1. Then
+      a loop: add A to C, subtract D from B, jump back while B is not 0.
+
+      ```text
+      [42]
+      ```
+    solution: |
+      def run(program):
+          registers = {"A": 0, "B": 0, "C": 0, "D": 0}
+          pc = 0
+          outputs = []
+          while True:
+              instruction = program[pc]        # fetch
+              pc += 1
+              op = instruction[0]              # decode
+              if op == "HALT":                 # execute
+                  return outputs
+              elif op == "SET":
+                  registers[instruction[1]] = instruction[2] % 256
+              elif op == "OUT":
+                  outputs.append(registers[instruction[1]])
+              elif op == "ADD":
+                  registers[instruction[1]] = (registers[instruction[1]] + registers[instruction[2]]) % 256
+              elif op == "SUB":
+                  registers[instruction[1]] = (registers[instruction[1]] - registers[instruction[2]]) % 256
+              elif op == "JMP":
+                  pc = instruction[1]
+              elif op == "JNZ":
+                  if registers[instruction[1]] != 0:
+                      pc = instruction[2]
+              else:
+                  raise ValueError(f"unknown instruction: {op}")
+
+
+      def multiply(x, y):
+          return [
+              ("SET", "A", x),     # 0
+              ("SET", "B", y),     # 1  the counter
+              ("SET", "C", 0),     # 2  the result
+              ("SET", "D", 1),     # 3
+              ("ADD", "C", "A"),   # 4  <- the loop
+              ("SUB", "B", "D"),   # 5
+              ("JNZ", "B", 4),     # 6
+              ("OUT", "C"),        # 7
+              ("HALT",),           # 8
+          ]
+
+
+      print(run(multiply(6, 7)))
+    after: >-
+      Every program you ever ran works like this in the end: simple
+      instructions, a program counter, and jumps. Python itself is a
+      program of such instructions, and it runs your Python code. The CPU
+      of your computer runs billions of them per second.
+    checks:
+      - *set-out
+      - *wrap
+      - *jnz
+      - expr: "callable(ns.get('multiply')) and all(run(multiply(x, y)) == [x * y] for x, y in [(6, 7), (1, 1), (0, 5), (12, 21), (255, 1), (1, 200)])"
+        pass: "The program multiplies, with one OUT"
+        hint: "A loop at the ADD: `(\"ADD\", \"C\", \"A\")`, `(\"SUB\", \"B\", \"D\")`, `(\"JNZ\", \"B\", <place of the ADD>)`."
+        misconceptions:
+          - when: "callable(ns.get('multiply')) and run(multiply(6, 7)) == [48]"
+            say: "One addition too many: 6 × 8. Does the loop start at the right place, and does B start at y?"
+          - when: "callable(ns.get('multiply')) and run(multiply(6, 7)) == [36]"
+            say: "One addition too few: 6 × 6. Count the loop: it must add 7 times."
+      - expr: "callable(ns.get('multiply')) and all(op[0] in ('SET', 'ADD', 'SUB', 'OUT', 'JMP', 'JNZ', 'HALT') for op in multiply(3, 4)) and all(op[0] != 'SET' or op[2] in (3, 4, 0, 1) for op in multiply(3, 4))"
+        pass: "The CPU does the work: no answer is set by Python"
+        hint: "SET only x, y, 0 and 1. The multiplying happens in the loop."
+      - expr: "err is None and lines[-1] == '[42]'"
+        pass: "6 × 7 shows [42]"
+        hint: "`print(run(multiply(6, 7)))` at the end."
+    hints:
+      - "Write the instructions on paper first, with their numbers 0, 1, 2..."
+      - "Four SETs (0 to 3), then the loop from 4: ADD C A, SUB B D, JNZ B 4."
+      - "After the loop: `(\"OUT\", \"C\")` and `(\"HALT\",)`."
+
+  # 6. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Look back
+    items:
+      - kind: mcq
+        id: q-cycle
+        objective: O1
+        prompt: "In which order does a CPU work on each instruction?"
+        options:
+          - text: "Fetch, decode, execute"
+            correct: true
+            why: "Read it, find out what it means, do it. Then the next."
+          - text: "Execute, fetch, decode"
+            why: "It must read an instruction before it can do it."
+          - text: "All instructions at once"
+            why: "One after the other (real CPUs overlap them a little)."
+      - kind: mcq
+        id: q-pc
+        objective: O1
+        prompt: "What does a jump instruction change?"
+        options:
+          - text: "Only the program counter"
+            correct: true
+            why: "The next fetch then reads from the new address."
+          - text: "The program itself"
+            why: "The program stays the same."
+          - text: "The registers A to D"
+            why: "Only `pc` changes."
+      - kind: mcq
+        id: q-loop
+        objective: O3
+        prompt: "How does your countdown program loop, without `for` or `while`?"
+        options:
+          - text: "JNZ jumps back to an earlier instruction while a register is not 0"
+            correct: true
+            why: "Every loop in every language ends up like this in the CPU."
+          - text: "The CPU runs the program again"
+            why: "It jumps back inside the program."
+          - text: "HALT starts it again"
+            why: "HALT stops it."
+      - kind: mcq
+        id: q-mul
+        objective: O3
+        prompt: "Your CPU has no multiply instruction. Why can it still multiply?"
+        options:
+          - text: "Multiplying is adding in a loop, and the CPU can add and jump"
+            correct: true
+            why: "A few simple instructions can compute anything, given time and memory."
+          - text: "Python multiplies for it"
+            why: "The program only uses ADD, SUB and JNZ."
+          - text: "It cannot"
+            why: "Your program computed 6 × 7."
+
+  # 7. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-register
+    objective: O1
+    prompt: "What is a register?"
+    options:
+      - text: "A very fast place for one value, inside the CPU"
+        correct: true
+        why: "A CPU has only a few: your CPU has A, B, C and D."
+      - text: "A list of all instructions"
+        why: "That is the program, in memory."
+      - text: "A part of the screen"
+        why: "It is inside the CPU."
+  - kind: mcq
+    id: r-pc
+    objective: O1
+    prompt: "What does the program counter hold?"
+    options:
+      - text: "The address of the next instruction"
+        correct: true
+        why: "After each fetch it goes up by one, unless a jump sets it."
+      - text: "How many programs have run"
+        why: "It points at the next instruction."
+      - text: "The result of the last ADD"
+        why: "That is in a register."
+  - kind: mcq
+    id: r-decode
+    objective: O1
+    prompt: "In your `run`, which part is the decode?"
+    options:
+      - text: "`op = instruction[0]` and the `if`/`elif` that picks what to do"
+        correct: true
+        why: "Fetch is `program[pc]`, execute is the code in each branch."
+      - text: "`program[pc]`"
+        why: "That is the fetch."
+      - text: "`return outputs`"
+        why: "That is HALT."
+  - kind: mcq
+    id: r-jnz
+    objective: O2
+    prompt: "What does `(\"JNZ\", \"B\", 4)` do when B is 0?"
+    options:
+      - text: "Nothing: the CPU goes on with the next instruction"
+        correct: true
+        why: "It jumps only when B is not zero."
+      - text: "It jumps to 4"
+        why: "Only when B is not 0."
+      - text: "It stops the CPU"
+        why: "Only HALT stops it."
+  - kind: mcq
+    id: r-wrap
+    objective: O2
+    prompt: "Your 8-bit CPU adds 200 and 100. What is in the register?"
+    options:
+      - text: "44"
+        correct: true
+        why: "300 % 256 = 44: overflow."
+      - text: "300"
+        why: "300 does not fit in 8 bits."
+      - text: "255"
+        why: "It wraps around, it does not stop at 255."

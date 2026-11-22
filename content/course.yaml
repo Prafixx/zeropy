@@ -171,3 +171,18 @@ paths:
           - { id: web-api, title: Your own JSON API }
           - { id: web-project, title: "Project: a reading list", kind: project }
           - { id: web-real, title: A real server on your computer and your Pi }
+  - id: computer
+    title: How computers work
+    short: Computer
+    goal: See what is inside - bits, text as numbers, logic gates, memory and a tiny CPU that you build yourself.
+    needs: [functions, dictionaries]
+    modules:
+      - title: Inside the computer
+        goal: From single bits to a working CPU, all in Python.
+        lessons:
+          - { id: computer-bits, title: Bits and bytes }
+          - { id: computer-text, title: "Text, colours and hex" }
+          - { id: computer-logic, title: Logic gates }
+          - { id: computer-numbers, title: The limits of numbers }
+          - { id: computer-memory, title: Memory }
+          - { id: computer-cpu, title: "Project: a tiny CPU", kind: project }

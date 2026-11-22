@@ -1,0 +1,454 @@
+id: computer-memory
+order: 505
+title: Memory
+summary: Memory is a long row of bytes, each with an address. Store text and numbers in a pretend memory, read them back, and see how a missing end byte becomes a bug.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Describe memory as numbered bytes, and know the difference between RAM and storage
+  - id: O2
+    text: Store text in bytes with an end marker, and read it back by address
+  - id: O3
+    text: Store a number bigger than 255 in several bytes, little-endian, and read it back
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: ram
+    type: theory
+    objective: O1
+    title: A long row of bytes
+    body: |
+      **RAM** (the working memory) is a very long row of bytes. Each byte
+      has a number, its **address**: 0, 1, 2, and so on. A computer with
+      8 GB of RAM has about 8 000 000 000 addresses. The CPU reads and
+      writes by address: "give me the byte at 4 096".
+
+      Everything a running program uses lives there: your variables, your
+      lists, the code itself. RAM forgets everything when the power goes.
+      **Storage** (SSD, SD card, hard disk) keeps it, but is much slower:
+
+      | Where | Time to read |
+      |---|---|
+      | cache, inside the CPU | about 1 nanosecond |
+      | RAM | about 100 nanoseconds |
+      | SSD | about 100 000 nanoseconds (0.1 ms) |
+      | over the internet | about 50 000 000 nanoseconds (50 ms) |
+
+      In Python, a `bytearray` is a row of bytes that you can change: a good
+      pretend memory. `memory = bytearray(16)` gives 16 bytes, all 0, with
+      the addresses 0 to 15. `memory[5] = 72` writes 72 at address 5.
+    keys:
+      - code: "address"
+        means: "The number of a byte in memory."
+      - code: "RAM / storage"
+        means: "Fast and forgets / slow and keeps."
+      - code: "bytearray(16)"
+        means: "16 bytes that can change: a pretend memory."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: dump
+    type: demo
+    visual: none
+    objective: O2
+    title: Look into memory
+    intro: |
+      Press **Run**: two texts are written into 16 bytes of memory, each
+      with a byte 0 at the end. `dump` shows each byte in hex, with the
+      address of the row, and the characters on the right.
+    code: |
+      memory = bytearray(16)
+
+
+      def dump(memory):
+          for start in range(0, len(memory), 8):
+              row = memory[start:start + 8]
+              hexes = " ".join(f"{b:02x}" for b in row)
+              chars = "".join(chr(b) if 32 <= b < 127 else "." for b in row)
+              print(f"{start:02}: {hexes}  {chars}")
+
+
+      memory[2:4] = "Hi".encode()      # address 2 and 3
+      memory[4] = 0                    # the end of "Hi"
+      memory[5:8] = "Zoe".encode()     # address 5, 6, 7
+      memory[8] = 0                    # the end of "Zoe"
+      dump(memory)
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and lines[0] == '00: 00 00 48 69 00 5a 6f 65  ..Hi.Zoe'"
+      - text: "Overwrite the end of \"Hi\": add `memory[4] = 33` (a `!`) at the end."
+        expr: "err is None and '..Hi!Zoe' in out"
+      - text: "Try `memory[0] = 300`. What does Python say?"
+        expr: "err == 'ValueError'"
+    investigate:
+      - kind: mcq
+        id: i-zero
+        prompt: "Why a byte 0 after each text?"
+        options:
+          - text: "Memory has no gaps: the 0 says where the text ends"
+            correct: true
+            why: "Without it, a program cannot know if \"Hi\" ends after i, or goes on into \"Zoe\"."
+          - text: "To make the text look nice"
+            why: "The 0 is not shown. It marks the end."
+          - text: "Python needs it"
+            why: "Python strings store their length. The C language uses the 0 end."
+      - kind: mcq
+        id: i-overflow
+        prompt: "With `memory[4] = 33`, a program that reads the text at address 2 up to the 0 now gets `Hi!Zoe`. What does this show?"
+        options:
+          - text: "Writing one byte too far changes other data: a classic bug, and a security hole"
+            correct: true
+            why: "This is a \"buffer overflow\". Many attacks on programs in C start like this."
+          - text: "Nothing: \"Hi\" and \"Zoe\" are the same text"
+            why: "They were two texts. Now the end mark is gone."
+          - text: "That the memory is too small"
+            why: "The memory is big enough. The end mark was overwritten."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-write
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Write a text into memory
+    prompt: |
+      **Complete `write_text(memory, address, text)`**: it puts the UTF-8
+      bytes of the text at the address, and a byte 0 right after them.
+
+      ```text
+      00: 00 00 48 69 00 5a 6f 65  ..Hi.Zoe
+      08: 00 00 00 00 00 00 00 00  ........
+      ```
+    given: |
+      def dump(memory):
+          for start in range(0, len(memory), 8):
+              row = memory[start:start + 8]
+              hexes = " ".join(f"{b:02x}" for b in row)
+              chars = "".join(chr(b) if 32 <= b < 127 else "." for b in row)
+              print(f"{start:02}: {hexes}  {chars}")
+    starter: |
+      # dump(memory) exists.
+
+
+      def write_text(memory, address, text):
+          data = text.encode("utf-8")
+          memory[address:address + len(data)] = ___
+          memory[___] = 0
+
+
+      memory = bytearray(16)
+      write_text(memory, 2, "Hi")
+      write_text(memory, 5, "Zoe")
+      dump(memory)
+    solution: |
+      def write_text(memory, address, text):
+          data = text.encode("utf-8")
+          memory[address:address + len(data)] = data
+          memory[address + len(data)] = 0
+
+
+      memory = bytearray(16)
+      write_text(memory, 2, "Hi")
+      write_text(memory, 5, "Zoe")
+      dump(memory)
+    after: >-
+      "Hi" takes the addresses 2 and 3, so its end mark goes to 4: the
+      address plus the number of bytes. An accent counts as 2 bytes here:
+      that is why `len(data)`, not `len(text)`.
+    checks:
+      - expr: "callable(ns.get('write_text')) and (lambda m: (write_text(m, 1, 'ab'), bytes(m))[1] == b'\\x00ab\\x00\\x00\\x00\\x00\\x00')(bytearray(b'\\x00' * 8))"
+        pass: "The bytes go to the address, with a 0 after them"
+        hint: "`memory[address:address + len(data)] = data`, then `memory[address + len(data)] = 0`."
+      - expr: "callable(ns.get('write_text')) and (lambda m: (write_text(m, 0, 'é!'), bytes(m))[1] == b'\\xc3\\xa9!\\x00\\x07')(bytearray(b'\\x07' * 5))"
+        pass: "The end mark comes after the last byte, also with accents"
+        hint: "Count the bytes: `len(data)`, not `len(text)`."
+        misconceptions:
+          - when: "callable(ns.get('write_text')) and (lambda m: (write_text(m, 0, 'é!'), bytes(m))[1][2])(bytearray(b'\\x07' * 5)) == 0"
+            say: "The 0 overwrites the `!`: \"é!\" is 3 bytes but 2 characters. Use `len(data)`."
+      - expr: "err is None and lines == ['00: 00 00 48 69 00 5a 6f 65  ..Hi.Zoe', '08: 00 00 00 00 00 00 00 00  ........']"
+        pass: "The memory looks like the dump above"
+        hint: "Keep the calls at the end."
+    hints:
+      - "The first blank: the bytes of the text, `data`."
+      - "The end mark goes right after the bytes."
+      - "`memory[address + len(data)] = 0`."
+
+  # 4. EXERCISE: debug -------------------------------------------------------
+  - id: ex-read
+    type: exercise
+    fade: debug
+    objective: O2
+    title: Read until the end mark
+    prompt: |
+      `read_text(memory, address)` should read the text at an address. But
+      it gives the whole rest of the memory, with the other texts in it.
+      **Fix it**: stop at the first byte 0.
+
+      ```text
+      Hi
+      Zoe
+      ```
+    given: |
+      memory = bytearray(b"\x00\x00Hi\x00Zoe\x00\x00\x00\x00\x00\x00\x00\x00")
+    starter: |
+      # memory exists: "Hi" at address 2, "Zoe" at address 5.
+
+
+      def read_text(memory, address):
+          data = memory[address:]
+          return data.decode("utf-8")
+
+
+      print(read_text(memory, 2))
+      print(read_text(memory, 5))
+    solution: |
+      def read_text(memory, address):
+          end = address
+          while memory[end] != 0:
+              end += 1
+          return memory[address:end].decode("utf-8")
+
+
+      print(read_text(memory, 2))
+      print(read_text(memory, 5))
+    after: >-
+      A program that reads up to a 0 trusts that the 0 is there. If a bug
+      or an attacker removed it, the program reads into other data: that
+      is how a secret can leak from memory.
+    checks:
+      - expr: "callable(ns.get('read_text')) and read_text(memory, 2) == 'Hi' and read_text(memory, 5) == 'Zoe'"
+        pass: "It stops at the end mark"
+        hint: "Find the first 0 from the address on, and take the bytes before it."
+      - expr: "callable(ns.get('read_text')) and read_text(bytearray(b'\\x00caf\\xc3\\xa9\\x00x'), 1) == 'café' and read_text(bytearray(b'A\\x00'), 0) == 'A' and read_text(bytearray(b'\\x00\\x00'), 1) == ''"
+        pass: "It works at any address, with accents, and for an empty text"
+        hint: "A loop: `while memory[end] != 0: end += 1`."
+      - expr: "err is None and lines == ['Hi', 'Zoe']"
+        pass: "It prints Hi and Zoe"
+        hint: "Keep the two prints."
+    hints:
+      - "Where does the text end? At the first byte 0 after the address."
+      - "`end = address`, then `while memory[end] != 0: end += 1`."
+      - "Then `memory[address:end].decode(\"utf-8\")`."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: numbers
+    type: theory
+    objective: O3
+    title: Numbers bigger than a byte
+    body: |
+      One byte holds 0 to 255. A bigger number takes **several bytes**: 2
+      bytes (16 bits) hold 0 to 65 535, 4 bytes hold about 4 billion.
+
+      1000 does not fit in one byte. Split it like a number with two digits
+      in base 256: `1000 = 3 × 256 + 232`. So the two bytes are `3` (high)
+      and `232` (low).
+
+      In which order? Most CPUs (Intel, AMD, the ARM in a Raspberry Pi) put
+      the **low byte first**: **little-endian**. At address 2 and 3:
+
+      ```text
+      address:   2     3
+      byte:    232     3        → 232 + 3 × 256 = 1000
+      ```
+
+      Python can do it for you, and so can you:
+
+      ```python
+      (1000).to_bytes(2, "little")         # b'\xe8\x03'  (e8 = 232)
+      int.from_bytes(b"\xe8\x03", "little")  # 1000
+      low, high = 1000 % 256, 1000 // 256     # 232, 3
+      ```
+
+      Files and networks often use the other order, **big-endian**
+      (`"big"`): a file read with the wrong order gives wrong numbers.
+    keys:
+      - code: "n % 256, n // 256"
+        means: "The low byte and the high byte."
+      - code: "little-endian"
+        means: "Low byte first (most CPUs)."
+      - code: "n.to_bytes(2, \"little\")"
+        means: "A number as 2 bytes."
+
+  # 6. EXERCISE: independent -------------------------------------------------
+  - id: ex-u16
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Two bytes for a number
+    prompt: |
+      **Write `write_u16(memory, address, value)` and
+      `read_u16(memory, address)`**. They store a number from 0 to 65 535 in
+      2 bytes, little-endian, and read it back. Do it by hand, without
+      `to_bytes` and `from_bytes`.
+
+      ```text
+      [0, 0, 232, 3, 0, 0]
+      1000
+      ```
+    starter: |
+      # Your two functions here
+
+
+      memory = bytearray(6)
+      write_u16(memory, 2, 1000)
+      print(list(memory))
+      print(read_u16(memory, 2))
+    solution: |
+      def write_u16(memory, address, value):
+          memory[address] = value % 256
+          memory[address + 1] = value // 256
+
+
+      def read_u16(memory, address):
+          return memory[address] + memory[address + 1] * 256
+
+
+      memory = bytearray(6)
+      write_u16(memory, 2, 1000)
+      print(list(memory))
+      print(read_u16(memory, 2))
+    after: >-
+      `value % 256` and `value // 256` are the same as `value & 255` and
+      `value >> 8` from the lesson on gates: CPUs use the bit operators.
+    checks:
+      - expr: "callable(ns.get('write_u16')) and all((lambda m: (write_u16(m, 1, v), bytes(m))[1] == b'\\x00' + v.to_bytes(2, 'little') + b'\\x00')(bytearray(4)) for v in [0, 1, 255, 256, 1000, 65535])"
+        pass: "write_u16 stores the low byte first"
+        hint: "`memory[address] = value % 256`, `memory[address + 1] = value // 256`."
+        misconceptions:
+          - when: "callable(ns.get('write_u16')) and (lambda m: (write_u16(m, 0, 1000), list(m))[1])(bytearray(2)) == [3, 232]"
+            say: "That is big-endian: the high byte first. Little-endian puts the low byte (`value % 256`) at the address itself."
+      - expr: "callable(ns.get('read_u16')) and all(read_u16(bytearray(b'\\x09' + v.to_bytes(2, 'little')), 1) == v for v in [0, 1, 255, 256, 1000, 65535])"
+        pass: "read_u16 reads it back"
+        hint: "`memory[address] + memory[address + 1] * 256`."
+      - expr: "'to_bytes' not in src and 'from_bytes' not in src"
+        pass: "By hand, without to_bytes or from_bytes"
+        hint: "Use `% 256` and `// 256`."
+      - expr: "err is None and lines == ['[0, 0, 232, 3, 0, 0]', '1000']"
+        pass: "It prints the bytes and 1000"
+        hint: "Keep the prints."
+    hints:
+      - "The low byte is `value % 256`, the high byte `value // 256`."
+      - "Low byte at `address`, high byte at `address + 1`."
+      - "Reading: `memory[address] + memory[address + 1] * 256`."
+
+  # 7. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-power
+        objective: O1
+        prompt: "The power goes off. What is lost?"
+        options:
+          - text: "What was only in RAM: the programs that ran and their data"
+            correct: true
+            why: "Saved files are in storage, and stay."
+          - text: "The files on the SSD"
+            why: "Storage keeps its data without power."
+          - text: "Nothing"
+            why: "RAM forgets without power."
+      - kind: predict
+        id: q-bytes
+        objective: O3
+        code: |
+          memory = bytearray(4)
+          memory[1] = 44
+          memory[2] = 1
+          print(list(memory))
+          print(memory[1] + memory[2] * 256)
+        explain: "Two bytes, little-endian: 44 + 1 × 256 = 300."
+      - kind: mcq
+        id: q-end
+        objective: O2
+        prompt: "A text in memory ends with a byte 0. What happens when a bug overwrites that 0?"
+        options:
+          - text: "A reader goes on into the next bytes, and gets other data"
+            correct: true
+            why: "It reads until the next 0, wherever that is."
+          - text: "The text gets shorter"
+            why: "It gets longer: the end mark is gone."
+          - text: "The computer stops"
+            why: "Usually nothing stops: it just reads the wrong data."
+      - kind: mcq
+        id: q-endian
+        objective: O3
+        prompt: "On a Raspberry Pi (little-endian), 1000 is stored in 2 bytes. Which byte is at the lower address?"
+        options:
+          - text: "232, the low byte"
+            correct: true
+            why: "1000 = 3 × 256 + 232. Low byte first."
+          - text: "3, the high byte"
+            why: "That is big-endian."
+          - text: "1000"
+            why: "1000 does not fit in one byte."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-address
+    objective: O1
+    prompt: "What is an address in memory?"
+    options:
+      - text: "The number of one byte in the long row of memory"
+        correct: true
+        why: "The CPU reads and writes by address."
+      - text: "The name of a variable"
+        why: "Names are for people. The CPU uses addresses."
+      - text: "A place on the internet"
+        why: "That is a web address."
+  - kind: mcq
+    id: r-speed
+    objective: O1
+    prompt: "Which is fastest to read?"
+    options:
+      - text: "The cache inside the CPU"
+        correct: true
+        why: "Then RAM, then the SSD, then the network."
+      - text: "The SSD"
+        why: "About 1000 times slower than RAM."
+      - text: "A file on the internet"
+        why: "The slowest of them."
+  - kind: mcq
+    id: r-zero
+    objective: O2
+    prompt: "Why is a byte 0 written after a text in memory?"
+    options:
+      - text: "It marks where the text ends"
+        correct: true
+        why: "Readers stop at it."
+      - text: "It is a space"
+        why: "A space is 32."
+      - text: "It makes the text bold"
+        why: "It is the end mark."
+  - kind: mcq
+    id: r-twobytes
+    objective: O3
+    prompt: "What is the largest number in 2 bytes?"
+    options:
+      - text: "65 535"
+        correct: true
+        why: "2 ** 16 - 1."
+      - text: "510"
+        why: "Bytes do not add: they are places in base 256."
+      - text: "255"
+        why: "That is one byte."
+  - kind: mcq
+    id: r-little
+    objective: O3
+    prompt: "What does little-endian mean?"
+    options:
+      - text: "The low byte of a number is stored first"
+        correct: true
+        why: "Most CPUs work like this."
+      - text: "Small numbers only"
+        why: "It is about the order of the bytes."
+      - text: "The bytes are written from the right"
+        why: "The low byte comes at the lower address."
