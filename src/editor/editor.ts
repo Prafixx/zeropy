@@ -172,3 +172,64 @@ export function highlightLines(lineEls: HTMLElement[], code: string): void {
     if (!el.hasChildNodes()) el.append('​');
   });
 }
+
+/** An element (a blank to fill) that takes the place of columns `from` to `to` of a line. */
+export interface Slot {
+  line: number;
+  from: number;
+  to: number;
+  el: HTMLElement;
+}
+
+/**
+ * Like highlightLines, but some parts of the code are replaced by elements:
+ * the code is highlighted as a whole (with the parts in it, so the colours
+ * are right), and each slot's element is put where its text would be.
+ */
+export function highlightWithSlots(lineEls: HTMLElement[], code: string, slots: Slot[]): void {
+  let index = 0;
+  let col = 0;
+  const placed = new Set<Slot>();
+  lineEls.forEach((el) => el.replaceChildren());
+  const add = (target: HTMLElement, text: string, classes: string): void => {
+    if (!text) return;
+    if (classes) {
+      const span = document.createElement('span');
+      span.className = classes;
+      span.textContent = text;
+      target.append(span);
+    } else target.append(text);
+  };
+  highlightCode(
+    code,
+    pythonLanguage.parser.parse(code),
+    highlighter,
+    (text, classes) => {
+      const target = lineEls[index];
+      if (!target) return;
+      const start = col;
+      const end = col + text.length;
+      let pos = start;
+      const here = slots.filter((s) => s.line === index && s.to > start && s.from < end).sort((a, b) => a.from - b.from);
+      for (const slot of here) {
+        if (slot.from > pos) add(target, text.slice(pos - start, slot.from - start), classes);
+        if (!placed.has(slot)) {
+          target.append(slot.el);
+          placed.add(slot);
+        }
+        pos = Math.max(pos, slot.to);
+      }
+      if (pos < end) add(target, text.slice(pos - start), classes);
+      col = end;
+    },
+    () => {
+      index += 1;
+      col = 0;
+    },
+  );
+  // A slot the highlighter never reached (it should not happen): put it at the end of its line.
+  for (const slot of slots) if (!placed.has(slot)) lineEls[slot.line]?.append(slot.el);
+  lineEls.forEach((el) => {
+    if (!el.hasChildNodes()) el.append('​');
+  });
+}

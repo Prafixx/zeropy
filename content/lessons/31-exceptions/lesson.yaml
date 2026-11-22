@@ -555,6 +555,18 @@ steps:
     objective: O1
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-try
+        objective: O1
+        prompt: "**Fill in the blanks** so the program prints `0` instead of stopping with an error."
+        code: |
+          text = "abc"
+          [?try?]:
+              number = int(text)
+          [?except?] ValueError:
+              number = 0
+          print(number)
+        explain: "`int(\"abc\")` raises a ValueError inside `try`. The `except ValueError:` block runs, and the program goes on."
       - kind: predict
         id: q-skip
         objective: O1

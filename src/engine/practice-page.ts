@@ -19,7 +19,7 @@ type Task = { lesson: Lesson; ref: string } & ({ kind: 'exercise'; step: Exercis
 /** Exercises and questions in a set. Exercises take longer, so fewer of them. */
 const SET = { exercises: 4, items: 3 };
 /** Kinds of questions that make you work with code (not only recall a fact). */
-const CODE_ITEMS = new Set<Item['kind']>(['trace', 'predict', 'order', 'diagnose', 'spot']);
+const CODE_ITEMS = new Set<Item['kind']>(['trace', 'predict', 'order', 'diagnose', 'spot', 'blanks']);
 
 /** Every task of a lesson that makes sense on its own, outside the lesson. */
 function tasksOf(lesson: Lesson): Task[] {

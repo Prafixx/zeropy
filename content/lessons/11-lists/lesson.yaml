@@ -496,6 +496,21 @@ steps:
     objective: O3
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-list
+        objective: O2
+        prompt: "**Fill in the blanks** so the program prints `['plum', 'pear', 'kiwi']` and then `kiwi`."
+        code: |
+          fruits = ["apple", "pear"]
+          fruits.[?append?]("kiwi")
+          fruits[[?0?]] = "plum"
+          print(fruits)
+          print(fruits[[?-1?]])
+        explain: "`append` adds at the end. Index 0 is the first value, so `apple` becomes `plum`. Index `-1` is the last value."
+        misconceptions:
+          - blank: 2
+            answer: "1"
+            say: "Index 1 is the second value, `pear`. The first is index 0."
       - kind: mcq
         id: q-first
         objective: O1

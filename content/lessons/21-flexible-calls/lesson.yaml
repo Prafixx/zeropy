@@ -38,8 +38,11 @@ steps:
       `zip` stops at the end of the **shortest** list. Values that have no
       partner are left out, with no error.
 
-      Pairs are also what `dict()` needs. `dict(zip(names, scores))` is
-      `{'Ana': 7, 'Ben': 9, 'Cleo': 4}`.
+      Pairs are also what `dict()` needs:
+
+      ```python
+      dict(zip(names, scores))    # {'Ana': 7, 'Ben': 9, 'Cleo': 4}
+      ```
     keys:
       - code: "zip(names, scores)"
         means: "Pairs: (first, first), (second, second), ..."
@@ -430,6 +433,27 @@ steps:
     objective: O2
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-zip
+        objective: O2
+        prompt: "**Fill in the blanks** so the program prints `Ann 7`, `Bo 9` and `6`."
+        code: |
+          names = ["Ann", "Bo"]
+          scores = [7, 9]
+          for name, score in [?zip?](names, scores):
+              print(name, score)
+
+
+          def total([?*numbers?]):
+              return sum(numbers)
+
+
+          print(total(1, 2, 3))
+        explain: "`zip` walks both lists side by side. `*numbers` takes any number of values, as a tuple."
+        misconceptions:
+          - blank: 2
+            answer: "numbers"
+            say: "Without `*`, the function takes exactly one value, and `total(1, 2, 3)` gives a TypeError."
       - kind: mcq
         id: q-zip
         objective: O1

@@ -453,6 +453,25 @@ steps:
     objective: O4
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-class
+        objective: O2
+        prompt: "**Fill in the blanks** so the program prints `Rex says woof`."
+        code: |
+          class Dog:
+              def [?__init__?](self, name):
+                  [?self.name?] = name
+
+              def speak(self):
+                  return f"{self.name} says woof"
+
+
+          print(Dog("Rex").speak())
+        explain: "`__init__` runs when an object is made. `self.name = name` keeps the name in the object, so `speak` can read it."
+        misconceptions:
+          - blank: 2
+            answer: "name"
+            say: "`name = name` only changes a local name. Keep it in the object: `self.name`."
       - kind: mcq
         id: q-plan
         objective: O1

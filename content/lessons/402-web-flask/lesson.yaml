@@ -364,6 +364,28 @@ steps:
     objective: O1
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-route
+        objective: O2
+        prompt: "**Fill in the blanks** so `/double/21` answers `42`, and `/double/abc` gives 404."
+        code: |
+          from flask import Flask
+
+          app = Flask(__name__)
+
+
+          @app.route("/double/[?<int:n>?]")
+          def double(n):
+              return str(n * 2)
+
+
+          print(app.test_client().get("/double/21").get_data(as_text=True))
+          print(app.test_client().get("/double/abc").status_code)
+        explain: "`<int:n>` takes only whole numbers, and gives `n` as an int. `abc` does not match, so Flask answers 404."
+        misconceptions:
+          - blank: 1
+            answer: "<n>"
+            say: "Without `int:`, `n` is the text `\"21\"`, and `\"21\" * 2` is `\"2121\"`."
       - kind: mcq
         id: q-route
         objective: O1

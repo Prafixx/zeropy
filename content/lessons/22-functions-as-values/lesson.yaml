@@ -367,6 +367,19 @@ steps:
     objective: O3
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-key
+        objective: O2
+        prompt: "**Fill in the blanks** so the words are sorted by their length, and the longest one is printed: `['fig', 'kiwi', 'banana']` and `banana`."
+        code: |
+          words = ["kiwi", "fig", "banana"]
+          print(sorted(words, key=[?len?]))
+          print(max(words, key=[?len?]))
+        explain: "`key=len` gives the function itself, without `()`: sorted and max call it for each word."
+        misconceptions:
+          - blank: 1
+            answer: "len()"
+            say: "`len()` calls the function at once, without a word. Give the function itself: `key=len`."
       - kind: mcq
         id: q-brackets
         objective: O1

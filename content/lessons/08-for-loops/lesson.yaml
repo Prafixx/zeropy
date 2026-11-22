@@ -414,6 +414,18 @@ steps:
     objective: O3
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-range
+        objective: O2
+        prompt: "**Fill in the blanks** so the loop prints `1`, `4` and `7`, one per line."
+        code: |
+          for n in range([?1?], [?10?], [?3?]):
+              print(n)
+        explain: "Start at 1, go up by 3, and stop before 10: 1, 4, 7. A stop of 8 or 9 works too: the stop itself is never part of the row."
+        misconceptions:
+          - blank: 2
+            answer: "7"
+            say: "The stop is never part of the row: with 7, the loop ends after 4."
       - kind: mcq
         id: q-values
         objective: O2

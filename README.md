@@ -11,6 +11,10 @@ desktop app, in about 31 hours.
 - **Code puzzles.** Put the mixed-up lines of a program in order: 33
   puzzles in 24 lessons. Python checks your order, so any order that works
   is right.
+- **Fill in the blanks.** Short gaps in real code, for the parts where the
+  exact syntax is hard: f-string formats, slices, `range`, comprehensions,
+  regular expressions, classes and Flask routes. Python checks your answer,
+  so another answer that works is right too.
 - **Be the computer.** Trace tables: you run a program in your head and
   write each new value, line by line. Python's real run is the answer key.
 - **How does it work?** After you play with a demo, short questions ask

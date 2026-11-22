@@ -60,6 +60,22 @@ function checkItem(item: unknown, where: string, objectives: Set<string>, out: s
     if (item.stdin !== undefined && (!Array.isArray(item.stdin) || !item.stdin.every(Array.isArray))) {
       out.push(`${where}: order stdin must be a list of answer lists`);
     }
+  } else if (item.kind === 'blanks') {
+    const code = text(item.code) ? item.code : '';
+    const blanks = [...code.matchAll(/\[\?(.*?)\?\]/g)];
+    if (blanks.length === 0) out.push(`${where}: blanks needs code with at least one [?answer?]`);
+    if (blanks.length > 6) out.push(`${where}: blanks has more than 6 blanks`);
+    if (blanks.some((m) => m[1].trim() === '')) out.push(`${where}: every blank needs an answer on one line`);
+    if (!text(item.explain)) out.push(`${where}: blanks needs an explanation`);
+    if (item.stdin !== undefined && (!Array.isArray(item.stdin) || !item.stdin.every(Array.isArray))) {
+      out.push(`${where}: blanks stdin must be a list of answer lists`);
+    }
+    const said = Array.isArray(item.misconceptions) ? item.misconceptions : [];
+    said.forEach((m, i) => {
+      if (!isRec(m) || typeof m.blank !== 'number' || m.blank < 1 || m.blank > blanks.length || !text(m.answer) || !text(m.say)) {
+        out.push(`${where}: misconception ${i + 1} needs blank (1 to ${blanks.length}), answer and say`);
+      }
+    });
   } else if (item.kind === 'trace') {
     if (!text(item.code)) out.push(`${where}: trace needs code`);
     if (!text(item.explain)) out.push(`${where}: trace needs an explanation`);
@@ -85,7 +101,7 @@ function checkItem(item: unknown, where: string, objectives: Set<string>, out: s
       });
     }
   } else {
-    out.push(`${where}: item kind must be "mcq", "predict", "diagnose", "order", "trace" or "spot"`);
+    out.push(`${where}: item kind must be "mcq", "predict", "diagnose", "order", "trace", "spot" or "blanks"`);
   }
 }
 

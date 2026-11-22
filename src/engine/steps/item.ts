@@ -5,7 +5,8 @@ import { confetti, glide, place, shake, stamp } from '@/kit/motion';
 import { onPyStatus, runPython } from '@/py/runner';
 import { samePrint, sameValue, traceRows } from '../trace-table';
 import type { TraceRow } from '../trace-table';
-import type { DiagnoseItem, Item, McqItem, OrderItem, PredictItem, PyError, SpotItem, TraceItem } from '../types';
+import type { Slot } from '@/editor/editor';
+import type { BlanksItem, DiagnoseItem, Item, McqItem, OrderItem, PredictItem, PyError, SpotItem, TraceItem } from '../types';
 import { button, codeBlock, h, icon, md, mdInline, panel, shuffle } from '../ui';
 import type { PanelKind } from '../ui';
 
@@ -839,11 +840,191 @@ function renderSpot(item: SpotItem, onDone: OnDone): ItemView {
   return { el, dispose: () => undefined };
 }
 
+const BLANK = /\[\?(.*?)\?\]/g;
+
+/**
+ * Fill in the blanks. The code is shown with a field for each `[?answer?]`.
+ * Our answers are right at once; other answers are right when the program
+ * prints the same and ends with the same values (Python is the judge).
+ */
+function renderBlanks(item: BlanksItem, onDone: OnDone): ItemView {
+  const raw = item.code.replace(/\n+$/, '');
+  const answers: string[] = [];
+  const slots: Slot[] = [];
+  // The program with our answers in it, and where each blank sits in it.
+  const lines = raw.split('\n').map((line, at) => {
+    let out = '';
+    let last = 0;
+    for (const m of line.matchAll(BLANK)) {
+      out += line.slice(last, m.index);
+      const from = out.length;
+      out += m[1];
+      answers.push(m[1]);
+      const input = h('input', {
+        class: 'blank-input',
+        type: 'text',
+        spellcheck: 'false',
+        autocomplete: 'off',
+        autocapitalize: 'off',
+      }) as HTMLInputElement;
+      input.style.width = `${Math.max(3, m[1].length + 1.5)}ch`;
+      slots.push({ line: at, from, to: out.length, el: input });
+      last = (m.index ?? 0) + m[0].length;
+    }
+    return out + line.slice(last);
+  });
+  const reference = lines.join('\n');
+  const inputs = slots.map((s) => s.el as HTMLInputElement);
+  inputs.forEach((input, i) => input.setAttribute('aria-label', `Blank ${i + 1} of ${inputs.length}`));
+  const runs = item.stdin ?? [[]];
+  let wrongTries = 0;
+  let solved = false;
+  let busy = false;
+  let disposed = false;
+  let expected: Outcome[] | null = null;
+
+  // The code, first plain (fields in their places), then highlighted.
+  const texts = lines.map((line, at) => {
+    const el = h('span', { class: 'code-text' });
+    let pos = 0;
+    for (const slot of slots.filter((s) => s.line === at)) {
+      el.append(line.slice(pos, slot.from), slot.el);
+      pos = slot.to;
+    }
+    el.append(line.slice(pos) || (pos === 0 ? '​' : ''));
+    return el;
+  });
+  const rows = texts.map((el, i) => h('div', { class: 'code-line' }, h('span', { class: 'code-num', 'aria-hidden': 'true' }, String(i + 1)), el));
+  const code = h('pre', { class: 'code is-blanks' }, ...rows);
+  void import('@/editor/editor').then((m) => m.highlightWithSlots(texts, reference, slots));
+
+  const feedback = h('div', { class: 'item-feedback', 'aria-live': 'polite' });
+  const check = button('Check', { kind: 'plain', onClick: () => void submit() });
+  const giveUp = button('Show the answer', { kind: 'ghost', small: true, onClick: () => showAnswer() });
+  giveUp.hidden = true;
+  inputs.forEach((input) => {
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        void submit();
+      }
+    });
+    input.addEventListener('input', () => input.classList.remove('is-right'));
+  });
+
+  function say(kind: PanelKind, title: string, ...body: (Node | string | null)[]): void {
+    feedback.replaceChildren(panel(kind, title, ...body));
+    place(feedback.children);
+    feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function finish(firstTry: boolean): void {
+    solved = true;
+    check.hidden = true;
+    giveUp.hidden = true;
+    inputs.forEach((input) => {
+      input.readOnly = true;
+      input.classList.add('is-right');
+    });
+    onDone(firstTry);
+  }
+
+  function showAnswer(): void {
+    if (solved || busy) return;
+    inputs.forEach((input, i) => (input.value = answers[i]));
+    say('info', 'These are our answers.', md(item.explain, 'prose prose-small'));
+    finish(false);
+  }
+
+  const stopStatus = onPyStatus((status) => {
+    if (!solved) check.querySelector('.btn-label')!.textContent = status === 'loading' ? 'Python is starting…' : 'Check';
+  });
+
+  async function submit(): Promise<void> {
+    if (solved || busy) return;
+    const values = inputs.map((input) => input.value.trim());
+    const empty = values.findIndex((v) => v === '');
+    if (empty >= 0) {
+      say('info', inputs.length > 1 ? 'Fill in every blank first.' : 'Fill in the blank first.');
+      inputs[empty].focus();
+      return;
+    }
+    if (values.every((v, i) => v === answers[i].trim())) {
+      say('good', 'Correct.', md(item.explain, 'prose prose-small'));
+      confetti(code, wrongTries === 0 ? 12 : 6);
+      finish(wrongTries === 0);
+      return;
+    }
+    busy = true;
+    check.disabled = true;
+    code.classList.add('is-busy');
+    let k = 0;
+    const mine = raw.replace(BLANK, () => values[k++]);
+    try {
+      expected ??= await Promise.all(runs.map((stdin) => outcomeOf(reference, stdin)));
+      const yours = await Promise.all(runs.map((stdin) => outcomeOf(mine, stdin)));
+      if (disposed) return;
+      const same = yours.every((run, n) => !run.error && run.out === expected![n].out && run.values === expected![n].values);
+      if (same) {
+        say('good', 'Correct. Your answer is different from ours, but Python gives the same result.', md(item.explain, 'prose prose-small'));
+        confetti(code, wrongTries === 0 ? 12 : 6);
+        finish(wrongTries === 0);
+        return;
+      }
+      wrongTries += 1;
+      inputs.forEach((input, i) => input.classList.toggle('is-right', values[i] === answers[i].trim()));
+      const known = item.misconceptions?.find((m) => values[m.blank - 1] === m.answer.trim());
+      const hint = known ? h('p', null, mdInline(known.say)) : null;
+      const bad = yours.findIndex((run, n) => run.error || run.out !== expected![n].out || run.values !== expected![n].values);
+      const run = yours[bad];
+      const want = expected[bad];
+      if (run.error) {
+        const last = run.error.traceback.trim().split('\n').at(-1) ?? run.error.type;
+        say('bad', 'Not yet. With your answer, Python stops with an error:', h('pre', { class: 'out-text out-inline' }, last), hint);
+      } else if (run.out !== want.out) {
+        say(
+          'bad',
+          'Not yet. With your answer, the program prints:',
+          h('pre', { class: 'out-text out-inline' }, run.out || '(nothing)'),
+          h('p', null, 'It must print:'),
+          h('pre', { class: 'out-text out-inline' }, want.out || '(nothing)'),
+          hint,
+        );
+      } else {
+        say('bad', 'Not yet. It prints the right text, but some values at the end are different.', hint);
+      }
+      shake(code);
+      if (wrongTries >= 2) giveUp.hidden = false;
+    } finally {
+      busy = false;
+      check.disabled = false;
+      code.classList.remove('is-busy');
+    }
+  }
+
+  const el = h(
+    'div',
+    { class: 'item' },
+    md(item.prompt ?? 'Fill in the blanks.', 'prose item-prompt'),
+    code,
+    h('div', { class: 'order-actions' }, check, giveUp),
+    feedback,
+  );
+  return {
+    el,
+    dispose() {
+      disposed = true;
+      stopStatus();
+    },
+  };
+}
+
 export function renderItem(item: Item, onDone: OnDone): ItemView {
   if (item.kind === 'mcq') return renderMcq(item, onDone);
   if (item.kind === 'predict') return renderPredict(item, onDone);
   if (item.kind === 'order') return renderOrder(item, onDone);
   if (item.kind === 'trace') return renderTrace(item, onDone);
   if (item.kind === 'spot') return renderSpot(item, onDone);
+  if (item.kind === 'blanks') return renderBlanks(item, onDone);
   return renderDiagnose(item, onDone);
 }

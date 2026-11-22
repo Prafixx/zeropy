@@ -608,6 +608,18 @@ steps:
     objective: O2
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-tuple
+        objective: O2
+        prompt: "**Fill in the blanks** so the function gives back the smallest and the largest number, and the program prints `1 9`."
+        code: |
+          def low_high(numbers):
+              return [?min(numbers)?], [?max(numbers)?]
+
+
+          low, high = low_high([4, 9, 1])
+          print(low, high)
+        explain: "`return a, b` gives back a tuple of two values. `low, high = ...` takes it apart again."
       - kind: predict
         id: q-default
         objective: O1

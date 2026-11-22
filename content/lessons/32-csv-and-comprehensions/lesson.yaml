@@ -579,6 +579,15 @@ steps:
     objective: O3
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-comp
+        objective: O3
+        prompt: "**Fill in the blanks** so the program prints the words longer than 4 letters, in capitals: `['PLANET', 'GALAXY']`."
+        code: |
+          words = ["sun", "planet", "moon", "galaxy"]
+          long = [[?w.upper()?] for w in words [?if len(w) > 4?]]
+          print(long)
+        explain: "A comprehension is: the value, the loop, then maybe a condition. `w.upper()` is the value, `if len(w) > 4` keeps only the long words."
       - kind: predict
         id: q-comp
         objective: O3

@@ -239,6 +239,8 @@ code {
   border-left-color: var(--sun);
 }
 .code-num {
+  /* A long line may not squeeze the number: the code would not line up. */
+  flex: none;
   width: 2ch;
   margin-right: 16px;
   text-align: right;
@@ -1251,6 +1253,35 @@ code {
   outline: 2px solid var(--sun);
 }
 .order-list.is-busy {
+  opacity: 0.7;
+}
+
+/* ---------- Fill in the blanks (inside a dark code block) ---------- */
+.code.is-blanks .code-text {
+  white-space: pre;
+}
+.blank-input {
+  min-width: 3ch;
+  margin: 0 1px;
+  padding: 0 4px;
+  border: 0;
+  border-bottom: 2px dashed var(--sun);
+  border-radius: 4px 4px 0 0;
+  background: color-mix(in srgb, var(--code-text) 12%, transparent);
+  color: var(--code-text);
+  font: inherit;
+  line-height: 1.4;
+  vertical-align: baseline;
+}
+.blank-input:focus {
+  outline: 2px solid var(--sun);
+  outline-offset: 1px;
+}
+.blank-input.is-right {
+  border-bottom: 2px solid var(--leaf);
+  background: color-mix(in srgb, var(--leaf) 25%, transparent);
+}
+.code.is-blanks.is-busy {
   opacity: 0.7;
 }
 .order-list.is-solved .order-card {

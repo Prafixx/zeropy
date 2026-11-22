@@ -358,6 +358,18 @@ steps:
     objective: O4
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-mask
+        objective: O3
+        prompt: "**Fill in the blanks** so the program prints the temperatures over 15 and how many there are: `[18 25 21]` and `3`."
+        code: |
+          import numpy as np
+
+          temps = np.array([12, 18, 25, 9, 21])
+          warm = temps[[?temps > 15?]]
+          print(warm)
+          print([?len(warm)?])
+        explain: "`temps > 15` is a mask of True and False. `temps[mask]` keeps the values where it is True."
       - kind: predict
         id: q-shape
         objective: O1

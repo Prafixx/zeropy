@@ -515,6 +515,20 @@ steps:
     objective: O1
     title: Check yourself
     items:
+      - kind: blanks
+        id: q-fill-dict
+        objective: O3
+        prompt: "**Fill in the blanks** so the program prints `Ann is 31`, `Bo is 25` and `0`."
+        code: |
+          ages = {"Ann": 31, "Bo": 25}
+          for name, age in ages.[?items?]():
+              print(f"{name} is {age}")
+          print(ages.[?get?]("Cy", 0))
+        explain: "`items()` gives each key with its value, as a pair. `get` gives the value, or the default `0` when the key is missing."
+        misconceptions:
+          - blank: 1
+            answer: "keys"
+            say: "`keys()` gives only the names. The loop needs name and age together: `items()`."
       - kind: mcq
         id: q-read
         objective: O1

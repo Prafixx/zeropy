@@ -190,6 +190,38 @@ for (const folder of readdirSync(lessonsDir)) {
       console.log(`  ok   ${item.id} (trace, ${rows.length} rows, ${cells.length} boxes: ${rows.map((r) => `${r.line}:${Object.entries(r.values).map(([n, v]) => `${n}=${v.repr}`).join(',')}${r.prints === null ? '' : `>${r.prints}`}`).join(' ')})`);
       continue;
     }
+    if (item.kind === 'blanks') {
+      // With our answers the program must run. A known wrong answer must give
+      // another result, or the page would call it right.
+      const blank = /\[\?(.*?)\?\]/g;
+      const fill = (pick) => {
+        let k = 0;
+        return item.code.replace(/\n+$/, '').replace(blank, (_, answer) => pick(k++, answer));
+      };
+      const outcome = (code, stdin) => {
+        const result = call({ code, cases: [{ stdin }] });
+        const values = result.vars.map((v) => `${v.name}=${v.repr}`).sort().join('\n');
+        return { error: result.error, out: result.stdout, key: `${result.stdout.trim()}\n--\n${values}` };
+      };
+      const runs = item.stdin ?? [[]];
+      const good = runs.map((stdin) => outcome(fill((_, a) => a), stdin));
+      const broken = good.find((g) => g.error);
+      if (broken) {
+        fail(`${item.id}: with the answers the code raises ${broken.error.type}`);
+        continue;
+      }
+      let ok = true;
+      for (const m of item.misconceptions ?? []) {
+        const wrong = runs.map((stdin) => outcome(fill((k, a) => (k === m.blank - 1 ? m.answer : a)), stdin));
+        if (wrong.every((w, n) => !w.error && w.key === good[n].key)) {
+          fail(`${item.id}: the misconception "${m.answer}" gives the same result, so it would count as right`);
+          ok = false;
+        }
+      }
+      const answers = [...item.code.matchAll(blank)].map((m) => m[1]);
+      if (ok) console.log(`  ok   ${item.id} (blanks: ${answers.join(' | ')}) prints ${JSON.stringify(good[0].out.trim())}`);
+      continue;
+    }
     if (item.kind === 'spot') {
       // The code is only read, not run (it may need files or the web): it must compile.
       const result = call({ code: `compile(${JSON.stringify(item.code)}, 'main.py', 'exec')`, cases: [{}] });

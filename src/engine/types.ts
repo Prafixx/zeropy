@@ -108,7 +108,26 @@ export interface SpotItem {
   explain: string;
 }
 
-export type Item = McqItem | PredictItem | DiagnoseItem | OrderItem | TraceItem | SpotItem;
+/**
+ * Fill in the blanks of a program. Each blank is written `[?answer?]` in
+ * `code`. Python is the judge: answers that make the program print the same
+ * and end with the same values as the lesson's answers are right too.
+ */
+export interface BlanksItem {
+  kind: 'blanks';
+  id: string;
+  objective: string;
+  prompt?: string;
+  code: string;
+  /** Answers for input(), one list per run. Default: one run without input. */
+  stdin?: string[][];
+  /** Shown after the blanks are right. */
+  explain: string;
+  /** Targeted feedback for a known wrong answer in one blank (1 is the first blank). */
+  misconceptions?: { blank: number; answer: string; say: string }[];
+}
+
+export type Item = McqItem | PredictItem | DiagnoseItem | OrderItem | TraceItem | SpotItem | BlanksItem;
 
 export interface Check {
   /** Python expression. True means the requirement is met. */
