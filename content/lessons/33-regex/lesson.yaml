@@ -606,3 +606,111 @@ review:
         why: "`re` works on text and always gives back text."
       - text: "`list`"
         why: "A list comes from `findall`. One group is one text."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-date-groups
+    type: exercise
+    fade: completion
+    objective: O3
+    title: A date in another order
+    prompt: |
+      **Replace `___`** with a pattern with three groups: four digits, two
+      digits, two digits. The program prints the date day first.
+
+      ```text
+      23.11.2026
+      ```
+    starter: |
+      import re
+
+      text = "2026-11-23"
+      match = re.fullmatch(r"___", text)
+      year, month, day = match.groups()
+      print(f"{day}.{month}.{year}")
+    solution: |
+      import re
+
+      text = "2026-11-23"
+      match = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", text)
+      year, month, day = match.groups()
+      print(f"{day}.{month}.{year}")
+    after: >-
+      Each pair of brackets is a group, and `groups()` gives them in order.
+      `\d{4}` is exactly four digits.
+    cases:
+      - {}
+      - label: "text is 1999-01-05"
+        set: { text: "1999-01-05" }
+    checks:
+      - expr: "err is None and lines == ['.'.join(reversed(text.split('-')))]"
+        pass: "It prints day.month.year"
+        hint: "`r\"(\\d{4})-(\\d{2})-(\\d{2})\"`."
+        misconceptions:
+          - when: "err == 'AttributeError'"
+            say: "The pattern does not fit the whole text, so `fullmatch` gave `None`. Check the `-` between the groups."
+      - expr: "match.re.groups == 3"
+        pass: "The pattern has three groups"
+        hint: "Put brackets around each part."
+    hints:
+      - "Four digits: `\\d{4}`. Two digits: `\\d{2}`."
+      - "Brackets make a group: `(\\d{4})`."
+      - "`r\"(\\d{4})-(\\d{2})-(\\d{2})\"`."
+  - id: x-username
+    type: exercise
+    fade: independent
+    objective: O2
+    title: A good user name
+    prompt: |
+      **Write `is_valid(name)`** with `re.fullmatch`: a good user name starts
+      with a small letter, then has 2 to 11 more small letters, digits or
+      `_`. So 3 to 12 characters in all.
+
+      ```text
+      True
+      False
+      False
+      ```
+    starter: |
+      import re
+
+      # Your function here.
+
+
+      print(is_valid("ana_99"))
+      print(is_valid("9lives"))
+      print(is_valid("al"))
+    solution: |
+      import re
+
+
+      def is_valid(name):
+          return re.fullmatch(r"[a-z][a-z0-9_]{2,11}", name) is not None
+
+
+      print(is_valid("ana_99"))
+      print(is_valid("9lives"))
+      print(is_valid("al"))
+    after: >-
+      `fullmatch` tests the **whole** text. With `search` or `match`,
+      "ana!!!" would pass, because its start fits.
+    checks:
+      - expr: "callable(ns.get('is_valid')) and [bool(is_valid(n)) for n in ['ana_99', 'bob', 'z' * 12, 'a_1']] == [True, True, True, True]"
+        pass: "Good names pass, also at 3 and 12 characters"
+        hint: "`[a-z][a-z0-9_]{2,11}`."
+      - expr: "callable(ns.get('is_valid')) and [bool(is_valid(n)) for n in ['9lives', 'al', 'z' * 13, 'Ana', 'ana!', 'an a', '']] == [False] * 7"
+        pass: "Bad names fail: digit first, too short, too long, capitals, other signs"
+        hint: "`re.fullmatch` tests the whole name."
+        misconceptions:
+          - when: "callable(ns.get('is_valid')) and bool(is_valid('ana!'))"
+            say: "\"ana!\" passes: the pattern checks only the start. Use `re.fullmatch`."
+      - expr: "callable(ns.get('is_valid')) and isinstance(is_valid('bob'), bool)"
+        pass: "It gives back True or False"
+        hint: "`re.fullmatch(...) is not None`."
+      - expr: "lines == ['True', 'False', 'False']"
+        pass: "It prints True, False, False"
+        hint: "Keep the prints."
+    hints:
+      - "First a small letter: `[a-z]`."
+      - "Then 2 to 11 of letters, digits or `_`: `[a-z0-9_]{2,11}`."
+      - "`return re.fullmatch(r\"[a-z][a-z0-9_]{2,11}\", name) is not None`."

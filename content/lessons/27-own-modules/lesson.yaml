@@ -580,3 +580,98 @@ review:
         why: "Python uses dots, not slashes."
       - text: "`import line from shop.labels`"
         why: "The order is `from ... import ...`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-shapes
+    type: exercise
+    fade: completion
+    objective: O1
+    title: A short name for a module
+    prompt: |
+      The folder has `shapes.py` (see the files). **Replace `___`** so the
+      module gets the short name `sh`, and the last line works as it is.
+
+      ```text
+      12.57
+      ```
+    files:
+      shapes.py: |
+        """Areas of shapes."""
+        PI = 3.14159
+
+
+        def circle_area(r):
+            return PI * r * r
+
+
+        def square_area(side):
+            return side * side
+    starter: |
+      import shapes as ___
+
+      print(round(sh.circle_area(2), 2))
+    solution: |
+      import shapes as sh
+
+      print(round(sh.circle_area(2), 2))
+    after: >-
+      `as` gives a module a second, shorter name. You know it from
+      `import numpy as np`.
+    checks:
+      - expr: "err is None and lines == ['12.57']"
+        pass: "It prints 12.57"
+        hint: "`import shapes as sh`."
+      - expr: "'def ' not in src"
+        pass: "It uses the module, and does not copy the function"
+        hint: "Import it: do not write the function again."
+    hints:
+      - "`as` gives a module a new name."
+      - "The last line uses the name `sh`."
+      - "`import shapes as sh`."
+  - id: x-quiet-module
+    type: exercise
+    fade: debug
+    objective: O3
+    title: Tests that run on import
+    prompt: |
+      This file is a module with a function and two tests. When another
+      program imports it, the tests print their lines too. **Fix it**: the
+      tests may only run when the file itself is run.
+
+      ```text
+      test 1: 0.0
+      test 2: 100.0
+      ```
+    starter: |
+      def celsius(fahrenheit):
+          return round((fahrenheit - 32) * 5 / 9, 1)
+
+
+      print("test 1:", celsius(32))
+      print("test 2:", celsius(212))
+    solution: |
+      def celsius(fahrenheit):
+          return round((fahrenheit - 32) * 5 / 9, 1)
+
+
+      if __name__ == "__main__":
+          print("test 1:", celsius(32))
+          print("test 2:", celsius(212))
+    after: >-
+      `__name__` is `"__main__"` only when the file is run. On import it is
+      the module's name, so the `if` keeps the module quiet.
+    checks:
+      - expr: "err is None and lines == ['test 1: 0.0', 'test 2: 100.0']"
+        pass: "Run as a program, it prints the tests"
+        hint: "Keep the two prints, inside the `if`."
+      - expr: "import_out('temps') == ''"
+        pass: "Imported as a module, it prints nothing"
+        hint: "Put the tests under `if __name__ == \"__main__\":`."
+      - expr: "callable(ns.get('celsius')) and celsius(50) == 10.0"
+        pass: "The function still works"
+        hint: "Keep the function as it is."
+    hints:
+      - "When is `__name__` equal to `\"__main__\"`?"
+      - "Only when the file itself is run, not when it is imported."
+      - "`if __name__ == \"__main__\":`, and indent the two prints under it."

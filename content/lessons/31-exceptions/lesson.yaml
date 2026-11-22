@@ -696,3 +696,115 @@ review:
         why: "That is `finally`."
       - text: "Only after an error"
         why: "That is `except`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-divide
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A safe division
+    prompt: |
+      **Replace the two `___`**: when `b` is 0, `safe_divide` catches the
+      error and gives back `None`.
+
+      ```text
+      2.5
+      None
+      ```
+    starter: |
+      def safe_divide(a, b):
+          ___:
+              return a / b
+          except ___:
+              return None
+
+
+      print(safe_divide(5, 2))
+      print(safe_divide(5, 0))
+    solution: |
+      def safe_divide(a, b):
+          try:
+              return a / b
+          except ZeroDivisionError:
+              return None
+
+
+      print(safe_divide(5, 2))
+      print(safe_divide(5, 0))
+    after: >-
+      Name the error you expect. A bare `except:` would also hide a bug,
+      like a text where a number should be.
+    checks:
+      - expr: "callable(ns.get('safe_divide')) and safe_divide(9, 3) == 3 and safe_divide(1, 0) is None"
+        pass: "It divides, and gives None for 0"
+        hint: "`try:` and `except ZeroDivisionError:`."
+      - expr: "callable(ns.get('safe_divide')) and raises(safe_divide, 'a', 2) == 'TypeError'"
+        pass: "Other errors are not hidden"
+        hint: "Catch only `ZeroDivisionError`."
+        misconceptions:
+          - when: "callable(ns.get('safe_divide')) and safe_divide('a', 2) is None"
+            say: "`except` without a name (or `Exception`) also hides real bugs, like dividing a text. Name the error: `ZeroDivisionError`."
+      - expr: "lines == ['2.5', 'None']"
+        pass: "It prints 2.5 and None"
+        hint: "Keep the prints."
+    hints:
+      - "The block that may fail starts with `try:`."
+      - "Dividing by 0 raises `ZeroDivisionError`."
+      - "`try:` and `except ZeroDivisionError:`."
+  - id: x-volume-raise
+    type: exercise
+    fade: independent
+    objective: O4
+    title: A value that is not allowed
+    prompt: |
+      **Write `set_volume(level)`**: it gives back `level` when it is from 0
+      to 100. Else it **raises a `ValueError`** with a message that says the
+      allowed range.
+
+      ```text
+      50
+      ValueError: volume must be from 0 to 100, not 120
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(set_volume(50))
+      try:
+          set_volume(120)
+      except ValueError as error:
+          print("ValueError:", error)
+    solution: |
+      def set_volume(level):
+          if not 0 <= level <= 100:
+              raise ValueError(f"volume must be from 0 to 100, not {level}")
+          return level
+
+
+      print(set_volume(50))
+      try:
+          set_volume(120)
+      except ValueError as error:
+          print("ValueError:", error)
+    after: >-
+      The function cannot do anything useful with 120, so it says so loudly.
+      The caller decides what to do: here it catches the error and shows the
+      message.
+    checks:
+      - expr: "callable(ns.get('set_volume')) and set_volume(0) == 0 and set_volume(100) == 100 and set_volume(37) == 37"
+        pass: "0 to 100 come back as they are"
+        hint: "`return level` when it is allowed."
+      - expr: "callable(ns.get('set_volume')) and raises(set_volume, 101) == 'ValueError' and raises(set_volume, -1) == 'ValueError'"
+        pass: "Outside 0 to 100: ValueError"
+        hint: "`if not 0 <= level <= 100: raise ValueError(...)`."
+        misconceptions:
+          - when: "callable(ns.get('set_volume')) and set_volume(120) is None"
+            say: "It gives back None, so the caller never learns that 120 is wrong. Raise the error: `raise ValueError(...)`."
+      - expr: "err is None and lines == ['50', 'ValueError: volume must be from 0 to 100, not 120']"
+        pass: "The message says the range and the value"
+        hint: "`f\"volume must be from 0 to 100, not {level}\"`."
+    hints:
+      - "Check the value first: `if not 0 <= level <= 100:`."
+      - "`raise ValueError(\"...\")` stops the function with that error."
+      - "Put the value into the message with an f-string."

@@ -624,3 +624,115 @@ review:
         why: "Only `\\n` makes a new line."
       - text: "None: `write` needs `\\n`"
         why: "`write` writes any text. Without `\\n`, all on one line."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-notes
+    type: exercise
+    fade: completion
+    objective: O4
+    title: Count the notes
+    prompt: |
+      `notes.txt` (see the files) has notes and some empty lines.
+      **Replace the two `___`**: go through the lines, and count only the
+      lines that are not empty.
+
+      ```text
+      3 notes
+      ```
+    files:
+      notes.txt: |
+        buy milk
+
+        call Ana
+
+
+        water the plants
+    starter: |
+      from pathlib import Path
+
+      lines = Path("notes.txt").read_text().splitlines()
+      count = 0
+      for line in lines:
+          if ___:
+              count = ___
+      print(f"{count} notes")
+    solution: |
+      from pathlib import Path
+
+      lines = Path("notes.txt").read_text().splitlines()
+      count = 0
+      for line in lines:
+          if line.strip():
+              count = count + 1
+      print(f"{count} notes")
+    after: >-
+      `line.strip()` is an empty text for an empty line (also one with only
+      spaces), and an empty text counts as False.
+    cases:
+      - {}
+      - label: "another notes.txt"
+        files:
+          notes.txt: "a\n   \nb\nc\nd\n"
+    checks:
+      - expr: "count == len([l for l in files['notes.txt'].splitlines() if l.strip()])"
+        pass: "It counts the lines that are not empty"
+        hint: "`if line.strip():` and `count = count + 1`."
+        misconceptions:
+          - when: "ns.get('count') == len(files['notes.txt'].splitlines())"
+            say: "The empty lines are counted too. Test `line.strip()` first."
+      - expr: "lines[-1:] == [f'{count} notes']"
+        pass: "It prints the count"
+        hint: "Keep the last line."
+    hints:
+      - "An empty line is `\"\"` after `strip()`."
+      - "`if line.strip():` is True only for a line with text."
+      - "`count = count + 1`."
+  - id: x-write-list
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Save the shopping list
+    prompt: |
+      **Write each item of `items` into `list.txt`, one per line**, then
+      print the file.
+
+      ```text
+      bread
+      eggs
+      tea
+      ```
+    starter: |
+      from pathlib import Path
+
+      items = ["bread", "eggs", "tea"]
+      # Write list.txt, then print it.
+    solution: |
+      from pathlib import Path
+
+      items = ["bread", "eggs", "tea"]
+      Path("list.txt").write_text("\n".join(items) + "\n")
+      print(Path("list.txt").read_text())
+    after: >-
+      `"\n".join(items)` puts a line break between the items, and the last
+      `"\n"` ends the last line. A file ends with a line break by custom.
+    cases:
+      - {}
+      - label: "other items"
+        set: { items: ["soap"] }
+    checks:
+      - expr: "files.get('list.txt') == '\\n'.join(items) + '\\n'"
+        pass: "list.txt has one item per line"
+        hint: "`Path(\"list.txt\").write_text(\"\\n\".join(items) + \"\\n\")`."
+        misconceptions:
+          - when: "files.get('list.txt') == ''.join(items)"
+            say: "The items are glued together. Put a line break between them: `\"\\n\".join(items)`."
+          - when: "(files.get('list.txt') or '').strip() == items[-1]"
+            say: "Only the last item is there: each write replaced the file. Write all items in one text, or open the file with `\"a\"`."
+      - expr: "lines[:len(items)] == items"
+        pass: "It prints the file"
+        hint: "`print(Path(\"list.txt\").read_text())`."
+    hints:
+      - "One text with all lines: `\"\\n\".join(items)`."
+      - "`Path(\"list.txt\").write_text(...)` writes it."
+      - "Then `print(Path(\"list.txt\").read_text())`."

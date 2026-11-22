@@ -547,3 +547,101 @@ review:
         why: "`upper` alone is not a name. It belongs to `str`."
       - text: "`upper.help()`"
         why: "`help` is a function: the thing goes inside its brackets."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-divmod
+    type: exercise
+    fade: completion
+    objective: O4
+    title: A function from the docs
+    prompt: |
+      The course never taught `divmod`. Its documentation says:
+
+      > `divmod(a, b)` returns the pair `(a // b, a % b)`.
+
+      **Replace `___`** with one call of `divmod`, so the program shows the
+      minutes and seconds of 135 seconds.
+
+      ```text
+      2 min 15 s
+      ```
+    starter: |
+      total = 135
+      minutes, seconds = ___
+      print(f"{minutes} min {seconds} s")
+    solution: |
+      total = 135
+      minutes, seconds = divmod(total, 60)
+      print(f"{minutes} min {seconds} s")
+    after: >-
+      One line of the docs was enough: what goes in, what comes out. Try it
+      with `help(divmod)` in the playground.
+    cases:
+      - {}
+      - label: "total is 3599"
+        set: { total: 3599 }
+    checks:
+      - expr: "(minutes, seconds) == (total // 60, total % 60)"
+        pass: "minutes and seconds are right"
+        hint: "`divmod(total, 60)`."
+      - expr: "'divmod(' in src"
+        pass: "It uses divmod"
+        hint: "One call: `divmod(total, 60)`."
+      - expr: "lines[-1:] == [f'{total // 60} min {total % 60} s']"
+        pass: "It prints the time"
+        hint: "Keep the print."
+    hints:
+      - "`divmod` gives back two values: unpack them."
+      - "Seconds to minutes: divide by 60."
+      - "`minutes, seconds = divmod(total, 60)`."
+  - id: x-default
+    type: exercise
+    fade: independent
+    objective: O2
+    title: max without an error
+    prompt: |
+      `max([])` stops with a `ValueError`. The signature in the docs is:
+
+      ```text
+      max(iterable, *, key=None, default=...)
+      ```
+
+      **Write `highest(scores)`** with one call of `max`: it gives back the
+      highest score, or `0` for an empty list. No `if` and no `try`.
+
+      ```text
+      9
+      0
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(highest([4, 9, 7]))
+      print(highest([]))
+    solution: |
+      def highest(scores):
+          return max(scores, default=0)
+
+
+      print(highest([4, 9, 7]))
+      print(highest([]))
+    after: >-
+      The `*` in the signature means: `default` must be given by its name.
+      `max(scores, 0)` would mean something else (the larger of the list and
+      0).
+    checks:
+      - expr: "callable(ns.get('highest')) and highest([4, 9, 7]) == 9 and highest([]) == 0 and highest([-3, -1]) == -1"
+        pass: "The highest score, or 0 for an empty list"
+        hint: "`max(scores, default=0)`."
+        misconceptions:
+          - when: "callable(ns.get('highest')) and highest([-3, -1]) == 0"
+            say: "Negative scores give 0: the default must only be used for an empty list. Use `default=0`, not a 0 among the values."
+      - expr: "syntax('If') == 0 and syntax('Try') == 0 and 'default=' in src.replace(' ', '')"
+        pass: "One call with default, no if or try"
+        hint: "The docs show a parameter `default`."
+    hints:
+      - "Read the signature: which parameter is for an empty list?"
+      - "After `*`, a parameter must be given by its name."
+      - "`return max(scores, default=0)`."

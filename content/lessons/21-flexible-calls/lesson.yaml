@@ -582,3 +582,105 @@ review:
         why: "The type is not the reason. The place after the star is."
       - text: "You do not have to: `print('a', 'b', '-')` works the same"
         why: "That prints `a b -`: the `'-'` is one more object."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-capitals
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Capitals from two lists
+    prompt: |
+      **Replace `___`** with one expression that builds a dictionary from
+      the two lists: each country with its capital.
+
+      ```text
+      Lima
+      3
+      ```
+    starter: |
+      countries = ["Peru", "Chile", "Ghana"]
+      capitals = ["Lima", "Santiago", "Accra"]
+      capital_of = ___
+      print(capital_of["Peru"])
+      print(len(capital_of))
+    solution: |
+      countries = ["Peru", "Chile", "Ghana"]
+      capitals = ["Lima", "Santiago", "Accra"]
+      capital_of = dict(zip(countries, capitals))
+      print(capital_of["Peru"])
+      print(len(capital_of))
+    after: >-
+      `zip` makes the pairs, `dict` turns pairs into keys and values. Two
+      lists that belong together become one dictionary.
+    cases:
+      - {}
+      - label: "other lists"
+        set: { countries: ["Peru", "Japan"], capitals: ["Lima", "Tokyo"] }
+    checks:
+      - expr: "capital_of == {c: k for c, k in zip(countries, capitals)}"
+        pass: "Each country with its capital"
+        hint: "`dict(zip(countries, capitals))`."
+        misconceptions:
+          - when: "isinstance(ns.get('capital_of'), dict) and set(ns.get('capital_of')) == set(capitals)"
+            say: "The keys are the capitals: the order of the lists in `zip` is swapped."
+      - expr: "'zip(' in src"
+        pass: "It uses zip"
+        hint: "`zip(countries, capitals)` gives the pairs."
+    hints:
+      - "`zip` walks both lists side by side."
+      - "`dict()` makes a dictionary from pairs."
+      - "`capital_of = dict(zip(countries, capitals))`."
+  - id: x-longest
+    type: exercise
+    fade: independent
+    objective: O2
+    title: The longest of any words
+    prompt: |
+      **Write `longest(*words)`**: it takes any number of words, and gives
+      back the longest one. With no words at all, it gives back `""`.
+
+      ```text
+      banana
+      kiwi
+
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(longest("fig", "banana", "kiwi"))
+      print(longest("kiwi"))
+      print(longest())
+    solution: |
+      def longest(*words):
+          best = ""
+          for word in words:
+              if len(word) > len(best):
+                  best = word
+          return best
+
+
+      print(longest("fig", "banana", "kiwi"))
+      print(longest("kiwi"))
+      print(longest())
+    after: >-
+      `*words` collects all the values of the call into one tuple, also
+      zero values. Starting with `""` makes the empty call work.
+    checks:
+      - expr: "callable(ns.get('longest')) and longest('a', 'abc', 'ab') == 'abc' and longest('hello') == 'hello'"
+        pass: "It finds the longest of any number of words"
+        hint: "`def longest(*words):`, then a best-so-far loop over `words`."
+        misconceptions:
+          - when: "callable(ns.get('longest')) and raises(longest, 'a', 'abc') == 'TypeError'"
+            say: "The function takes only one value. Write `*words` to take any number."
+      - expr: "callable(ns.get('longest')) and longest() == ''"
+        pass: "No words gives an empty text"
+        hint: "Start with `best = \"\"`, or use `max(words, key=len, default=\"\")`."
+      - expr: "lines == ['banana', 'kiwi', ''] or lines == ['banana', 'kiwi']"
+        pass: "It prints banana, kiwi and an empty line"
+        hint: "Keep the three prints."
+    hints:
+      - "`*words` makes `words` a tuple of all the values."
+      - "Start with `best = \"\"`, and keep the longer one."
+      - "`if len(word) > len(best): best = word`."

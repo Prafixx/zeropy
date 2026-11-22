@@ -23,7 +23,7 @@ desktop app, in about 31 hours.
 - **Mixed practice.** Exercises and questions from many lessons, in a
   mixed order, so you learn to choose the right tool yourself. The tasks
   you practiced longest ago come first.
-- **Practice more.** Extra exercises for the lessons of the first three
+- **Practice more.** Extra exercises for the lessons of the first five
   modules, in new situations, for when you want more practice of one
   skill before you go on. More modules follow.
 - **Solved examples with goals.** Each example is split into short goals,

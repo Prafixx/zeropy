@@ -494,3 +494,105 @@ review:
         why: "That is a filter: it keeps the numbers, it does not square them."
       - text: "`{n: n * n for n in nums}`"
         why: "That makes a dictionary."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-filter-map
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Cheap and with tax
+    prompt: |
+      **Replace the two `___`** with the body of a lambda: keep the prices
+      under 5, and add 20% to every price.
+
+      ```text
+      [2.5, 4.0]
+      [3.0, 4.8, 7.2]
+      ```
+    starter: |
+      prices = [2.5, 4.0, 6.0]
+      cheap = list(filter(lambda p: ___, prices))
+      with_tax = list(map(lambda p: ___, prices))
+      print(cheap)
+      print(with_tax)
+    solution: |
+      prices = [2.5, 4.0, 6.0]
+      cheap = list(filter(lambda p: p < 5, prices))
+      with_tax = list(map(lambda p: round(p * 1.2, 2), prices))
+      print(cheap)
+      print(with_tax)
+    after: >-
+      `filter` keeps the values for which the function says True; `map`
+      changes every value. `round(..., 2)` hides the tiny float errors.
+    cases:
+      - {}
+      - label: "other prices"
+        set: { prices: [1.0, 9.5] }
+    checks:
+      - expr: "cheap == [p for p in prices if p < 5]"
+        pass: "cheap keeps the prices under 5"
+        hint: "`lambda p: p < 5`."
+      - expr: "with_tax == [round(p * 1.2, 2) for p in prices]"
+        pass: "with_tax adds 20% to each price"
+        hint: "`lambda p: round(p * 1.2, 2)`."
+        misconceptions:
+          - when: "isinstance(ns.get('with_tax'), list) and len(with_tax) == len(prices) and all(abs(a - p * 1.2) < 1e-9 for a, p in zip(with_tax, prices)) and with_tax != [round(p * 1.2, 2) for p in prices]"
+            say: "Right, but with float noise like 4.800000000000001. Round to 2 decimals: `round(p * 1.2, 2)`."
+    hints:
+      - "The body of a lambda is one expression, without `return`."
+      - "For filter: a test, `p < 5`."
+      - "For map: the new value, `round(p * 1.2, 2)`."
+  - id: x-multiplier
+    type: exercise
+    fade: independent
+    objective: O4
+    title: A function that makes functions
+    prompt: |
+      **Write `make_multiplier(n)`**: it gives back a new function that
+      multiplies its argument by `n`.
+
+      ```text
+      15
+      40
+      ```
+    starter: |
+      # Your function here.
+
+
+      triple = make_multiplier(3)
+      times_ten = make_multiplier(10)
+      print(triple(5))
+      print(times_ten(4))
+    solution: |
+      def make_multiplier(n):
+          def multiply(x):
+              return x * n
+          return multiply
+
+
+      triple = make_multiplier(3)
+      times_ten = make_multiplier(10)
+      print(triple(5))
+      print(times_ten(4))
+    after: >-
+      The inner function remembers `n`, also after `make_multiplier` has
+      ended: that is a closure. Each call makes a new function with its own
+      `n`.
+    checks:
+      - expr: "callable(ns.get('make_multiplier')) and make_multiplier(7)(6) == 42 and make_multiplier(0)(9) == 0"
+        pass: "The new function multiplies by n"
+        hint: "Define a function inside, and return it without calling it."
+        misconceptions:
+          - when: "callable(ns.get('make_multiplier')) and not callable(make_multiplier(2))"
+            say: "It gives back a value, not a function. Return the inner function itself: `return multiply`, without `()`."
+      - expr: "callable(ns.get('make_multiplier')) and make_multiplier(2) is not make_multiplier(2)"
+        pass: "Each call makes a new function"
+        hint: "Define the inner function inside `make_multiplier`."
+      - expr: "lines == ['15', '40']"
+        pass: "It prints 15 and 40"
+        hint: "Keep the lines at the end."
+    hints:
+      - "Inside `make_multiplier`, write `def multiply(x):`."
+      - "`multiply` returns `x * n`: it can read `n`."
+      - "At the end: `return multiply`, without brackets."

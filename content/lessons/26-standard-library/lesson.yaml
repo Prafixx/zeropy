@@ -665,3 +665,90 @@ review:
         why: "It does the opposite: they repeat."
       - text: "To start the values at 1"
         why: "1 is the seed; the values can be anything."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-hypot
+    type: exercise
+    fade: completion
+    objective: O2
+    title: The long side of a triangle
+    prompt: |
+      **Replace the two `___`**: load the module `math`, and take the
+      square root.
+
+      ```text
+      5.0
+      ```
+    starter: |
+      import ___
+
+      a = 3
+      b = 4
+      c = math.___(a ** 2 + b ** 2)
+      print(c)
+    solution: |
+      import math
+
+      a = 3
+      b = 4
+      c = math.sqrt(a ** 2 + b ** 2)
+      print(c)
+    after: >-
+      `math` has many more: `math.pi`, `math.floor`, and even
+      `math.hypot(a, b)`, which does all of this line in one call.
+    cases:
+      - {}
+      - label: "a is 5 and b is 12"
+        set: { a: 5, b: 12 }
+    checks:
+      - expr: "abs(c - (a ** 2 + b ** 2) ** 0.5) < 1e-9"
+        pass: "c is the long side"
+        hint: "`math.sqrt(...)`."
+      - expr: "syntax('Import') + syntax('ImportFrom') >= 1"
+        pass: "It loads math"
+        hint: "`import math` at the top."
+    hints:
+      - "The module is called `math`."
+      - "The square root is `sqrt`."
+      - "`import math` and `math.sqrt(a ** 2 + b ** 2)`."
+  - id: x-days
+    type: exercise
+    fade: independent
+    objective: O2
+    title: How many days until
+    prompt: |
+      With `datetime`, **print how many days are left** from `today` to
+      `event`, then the **name of the weekday** of `event`.
+
+      ```text
+      31
+      Thursday
+      ```
+    starter: |
+      from datetime import date
+
+      today = date(2026, 11, 23)
+      event = date(2026, 12, 24)
+      # Your two prints here.
+    solution: |
+      from datetime import date
+
+      today = date(2026, 11, 23)
+      event = date(2026, 12, 24)
+      print((event - today).days)
+      print(event.strftime("%A"))
+    after: >-
+      Two dates subtract to a `timedelta`, and `.days` reads it. `%A` is
+      the code for the weekday name in `strftime`.
+    checks:
+      - expr: "err is None and lines == [str((event - today).days), event.strftime('%A')]"
+        pass: "The days left, then the weekday"
+        hint: "`(event - today).days` and `event.strftime(\"%A\")`."
+      - expr: "'31' not in src and 'Thursday' not in src"
+        pass: "Python computes both"
+        hint: "Let `datetime` count, do not type the answers."
+    hints:
+      - "Subtract the two dates."
+      - "The result has `.days`."
+      - "The weekday name: `event.strftime(\"%A\")`."

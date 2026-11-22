@@ -770,3 +770,99 @@ review:
         why: "The calls of `square` run one after the other, not together."
       - text: "One"
         why: "`total` waits on its desk while `square` runs on a second desk."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-greet
+    type: exercise
+    fade: completion
+    objective: O1
+    title: A greeting with a default
+    prompt: |
+      **Replace the two `___`**: `greeting` is `"Hello"` when the call does
+      not give one. The second call gives it by its name.
+
+      ```text
+      Hello, Ana!
+      Hi, Bo!
+      ```
+    starter: |
+      def greet(name, ___):
+          return f"{greeting}, {name}!"
+
+
+      print(greet("Ana"))
+      print(greet("Bo", ___))
+    solution: |
+      def greet(name, greeting="Hello"):
+          return f"{greeting}, {name}!"
+
+
+      print(greet("Ana"))
+      print(greet("Bo", greeting="Hi"))
+    after: >-
+      A default makes a parameter optional. Naming the argument in the call
+      (`greeting="Hi"`) makes the call easy to read.
+    checks:
+      - expr: "callable(ns.get('greet')) and greet('Cy') == 'Hello, Cy!' and greet('Cy', 'Hey') == 'Hey, Cy!'"
+        pass: "greeting is Hello when it is not given"
+        hint: "`def greet(name, greeting=\"Hello\"):`."
+      - expr: "'greeting=\"Hi\"' in src.replace(\"'\", '\"').replace(' ', '')"
+        pass: "The second call names the argument"
+        hint: "`greet(\"Bo\", greeting=\"Hi\")`."
+      - expr: "lines == ['Hello, Ana!', 'Hi, Bo!']"
+        pass: "It prints both greetings"
+        hint: "Keep the prints."
+    hints:
+      - "A default is written in the `def` line: `name=value`."
+      - "`def greet(name, greeting=\"Hello\"):`."
+      - "In the call: `greet(\"Bo\", greeting=\"Hi\")`."
+  - id: x-stats
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Three numbers at once
+    prompt: |
+      **Write `stats(numbers)`**: it gives back the smallest, the largest
+      and the average, as one tuple. For an empty list it gives back
+      `None` at once (there is no average of nothing).
+
+      ```text
+      (2, 9, 5.0)
+      None
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(stats([2, 4, 9]))
+      print(stats([]))
+    solution: |
+      def stats(numbers):
+          if not numbers:
+              return None
+          return min(numbers), max(numbers), sum(numbers) / len(numbers)
+
+
+      print(stats([2, 4, 9]))
+      print(stats([]))
+    after: >-
+      An early `return` ends the call: the line with the division never
+      runs for an empty list, so there is no ZeroDivisionError.
+    checks:
+      - expr: "callable(ns.get('stats')) and stats([2, 4, 9]) == (2, 9, 5.0) and stats([10]) == (10, 10, 10.0)"
+        pass: "smallest, largest and average, as a tuple"
+        hint: "`return min(numbers), max(numbers), sum(numbers) / len(numbers)`."
+      - expr: "callable(ns.get('stats')) and stats([]) is None"
+        pass: "An empty list gives None"
+        hint: "First: `if not numbers: return None`."
+        misconceptions:
+          - when: "callable(ns.get('stats')) and raises(stats, []) is not None"
+            say: "An empty list stops with an error. Return `None` at the start, before you compute."
+      - expr: "lines == ['(2, 9, 5.0)', 'None']"
+        pass: "It prints the tuple and None"
+        hint: "Keep the two prints."
+    hints:
+      - "Three values after `return`, with commas, make a tuple."
+      - "`min`, `max`, and `sum(...) / len(...)`."
+      - "At the start: `if not numbers: return None`."

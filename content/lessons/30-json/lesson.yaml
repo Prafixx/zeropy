@@ -642,3 +642,109 @@ review:
         why: "Then the changes of this run are never saved."
       - text: "Only save"
         why: "Without loading, every run starts from nothing."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-dumps
+    type: exercise
+    fade: completion
+    objective: O1
+    title: There and back
+    prompt: |
+      **Replace the two `___`** with functions of `json`: turn the data into
+      JSON text, and the text back into data.
+
+      ```text
+      {"name": "Ana", "scores": [7, 9], "member": true}
+      True
+      ```
+    starter: |
+      import json
+
+      data = {"name": "Ana", "scores": [7, 9], "member": True}
+      text = json.___(data)
+      back = json.___(text)
+      print(text)
+      print(back == data)
+    solution: |
+      import json
+
+      data = {"name": "Ana", "scores": [7, 9], "member": True}
+      text = json.dumps(data)
+      back = json.loads(text)
+      print(text)
+      print(back == data)
+    after: >-
+      `dumps` gives a text ("dump to string"), `loads` reads one ("load from
+      string"). Look at the text: JSON writes `true`, not `True`.
+    checks:
+      - expr: "isinstance(ns.get('text'), str) and text == json.dumps(data)"
+        pass: "text is the JSON text of data"
+        hint: "`json.dumps(data)`."
+      - expr: "back == data"
+        pass: "back is the same data again"
+        hint: "`json.loads(text)`."
+      - expr: "lines == ['{\"name\": \"Ana\", \"scores\": [7, 9], \"member\": true}', 'True']"
+        pass: "It prints the JSON text and True"
+        hint: "Keep the prints."
+    hints:
+      - "One function makes a text, the other reads one."
+      - "Both end with `s`: for \"string\"."
+      - "`json.dumps(data)` and `json.loads(text)`."
+  - id: x-volume
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Louder, and remember it
+    prompt: |
+      `settings.json` (see the files) keeps the settings of an app.
+      **Load it, add 10 to `"volume"` (but never more than 100), save it,
+      and print the new volume.**
+
+      ```text
+      60
+      ```
+    files:
+      settings.json: |
+        {"volume": 50, "theme": "dark"}
+    starter: |
+      import json
+      from pathlib import Path
+
+      # Load, change, save, print.
+    solution: |
+      import json
+      from pathlib import Path
+
+      path = Path("settings.json")
+      settings = json.loads(path.read_text())
+      settings["volume"] = min(settings["volume"] + 10, 100)
+      path.write_text(json.dumps(settings))
+      print(settings["volume"])
+    after: >-
+      Load, change, save: the next run starts where this one stopped. The
+      other settings (the theme) stay as they were.
+    cases:
+      - {}
+      - label: "the volume is 95"
+        files:
+          settings.json: '{"volume": 95, "theme": "light"}'
+    checks:
+      - expr: "json.loads(files['settings.json'])['volume'] == min(json.loads(start_files['settings.json'])['volume'] + 10, 100)"
+        pass: "The file has the new volume, at most 100"
+        hint: "`settings[\"volume\"] = min(settings[\"volume\"] + 10, 100)`, then save."
+        misconceptions:
+          - when: "files['settings.json'] == start_files['settings.json']"
+            say: "The file did not change. Write it again: `path.write_text(json.dumps(settings))`."
+          - when: "json.loads(files['settings.json'])['volume'] == 105"
+            say: "105 is too loud: the volume stops at 100. `min(..., 100)` keeps it there."
+      - expr: "json.loads(files['settings.json'])['theme'] == json.loads(start_files['settings.json'])['theme']"
+        pass: "The other settings stay"
+        hint: "Change only the volume, and save the whole dictionary."
+      - expr: "lines[-1:] == [str(json.loads(files['settings.json'])['volume'])]"
+        pass: "It prints the new volume"
+        hint: "`print(settings[\"volume\"])` at the end."
+    hints:
+      - "`settings = json.loads(path.read_text())`."
+      - "The new volume: `min(settings[\"volume\"] + 10, 100)`."
+      - "Save: `path.write_text(json.dumps(settings))`."
