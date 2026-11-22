@@ -9,7 +9,7 @@ interface PyodideLike {
 
 type Incoming =
   | { type: 'init'; indexURL: string; harness: string }
-  | { type: 'run'; id: number; request: string; fn?: 'run' | 'gui_event' | 'shell' };
+  | { type: 'run'; id: number; request: string; fn?: 'run' | 'gui_event' | 'shell' | 'web_request' };
 
 let pyodide: PyodideLike | null = null;
 let runFn: ((request: string) => string) | null = null;
@@ -17,6 +17,8 @@ let runFn: ((request: string) => string) | null = null;
 let guiFn: ((request: string) => string) | null = null;
 // One command of the pretend Linux terminal (shell.py).
 let shellFn: ((request: string) => string) | null = null;
+// A request from the page's browser to the Flask app of the last run (server.py).
+let webFn: ((request: string) => string) | null = null;
 
 /**
  * Packages that are not in the Python core, but next to it in public/pyodide
@@ -25,6 +27,7 @@ let shellFn: ((request: string) => string) | null = null;
  */
 const EXTRA: Record<string, RegExp> = {
   numpy: /(^|\n)[ \t]*(import[ \t]+numpy\b|from[ \t]+numpy\b)/,
+  flask: /(^|\n)[ \t]*(import[ \t]+flask\b|from[ \t]+flask\b)/,
 };
 const loaded = new Set<string>();
 
@@ -54,6 +57,7 @@ async function init(indexURL: string, harness: string): Promise<void> {
   runFn = pyodide.globals.get('run');
   guiFn = pyodide.globals.get('gui_event');
   shellFn = pyodide.globals.get('shell');
+  webFn = pyodide.globals.get('web_request');
 }
 
 self.onmessage = async (event: MessageEvent<Incoming>) => {
@@ -69,8 +73,9 @@ self.onmessage = async (event: MessageEvent<Incoming>) => {
   }
   if (msg.type === 'run') {
     try {
-      if (msg.fn !== 'gui_event' && msg.fn !== 'shell') await loadExtras(msg.request);
-      const result = (msg.fn === 'gui_event' ? guiFn : msg.fn === 'shell' ? shellFn : runFn)!(msg.request);
+      if (msg.fn === 'run' || msg.fn === undefined) await loadExtras(msg.request);
+      const fn = msg.fn === 'gui_event' ? guiFn : msg.fn === 'shell' ? shellFn : msg.fn === 'web_request' ? webFn : runFn;
+      const result = fn!(msg.request);
       self.postMessage({ type: 'result', id: msg.id, result });
     } catch (error) {
       self.postMessage({ type: 'crash', id: msg.id, message: String(error) });

@@ -1,12 +1,13 @@
 // Main-thread client for the Python worker. Lazy start, timeout, restart.
-import type { GuiEvent, GuiResult, RunRequest, RunResult, ShellRequest, ShellResult } from '@/engine/types';
+import type { GuiEvent, GuiResult, RunRequest, RunResult, ShellRequest, ShellResult, WebRequest, WebResult } from '@/engine/types';
 import harnessCode from './harness.py?raw';
 import shellCode from './shell.py?raw';
 import gpioCode from './gpio.py?raw';
 import plotCode from './plot.py?raw';
+import serverCode from './server.py?raw';
 
 // The pretend Linux shell, Raspberry Pi and matplotlib extend the harness.
-const harness = `${harnessCode}\n${shellCode}\n${gpioCode}\n${plotCode}`;
+const harness = `${harnessCode}\n${shellCode}\n${gpioCode}\n${plotCode}\n${serverCode}`;
 
 export type PyStatus = 'idle' | 'loading' | 'ready' | 'failed';
 
@@ -123,6 +124,38 @@ async function shellNow(request: ShellRequest): Promise<ShellResult> {
     };
     w.addEventListener('message', onMessage);
     w.postMessage({ type: 'run', id, fn: 'shell', request: JSON.stringify(request) });
+  });
+}
+
+/** A request from the page's browser to the Flask app of the last run. Queued like a run. */
+export function webRequest(request: WebRequest): Promise<WebResult> {
+  const next = queue.then(
+    () => webNow(request),
+    () => webNow(request),
+  );
+  queue = next.catch(() => undefined);
+  return next;
+}
+
+async function webNow(request: WebRequest): Promise<WebResult> {
+  await warmPython();
+  const w = worker!;
+  const id = nextId++;
+  return new Promise<WebResult>((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      w.removeEventListener('message', onMessage);
+      restart();
+      resolve({ status: 0, stdout: '', log: '', error: TIMEOUT_RESULT.error });
+    }, TIMEOUT_MS);
+    const onMessage = (msg: MessageEvent) => {
+      if (msg.data.id !== id) return;
+      window.clearTimeout(timer);
+      w.removeEventListener('message', onMessage);
+      if (msg.data.type === 'result') resolve(JSON.parse(msg.data.result) as WebResult);
+      else reject(new Error(msg.data.message));
+    };
+    w.addEventListener('message', onMessage);
+    w.postMessage({ type: 'run', id, fn: 'web_request', request: JSON.stringify(request) });
   });
 }
 

@@ -1,0 +1,543 @@
+id: web-project
+order: 406
+title: "Project: a reading list"
+summary: A small web app for the books you want to read - a page from a template, a form to add books, a button to mark them read, and a JSON API.
+minutes: 50
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Plan a web app as data and routes - which path, which method, what it answers
+  - id: O2
+    text: Combine templates, forms, redirects and checks of the input in one app
+  - id: O3
+    text: Give the same data to people (HTML) and to programs (JSON)
+
+steps:
+  # 1. USE THE FINISHED APP -----------------------------------------------------
+  - id: play
+    type: demo
+    visual: none
+    sealed: true
+    objective: O1
+    title: Use the finished app
+    intro: |
+      This project builds a **reading list**. Press **Run**, and use it:
+
+      - add a book (try one without an author too),
+      - mark a book as read,
+      - open `/api/books` and `/api/books?read=no` in the address bar.
+
+      Then look at the tab **HTTP messages** after you add a book.
+    experiments:
+      - text: "Start the app."
+        expr: "err is None and served"
+    code: &final |
+      from flask import Flask, abort, redirect, render_template_string, request, url_for
+
+      app = Flask(__name__)
+      books = [
+          {"id": 1, "title": "The Hobbit", "author": "J. R. R. Tolkien", "read": True},
+          {"id": 2, "title": "Dune", "author": "Frank Herbert", "read": False},
+      ]
+
+      PAGE = """<h1>My reading list</h1>
+      <p>{{ books|length }} books, {{ read }} read.</p>
+      <ul>
+      {% for b in books %}
+      <li>{{ b.title }} by {{ b.author }}
+      {% if b.read %}(read){% else %}<form method="post" action="/books/{{ b.id }}/read"><button>I read it</button></form>{% endif %}
+      </li>
+      {% endfor %}
+      </ul>
+      <h2>Add a book</h2>
+      <form method="post" action="/add">
+      <input name="title" placeholder="title"> <input name="author" placeholder="author"> <button>Add</button>
+      </form>"""
+
+
+      @app.route("/")
+      def home():
+          read = len([b for b in books if b["read"]])
+          return render_template_string(PAGE, books=books, read=read)
+
+
+      @app.post("/add")
+      def add():
+          title = request.form.get("title", "").strip()
+          author = request.form.get("author", "").strip()
+          if not title or not author:
+              return "Title and author are needed.", 400
+          books.append({"id": len(books) + 1, "title": title, "author": author, "read": False})
+          return redirect(url_for("home"))
+
+
+      @app.post("/books/<int:id>/read")
+      def mark_read(id):
+          for b in books:
+              if b["id"] == id:
+                  b["read"] = True
+                  return redirect(url_for("home"))
+          abort(404)
+
+
+      @app.get("/api/books")
+      def api_books():
+          wanted = request.args.get("read")
+          if wanted == "yes":
+              return [b for b in books if b["read"]]
+          if wanted == "no":
+              return [b for b in books if not b["read"]]
+          return books
+
+
+      app.run()
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: brief
+    type: theory
+    objective: O1
+    title: The plan
+    body: |
+      Before the code, the plan. The **data** is a list of books, each a
+      dictionary: `{"id": 2, "title": "Dune", "author": "Frank Herbert",
+      "read": False}`. The **routes**:
+
+      | Method | Path | What it does |
+      |---|---|---|
+      | GET | `/` | the page: all books, and a form to add one |
+      | POST | `/add` | add a book, then redirect to `/` |
+      | POST | `/books/<id>/read` | mark a book as read, then redirect |
+      | GET | `/api/books` | all books as JSON (`?read=yes` or `?read=no` filters) |
+
+      You build it in four steps. Each step starts from your code of the
+      step before:
+
+      1. **The page**: a template that lists the books.
+      2. **Add a book**: the form, and the route `/add`.
+      3. **I read it**: a button for each book that is not read yet.
+      4. **The API**: the same books for programs, as JSON.
+    keys:
+      - code: "GET / and POST /add"
+        means: "People read with GET and change with POST."
+      - code: "redirect(url_for(\"home\"))"
+        means: "After each change, back to the page."
+      - code: "/api/books"
+        means: "The same data for programs."
+
+  # 3. PROJECT STEP 1 ---------------------------------------------------------
+  - id: m1-page
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 1: the page"
+    prompt: |
+      **Fill the template `PAGE`**, so the home page shows:
+
+      - the number of books: `2 books`,
+      - a `<li>` for each book: `Dune by Frank Herbert`,
+      - `(read)` after the books that are read.
+
+      Run it and look at the page.
+    starter: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      books = [
+          {"id": 1, "title": "The Hobbit", "author": "J. R. R. Tolkien", "read": True},
+          {"id": 2, "title": "Dune", "author": "Frank Herbert", "read": False},
+      ]
+
+      PAGE = """<h1>My reading list</h1>
+      """
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, books=books)
+
+
+      app.run()
+    solution: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      books = [
+          {"id": 1, "title": "The Hobbit", "author": "J. R. R. Tolkien", "read": True},
+          {"id": 2, "title": "Dune", "author": "Frank Herbert", "read": False},
+      ]
+
+      PAGE = """<h1>My reading list</h1>
+      <p>{{ books|length }} books</p>
+      <ul>
+      {% for b in books %}
+      <li>{{ b.title }} by {{ b.author }}{% if b.read %} (read){% endif %}</li>
+      {% endfor %}
+      </ul>"""
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, books=books)
+
+
+      app.run()
+    checks:
+      - &page-lists
+        expr: "client is not None and all(f\"{b['title']} by {b['author']}\" in client.get('/').get_data(as_text=True) for b in books) and client.get('/').get_data(as_text=True).count('<li>') == len(books)"
+        pass: "A <li> for each book: title by author"
+        hint: "`{% for b in books %}<li>{{ b.title }} by {{ b.author }}</li>{% endfor %}`."
+      - &page-count
+        expr: "client is not None and f'{len(books)} books' in client.get('/').get_data(as_text=True)"
+        pass: "The number of books"
+        hint: "`{{ books|length }} books`."
+      - expr: "client is not None and client.get('/').get_data(as_text=True).count('(read)') == len([b for b in books if b['read']]) and (books.append({'id': 99, 'title': 'Emma', 'author': 'Jane Austen', 'read': True}) or True) and client.get('/').get_data(as_text=True).count('(read)') == len([b for b in books if b['read']])"
+        pass: "(read) after each book that is read"
+        hint: "`{% if b.read %} (read){% endif %}` inside the `<li>`."
+      - &page-safe
+        expr: "client is not None and (books.append({'id': 98, 'title': '<b>Bold</b>', 'author': 'X', 'read': False}) or True) and '&lt;b&gt;Bold&lt;/b&gt;' in client.get('/').get_data(as_text=True)"
+        pass: "Titles are escaped"
+        hint: "Use `{{ b.title }}` without `|safe`."
+    hints:
+      - "The template gets `books`. Loop over it with `{% for b in books %}` ... `{% endfor %}`."
+      - "`{{ b.title }}` reads the key `title` of the dictionary `b`."
+      - "`<li>{{ b.title }} by {{ b.author }}{% if b.read %} (read){% endif %}</li>`, and above the list `<p>{{ books|length }} books</p>`."
+
+  # 4. PROJECT STEP 2 ---------------------------------------------------------
+  - id: m2-add
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 2: add a book"
+    prompt: |
+      **Add a form and the route `POST /add`**:
+
+      - Under the list, a form with `method="post"`, `action="/add"`, and
+        two fields: `title` and `author`.
+      - The route takes both fields (without spaces around them), adds
+        `{"id": len(books) + 1, "title": ..., "author": ..., "read": False}`
+        and redirects to `/`.
+      - When a field is empty, it answers `Title and author are needed.`
+        with **400**, and adds nothing.
+
+      You need `request`, `redirect` and `url_for` from flask.
+    solution: |
+      from flask import Flask, redirect, render_template_string, request, url_for
+
+      app = Flask(__name__)
+      books = [
+          {"id": 1, "title": "The Hobbit", "author": "J. R. R. Tolkien", "read": True},
+          {"id": 2, "title": "Dune", "author": "Frank Herbert", "read": False},
+      ]
+
+      PAGE = """<h1>My reading list</h1>
+      <p>{{ books|length }} books</p>
+      <ul>
+      {% for b in books %}
+      <li>{{ b.title }} by {{ b.author }}{% if b.read %} (read){% endif %}</li>
+      {% endfor %}
+      </ul>
+      <h2>Add a book</h2>
+      <form method="post" action="/add">
+      <input name="title" placeholder="title"> <input name="author" placeholder="author"> <button>Add</button>
+      </form>"""
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, books=books)
+
+
+      @app.post("/add")
+      def add():
+          title = request.form.get("title", "").strip()
+          author = request.form.get("author", "").strip()
+          if not title or not author:
+              return "Title and author are needed.", 400
+          books.append({"id": len(books) + 1, "title": title, "author": author, "read": False})
+          return redirect(url_for("home"))
+
+
+      app.run()
+    checks:
+      - *page-lists
+      - *page-count
+      - &add-form
+        expr: "client is not None and all(s in client.get('/').get_data(as_text=True).replace(\"'\", '\"') for s in ['method=\"post\"', 'action=\"/add\"', 'name=\"title\"', 'name=\"author\"'])"
+        pass: "The page has the form, with the fields title and author"
+        hint: "`<form method=\"post\" action=\"/add\">` with `<input name=\"title\">` and `<input name=\"author\">`."
+      - &add-works
+        expr: "client is not None and (lambda n: client.post('/add', data={'title': ' Matilda ', 'author': 'Roald Dahl'}).status_code == 302 and len(books) == n + 1 and books[-1] == {'id': n + 1, 'title': 'Matilda', 'author': 'Roald Dahl', 'read': False})(len(books))"
+        pass: "POST /add adds the book and redirects"
+        hint: "`books.append({\"id\": len(books) + 1, ...})`, then `return redirect(url_for(\"home\"))`."
+        misconceptions:
+          - when: "client is not None and client.post('/add', data={'title': 'A', 'author': 'B'}).status_code == 405"
+            say: "The route does not take POST. Use `@app.post(\"/add\")`."
+          - when: "client is not None and len(books) > 0 and books[-1].get('title', '').startswith(' ')"
+            say: "The title keeps its spaces. Use `.strip()`."
+      - &add-checks
+        expr: "client is not None and (lambda n: all(client.post('/add', data=d).status_code == 400 for d in [{'title': 'X', 'author': ''}, {'title': '  ', 'author': 'Y'}, {}]) and len(books) == n and 'Title and author are needed.' in client.post('/add', data={}).get_data(as_text=True))(len(books))"
+        pass: "An empty field gives 400, and nothing is added"
+        hint: "`if not title or not author: return \"Title and author are needed.\", 400`, before the append."
+        misconceptions:
+          - when: "client is not None and client.post('/add', data={}).status_code == 400 and 'Bad Request' in client.post('/add', data={}).get_data(as_text=True)"
+            say: "Flask's own 400: a field is missing in `request.form[...]`. Use `request.form.get(\"title\", \"\")`, and answer your own message."
+    hints:
+      - "The form: `<form method=\"post\" action=\"/add\">`, two `<input name=...>`, a `<button>`."
+      - "`title = request.form.get(\"title\", \"\").strip()`, the same for the author."
+      - "Check first: `if not title or not author: return \"Title and author are needed.\", 400`. Then append and redirect."
+
+  # 5. PROJECT STEP 3 ---------------------------------------------------------
+  - id: m3-read
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 3: I read it"
+    prompt: |
+      **A button for each book that is not read yet.**
+
+      - In the template, instead of nothing for an unread book: a form with
+        `method="post"` and `action="/books/{{ b.id }}/read"`, with a
+        button `I read it`.
+      - A route `POST /books/<int:id>/read` sets `"read"` of that book to
+        `True` and redirects to `/`. An unknown id gives **404**
+        (`abort(404)`).
+      - Above the list: `2 books, 1 read.` Count the read books in the view
+        and give the number to the template as `read`.
+    solution: |
+      from flask import Flask, abort, redirect, render_template_string, request, url_for
+
+      app = Flask(__name__)
+      books = [
+          {"id": 1, "title": "The Hobbit", "author": "J. R. R. Tolkien", "read": True},
+          {"id": 2, "title": "Dune", "author": "Frank Herbert", "read": False},
+      ]
+
+      PAGE = """<h1>My reading list</h1>
+      <p>{{ books|length }} books, {{ read }} read.</p>
+      <ul>
+      {% for b in books %}
+      <li>{{ b.title }} by {{ b.author }}
+      {% if b.read %}(read){% else %}<form method="post" action="/books/{{ b.id }}/read"><button>I read it</button></form>{% endif %}
+      </li>
+      {% endfor %}
+      </ul>
+      <h2>Add a book</h2>
+      <form method="post" action="/add">
+      <input name="title" placeholder="title"> <input name="author" placeholder="author"> <button>Add</button>
+      </form>"""
+
+
+      @app.route("/")
+      def home():
+          read = len([b for b in books if b["read"]])
+          return render_template_string(PAGE, books=books, read=read)
+
+
+      @app.post("/add")
+      def add():
+          title = request.form.get("title", "").strip()
+          author = request.form.get("author", "").strip()
+          if not title or not author:
+              return "Title and author are needed.", 400
+          books.append({"id": len(books) + 1, "title": title, "author": author, "read": False})
+          return redirect(url_for("home"))
+
+
+      @app.post("/books/<int:id>/read")
+      def mark_read(id):
+          for b in books:
+              if b["id"] == id:
+                  b["read"] = True
+                  return redirect(url_for("home"))
+          abort(404)
+
+
+      app.run()
+    checks:
+      - *page-lists
+      - *add-works
+      - *add-checks
+      - &read-buttons
+        expr: "client is not None and client.get('/').get_data(as_text=True).replace(\"'\", '\"').count('/read\"') == len([b for b in books if not b['read']]) and 'action=\"/books/2/read\"' in client.get('/').get_data(as_text=True).replace(\"'\", '\"')"
+        pass: "A form with the button for each unread book"
+        hint: "`{% if b.read %}(read){% else %}<form method=\"post\" action=\"/books/{{ b.id }}/read\"><button>I read it</button></form>{% endif %}`."
+      - &read-works
+        expr: "client is not None and client.post('/books/2/read').status_code == 302 and books[1]['read'] is True and client.post('/books/999/read').status_code == 404"
+        pass: "POST /books/2/read marks Dune as read; an unknown id gives 404"
+        hint: "Find the book with that id, set `b[\"read\"] = True`, redirect. After the loop: `abort(404)`."
+        misconceptions:
+          - when: "client is not None and client.post('/books/1/read').status_code == 404 and client.post('/books/2/read').status_code == 404"
+            say: "Every id gives 404. Is the route `/books/<int:id>/read`, with `int:`? The ids in `books` are numbers."
+      - &read-count
+        expr: "client is not None and f\"{len(books)} books, {len([b for b in books if b['read']])} read.\" in client.get('/').get_data(as_text=True)"
+        pass: "The page says how many books are read"
+        hint: "In the view: `read = len([b for b in books if b[\"read\"]])`, and `render_template_string(PAGE, books=books, read=read)`."
+    hints:
+      - "The `{% else %}` part of the `if b.read` gets a small form, one per book."
+      - "`@app.post(\"/books/<int:id>/read\")`, then a loop over `books` that finds `b[\"id\"] == id`."
+      - "Import `abort`. After the loop (no book found): `abort(404)`."
+
+  # 6. PROJECT STEP 4 ---------------------------------------------------------
+  - id: m4-api
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O3
+    title: "Step 4: the API"
+    prompt: |
+      **Add `GET /api/books`**: all books as JSON. With `?read=yes` only the
+      books that are read, with `?read=no` only the others.
+
+      Run it, and open `/api/books?read=no` in the address bar.
+    solution: *final
+    after: >-
+      One list of data, two ways out: HTML for people, JSON for programs.
+      A phone app or a script could now use your reading list.
+    checks:
+      - *page-lists
+      - *add-works
+      - *read-works
+      - expr: "client is not None and client.get('/api/books').get_json() == books"
+        pass: "/api/books gives all books as JSON"
+        hint: "`@app.get(\"/api/books\")` and `return books`."
+      - expr: "client is not None and client.get('/api/books?read=yes').get_json() == [b for b in books if b['read']] and client.get('/api/books?read=no').get_json() == [b for b in books if not b['read']]"
+        pass: "?read=yes and ?read=no filter the books"
+        hint: "`wanted = request.args.get(\"read\")`, then a list comprehension for each value."
+        misconceptions:
+          - when: "client is not None and client.get('/api/books?read=no').get_json() == books"
+            say: "The filter does nothing yet. Read `request.args.get(\"read\")`."
+      - expr: "err is None and served"
+        pass: "The app runs"
+        hint: "Keep `app.run()` as the last line."
+    hints:
+      - "A view that returns a list answers JSON."
+      - "`wanted = request.args.get(\"read\")`."
+      - "`if wanted == \"yes\": return [b for b in books if b[\"read\"]]`, the same for `\"no\"`, else `return books`."
+
+  # 7. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Look back
+    items:
+      - kind: mcq
+        id: q-post
+        objective: O1
+        prompt: "Why is \"I read it\" a POST form, and not a link to `/books/2/read`?"
+        options:
+          - text: "It changes data. A link is a GET, and a GET must never change anything"
+            correct: true
+            why: "Browsers and search engines may open links by themselves. Changes go with POST."
+          - text: "Links cannot have numbers"
+            why: "They can. The reason is that it changes data."
+          - text: "POST is faster"
+            why: "The reason is safety."
+      - kind: mcq
+        id: q-400
+        objective: O2
+        prompt: "Why check the fields of the form on the server, when the page could also check them?"
+        options:
+          - text: "Anyone can send a request without your page, for example with requests"
+            correct: true
+            why: "Checks in the browser help people. Checks on the server protect the data."
+          - text: "Browsers cannot check forms"
+            why: "They can (`required`), but a server cannot trust them."
+          - text: "It is not needed"
+            why: "Without it, empty books get into the list."
+      - kind: mcq
+        id: q-id
+        objective: O1
+        prompt: "The id of a new book is `len(books) + 1`. When could this give the same id twice?"
+        options:
+          - text: "When books can also be deleted"
+            correct: true
+            why: "Then the list gets shorter. Real apps let a database give the ids."
+          - text: "Never"
+            why: "With deleting, two books can get the same id."
+          - text: "When two books have the same title"
+            why: "The id does not depend on the title."
+      - kind: mcq
+        id: q-restart
+        objective: O3
+        prompt: "You restart the server. What happens to the books you added?"
+        options:
+          - text: "They are gone: the list is in memory"
+            correct: true
+            why: "A next version could save the list in a JSON file after each change."
+          - text: "They stay, because of the API"
+            why: "The API reads the same list in memory."
+          - text: "The browser keeps them"
+            why: "The browser only has the last page."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-plan
+    objective: O1
+    prompt: "What do you write down first when you plan a web app?"
+    options:
+      - text: "The data, and the routes: method, path, what each answers"
+        correct: true
+        why: "Then each route is one small function."
+      - text: "The colors of the page"
+        why: "The look comes last."
+      - text: "The test client"
+        why: "Tests come with the routes."
+  - kind: mcq
+    id: r-get-change
+    objective: O1
+    prompt: "Which method for a request that changes data?"
+    options:
+      - text: "POST (or PUT and DELETE in an API)"
+        correct: true
+        why: "GET only reads."
+      - text: "GET"
+        why: "GET must never change anything."
+      - text: "Any method"
+        why: "GET is for reading only."
+  - kind: mcq
+    id: r-redirect
+    objective: O2
+    prompt: "What does a form route do after it changed the data?"
+    options:
+      - text: "It redirects to a page"
+        correct: true
+        why: "So a reload does not send the form again."
+      - text: "It returns the data as JSON"
+        why: "For a form of a page: redirect."
+      - text: "It restarts the server"
+        why: "It redirects."
+  - kind: mcq
+    id: r-abort
+    objective: O2
+    prompt: "What does `abort(404)` do in a view?"
+    options:
+      - text: "It stops the view, and the server answers 404 Not Found"
+        correct: true
+        why: "For an id that does not exist."
+      - text: "It stops the server"
+        why: "Only this request ends."
+      - text: "It returns the text 404"
+        why: "It answers with the status 404."
+  - kind: mcq
+    id: r-api-same
+    objective: O3
+    prompt: "The page and `/api/books` show the same books. Where do both get them?"
+    options:
+      - text: "From the same list, books"
+        correct: true
+        why: "One set of data, two ways to show it."
+      - text: "The API asks the page"
+        why: "Both read the list directly."
+      - text: "From two copies of the list"
+        why: "One list: a change shows in both."

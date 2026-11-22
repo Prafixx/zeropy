@@ -25,7 +25,7 @@ HOST = "raspberrypi"
 SHELL_PID = 611
 _MAX_OUT = 20_000
 _MAX_DEPTH = 8  # scripts that run scripts
-_MAX_STEPS = 20_000  # commands in one line, with every round of every loop
+_SHELL_MAX_STEPS = 20_000  # commands in one line, with every round of every loop
 _MAX_ROUNDS = 1_000  # rounds of one loop
 _PY_SECONDS = 30  # pretend seconds a Python program may sleep before it is stopped
 _BASE_DIRS = {
@@ -1072,7 +1072,7 @@ class Shell:
     # ---- running ---------------------------------------------------------------
     def tick(self):
         self.steps += 1
-        if self.steps > _MAX_STEPS or self.steps % 100 == 0 and sum(len(t) for t in self.screen) > _MAX_OUT:
+        if self.steps > _SHELL_MAX_STEPS or self.steps % 100 == 0 and sum(len(t) for t in self.screen) > _MAX_OUT:
             raise _Stop()
 
     def error(self, message, line=None):

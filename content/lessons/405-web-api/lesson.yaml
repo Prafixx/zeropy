@@ -1,0 +1,551 @@
+id: web-api
+order: 405
+title: Your own JSON API
+summary: A server for programs instead of people. Answer with JSON and the right status code, take JSON in, and test it all with Flask's test client.
+minutes: 45
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Answer with JSON from a view, with the right status code (200, 201, 400, 404)
+  - id: O2
+    text: Take JSON from a POST with request.get_json(), and check it before you use it
+  - id: O3
+    text: Try an API with Flask's test client - status_code and get_json()
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: api
+    type: theory
+    objective: O1
+    title: Pages for programs
+    body: |
+      In the lesson "Web APIs" your program asked other servers for JSON.
+      Now you write such a server. A view that returns a **dictionary** (or
+      a list) answers with JSON:
+
+      ```python
+      @app.get("/api/cities/<name>")
+      def city(name):
+          if name not in CITIES:
+              return {"error": "unknown city"}, 404
+          return {"name": name, "temp": CITIES[name]}
+      ```
+
+      - `@app.get(...)` is short for `@app.route(..., methods=["GET"])`.
+        There is `@app.post(...)` too.
+      - Flask turns the dictionary into JSON and sets
+        `Content-Type: application/json`.
+      - A **pair** `(body, status)` sets the status code. A good API says
+        what went wrong in its status: 404 for "not there", 400 for "your
+        data is wrong", 201 for "created".
+
+      To try an API, you need no browser. Flask's **test client** sends
+      requests to the app directly, without a server:
+
+      ```python
+      client = app.test_client()
+      r = client.get("/api/cities/Oslo")
+      print(r.status_code)    # 200
+      print(r.get_json())     # {'name': 'Oslo', 'temp': 4.5}
+      ```
+
+      This is also how you write tests for a web app.
+    keys:
+      - code: "return {\"a\": 1}"
+        means: "Answer with JSON."
+      - code: "return {\"error\": \"...\"}, 404"
+        means: "JSON with a status code."
+      - code: "app.test_client()"
+        means: "Send requests to the app without a server."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: try
+    type: demo
+    visual: none
+    objective: O3
+    title: Ask the API
+    intro: |
+      This program has no `app.run()`: the test client asks the API
+      directly. Press **Run**, then change the requests at the bottom.
+    code: |
+      from flask import Flask
+
+      app = Flask(__name__)
+      CITIES = {"Oslo": 4.5, "Rome": 17.5, "Cairo": 26.5}
+
+
+      @app.get("/api/cities")
+      def all_cities():
+          return sorted(CITIES)
+
+
+      @app.get("/api/cities/<name>")
+      def city(name):
+          if name not in CITIES:
+              return {"error": "unknown city"}, 404
+          return {"name": name, "temp": CITIES[name]}
+
+
+      client = app.test_client()
+      r = client.get("/api/cities")
+      print(r.status_code, r.get_json())
+      r = client.get("/api/cities/Rome")
+      print(r.status_code, r.get_json())
+      r = client.get("/api/cities/Paris")
+      print(r.status_code, r.get_json())
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and lines[2] == \"404 {'error': 'unknown city'}\""
+      - text: "Add Paris to `CITIES`, and run it again."
+        expr: "err is None and \"200 {'name': 'Paris'\" in out"
+      - text: "Ask for `/api/towns`. Which status code comes back?"
+        expr: "err is None and '/api/towns' in src and '404 None' in out"
+    investigate:
+      - kind: mcq
+        id: i-none
+        prompt: "For `/api/towns`, `r.get_json()` is `None`. Why?"
+        options:
+          - text: "No route matches, so Flask answers its own 404 page in HTML, not JSON"
+            correct: true
+            why: "`get_json()` gives `None` when the body is not JSON."
+          - text: "The city list is empty"
+            why: "The view is never called: no route matches."
+          - text: "The test client cannot read 404s"
+            why: "It read the status: 404."
+      - kind: mcq
+        id: i-order
+        prompt: "The view returns `{\"name\": name, \"temp\": ...}`, and `get_json()` gives the same keys. Does a program need to care about the order of the keys?"
+        options:
+          - text: "No: read JSON by key, like `data[\"temp\"]`"
+            correct: true
+            why: "Flask even sorts the keys of its JSON. Programs use the keys, not the order."
+          - text: "Yes, name must come first"
+            why: "Keys are found by name."
+          - text: "Yes, or the JSON is not valid"
+            why: "Any order is valid JSON."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-city
+    type: exercise
+    fade: completion
+    objective: O1
+    title: An API for prices
+    prompt: |
+      **Complete the view `price`**: for a known product it answers
+      `{"product": ..., "price": ...}`. For an unknown product it answers
+      `{"error": "unknown product"}` with the status **404**.
+
+      ```text
+      200 {'price': 2.5, 'product': 'tea'}
+      404 {'error': 'unknown product'}
+      ```
+    starter: |
+      from flask import Flask
+
+      app = Flask(__name__)
+      PRICES = {"tea": 2.5, "coffee": 3.0, "cake": 4.0}
+
+
+      @app.get("/api/prices/<product>")
+      def price(product):
+          if product not in PRICES:
+              return ___
+          return ___
+
+
+      client = app.test_client()
+      for path in ["/api/prices/tea", "/api/prices/soup"]:
+          r = client.get(path)
+          print(r.status_code, r.get_json())
+    solution: |
+      from flask import Flask
+
+      app = Flask(__name__)
+      PRICES = {"tea": 2.5, "coffee": 3.0, "cake": 4.0}
+
+
+      @app.get("/api/prices/<product>")
+      def price(product):
+          if product not in PRICES:
+              return {"error": "unknown product"}, 404
+          return {"product": product, "price": PRICES[product]}
+
+
+      client = app.test_client()
+      for path in ["/api/prices/tea", "/api/prices/soup"]:
+          r = client.get(path)
+          print(r.status_code, r.get_json())
+    after: >-
+      A program that uses your API can now check `r.status_code` first, as
+      you did in the lesson "Web APIs".
+    checks:
+      - expr: "client is not None and client.get('/api/prices/cake').status_code == 200 and client.get('/api/prices/cake').get_json() == {'product': 'cake', 'price': 4.0}"
+        pass: "A known product gives its price, as JSON"
+        hint: "`return {\"product\": product, \"price\": PRICES[product]}`."
+      - expr: "client is not None and client.get('/api/prices/soup').get_json() == {'error': 'unknown product'}"
+        pass: "An unknown product gives the error as JSON"
+        hint: "`return {\"error\": \"unknown product\"}, 404`."
+      - expr: "client is not None and client.get('/api/prices/soup').status_code == 404"
+        pass: "...with the status 404"
+        hint: "Return a pair: the dictionary, then `404`."
+        misconceptions:
+          - when: "client is not None and client.get('/api/prices/soup').status_code == 200"
+            say: "The error comes with 200 OK, so a program thinks all went well. Return `{...}, 404`."
+      - expr: "err is None and lines == [\"200 {'price': 2.5, 'product': 'tea'}\", \"404 {'error': 'unknown product'}\"]"
+        pass: "It prints the two answers"
+        hint: "Keep the loop at the end."
+    hints:
+      - "A view can return a dictionary: Flask makes it JSON."
+      - "With a status: `return {\"error\": \"unknown product\"}, 404`."
+      - "The last line: `return {\"product\": product, \"price\": PRICES[product]}`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: post-json
+    type: theory
+    objective: O2
+    title: JSON coming in
+    body: |
+      A program sends new data as JSON in the body of a POST:
+
+      ```python
+      @app.post("/api/tasks")
+      def add_task():
+          data = request.get_json()
+          title = data.get("title", "") if isinstance(data, dict) else ""
+          if not isinstance(title, str) or not title.strip():
+              return {"error": "title is missing"}, 400
+          task = {"id": len(tasks) + 1, "title": title.strip(), "done": False}
+          tasks.append(task)
+          return task, 201
+      ```
+
+      - `request.get_json()` gives the JSON of the body as Python values.
+        A body that is not JSON gets **415** or **400** from Flask.
+      - **Check** the data before you use it. Any program can send
+        anything: a list instead of a dictionary, a number instead of
+        text, nothing at all. Bad data gets **400** with a clear error.
+      - A new thing gets **201 Created**, with the new thing as the body,
+        so the client learns its `id`.
+
+      With the test client: `client.post("/api/tasks", json={"title":
+      "call Mia"})`. With requests: `requests.post(url, json={...})`.
+    keys:
+      - code: "request.get_json()"
+        means: "The JSON of the request body."
+      - code: "return task, 201"
+        means: "Created: send back the new thing."
+      - code: "client.post(path, json={...})"
+        means: "Send JSON with the test client."
+
+  # 5. EXERCISE: independent -------------------------------------------------
+  - id: ex-add
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Add a task
+    prompt: |
+      **Write the view `add_task`** for `POST /api/tasks`. The JSON must
+      have a `title` with some text in it:
+
+      - Good data: add `{"id": ..., "title": ..., "done": False}` to
+        `tasks` (the next id is `len(tasks) + 1`) and answer it with
+        **201**.
+      - No `title`, an empty one, or not text: answer
+        `{"error": "title is missing"}` with **400**.
+
+      ```text
+      201 {'done': False, 'id': 2, 'title': 'call Mia'}
+      400 {'error': 'title is missing'}
+      400 {'error': 'title is missing'}
+      2
+      ```
+    starter: |
+      from flask import Flask, request
+
+      app = Flask(__name__)
+      tasks = [{"id": 1, "title": "water the plants", "done": False}]
+
+
+      @app.get("/api/tasks")
+      def all_tasks():
+          return tasks
+
+
+      # Your view here
+
+
+      client = app.test_client()
+      for data in [{"title": "call Mia"}, {"title": "  "}, {"name": "x"}]:
+          r = client.post("/api/tasks", json=data)
+          print(r.status_code, r.get_json())
+      print(len(client.get("/api/tasks").get_json()))
+    solution: |
+      from flask import Flask, request
+
+      app = Flask(__name__)
+      tasks = [{"id": 1, "title": "water the plants", "done": False}]
+
+
+      @app.get("/api/tasks")
+      def all_tasks():
+          return tasks
+
+
+      @app.post("/api/tasks")
+      def add_task():
+          data = request.get_json()
+          title = data.get("title", "") if isinstance(data, dict) else ""
+          if not isinstance(title, str) or not title.strip():
+              return {"error": "title is missing"}, 400
+          task = {"id": len(tasks) + 1, "title": title.strip(), "done": False}
+          tasks.append(task)
+          return task, 201
+
+
+      client = app.test_client()
+      for data in [{"title": "call Mia"}, {"title": "  "}, {"name": "x"}]:
+          r = client.post("/api/tasks", json=data)
+          print(r.status_code, r.get_json())
+      print(len(client.get("/api/tasks").get_json()))
+    after: >-
+      Bad data never reaches your list. A server that checks its input is
+      safe from other programs' mistakes, and from attacks.
+    checks:
+      - expr: "client is not None and client.post('/api/tasks', json={'title': 'buy milk'}).status_code == 201 and client.get('/api/tasks').get_json()[-1]['title'] == 'buy milk' and client.get('/api/tasks').get_json()[-1]['done'] is False"
+        pass: "Good data: 201, and the task is in the list"
+        hint: "`@app.post(\"/api/tasks\")`, then `tasks.append(task)` and `return task, 201`."
+        misconceptions:
+          - when: "client is not None and client.post('/api/tasks', json={'title': 'buy bread'}).status_code == 405"
+            say: "The route does not take POST. Use `@app.post(\"/api/tasks\")`."
+          - when: "client is not None and client.post('/api/tasks', json={'title': 'buy rice'}).status_code == 200"
+            say: "The task is added, but the status is 200. A new thing gets 201: `return task, 201`."
+      - expr: "client is not None and (lambda r: r.get_json()['id'] == len(tasks) and r.get_json()['title'] == 'read')(client.post('/api/tasks', json={'title': 'read'}))"
+        pass: "The answer is the new task, with its id"
+        hint: "`task = {\"id\": len(tasks) + 1, \"title\": ..., \"done\": False}`, and return it."
+      - expr: "client is not None and all(client.post('/api/tasks', json=d).status_code == 400 for d in [{}, {'title': ''}, {'title': '   '}, {'title': 42}, ['title']]) and client.post('/api/tasks', json={}).get_json() == {'error': 'title is missing'}"
+        pass: "Bad data gets 400 with the error"
+        hint: "Check that `title` is text with something in it: `isinstance(title, str) and title.strip()`."
+        misconceptions:
+          - when: "client is not None and client.post('/api/tasks', json={'title': 42}).status_code in (201, 500)"
+            say: "A number as the title must give 400 too. Check `isinstance(title, str)`."
+          - when: "client is not None and client.post('/api/tasks', json=['title']).status_code == 500"
+            say: "The JSON may be a list, not a dictionary: then `.get` fails. Check `isinstance(data, dict)` first."
+      - expr: "client is not None and (lambda n: all(client.post('/api/tasks', json=d).status_code == 400 for d in [{}, {'title': ' '}]) and len(tasks) == n)(len(tasks))"
+        pass: "Bad data does not change the list"
+        hint: "Return the 400 before `tasks.append(...)`."
+    hints:
+      - "Start with `@app.post(\"/api/tasks\")` and `def add_task():`."
+      - "`data = request.get_json()`, then `title = data.get(\"title\", \"\") if isinstance(data, dict) else \"\"`."
+      - "If `not isinstance(title, str) or not title.strip()`: `return {\"error\": \"title is missing\"}, 400`. Else make the task, append it, `return task, 201`."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-id
+    type: exercise
+    fade: debug
+    objective: O1
+    title: Always 404
+    prompt: |
+      `GET /api/tasks/<id>` should give one task. But it answers 404 for
+      every id, also for the tasks that exist. **Find the mistake and fix
+      it**:
+
+      ```text
+      200 {'done': False, 'id': 1, 'title': 'water the plants'}
+      404 {'error': 'no such task'}
+      ```
+    starter: |
+      from flask import Flask
+
+      app = Flask(__name__)
+      tasks = {
+          1: {"id": 1, "title": "water the plants", "done": False},
+          2: {"id": 2, "title": "call Mia", "done": True},
+      }
+
+
+      @app.get("/api/tasks/<id>")
+      def one_task(id):
+          if id not in tasks:
+              return {"error": "no such task"}, 404
+          return tasks[id]
+
+
+      client = app.test_client()
+      for path in ["/api/tasks/1", "/api/tasks/9"]:
+          r = client.get(path)
+          print(r.status_code, r.get_json())
+    solution: |
+      from flask import Flask
+
+      app = Flask(__name__)
+      tasks = {
+          1: {"id": 1, "title": "water the plants", "done": False},
+          2: {"id": 2, "title": "call Mia", "done": True},
+      }
+
+
+      @app.get("/api/tasks/<int:id>")
+      def one_task(id):
+          if id not in tasks:
+              return {"error": "no such task"}, 404
+          return tasks[id]
+
+
+      client = app.test_client()
+      for path in ["/api/tasks/1", "/api/tasks/9"]:
+          r = client.get(path)
+          print(r.status_code, r.get_json())
+    after: >-
+      A part of the path is text, `"1"`, and the keys of `tasks` are
+      numbers: `"1" not in tasks` is always `True`. `<int:id>` gives a
+      number, and `/api/tasks/abc` now gives 404 by itself.
+    checks:
+      - expr: "client is not None and client.get('/api/tasks/2').status_code == 200 and client.get('/api/tasks/2').get_json()['title'] == 'call Mia'"
+        pass: "An existing task is found"
+        hint: "Is `id` text or a number? Compare with the keys of `tasks`."
+        misconceptions:
+          - when: "\"tasks[str(\" in src.replace(' ', '') or \"'1':\" in src"
+            say: "That works too, but the usual fix is in the route: `<int:id>` gives a number."
+      - expr: "client is not None and client.get('/api/tasks/9').status_code == 404 and client.get('/api/tasks/abc').status_code == 404"
+        pass: "Unknown ids still give 404"
+        hint: "Keep the test for unknown ids."
+      - expr: "err is None and lines == [\"200 {'done': False, 'id': 1, 'title': 'water the plants'}\", \"404 {'error': 'no such task'}\"]"
+        pass: "It prints the two answers"
+        hint: "Keep the loop at the end."
+    hints:
+      - "Print `type(id)` in the view. What comes out?"
+      - "Parts of the path are text. The keys of `tasks` are ints."
+      - "Use the converter: `@app.get(\"/api/tasks/<int:id>\")`."
+
+  # 7. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-201
+        objective: O1
+        prompt: "A POST creates a new user. Which status code fits best?"
+        options:
+          - text: "201 Created"
+            correct: true
+            why: "And the body is the new user, with its id."
+          - text: "200 OK"
+            why: "It works, but 201 says more: something new exists."
+          - text: "302 Found"
+            why: "That is a redirect, for browsers after a form."
+      - kind: mcq
+        id: q-400
+        objective: O2
+        prompt: "A program sends `{\"title\": 42}` to your API. What should it answer?"
+        options:
+          - text: "400 with an error in JSON: the data is wrong"
+            correct: true
+            why: "The client sent bad data: a 4xx, and a clear message."
+          - text: "201: add the task \"42\""
+            why: "A title must be text. Check the data."
+          - text: "500"
+            why: "500 means a bug in the server. Check and answer 400 instead."
+      - kind: predict
+        id: q-test
+        objective: O3
+        code: |
+          from flask import Flask
+
+          app = Flask(__name__)
+
+
+          @app.get("/api/ping")
+          def ping():
+              return {"ok": True}
+
+
+          client = app.test_client()
+          r = client.get("/api/ping")
+          print(r.status_code, r.get_json())
+          r = client.post("/api/ping")
+          print(r.status_code)
+        explain: "GET gives the JSON. The route takes only GET, so a POST gets 405 Method Not Allowed."
+      - kind: mcq
+        id: q-dict
+        objective: O1
+        prompt: "What does Flask do when a view returns a dictionary?"
+        options:
+          - text: "It sends it as JSON, with Content-Type application/json"
+            correct: true
+            why: "Lists work too."
+          - text: "It shows it as an HTML table"
+            why: "It sends JSON, for programs."
+          - text: "It raises an error: a view must return text"
+            why: "Dictionaries and lists are fine."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-pair
+    objective: O1
+    prompt: "How does a view answer JSON with the status 404?"
+    options:
+      - text: "`return {\"error\": \"not found\"}, 404`"
+        correct: true
+        why: "A pair: the body, then the status."
+      - text: "`return 404`"
+        why: "A number alone is not a response."
+      - text: "`return {\"status\": 404}`"
+        why: "That is JSON with 200 OK."
+  - kind: mcq
+    id: r-get-json
+    objective: O2
+    prompt: "Where is the JSON that a client sent with POST?"
+    options:
+      - text: "`request.get_json()`"
+        correct: true
+        why: "Then check it before you use it."
+      - text: "`request.args`"
+        why: "That is the query of the address."
+      - text: "An argument of the view"
+        why: "Only parts of the path are arguments."
+  - kind: mcq
+    id: r-check
+    objective: O2
+    prompt: "Why check the JSON that comes in?"
+    options:
+      - text: "Any program can send anything: wrong types, missing keys, nothing"
+        correct: true
+        why: "Bad data gets 400, and never reaches your data."
+      - text: "Flask cannot read JSON without a check"
+        why: "Flask reads it. Whether it makes sense is your job."
+      - text: "It is faster"
+        why: "It is safer."
+  - kind: mcq
+    id: r-client
+    objective: O3
+    prompt: "What does `app.test_client()` give?"
+    options:
+      - text: "A client that sends requests to the app without a server"
+        correct: true
+        why: "For trying and testing an app: `client.get(...)`, `client.post(...)`."
+      - text: "A browser window"
+        why: "It is a Python object, without a window."
+      - text: "A copy of the app"
+        why: "It talks to the same app."
+  - kind: mcq
+    id: r-int
+    objective: O1
+    prompt: "The keys of `tasks` are ints. Why does the route need `<int:id>`?"
+    options:
+      - text: "Without it, id is text, and \"1\" is not the key 1"
+        correct: true
+        why: "Parts of the path are text unless a converter says otherwise."
+      - text: "Routes cannot have text"
+        why: "They can: `<name>` gives text."
+      - text: "For speed"
+        why: "It is about the type of id."

@@ -2653,8 +2653,186 @@ code {
 }
 
 /* ---------- A window of the pretend tkinter ---------- */
-.bench-window-slot:empty {
+.bench-window-slot:empty,
+.bench-server-slot:empty {
   display: none;
+}
+/* The small browser for a Flask app (src/engine/steps/browser.ts). */
+.mb {
+  margin: 10px 0;
+  border: var(--line);
+  border-radius: var(--radius-s);
+  background: var(--paper-2);
+  box-shadow: var(--shadow-s);
+  overflow: hidden;
+}
+.mb-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-bottom: var(--line);
+  background: var(--paper-3);
+}
+.mb-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-3);
+  font: 400 14px/1.4 var(--font-mono);
+}
+.mb-host {
+  flex: none;
+}
+@media (max-width: 480px) {
+  .mb-host {
+    display: none;
+  }
+}
+.mb-address {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+}
+.mb-address:focus {
+  outline: none;
+}
+.mb-field:focus-within {
+  outline: 3px solid var(--blue);
+  outline-offset: 1px;
+}
+.mb-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-bottom: var(--line);
+  font: 700 13px/1.4 var(--font-body);
+}
+.mb-tab {
+  padding: 2px 10px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+}
+.mb-tab.is-on {
+  border-color: var(--edge);
+  background: var(--paper);
+  color: var(--ink);
+}
+.mb-status {
+  margin-left: auto;
+  color: var(--ink-3);
+}
+.mb-code {
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+.mb-code.is-ok {
+  background: var(--tint-good);
+}
+.mb-code.is-move {
+  background: var(--tint-info);
+}
+.mb-code.is-bad {
+  background: var(--tint-bad);
+}
+.mb-body {
+  max-height: 420px;
+  overflow: auto;
+  padding: 10px 14px;
+  font: 400 15px/1.5 var(--font-body);
+  color: var(--ink);
+}
+.mb.is-busy .mb-body {
+  opacity: 0.6;
+}
+.mb-page {
+  overflow-wrap: anywhere;
+}
+.mb-page :is(h1, h2, h3, h4) {
+  margin: 0.4em 0;
+  font-family: var(--font-display);
+  line-height: 1.2;
+}
+.mb-page h1 {
+  font-size: 1.6em;
+}
+.mb-page :is(p, ul, ol, table, form, pre) {
+  margin: 0.5em 0;
+}
+.mb-page table {
+  border-collapse: collapse;
+}
+.mb-page :is(td, th) {
+  padding: 3px 8px;
+  border: 1px solid var(--ink-3);
+}
+.mb-page :is(input, textarea, select) {
+  margin: 2px 4px 2px 0;
+  padding: 3px 6px;
+  border: var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+.mb-page button,
+.mb-page input[type='submit'] {
+  padding: 3px 12px;
+  border: var(--line);
+  border-radius: 6px;
+  background: var(--paper-3);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.mb-link {
+  color: var(--blue);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.mb-away {
+  color: var(--ink-3);
+  text-decoration: underline dotted;
+  cursor: not-allowed;
+}
+.mb-img {
+  color: var(--ink-3);
+  font-style: italic;
+}
+.mb-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 400 13px/1.5 var(--font-mono);
+}
+.mb-raw-label {
+  margin: 8px 0 2px;
+  font: 700 12px/1.4 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+}
+.mb-notice {
+  margin: 4px 0;
+  color: var(--ink-2);
+  font-style: italic;
 }
 /* Charts of matplotlib.pyplot (src/engine/steps/chart.ts). */
 .bench-charts:empty {

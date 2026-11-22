@@ -1,0 +1,512 @@
+id: web-templates
+order: 404
+title: Pages from templates
+summary: Keep the HTML apart from the Python, in templates with places for values, loops and decisions. Templates also escape for you.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Fill a Jinja template with values, filters, a for loop and an if
+  - id: O2
+    text: Know that templates escape values, and why |safe on visitor text is a hole
+  - id: O3
+    text: Organise a real project with a templates folder, render_template and a base layout
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: jinja
+    type: theory
+    objective: O1
+    title: HTML with places for values
+    body: |
+      Long f-strings of HTML are hard to read. A **template** is HTML with
+      places for values. Flask uses the template language **Jinja**:
+
+      ```python
+      from flask import render_template_string
+
+      PAGE = """<h1>{{ title }}</h1>
+      <ul>
+      {% for item in items %}
+        <li>{{ item }}</li>
+      {% endfor %}
+      </ul>
+      {% if not items %}<p>Nothing yet.</p>{% endif %}"""
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, title="Shopping", items=["tea", "milk"])
+      ```
+
+      - `{{ value }}` puts a value into the page.
+      - `{% for ... %}` ... `{% endfor %}` repeats a part, like a `for`
+        loop. `{% if ... %}` ... `{% else %}` ... `{% endif %}` decides.
+        Jinja has no indentation: the end tags close the blocks.
+      - The names come from the call: `title="Shopping"` gives `title`.
+      - A **filter** changes a value: `{{ title|upper }}` gives
+        `SHOPPING`, `{{ items|length }}` gives `2`, `{{ price|round(1) }}`
+        rounds. `{{ item.name }}` reads the key `name` of a dictionary.
+    keys:
+      - code: "{{ value }}"
+        means: "Put a value into the page (escaped)."
+      - code: "{% for x in xs %} ... {% endfor %}"
+        means: "Repeat a part of the page."
+      - code: "{{ name|upper }}"
+        means: "A filter: change the value before it is shown."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: cities
+    type: demo
+    visual: none
+    objective: O1
+    title: A table from a list
+    intro: |
+      Press **Run**: a table of cities, made by one template. Then change
+      the data and the template.
+    code: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+
+      CITIES = [
+          {"name": "Oslo", "temp": 4.25},
+          {"name": "Rome", "temp": 17.75},
+          {"name": "Cairo", "temp": 26.5},
+      ]
+
+      PAGE = """<h1>{{ title|upper }}</h1>
+      <table>
+        <tr><th>City</th><th>°C</th></tr>
+        {% for city in cities %}
+        <tr><td>{{ city.name }}</td><td>{{ city.temp|round(1) }}</td></tr>
+        {% endfor %}
+      </table>
+      <p>{{ cities|length }} cities.</p>"""
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, title="Weather today", cities=CITIES)
+
+
+      app.run()
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and served"
+      - text: "Add a city to `CITIES`, and run it again."
+        expr: "err is None and '4 cities.' in client.get('/').get_data(as_text=True)"
+      - text: "In the template, write `warm` after the temperature when it is over 20: `{% if city.temp > 20 %}warm{% endif %}`."
+        expr: "err is None and 'warm' in client.get('/').get_data(as_text=True)"
+    investigate:
+      - kind: mcq
+        id: i-typo
+        prompt: "You write `{{ city.nmae }}` (a typo). What does the page show in that place?"
+        options:
+          - text: "Nothing: Jinja shows an unknown name as empty text"
+            correct: true
+            why: "No error. So check the page after each change: an empty place often means a typo."
+          - text: "An error page, 500"
+            why: "Jinja is lenient with unknown names: they are empty."
+          - text: "The text city.nmae"
+            why: "`{{ }}` always looks up a value."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-loop
+    type: exercise
+    fade: completion
+    objective: O1
+    title: The list of tasks
+    prompt: |
+      **Complete the template**: a `<li>` for each task in `tasks`, and
+      `<p>All done!</p>` when the list is empty.
+
+      ```html
+      <h1>Tasks (2)</h1>
+      <ul><li>water the plants</li><li>call Mia</li></ul>
+      ```
+    starter: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      tasks = ["water the plants", "call Mia"]
+
+      PAGE = """<h1>Tasks ({{ tasks|length }})</h1>
+      <ul>
+      ___
+      </ul>
+      ___"""
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, tasks=tasks)
+
+
+      app.run()
+    solution: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      tasks = ["water the plants", "call Mia"]
+
+      PAGE = """<h1>Tasks ({{ tasks|length }})</h1>
+      <ul>
+      {% for task in tasks %}<li>{{ task }}</li>{% endfor %}
+      </ul>
+      {% if not tasks %}<p>All done!</p>{% endif %}"""
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, tasks=tasks)
+
+
+      app.run()
+    after: >-
+      The Python only gives the data; the template decides how it looks.
+      The same template works for 0, 2 or 200 tasks.
+    checks:
+      - expr: "client is not None and all(f'<li>{t}</li>' in client.get('/').get_data(as_text=True) for t in tasks) and 'Tasks (2)' in client.get('/').get_data(as_text=True)"
+        pass: "One <li> for each task"
+        hint: "`{% for task in tasks %}<li>{{ task }}</li>{% endfor %}`."
+      - expr: "client is not None and 'All done!' not in client.get('/').get_data(as_text=True) and (tasks.clear() or True) and 'All done!' in client.get('/').get_data(as_text=True) and '<li>' not in client.get('/').get_data(as_text=True)"
+        pass: "An empty list shows All done!"
+        hint: "`{% if not tasks %}<p>All done!</p>{% endif %}`."
+      - expr: "client is not None and (tasks.extend(['a', 'b', 'c']) or True) and client.get('/').get_data(as_text=True).count('<li>') == len(tasks)"
+        pass: "It works for any number of tasks"
+        hint: "Use the loop, not fixed `<li>` lines."
+    hints:
+      - "A loop in Jinja: `{% for task in tasks %}` ... `{% endfor %}`."
+      - "Inside: `<li>{{ task }}</li>`."
+      - "The second blank: `{% if not tasks %}<p>All done!</p>{% endif %}`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: autoescape
+    type: theory
+    objective: O2
+    title: Templates escape for you
+    body: |
+      `{{ value }}` is **escaped**: `<b>` becomes `&lt;b&gt;`. You do not
+      need `escape()` in templates. That makes templates safer than
+      f-strings.
+
+      The filter `|safe` turns escaping off: `{{ text|safe }}` puts the
+      text in as HTML. Use it only for HTML that **you** wrote, never for
+      text from visitors: that would open the XSS hole again.
+    keys:
+      - code: "{{ comment }}"
+        means: "Escaped: always safe."
+      - code: "{{ comment|safe }}"
+        means: "Not escaped: only for your own HTML."
+
+  # 5. EXERCISE: debug -------------------------------------------------------
+  - id: ex-safe
+    type: exercise
+    fade: debug
+    objective: O2
+    title: Too safe to be safe
+    prompt: |
+      The reviews page wanted bold names, and used `|safe` everywhere. Now
+      a visitor's review shows as HTML. **Fix the template**: the names of
+      the products may stay bold, but every review must be text.
+    starter: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      reviews = [
+          {"product": "Tea", "text": "Very good!"},
+          {"product": "Cake", "text": "<script>alert('hacked')</script>"},
+      ]
+
+      PAGE = """<h1>Reviews</h1>
+      {% for r in reviews %}
+      <p><b>{{ r.product }}</b>: {{ r.text|safe }}</p>
+      {% endfor %}"""
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, reviews=reviews)
+
+
+      app.run()
+    solution: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      reviews = [
+          {"product": "Tea", "text": "Very good!"},
+          {"product": "Cake", "text": "<script>alert('hacked')</script>"},
+      ]
+
+      PAGE = """<h1>Reviews</h1>
+      {% for r in reviews %}
+      <p><b>{{ r.product }}</b>: {{ r.text }}</p>
+      {% endfor %}"""
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, reviews=reviews)
+
+
+      app.run()
+    after: >-
+      The `<b>` around the name is in the template, so it stays HTML. The
+      review is a value, so `{{ }}` escapes it. That is the whole rule.
+    checks:
+      - expr: "client is not None and '<script>' not in client.get('/').get_data(as_text=True) and '&lt;script&gt;' in client.get('/').get_data(as_text=True)"
+        pass: "The review is shown as text"
+        hint: "Remove `|safe` after `r.text`."
+      - expr: "client is not None and '<b>Tea</b>' in client.get('/').get_data(as_text=True) and '<b>Cake</b>' in client.get('/').get_data(as_text=True)"
+        pass: "The names are still bold"
+        hint: "Keep the `<b>` tags of the template."
+      - expr: "'escape(' not in src"
+        pass: "No escape() needed: the template does it"
+        hint: "Templates escape `{{ }}` by themselves. Remove `escape()`."
+        misconceptions:
+          - when: "'escape(' in src and '|safe' in src"
+            say: "`escape()` together with `|safe` works, but it is the long way. Just remove `|safe`."
+    hints:
+      - "Which part of the page comes from visitors?"
+      - "`|safe` turns escaping off."
+      - "Write `{{ r.text }}`, without `|safe`."
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: files
+    type: theory
+    objective: O3
+    title: Templates in files
+    body: |
+      In a real project, templates are files in a folder `templates`, next
+      to the program. `render_template` finds them by name:
+
+      ```text
+      my-site/
+      ├── app.py
+      └── templates/
+          ├── base.html
+          └── home.html
+      ```
+
+      ```python
+      from flask import render_template
+
+      return render_template("home.html", name="Ann")
+      ```
+
+      Most pages share a frame: the top, the menu, the bottom. Write it
+      once, in `base.html`, with a **block** that each page fills:
+
+      ```html
+      <!-- base.html -->
+      <header>My site</header>
+      {% block content %}{% endblock %}
+      <footer>Made with Flask</footer>
+
+      <!-- home.html -->
+      {% extends "base.html" %}
+      {% block content %}<p>Hello, {{ name }}!</p>{% endblock %}
+      ```
+
+      Files that end with `.html` are escaped, like strings.
+    keys:
+      - code: "render_template(\"home.html\", ...)"
+        means: "Fill the file templates/home.html."
+      - code: "{% extends \"base.html\" %}"
+        means: "This page fills the frame of base.html."
+      - code: "{% block content %}"
+        means: "A place in the frame that a page fills."
+
+  # 7. DEMO -----------------------------------------------------------------
+  - id: layout
+    type: demo
+    visual: none
+    objective: O3
+    title: One frame, two pages
+    intro: |
+      The folder has a `templates` folder with three files (shown under the
+      output). Press **Run**, and click between the two pages: both have
+      the same header and footer, from `base.html`.
+    files:
+      templates/base.html: |
+        <header><b>Café Zero</b> | <a href="/">Home</a> | <a href="/menu">Menu</a></header>
+        <hr>
+        {% block content %}{% endblock %}
+        <hr>
+        <footer>Open every day, 8 to 18.</footer>
+      templates/home.html: |
+        {% extends "base.html" %}
+        {% block content %}
+        <h1>Welcome</h1>
+        <p>Today's cake: {{ cake }}.</p>
+        {% endblock %}
+      templates/menu.html: |
+        {% extends "base.html" %}
+        {% block content %}
+        <h1>Menu</h1>
+        <ul>{% for item, price in items.items() %}<li>{{ item }}: {{ price }} €</li>{% endfor %}</ul>
+        {% endblock %}
+    code: |
+      from flask import Flask, render_template
+
+      app = Flask(__name__)
+      MENU = {"Tea": 2.5, "Coffee": 3.0, "Cake": 4.0}
+
+
+      @app.route("/")
+      def home():
+          return render_template("home.html", cake="apple")
+
+
+      @app.route("/menu")
+      def menu():
+          return render_template("menu.html", items=MENU)
+
+
+      app.run()
+    experiments:
+      - text: "Run it, and open the menu."
+        expr: "err is None and served"
+      - text: "Change the cake of the day."
+        expr: "err is None and 'apple' not in client.get('/').get_data(as_text=True)"
+      - text: "Add a drink to `MENU`."
+        expr: "err is None and client.get('/menu').get_data(as_text=True).count('<li>') == 4"
+    investigate:
+      - kind: mcq
+        id: i-extends
+        prompt: "You want a new link `Contact` in the header of every page. Which file do you change?"
+        options:
+          - text: "templates/base.html, once"
+            correct: true
+            why: "Every page extends it. That is the point of a base layout."
+          - text: "home.html and menu.html"
+            why: "They only fill the block. The header is in base.html."
+          - text: "app.py"
+            why: "The Python gives data. The look is in the templates."
+
+  # 8. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-for
+        objective: O1
+        prompt: "How does a for loop end in a Jinja template?"
+        options:
+          - text: "`{% endfor %}`"
+            correct: true
+            why: "Jinja has no indentation. Each block has an end tag."
+          - text: "With less indentation"
+            why: "That is Python. Templates are HTML."
+          - text: "`{{ end }}`"
+            why: "`{{ }}` shows a value."
+      - kind: mcq
+        id: q-filter
+        objective: O1
+        prompt: "`name` is `\"ann\"`. What does `{{ name|upper }}` show?"
+        options:
+          - text: "ANN"
+            correct: true
+            why: "A filter changes the value before it is shown."
+          - text: "ann|upper"
+            why: "`|upper` is a filter, not text."
+          - text: "Ann"
+            why: "That would be `|capitalize`."
+      - kind: mcq
+        id: q-escape
+        objective: O2
+        prompt: "`comment` is `\"<b>hi</b>\"`. What does `{{ comment }}` put into the HTML?"
+        options:
+          - text: "`&lt;b&gt;hi&lt;/b&gt;`: the browser shows <b>hi</b> as text"
+            correct: true
+            why: "Templates escape values."
+          - text: "`<b>hi</b>`: a bold hi"
+            why: "That needs `|safe`."
+          - text: "Nothing"
+            why: "The value is shown, escaped."
+      - kind: mcq
+        id: q-folder
+        objective: O3
+        prompt: "`render_template(\"menu.html\")` stops with TemplateNotFound. What is wrong most often?"
+        options:
+          - text: "The file is not in a folder called templates next to the program"
+            correct: true
+            why: "Flask looks in `templates/` by default."
+          - text: "The file must end with .txt"
+            why: "`.html` is right: it is escaped too."
+          - text: "render_template needs the full path"
+            why: "Only the name inside `templates/`."
+
+  # 9. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-braces
+    objective: O1
+    prompt: "In a Jinja template, what is the difference between `{{ }}` and `{% %}`?"
+    options:
+      - text: "`{{ }}` shows a value; `{% %}` is a command like for or if"
+        correct: true
+        why: "Values go in double braces, commands in braces with %."
+      - text: "No difference"
+        why: "`{% %}` shows nothing by itself."
+      - text: "`{% %}` is a comment"
+        why: "A comment is `{# #}`."
+  - kind: mcq
+    id: r-call
+    objective: O1
+    prompt: "How does the value `title` get into the template?"
+    options:
+      - text: "As an argument of the call: `render_template_string(PAGE, title=\"Shop\")`"
+        correct: true
+        why: "Each keyword argument becomes a name in the template."
+      - text: "The template reads the variables of the program"
+        why: "Only what you pass in."
+      - text: "From the URL"
+        why: "Only what you pass in."
+  - kind: mcq
+    id: r-safe
+    objective: O2
+    prompt: "When is `|safe` OK?"
+    options:
+      - text: "Only for HTML that you wrote yourself"
+        correct: true
+        why: "Never for visitor text: that is the XSS hole."
+      - text: "For every value, to be sure"
+        why: "It turns safety off."
+      - text: "For text from forms"
+        why: "Text from forms is exactly what must be escaped."
+  - kind: mcq
+    id: r-unknown
+    objective: O1
+    prompt: "A template uses a name that you did not pass in. What happens?"
+    options:
+      - text: "It shows as empty text"
+        correct: true
+        why: "No error. An empty place often means a typo."
+      - text: "NameError"
+        why: "Jinja does not raise an error for an unknown name."
+      - text: "It shows None"
+        why: "It shows nothing."
+  - kind: mcq
+    id: r-base
+    objective: O3
+    prompt: "What is `base.html` with `{% block content %}` for?"
+    options:
+      - text: "The frame that all pages share; each page fills the block"
+        correct: true
+        why: "Pages start with `{% extends \"base.html\" %}`."
+      - text: "The home page"
+        why: "It is the frame of all pages."
+      - text: "A backup of the templates"
+        why: "It is the shared layout."

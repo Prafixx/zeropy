@@ -18,6 +18,7 @@ import sys
 import traceback
 import types
 import urllib.parse
+_json_module = json  # _request() has a parameter called json, like requests
 from contextlib import redirect_stderr, redirect_stdout
 
 _FILE = "main.py"
@@ -333,6 +334,9 @@ class _Web:
 
 
 _web = _Web()
+# Functions that may answer a request for this computer (127.0.0.1) from an
+# app of the same program (server.py). Each returns a _Response or None.
+_LOCAL_SERVERS = []
 
 
 def _split_url(url):
@@ -402,7 +406,9 @@ class _Response:
         return f"<Response [{self.status_code}]>"
 
 
-def _request(method, url, params=None, timeout=None, **kwargs):
+def _request(method, url, params=None, timeout=None, data=None, json=None, **kwargs):
+    json_body = json
+    json = _json_module
     base, params_in_url = _split_url(str(url))
     all_params = dict(params_in_url)
     if isinstance(params, (str, bytes)):
@@ -413,10 +419,16 @@ def _request(method, url, params=None, timeout=None, **kwargs):
     parts = urllib.parse.urlparse(full)
     host = parts.netloc or base
     path = (parts.path or "/") + ("?" + parts.query if parts.query else "")
+    for serve in _LOCAL_SERVERS:
+        answer = serve(method, full, all_params, data, json_body)
+        if answer is not None:
+            return answer
     route = _route_for(base, all_params)
     if route is None or route.get("error") == "ConnectionError":
+        pool = "HTTPConnectionPool" if parts.scheme == "http" else "HTTPSConnectionPool"
+        port = parts.port or (80 if parts.scheme == "http" else 443)
         raise _ConnectionError(
-            f"HTTPSConnectionPool(host='{host}', port=443): Max retries exceeded with url: {path} "
+            f"{pool}(host='{parts.hostname or host}', port={port}): Max retries exceeded with url: {path} "
             f"(Failed to establish a new connection)"
         )
     if route.get("error") == "Timeout":
@@ -439,7 +451,9 @@ def _make_requests():
     module.Response = _Response
     module.request = _request
     module.get = lambda url, params=None, **kwargs: _request("GET", url, params=params, **kwargs)
-    module.post = lambda url, data=None, json=None, **kwargs: _request("POST", url, **kwargs)
+    module.post = lambda url, data=None, json=None, **kwargs: _request("POST", url, data=data, json=json, **kwargs)
+    module.put = lambda url, data=None, json=None, **kwargs: _request("PUT", url, data=data, json=json, **kwargs)
+    module.delete = lambda url, **kwargs: _request("DELETE", url, **kwargs)
     module.codes = types.SimpleNamespace(ok=200, not_found=404)
     sys.modules["requests"] = module
     sys.modules["requests.exceptions"] = exceptions
@@ -1442,6 +1456,9 @@ def run(request_json):
         os.chdir("/")
         shutil.rmtree(_gui_last.home, ignore_errors=True)
     _gui_last = None
+    for hook in _RUN_HOOKS:
+        if hasattr(hook, "reset"):
+            hook.reset()
     req = json.loads(request_json)
     src = req["code"]
     cases = req.get("cases") or [{}]
@@ -1485,11 +1502,18 @@ def run(request_json):
     # gui_event(). The checks may have clicked already, so it gets a fresh
     # run of the first case, in a folder that stays until the next run.
     gui = None
-    if first["gui"].root is not None:
+    live = None
+    serving = (first["ext"].get("server") or {}).get("served")
+    if first["gui"].root is not None or serving:
         live = _execute(src, cases[0], False, len(cases), bool(req.get("pytest")))
         _gui_last = live["gui"]
-        gui = _gui_tree(_gui_last)
+        if _gui_last.root is not None:
+            gui = _gui_tree(_gui_last)
         os.chdir("/")
+    # A server of the live run answers the page's browser (server.py).
+    for hook in _RUN_HOOKS:
+        if hasattr(hook, "keep"):
+            hook.keep(live["ext"].get(hook.name) if live else None)
     return json.dumps(
         {
             "gui": gui,
@@ -1502,5 +1526,6 @@ def run(request_json):
             "files": first["files"],
             "gpio": first["ext"].get("gpio"),
             "plot": first["ext"].get("plot"),
+            "server": first["ext"].get("server"),
         }
     )

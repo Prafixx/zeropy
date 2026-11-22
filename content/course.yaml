@@ -155,3 +155,19 @@ paths:
           - { id: data-line, title: "A first model: a straight line" }
           - { id: data-neighbours, title: "Sort into classes: nearest neighbours" }
           - { id: data-real, title: "The real tools: pandas and scikit-learn" }
+  - id: web
+    title: Networks and the web
+    short: Web
+    goal: Know how the web works, and build your own web server and API with Flask.
+    needs: [web-apis]
+    modules:
+      - title: Your own web server
+        goal: Read URLs and HTTP messages, and answer them with Flask.
+        lessons:
+          - { id: web-how, title: How the web works }
+          - { id: web-flask, title: Your first web server }
+          - { id: web-forms, title: Forms and questions }
+          - { id: web-templates, title: Pages from templates }
+          - { id: web-api, title: Your own JSON API }
+          - { id: web-project, title: "Project: a reading list", kind: project }
+          - { id: web-real, title: A real server on your computer and your Pi }

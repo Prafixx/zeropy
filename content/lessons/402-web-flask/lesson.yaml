@@ -1,0 +1,483 @@
+id: web-flask
+order: 402
+title: Your first web server
+summary: Write a web server with Flask. Each address of your site is a Python function, and the browser shows what it returns.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Make a Flask app with routes, run it, and open its pages in a browser
+  - id: O2
+    text: Take values from the path with variable parts like <name> and <int:n>
+  - id: O3
+    text: Read the errors of a Flask app - a 404, a route that is there twice, a view without return
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: flask
+    type: theory
+    objective: O1
+    title: A server in a few lines
+    body: |
+      **Flask** is a small library for web servers. It reads the requests
+      for you, and sends your answer as a response:
+
+      ```python
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<h1>Hello from my server</h1>"
+
+
+      app.run()
+      ```
+
+      - `app = Flask(__name__)` makes the app.
+      - `@app.route("/")` is a **decorator**: a line with `@` above a
+        function. It tells Flask: "when a request for the path `/` comes,
+        call this function". A function that answers a route is a **view**.
+      - The view **returns** the body of the response: here HTML. Flask
+        adds the status `200 OK` and the headers.
+      - `app.run()` starts the server. It waits for requests and never
+        ends by itself (on a real computer, stop it with **Ctrl + C**).
+
+      In this course, `app.run()` opens a small browser under your code.
+      Its requests go to your app, inside this page.
+    keys:
+      - code: "app = Flask(__name__)"
+        means: "Make the app."
+      - code: "@app.route(\"/about\")"
+        means: "The function below answers the path /about."
+      - code: "app.run()"
+        means: "Start the server: wait for requests."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: first
+    type: demo
+    visual: none
+    objective: O1
+    title: Two pages
+    intro: |
+      Press **Run**: the server starts and the browser opens `/`. Click the
+      link. Type `/contact` in the address bar and press **Enter**. Then
+      change the code and run it again.
+    code: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<h1>My site</h1><p>Welcome! <a href='/about'>About me</a></p>"
+
+
+      @app.route("/about")
+      def about():
+          return "<h1>About me</h1><p>I learn Python.</p><p><a href='/'>Home</a></p>"
+
+
+      app.run()
+    experiments:
+      - text: "Run it, and click the link."
+        expr: "err is None and served"
+      - text: "Change the text of the home page."
+        expr: "err is None and client.get('/').get_data(as_text=True) != \"<h1>My site</h1><p>Welcome! <a href='/about'>About me</a></p>\""
+      - text: "Add a page `/contact` with its own route and function."
+        expr: "err is None and client.get('/contact').status_code == 200"
+    investigate:
+      - kind: mcq
+        id: i-404
+        prompt: "You open `/contact` before it has a route. What does the server answer?"
+        options:
+          - text: "404 Not Found: no route has that path"
+            correct: true
+            why: "Flask answers 404 by itself for every path without a route."
+          - text: "500: the program has an error"
+            why: "The program has no error. It has no page for that path."
+          - text: "The home page"
+            why: "Each path needs its own route."
+      - kind: mcq
+        id: i-after
+        prompt: "You add `print(\"started\")` on a line **after** `app.run()`. When is it printed?"
+        options:
+          - text: "Only when the server stops (Ctrl + C on a real computer)"
+            correct: true
+            why: "`app.run()` waits for requests. The next line runs only after it ends."
+          - text: "Right after the server starts"
+            why: "`app.run()` does not end while the server runs."
+          - text: "For each request"
+            why: "Only the view functions run for a request."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-page
+    type: exercise
+    fade: completion
+    objective: O1
+    title: A page for the menu
+    prompt: |
+      A café wants its menu on the web. **Add a route `/menu`** with a view
+      that returns a heading `<h1>Menu</h1>` and a list:
+
+      ```html
+      <h1>Menu</h1>
+      <ul><li>Tea</li><li>Coffee</li><li>Cake</li></ul>
+      ```
+
+      Run it, and open `/menu` in the browser.
+    starter: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<h1>Café Zero</h1><p><a href='/menu'>See the menu</a></p>"
+
+
+      # Your route here
+
+
+      app.run()
+    solution: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<h1>Café Zero</h1><p><a href='/menu'>See the menu</a></p>"
+
+
+      @app.route("/menu")
+      def menu():
+          return "<h1>Menu</h1><ul><li>Tea</li><li>Coffee</li><li>Cake</li></ul>"
+
+
+      app.run()
+    after: >-
+      Each page of a site is one route and one function. The link on the
+      home page is a request for `/menu`, like typing it.
+    checks:
+      - expr: "client is not None and client.get('/menu').status_code == 200"
+        pass: "The path /menu has a page"
+        hint: "Add `@app.route(\"/menu\")` and a function under it, before `app.run()`."
+        misconceptions:
+          - when: "client is not None and client.get('/menu/').status_code == 200"
+            say: "Your route is `/menu/`, with a `/` at the end. Write `@app.route(\"/menu\")`."
+      - expr: "client is not None and all(w in client.get('/menu').get_data(as_text=True) for w in ['<h1>Menu</h1>', '<li>Tea</li>', '<li>Coffee</li>', '<li>Cake</li>'])"
+        pass: "It shows the heading and the three items"
+        hint: "Return `\"<h1>Menu</h1><ul><li>Tea</li><li>Coffee</li><li>Cake</li></ul>\"`."
+      - expr: "client is not None and 'Café Zero' in client.get('/').get_data(as_text=True)"
+        pass: "The home page still works"
+        hint: "Keep the route `/`."
+      - expr: "err is None and served"
+        pass: "The server runs"
+        hint: "Keep `app.run()` as the last line."
+    hints:
+      - "Copy the shape of `home`: a line with `@app.route(...)`, then a `def`."
+      - "`@app.route(\"/menu\")` and `def menu():`."
+      - "The function returns the HTML of the page, as text."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: variables
+    type: theory
+    objective: O2
+    title: Parts of the path as values
+    body: |
+      One route can answer many paths. A part in `< >` becomes an argument
+      of the view:
+
+      ```python
+      from markupsafe import escape
+
+
+      @app.route("/hello/<name>")
+      def hello(name):
+          return f"Hello, {escape(name)}!"
+      ```
+
+      `/hello/Ann` gives `Hello, Ann!`, `/hello/Bo` gives `Hello, Bo!`.
+
+      `escape()` makes text safe for HTML: `<` becomes `&lt;`, so text from
+      the address can never become HTML or a script. Use it for every text
+      that comes from a visitor (the next lesson shows why).
+
+      A **converter** says what the part must be:
+
+      ```python
+      @app.route("/table/<int:n>")
+      def table(n):          # n is an int
+          return f"{n} x 2 = {n * 2}"
+      ```
+
+      `/table/7` works. `/table/seven` gives **404**: the path does not
+      match the route. Other converters: `<float:x>`, `<path:p>` (may have
+      `/` in it).
+    keys:
+      - code: "@app.route(\"/hello/<name>\")"
+        means: "Any text in that place, as the argument name."
+      - code: "<int:n>"
+        means: "Only whole numbers; n is an int."
+      - code: "escape(text)"
+        means: "Make text from a visitor safe for HTML."
+
+  # 5. EXERCISE: independent -------------------------------------------------
+  - id: ex-square
+    type: exercise
+    fade: independent
+    objective: O2
+    title: A calculator in the address
+    prompt: |
+      **Add a route `/square/<int:n>`**. Its page says the square of `n`:
+
+      ```text
+      /square/7    →  7 x 7 = 49
+      /square/12   →  12 x 12 = 144
+      /square/abc  →  404 Not Found
+      ```
+    starter: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<p>Try <a href='/square/7'>/square/7</a></p>"
+
+
+      app.run()
+    solution: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<p>Try <a href='/square/7'>/square/7</a></p>"
+
+
+      @app.route("/square/<int:n>")
+      def square(n):
+          return f"{n} x {n} = {n * n}"
+
+
+      app.run()
+    after: >-
+      The converter does the checking for you: a path that is not a whole
+      number never reaches your function.
+    checks:
+      - expr: "client is not None and client.get('/square/7').get_data(as_text=True).strip() == '7 x 7 = 49' and client.get('/square/12').get_data(as_text=True).strip() == '12 x 12 = 144'"
+        pass: "/square/7 and /square/12 give the right squares"
+        hint: "`return f\"{n} x {n} = {n * n}\"`."
+        misconceptions:
+          - when: "client is not None and client.get('/square/7').status_code == 500"
+            say: "The page has an error. Is `n` text? Use `<int:n>`, then `n * n` works."
+          - when: "client is not None and client.get('/square/7').status_code == 404"
+            say: "No route matches `/square/7`. Write `@app.route(\"/square/<int:n>\")`."
+      - expr: "client is not None and client.get('/square/abc').status_code == 404 and client.get('/square/0').get_data(as_text=True).strip() == '0 x 0 = 0'"
+        pass: "Only whole numbers match: /square/abc gives 404"
+        hint: "Use the converter: `<int:n>`."
+      - expr: "err is None and served"
+        pass: "The server runs"
+        hint: "Keep `app.run()` as the last line."
+    hints:
+      - "A route with a part in `< >`: `@app.route(\"/square/<int:n>\")`."
+      - "The function gets `n`: `def square(n):`."
+      - "`return f\"{n} x {n} = {n * n}\"`."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-twice
+    type: exercise
+    fade: debug
+    objective: O3
+    title: The server does not start
+    prompt: |
+      This server stops before it starts, with an `AssertionError`. **Read
+      the message, and fix the code** so both pages work.
+    starter: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def page():
+          return "<h1>Home</h1><a href='/news'>News</a>"
+
+
+      @app.route("/news")
+      def page():
+          return "<h1>News</h1><p>We are open on Sunday.</p>"
+
+
+      app.run()
+    solution: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def page():
+          return "<h1>Home</h1><a href='/news'>News</a>"
+
+
+      @app.route("/news")
+      def news():
+          return "<h1>News</h1><p>We are open on Sunday.</p>"
+
+
+      app.run()
+    after: >-
+      Flask knows each view by its function name (the **endpoint**). Two
+      views with the same name would replace each other, so Flask stops
+      with "View function mapping is overwriting an existing endpoint
+      function". Give every view its own name.
+    checks:
+      - expr: "err is None and served"
+        pass: "The server starts"
+        hint: "The message says `page` is there twice. Rename one of the two functions."
+        misconceptions:
+          - when: "err == 'AssertionError'"
+            say: "Still the same error: two view functions have the same name."
+      - expr: "client is not None and 'Home' in client.get('/').get_data(as_text=True) and 'Sunday' in client.get('/news').get_data(as_text=True)"
+        pass: "Both pages work"
+        hint: "Keep both routes, each with its own function."
+    hints:
+      - "Read the last line of the message. Which name is there twice?"
+      - "Both views are called `page`."
+      - "Rename the second one: `def news():`."
+
+  # 7. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-route
+        objective: O1
+        prompt: "What does `@app.route(\"/shop\")` do with the function below it?"
+        options:
+          - text: "Flask calls it for each request for the path /shop"
+            correct: true
+            why: "Its return value is the body of the response."
+          - text: "It runs the function once, at the start"
+            why: "It runs it for each request, not at the start."
+          - text: "It makes a file shop.html"
+            why: "Nothing is saved. The page comes from the function each time."
+      - kind: mcq
+        id: q-int
+        objective: O2
+        prompt: "The route is `/item/<int:id>`. What does `/item/3.5` give?"
+        options:
+          - text: "404 Not Found"
+            correct: true
+            why: "3.5 is not a whole number, so the path does not match the route."
+          - text: "The item 3"
+            why: "The converter does not round. The path does not match."
+          - text: "500 Internal Server Error"
+            why: "The view is never called, so it cannot fail."
+      - kind: mcq
+        id: q-none
+        objective: O3
+        prompt: "A view ends without `return`. What happens when you open its page?"
+        options:
+          - text: "500: Flask says the view did not return a valid response"
+            correct: true
+            why: "The function gives `None`, and `None` is not a response. The server log shows a TypeError."
+          - text: "An empty page with 200 OK"
+            why: "Flask needs a response. `None` is not one."
+          - text: "404 Not Found"
+            why: "The route exists. The view fails."
+      - kind: mcq
+        id: q-escape
+        objective: O2
+        prompt: "Why `escape(name)` in `f\"Hello, {escape(name)}!\"`?"
+        options:
+          - text: "So text from the address cannot become HTML or a script in the page"
+            correct: true
+            why: "`<` becomes `&lt;`: the browser shows it as text."
+          - text: "To make the name shorter"
+            why: "It only changes the special characters of HTML."
+          - text: "Because f-strings need it"
+            why: "f-strings work without it. The page is not safe without it."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-view
+    objective: O1
+    prompt: "What is a view in Flask?"
+    options:
+      - text: "A function that answers a route; it returns the body of the response"
+        correct: true
+        why: "`@app.route(...)` above it says which path."
+      - text: "The browser"
+        why: "The browser is the client."
+      - text: "A file with HTML"
+        why: "A view is a Python function."
+  - kind: mcq
+    id: r-run
+    objective: O1
+    prompt: "What does `app.run()` do?"
+    options:
+      - text: "It starts the server, and waits for requests until you stop it"
+        correct: true
+        why: "So it is the last line of the program."
+      - text: "It opens each page once"
+        why: "It waits for requests from a browser."
+      - text: "It checks the code for errors"
+        why: "It starts the server."
+  - kind: mcq
+    id: r-variable
+    objective: O2
+    prompt: "Which route answers both `/user/ann` and `/user/bo`?"
+    options:
+      - text: "`@app.route(\"/user/<name>\")`"
+        correct: true
+        why: "The view gets `name`: \"ann\" or \"bo\"."
+      - text: "`@app.route(\"/user\")`"
+        why: "That answers only `/user`."
+      - text: "`@app.route(\"/user/name\")`"
+        why: "Without `< >`, `name` is fixed text."
+  - kind: mcq
+    id: r-endpoint
+    objective: O3
+    prompt: "Flask stops with \"View function mapping is overwriting an existing endpoint function: page\". Why?"
+    options:
+      - text: "Two view functions are called page"
+        correct: true
+        why: "Each view needs its own function name."
+      - text: "The route is wrong"
+        why: "The message is about the function name."
+      - text: "The page is missing"
+        why: "There are two, with the same name."
+  - kind: mcq
+    id: r-escape
+    objective: O2
+    prompt: "Which text needs `escape()` before it goes into HTML?"
+    options:
+      - text: "Every text that comes from a visitor"
+        correct: true
+        why: "From the path, a form or a query: it could hold HTML or a script."
+      - text: "Only numbers"
+        why: "Numbers are safe. Text from a visitor is not."
+      - text: "Text in your own code"
+        why: "Your own text is the HTML you want."

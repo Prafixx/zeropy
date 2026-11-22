@@ -14,6 +14,7 @@ file: it is short, and it changes none of your files.
 """
 
 import hashlib
+import json
 import os
 import platform
 import re
@@ -21,7 +22,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-CHECK_VERSION = "12"
+CHECK_VERSION = "13"
 # The seal shows the page that the block came from this script unchanged.
 # It is not a secret: it only catches a block that was typed or edited by hand.
 SALT = "zeropy-local-v1"
@@ -1068,6 +1069,73 @@ def task_data():
     return facts, tips
 
 
+# Imports app.py as a module (like `flask --app app run` does) and asks its
+# app for two pages with Flask's test client: no server, no network. A file
+# that starts the server on import never ends: then the probe times out.
+FLASK_PROBE = """import importlib.util, json, sys
+sys.path.insert(0, ".")
+spec = importlib.util.spec_from_file_location("app", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules["app"] = module
+spec.loader.exec_module(module)
+from flask import Flask
+apps = [v for v in vars(module).values() if isinstance(v, Flask)]
+out = {"found": bool(apps)}
+if apps:
+    app = apps[0]
+    out["routes"] = len([r for r in app.url_map.iter_rules() if r.endpoint != "static"])
+    client = app.test_client()
+    out["home"] = client.get("/").status_code
+    out["missing"] = client.get("/zeropy-no-such-page").status_code
+print("ZEROPY-PROBE " + json.dumps(out))
+"""
+
+
+def task_flask():
+    """Networks and the web: Flask in a venv, and an app.py that Flask can import."""
+    facts = python_facts()
+    tips = []
+    venv_facts(facts, tips)
+    packages = installed_packages() or {}
+    facts.append(("flask", packages.get("flask", "no")))
+    if "flask" not in packages:
+        tips.append("Flask is not installed here. With the venv active: pip install flask")
+    reqs = Path("requirements.txt")
+    facts.append(("reqs_flask", yes_no(reqs.is_file() and "flask" in requirement_names(read_text(reqs)))))
+    if not reqs.is_file():
+        tips.append("There is no requirements.txt yet. Make it with: pip freeze > requirements.txt")
+
+    program = Path("app.py")
+    facts.append(("app_exists", yes_no(program.is_file())))
+    if not program.is_file():
+        tips.append("There is no app.py in this folder.")
+        return facts, tips
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", FLASK_PROBE, str(program)],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20,
+            env=dict(os.environ, PYTHONIOENCODING="utf-8"),
+        )
+    except subprocess.TimeoutExpired:
+        facts.append(("app_ok", "timeout"))
+        tips.append('app.py starts the server when it is imported. Put app.run() under: if __name__ == "__main__":')
+        return facts, tips
+    found = re.search(r"ZEROPY-PROBE (\{.*\})", result.stdout)
+    data = json.loads(found.group(1)) if found else {}
+    facts.append(("app_ok", "yes" if found else "no"))
+    facts.append(("app_found", yes_no(data.get("found"))))
+    facts.append(("routes", str(data.get("routes", 0))))
+    facts.append(("home_status", str(data.get("home", 0))))
+    facts.append(("missing_status", str(data.get("missing", 0))))
+    if not found:
+        tips.append("app.py stops with an error when it is imported. Run python app.py and read the message.")
+    elif not data.get("found"):
+        tips.append("app.py has no Flask app. Make one with: app = Flask(__name__)")
+    elif data.get("home") != 200:
+        tips.append("The home page / does not answer 200. Open it in the browser and read the server's log.")
+    return facts, tips
+
+
 def facts_value(facts, key):
     return next((value for k, value in facts if k == key), None)
 
@@ -1086,6 +1154,7 @@ TASKS = {
     "build": task_build,
     "capstone": task_capstone,
     "data": task_data,
+    "flask": task_flask,
 }
 
 

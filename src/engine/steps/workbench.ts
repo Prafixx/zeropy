@@ -2,8 +2,10 @@
 import type { CodeEditor } from '@/editor/editor';
 import { place } from '@/kit/motion';
 import { explainError } from '@/py/errors';
-import { guiEvent, onPyStatus } from '@/py/runner';
-import type { ChartFigure, GuiEvent, GuiTree, PyError, RunResult } from '../types';
+import { guiEvent, onPyStatus, webRequest } from '@/py/runner';
+import type { ChartFigure, GuiEvent, GuiTree, PyError, RunResult, ServerInfo, WebRequest, WebResult } from '../types';
+import { createBrowser } from './browser';
+import type { MiniBrowser } from './browser';
 import { drawChart } from './chart';
 import { createGuiWindow } from './gui-window';
 import type { GuiWindow } from './gui-window';
@@ -26,6 +28,8 @@ export interface Workbench {
   setWindow(tree?: GuiTree | null): void;
   /** Shows the charts of a program that used matplotlib.pyplot. */
   setCharts(figures?: ChartFigure[] | null): void;
+  /** Shows a browser for the Flask app of a program that called app.run(). */
+  setServer(info?: ServerInfo | null): void;
   /** Shows the files in the folder after a run (or the starting files). */
   setFiles(files?: Record<string, string>): void;
   showError(error: PyError | null): void;
@@ -72,7 +76,9 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
   const filesSlot = h('div', { class: 'bench-files-slot', 'aria-live': 'polite' });
   const windowSlot = h('div', { class: 'bench-window-slot' });
   const chartsSlot = h('div', { class: 'bench-charts', 'aria-live': 'polite' });
+  const serverSlot = h('div', { class: 'bench-server-slot' });
   let gui: GuiWindow | null = null;
+  let browser: MiniBrowser | null = null;
   let printed = '';
   const frame = h(
     'div',
@@ -85,6 +91,7 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     { class: `bench${options.sealed ? ' is-sealed' : ''}${options.tall ? ' is-tall' : ''}` },
     frame,
     windowSlot,
+    serverSlot,
     chartsSlot,
     h('div', { class: 'bench-out' }, h('div', { class: 'out-label' }, 'Output'), out, inputSlot),
     filesSlot,
@@ -214,6 +221,33 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     if (figures?.length) place(chartsSlot.children);
   }
 
+  function setServer(info?: ServerInfo | null): void {
+    if (!info?.served) {
+      serverSlot.replaceChildren();
+      browser = null;
+      return;
+    }
+    if (!browser) {
+      browser = createBrowser((request) => onWebRequest(request));
+      serverSlot.append(browser.el);
+      place(browser.el);
+    }
+    browser.start(info);
+  }
+
+  /** A request of the browser. The server log and the prints of the app go to the output. */
+  async function onWebRequest(request: WebRequest): Promise<WebResult | null> {
+    // Not blocked while a run is busy: the browser opens its first page at the
+    // end of a run, and the runner's queue keeps runs and requests in order.
+    if (disposed) return null;
+    const result = await webRequest(request);
+    if (disposed) return null;
+    const more = `${result.stdout}${result.log ? `${result.log}\n` : ''}`;
+    if (more) setOutput(printed + (printed && !printed.endsWith('\n') ? '\n' : '') + more);
+    showError(result.error);
+    return result;
+  }
+
   async function onGuiEvent(event: GuiEvent): Promise<void> {
     if (busy || disposed) return;
     const result = await guiEvent(event);
@@ -279,6 +313,7 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     setOutput,
     setWindow,
     setCharts,
+    setServer,
     setFiles,
     showError,
     getCode,

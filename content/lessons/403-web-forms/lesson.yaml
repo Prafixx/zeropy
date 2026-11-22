@@ -1,0 +1,537 @@
+id: web-forms
+order: 403
+title: Forms and questions
+summary: Let visitors send data to your server - in the query of the address, or with a form. Keep it, show it, and keep your page safe from their HTML.
+minutes: 45
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Read the query of a request with request.args, with a default value
+  - id: O2
+    text: Take a form sent with POST - methods, request.form, and a redirect after it
+  - id: O3
+    text: Show what visitors wrote safely, with escape, and know what goes wrong without it
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: args
+    type: theory
+    objective: O1
+    title: Questions in the address
+    body: |
+      The query of a URL (`?q=pi&page=2`) is in `request.args`, a kind of
+      dictionary. Import `request` from flask:
+
+      ```python
+      from flask import Flask, request
+      from markupsafe import escape
+
+
+      @app.route("/search")
+      def search():
+          word = request.args.get("q", "")       # "" if there is no q
+          return f"You searched for {escape(word)}"
+      ```
+
+      `.get(name, default)` gives the default when the name is missing,
+      like with a dictionary. `request.args["q"]` would answer **400 Bad
+      Request** when `q` is missing. All values are **text**: use `int()`
+      for numbers.
+
+      A form with the method GET puts its fields into the query. Each
+      `<input>` sends its `name` and what the visitor typed:
+
+      ```html
+      <form action="/search">
+        <input name="q"> <button>Search</button>
+      </form>
+      ```
+
+      Typing `pi` and pressing **Search** opens `/search?q=pi`.
+    keys:
+      - code: "request.args.get(\"q\", \"\")"
+        means: "The value of q in the query, or \"\" without it."
+      - code: "<form action=\"/search\">"
+        means: "A GET form: its fields go into the query."
+      - code: "<input name=\"q\">"
+        means: "A field; it sends q=what you typed."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: search
+    type: demo
+    visual: none
+    objective: O1
+    title: A search form
+    intro: |
+      Press **Run**. Search for `tea`, then for `cake`, then for nothing.
+      Look at the address after each search.
+    code: |
+      from flask import Flask, request
+      from markupsafe import escape
+
+      app = Flask(__name__)
+      DRINKS = ["green tea", "black tea", "coffee", "hot chocolate", "lemonade"]
+
+
+      @app.route("/")
+      def home():
+          return """<h1>Drinks</h1>
+      <form action="/search"><input name="q"> <button>Search</button></form>"""
+
+
+      @app.route("/search")
+      def search():
+          word = request.args.get("q", "").lower()
+          found = [d for d in DRINKS if word in d]
+          items = "".join(f"<li>{escape(d)}</li>" for d in found)
+          return f"<p>{len(found)} for '{escape(word)}':</p><ul>{items}</ul><a href='/'>Back</a>"
+
+
+      app.run()
+    experiments:
+      - text: "Run it, and search for `tea`."
+        expr: "err is None and served"
+      - text: "Add `\"iced tea\"` to `DRINKS`, run it again, and search for `tea`."
+        expr: "err is None and '3 for' in client.get('/search?q=tea').get_data(as_text=True)"
+      - text: "Show `No drink found.` when the list is empty."
+        expr: "err is None and 'No drink found.' in client.get('/search?q=zzz').get_data(as_text=True)"
+    investigate:
+      - kind: mcq
+        id: i-empty
+        prompt: "You search for nothing. The address is `/search?q=`. What is `word`?"
+        options:
+          - text: "\"\": q is there, but empty"
+            correct: true
+            why: "The default is only for a missing q. Every drink has \"\" in it, so all 5 are found."
+          - text: "None"
+            why: "`get` gives the default `\"\"` without q, and the empty text with an empty q."
+          - text: "It stops with a KeyError"
+            why: "`.get()` never raises a KeyError."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-greet
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Hello, whoever you are
+    prompt: |
+      **Complete the view `greet`**: it says hello to the `name` in the
+      query, and to `stranger` when there is no name.
+
+      ```text
+      /greet?name=Ann  →  Hello, Ann!
+      /greet           →  Hello, stranger!
+      ```
+    starter: |
+      from flask import Flask, request
+      from markupsafe import escape
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<form action='/greet'><input name='name'> <button>Say hello</button></form>"
+
+
+      @app.route("/greet")
+      def greet():
+          name = ___
+          return f"Hello, {escape(name)}!"
+
+
+      app.run()
+    solution: |
+      from flask import Flask, request
+      from markupsafe import escape
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<form action='/greet'><input name='name'> <button>Say hello</button></form>"
+
+
+      @app.route("/greet")
+      def greet():
+          name = request.args.get("name", "stranger")
+          return f"Hello, {escape(name)}!"
+
+
+      app.run()
+    after: >-
+      The form and the address do the same thing: the form only builds
+      the query for you.
+    checks:
+      - expr: "client is not None and client.get('/greet?name=Ann').get_data(as_text=True) == 'Hello, Ann!' and client.get('/greet?name=Bo%20Li').get_data(as_text=True) == 'Hello, Bo Li!'"
+        pass: "It greets the name from the query"
+        hint: "`request.args.get(\"name\", ...)`."
+      - expr: "client is not None and client.get('/greet').get_data(as_text=True) == 'Hello, stranger!'"
+        pass: "Without a name: Hello, stranger!"
+        hint: "Give `get` a second value: the default, `\"stranger\"`."
+        misconceptions:
+          - when: "client is not None and client.get('/greet').status_code == 400"
+            say: "`request.args[\"name\"]` gives 400 when there is no name. Use `request.args.get(\"name\", \"stranger\")`."
+      - expr: "client is not None and client.get('/greet?name=%3Cb%3E').get_data(as_text=True) == 'Hello, &lt;b&gt;!'"
+        pass: "The name is escaped"
+        hint: "Keep `escape(name)` in the return line."
+    hints:
+      - "The query is in `request.args`."
+      - "`request.args.get(\"name\")` gives the name, or `None`."
+      - "`name = request.args.get(\"name\", \"stranger\")`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: post
+    type: theory
+    objective: O2
+    title: Forms that send data
+    body: |
+      A form that **adds** something uses `method="post"`. Its fields go
+      in the **body** of the request, not in the address:
+
+      ```python
+      from flask import Flask, redirect, request, url_for
+
+      notes = []
+
+
+      @app.route("/", methods=["GET", "POST"])
+      def home():
+          if request.method == "POST":
+              notes.append(request.form["note"])
+              return redirect(url_for("home"))
+          ...  # GET: show the form and the notes
+      ```
+
+      - `methods=["GET", "POST"]`: this route takes both. Without it, a
+        POST gets **405 Method Not Allowed**.
+      - `request.method` says which one came. `request.form` holds the
+        fields of the form.
+      - After a POST, send the browser on with `redirect(...)` (status
+        302). Then a reload of the page does not send the form again.
+        `url_for("home")` gives the path of the view `home`: `/`.
+
+      The list `notes` lives in the memory of the server: it is empty
+      again after a restart. To keep data, save it in a file (JSON) or a
+      database.
+    keys:
+      - code: "methods=[\"GET\", \"POST\"]"
+        means: "This route takes GET and POST."
+      - code: "request.form[\"note\"]"
+        means: "A field of a form sent with POST."
+      - code: "redirect(url_for(\"home\"))"
+        means: "Send the browser to the page of the view home."
+
+  # 5. EXERCISE: completion --------------------------------------------------
+  - id: ex-guestbook
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A guestbook
+    prompt: |
+      **Complete the guestbook.** With a POST, add the field `message` to
+      `messages`, and send the browser back to the page with a redirect.
+      With a GET, show the form and the messages.
+
+      Run it, write two messages, and reload the page.
+    starter: |
+      from flask import Flask, redirect, request, url_for
+      from markupsafe import escape
+
+      app = Flask(__name__)
+      messages = []
+
+      FORM = """<h1>Guestbook</h1>
+      <form method="post"><input name="message"> <button>Write</button></form>"""
+
+
+      @app.route("/", methods=["GET", "POST"])
+      def home():
+          if request.method == "POST":
+              messages.append(___)
+              return ___
+          items = "".join(f"<li>{escape(m)}</li>" for m in messages)
+          return FORM + f"<ul>{items}</ul>"
+
+
+      app.run()
+    solution: |
+      from flask import Flask, redirect, request, url_for
+      from markupsafe import escape
+
+      app = Flask(__name__)
+      messages = []
+
+      FORM = """<h1>Guestbook</h1>
+      <form method="post"><input name="message"> <button>Write</button></form>"""
+
+
+      @app.route("/", methods=["GET", "POST"])
+      def home():
+          if request.method == "POST":
+              messages.append(request.form["message"])
+              return redirect(url_for("home"))
+          items = "".join(f"<li>{escape(m)}</li>" for m in messages)
+          return FORM + f"<ul>{items}</ul>"
+
+
+      app.run()
+    after: >-
+      This is the usual pattern: POST, change the data, redirect, GET.
+      Open the tab **HTTP messages** after you write: the POST got a 302,
+      and the browser asked for `/` again by itself.
+    checks:
+      - expr: "client is not None and client.post('/', data={'message': 'Hello from Oslo'}).status_code == 302 and 'Hello from Oslo' in client.get('/').get_data(as_text=True)"
+        pass: "A POST adds the message, and the page shows it"
+        hint: "`messages.append(request.form[\"message\"])`."
+        misconceptions:
+          - when: "client is not None and client.post('/', data={'message': 'x1'}).status_code == 200"
+            say: "The message is added, but the answer is a page. Send the browser on: `return redirect(url_for(\"home\"))`."
+      - expr: "client is not None and client.post('/', data={'message': 'Second'}).headers.get('Location') == '/'"
+        pass: "After a POST, the browser goes back to /"
+        hint: "`return redirect(url_for(\"home\"))`."
+      - expr: "client is not None and client.get('/').status_code == 200 and 'method=\"post\"' in client.get('/').get_data(as_text=True)"
+        pass: "A GET shows the form"
+        hint: "Keep the last two lines of the view."
+    hints:
+      - "The field of the form is in `request.form`, by its name."
+      - "`messages.append(request.form[\"message\"])`."
+      - "Then `return redirect(url_for(\"home\"))`."
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: xss
+    type: theory
+    objective: O3
+    title: Never trust what visitors write
+    body: |
+      What a visitor writes ends up in **your** page, which **other**
+      visitors open. Without `escape()`, a visitor can write HTML:
+
+      ```html
+      <script>steal(document.cookie)</script>
+      ```
+
+      Then the browser of every visitor runs that script, as if your site
+      sent it. This attack is called **XSS** (cross-site scripting). It is
+      one of the most common holes in web sites.
+
+      `escape()` turns the special characters into harmless codes:
+
+      ```text
+      <   →  &lt;       >  →  &gt;       &  →  &amp;
+      "   →  &#34;      '  →  &#39;
+      ```
+
+      The browser shows them as the characters, as text. (The small
+      browser of this course never runs scripts, but a real one does.)
+      In the next lesson, templates escape for you.
+    keys:
+      - code: "escape(text)"
+        means: "< > & \" ' become harmless codes."
+      - code: "XSS"
+        means: "A visitor's script runs in other visitors' browsers."
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-safe
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A hole in the wall
+    prompt: |
+      This message wall shows what visitors write. A visitor wrote
+      `<script>alert("hacked")</script>`, and it went into the page as
+      HTML. **Fix the hole**: every message must be shown as text.
+    starter: |
+      from flask import Flask, redirect, request, url_for
+
+      app = Flask(__name__)
+      wall = ['<script>alert("hacked")</script>']
+
+
+      @app.route("/", methods=["GET", "POST"])
+      def home():
+          if request.method == "POST":
+              wall.append(request.form["text"])
+              return redirect(url_for("home"))
+          items = "".join(f"<li>{text}</li>" for text in wall)
+          return f"<form method='post'><input name='text'> <button>Post</button></form><ul>{items}</ul>"
+
+
+      app.run()
+    solution: |
+      from flask import Flask, redirect, request, url_for
+      from markupsafe import escape
+
+      app = Flask(__name__)
+      wall = ['<script>alert("hacked")</script>']
+
+
+      @app.route("/", methods=["GET", "POST"])
+      def home():
+          if request.method == "POST":
+              wall.append(request.form["text"])
+              return redirect(url_for("home"))
+          items = "".join(f"<li>{escape(text)}</li>" for text in wall)
+          return f"<form method='post'><input name='text'> <button>Post</button></form><ul>{items}</ul>"
+
+
+      app.run()
+    after: >-
+      Escape at the moment the text goes into HTML, not when it comes in:
+      the list keeps what the visitor really wrote, and each page shows it
+      safely.
+    checks:
+      - expr: "client is not None and '<script>' not in client.get('/').get_data(as_text=True) and '&lt;script&gt;alert(&#34;hacked&#34;)&lt;/script&gt;' in client.get('/').get_data(as_text=True)"
+        pass: "The script is shown as text"
+        hint: "`from markupsafe import escape`, then `{escape(text)}` in the `<li>`."
+      - expr: "client is not None and client.post('/', data={'text': '<b>bold</b> & more'}).status_code == 302 and '&lt;b&gt;bold&lt;/b&gt; &amp; more' in client.get('/').get_data(as_text=True)"
+        pass: "New messages are shown as text too"
+        hint: "Escape each message when the page is made."
+        misconceptions:
+          - when: "client is not None and client.post('/', data={'text': '<i>x</i>'}).status_code == 302 and '&amp;lt;i&amp;gt;' in client.get('/').get_data(as_text=True)"
+            say: "The text is escaped twice. Escape it once: when it goes into the HTML, not also when you add it to the list."
+      - expr: "\"<form method='post'>\" in client.get('/').get_data(as_text=True)"
+        pass: "The form itself is still HTML"
+        hint: "Escape only the messages, not the whole page."
+    hints:
+      - "Which text comes from visitors? That is the one to escape."
+      - "`from markupsafe import escape`."
+      - "`f\"<li>{escape(text)}</li>\"`."
+
+  # 8. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-args-missing
+        objective: O1
+        prompt: "The view uses `request.args[\"page\"]`. Someone opens it without `?page=`. What happens?"
+        options:
+          - text: "400 Bad Request"
+            correct: true
+            why: "A missing key in `request.args[...]` is a client error. Use `.get()` with a default."
+          - text: "page is None"
+            why: "That is `request.args.get(\"page\")`."
+          - text: "500 Internal Server Error"
+            why: "Flask answers 400: the request lacks something."
+      - kind: mcq
+        id: q-405
+        objective: O2
+        prompt: "A form sends POST to `@app.route(\"/add\")`, without `methods=`. What does the server answer?"
+        options:
+          - text: "405 Method Not Allowed"
+            correct: true
+            why: "Without `methods=`, a route takes only GET."
+          - text: "200 OK"
+            why: "The route does not take POST."
+          - text: "404 Not Found"
+            why: "The path exists, but not for POST."
+      - kind: mcq
+        id: q-redirect
+        objective: O2
+        prompt: "Why `redirect(...)` after a POST, and not the page itself?"
+        options:
+          - text: "So a reload asks for the page with GET, and does not send the form again"
+            correct: true
+            why: "Without it, a reload would add the same message twice."
+          - text: "It is faster"
+            why: "It is one more request. It is safer."
+          - text: "POST cannot have a body"
+            why: "POST has a body: the fields of the form."
+      - kind: mcq
+        id: q-number
+        objective: O1
+        prompt: "`/shop?count=3`. What is `request.args.get(\"count\")`?"
+        options:
+          - text: "\"3\", text"
+            correct: true
+            why: "All values in the query are text. Use `int()`."
+          - text: "3, an int"
+            why: "The query is text. Flask does not guess."
+          - text: "[\"3\"], a list"
+            why: "That is what `parse_qs` gives. `request.args.get` gives the first value."
+      - kind: mcq
+        id: q-xss
+        objective: O3
+        prompt: "What can a visitor do when your page shows their text without `escape()`?"
+        options:
+          - text: "Put a script in your page that runs in other visitors' browsers"
+            correct: true
+            why: "That is XSS. Escape every text from visitors."
+          - text: "Nothing, HTML is safe"
+            why: "A browser runs any `<script>` in a page."
+          - text: "Only make the text bold"
+            why: "Bold is harmless, but the same hole lets in scripts."
+
+  # 9. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-args
+    objective: O1
+    prompt: "Where is `q` of `/search?q=pi` in Flask?"
+    options:
+      - text: "`request.args`"
+        correct: true
+        why: "The query. `request.args.get(\"q\", \"\")` is safe."
+      - text: "`request.form`"
+        why: "That holds the fields of a POST form."
+      - text: "An argument of the view"
+        why: "Only parts of the path in `< >` are arguments."
+  - kind: mcq
+    id: r-get-form
+    objective: O1
+    prompt: "A form without `method=` is sent. Where do its fields go?"
+    options:
+      - text: "Into the query of the address: GET"
+        correct: true
+        why: "GET is the default for forms."
+      - text: "Into the body: POST"
+        why: "Only with `method=\"post\"`."
+      - text: "Nowhere"
+        why: "They go into the query."
+  - kind: mcq
+    id: r-methods
+    objective: O2
+    prompt: "How does a route take both GET and POST?"
+    options:
+      - text: "`@app.route(\"/\", methods=[\"GET\", \"POST\"])`"
+        correct: true
+        why: "Then `request.method` says which one came."
+      - text: "Two routes with the same path"
+        why: "One route with `methods=` is the usual way."
+      - text: "It takes both without anything"
+        why: "Without `methods=` only GET."
+  - kind: mcq
+    id: r-memory
+    objective: O2
+    prompt: "The guestbook keeps messages in a list. What happens when the server restarts?"
+    options:
+      - text: "The messages are gone"
+        correct: true
+        why: "The list lives in memory. Save to a file or a database to keep data."
+      - text: "They stay"
+        why: "A new run starts with an empty list."
+      - text: "The browser keeps them"
+        why: "The browser only has the last page."
+  - kind: mcq
+    id: r-escape-when
+    objective: O3
+    prompt: "When do you escape a visitor's text?"
+    options:
+      - text: "When it goes into the HTML of a page"
+        correct: true
+        why: "Keep the real text in your data, and escape it each time you show it."
+      - text: "Never: browsers check it"
+        why: "Browsers run any script in a page."
+      - text: "Twice, to be sure"
+        why: "Twice shows `&amp;lt;` to the visitor."

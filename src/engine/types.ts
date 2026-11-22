@@ -635,6 +635,45 @@ export interface RunResult {
   gpio?: GpioRun | null;
   /** A program that used matplotlib.pyplot: its figures (first case). */
   plot?: ChartFigure[] | null;
+  /** The Flask app of the program (src/py/server.py), or null. */
+  server?: ServerInfo | null;
+}
+
+/** A Flask app of a run. `served`: the program called app.run(). */
+export interface ServerInfo {
+  served: boolean;
+  host: string;
+  port: number;
+  debug: boolean;
+  name: string;
+  routes: { rule: string; methods: string[] }[];
+  key: number;
+}
+
+/** A request from the page's browser to the app of the last run. */
+export interface WebRequest {
+  method: string;
+  /** Path and query, like "/hello?name=Ann". */
+  path: string;
+  form?: Record<string, string>;
+  json?: unknown;
+}
+
+export interface WebResult {
+  /** 0: there was no app to answer, or the request was stopped. */
+  status: number;
+  reason?: string;
+  headers?: [string, string][];
+  /** The type of the body without charset, like "text/html". */
+  type?: string;
+  body?: string;
+  cut?: boolean;
+  location?: string | null;
+  /** What the app's own code printed while it answered. */
+  stdout: string;
+  /** The line of the server log for this request. */
+  log: string;
+  error: PyError | null;
 }
 
 /** One series of a chart (src/py/plot.py). */

@@ -1,0 +1,404 @@
+id: web-real
+order: 407
+title: A real server on your computer and your Pi
+summary: Run your Flask app on your own computer with a real browser, then open it from your phone - and keep it safe on the network.
+minutes: 45
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Run a Flask app on your own computer in a venv, with flask --app or python, and stop it
+  - id: O2
+    text: Make a server reachable in your network (host 0.0.0.0) and find its address
+  - id: O3
+    text: Know the safety rules - no debug mode on a network, the firewall, a real server for real use
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: local
+    type: theory
+    objective: O1
+    title: Flask on your computer
+    body: |
+      On your own computer, a Flask app is a project like the others:
+
+      ```text
+      python -m venv .venv          (then activate it)
+      pip install flask
+      pip freeze > requirements.txt
+      ```
+
+      Save the app as `app.py`, and start it in one of two ways:
+
+      ```text
+      flask --app app run            # Flask finds app in app.py
+      python app.py                  # runs app.run() at the end
+      ```
+
+      Then open **http://127.0.0.1:5000** in your real browser. The
+      terminal shows the log, line by line. **Ctrl + C** stops the server.
+
+      For `python app.py`, put `app.run()` under a guard:
+
+      ```python
+      if __name__ == "__main__":
+          app.run()
+      ```
+
+      `__name__` is `"__main__"` only when you run the file itself. When
+      another program imports `app.py` (like `flask --app app run`, or a
+      test), the server does not start by itself.
+
+      While you work, `flask --app app run --debug` restarts the server
+      each time you save, and shows errors in the browser.
+    keys:
+      - code: "flask --app app run"
+        means: "Start the app of app.py."
+      - code: "if __name__ == \"__main__\":"
+        means: "Only when this file is run, not imported."
+      - code: "Ctrl + C"
+        means: "Stop the server."
+
+  # 2. PREDICT ---------------------------------------------------------------
+  - id: predict-name
+    type: predict
+    objective: O1
+    title: Run, or imported?
+    item:
+      kind: predict
+      id: p-name
+      prompt: "You run this file itself, as `python tools.py`. **Type what it prints.**"
+      code: |
+        def double(x):
+            return 2 * x
+
+
+        print("my name:", __name__)
+        if __name__ == "__main__":
+            print("I am the program")
+      explain: >-
+        A file that you run is called "__main__", so both lines print. If
+        another file did `import tools`, `__name__` would be "tools": the
+        first line would print "my name: tools", and the second line would
+        not print at all.
+      misconceptions:
+        - answer: "my name: tools"
+          say: "That is what an import would print. You run the file itself, so its name is __main__."
+        - answer: "my name: __main__"
+          say: "`__name__` is \"__main__\", so the `if` is true: the second line prints too."
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: network
+    type: theory
+    objective: O2
+    title: Open it from your phone
+    body: |
+      `127.0.0.1` is only reachable from the computer itself. To open your
+      site from a phone in the **same Wi-Fi**, the server must listen on
+      all addresses of the computer:
+
+      ```text
+      flask --app app run --host 0.0.0.0
+      ```
+
+      or `app.run(host="0.0.0.0")`. Flask then prints its address in the
+      network, like `http://192.168.1.23:5000`. Open that on your phone.
+      To find the address yourself: `ipconfig` on Windows (IPv4 Address),
+      `hostname -I` on a Raspberry Pi.
+
+      This is how a Pi becomes the server of a small project: a page that
+      shows its sensors, or buttons that switch an LED. To start the app at
+      every boot, use a systemd service, as in the lesson "Processes,
+      services and logs".
+    keys:
+      - code: "--host 0.0.0.0"
+        means: "Listen on all addresses, not only 127.0.0.1."
+      - code: "http://192.168.1.23:5000"
+        means: "The address in your network (yours is different)."
+      - code: "hostname -I"
+        means: "The address of a Pi in the network."
+
+  # 3. EXERCISE: independent -------------------------------------------------
+  - id: ex-pi
+    type: exercise
+    fade: independent
+    objective: O2
+    title: A server for the Pi
+    prompt: |
+      This app should run on a Pi and be opened from a phone. **Change the
+      last line**, so that the server:
+
+      - listens on all addresses,
+      - uses the port **8000**,
+      - runs **without** debug mode,
+      - starts only when the file is run, not when it is imported.
+    starter: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<h1>Hello from the Pi</h1><p>Temperature: 21.5 °C</p>"
+
+
+      app.run(debug=True)
+    solution: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return "<h1>Hello from the Pi</h1><p>Temperature: 21.5 °C</p>"
+
+
+      if __name__ == "__main__":
+          app.run(host="0.0.0.0", port=8000)
+    after: >-
+      Flask now prints "Running on all addresses (0.0.0.0)". On a real Pi
+      it also prints the address in the network, for your phone.
+    checks:
+      - expr: "err is None and served and server_host == '0.0.0.0'"
+        pass: "It listens on all addresses"
+        hint: "`app.run(host=\"0.0.0.0\", ...)`."
+      - expr: "err is None and served and server_port == 8000"
+        pass: "On the port 8000"
+        hint: "`port=8000`."
+      - expr: "err is None and served and not server_debug"
+        pass: "Without debug mode"
+        hint: "Remove `debug=True`."
+        misconceptions:
+          - when: "err is None and served and server_debug and server_host == '0.0.0.0'"
+            say: "Debug mode on all addresses is dangerous: anyone in the network could use the debugger. Remove `debug=True`."
+      - expr: "'__name__' in src and syntax('If') >= 1 and not any(l.startswith('app.run') for l in src.splitlines())"
+        pass: "app.run() is under if __name__ == \"__main__\":"
+        hint: "Put the line under `if __name__ == \"__main__\":`, indented."
+    hints:
+      - "`app.run()` takes `host=` and `port=`."
+      - "`app.run(host=\"0.0.0.0\", port=8000)`, without `debug=True`."
+      - "Above it: `if __name__ == \"__main__\":`, and indent the `app.run(...)` line."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: safety
+    type: theory
+    objective: O3
+    title: Safe on the network
+    body: |
+      A server that others can reach needs care:
+
+      - **Never debug mode with `--host 0.0.0.0`.** The debugger in the
+        browser lets anyone who can open the page run Python on your
+        computer.
+      - **The firewall.** The first time, Windows asks whether Python may
+        use the network. Allow it only for **private** networks (your home),
+        never for public ones (a café, a station).
+      - **Only your own network.** Do not open your router to the internet
+        for this server. Your home network is the limit.
+      - **The development server is for learning.** Flask says it itself:
+        "Do not use it in a production deployment." Real sites run the app
+        with a production server, like `waitress` (Windows) or `gunicorn`
+        (Linux).
+      - **Stop it** when you do not use it: Ctrl + C.
+    keys:
+      - code: "--debug and 0.0.0.0"
+        means: "Never together."
+      - code: "Private networks only"
+        means: "Allow Python in the firewall only at home."
+      - code: "waitress / gunicorn"
+        means: "Production servers, for real sites."
+
+  # 5. LOCAL ----------------------------------------------------------------
+  - id: real
+    type: local
+    objective: O1
+    title: Your app, really running
+    prompt: |
+      **Run your reading list (or your own app) on your computer.**
+
+      1. A new folder `web` in `python-course`. Make a venv in it and
+         activate it. `pip install flask`, then
+         `pip freeze > requirements.txt`.
+      2. Save your app of the project lesson as `app.py`. Put the last line
+         under `if __name__ == "__main__":`.
+      3. `flask --app app run`. Open **http://127.0.0.1:5000** in your
+         browser, add a book, and watch the log in the terminal. Stop it
+         with **Ctrl + C**.
+      4. If you like: `flask --app app run --host 0.0.0.0`, and open the
+         address that Flask prints on your phone (same Wi-Fi). Stop it when
+         you are done.
+      5. Download `check.py` **again** (this task is new), and run
+         `python check.py flask` in the folder `web`. The check does not
+         start the server: it imports `app.py`, like a test.
+    task: flask
+    needs: 13
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      venv_exists: "yes"
+      in_venv: "yes"
+      venv_here: "yes"
+      flask: "3.1.3"
+      reqs_flask: "yes"
+      app_exists: "yes"
+      app_ok: "yes"
+      app_found: "yes"
+      routes: "4"
+      home_status: "200"
+      missing_status: "404"
+    checks:
+      - expr: "report.get('in_venv') == 'yes' and report.get('venv_here') == 'yes' and report.get('flask', 'no') != 'no'"
+        pass: "Flask is installed in the venv of this folder"
+        hint: "In `web`: `python -m venv .venv`, activate it, `pip install flask`, then run the check again."
+        misconceptions:
+          - when: "report.get('venv_exists') == 'no'"
+            say: "There is no `.venv` in this folder. Run the check in `web`."
+          - when: "report.get('in_venv') == 'no'"
+            say: "The venv is not active. Activate it, then run the check again."
+      - expr: "report.get('reqs_flask') == 'yes'"
+        pass: "requirements.txt lists flask"
+        hint: "With the venv active: `pip freeze > requirements.txt`."
+      - expr: "report.get('app_ok') == 'yes' and report.get('app_found') == 'yes'"
+        pass: "app.py can be imported, and has a Flask app"
+        hint: "Run `python app.py` and read the message from the bottom."
+        misconceptions:
+          - when: "report.get('app_exists') == 'no'"
+            say: "There is no `app.py` in this folder."
+          - when: "report.get('app_ok') == 'timeout'"
+            say: "app.py starts the server when it is imported. Put `app.run()` under `if __name__ == \"__main__\":`."
+          - when: "report.get('app_ok') == 'yes' and report.get('app_found') == 'no'"
+            say: "app.py has no Flask app. Is there `app = Flask(__name__)`?"
+      - expr: "report.get('home_status') == '200' and report.get('missing_status') == '404' and report.get('routes', '0').isdigit() and int(report.get('routes', '0')) >= 2"
+        pass: "The home page answers 200, and the app has at least two routes"
+        hint: "The app needs a route `/` that works, and at least one more route."
+    hints:
+      - "Do the steps one at a time. `pip list` shows what the venv has."
+      - "Run `check.py` in the folder `web`, with the venv active."
+      - "\"Address already in use\"? Another server runs on port 5000. Stop it, or use `--port 5001`."
+
+  # 6. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-phone
+        objective: O2
+        prompt: "The server runs with `flask --app app run`. Your phone cannot open `http://192.168.1.23:5000`. Why?"
+        options:
+          - text: "Without --host 0.0.0.0 the server listens only on 127.0.0.1"
+            correct: true
+            why: "127.0.0.1 is only for the computer itself."
+          - text: "Phones cannot open Flask sites"
+            why: "A phone is a browser like any other."
+          - text: "The port must be 80"
+            why: "Any port works, if you put it in the address."
+      - kind: mcq
+        id: q-debug
+        objective: O3
+        prompt: "Why never `--debug` together with `--host 0.0.0.0`?"
+        options:
+          - text: "The debugger lets anyone who can open the page run code on your computer"
+            correct: true
+            why: "Debug mode is only for your own computer, on 127.0.0.1."
+          - text: "It makes the server slow"
+            why: "The problem is safety."
+          - text: "Flask does not allow it"
+            why: "Flask allows it. You must not do it."
+      - kind: mcq
+        id: q-guard
+        objective: O1
+        prompt: "`app.py` ends with `app.run()`, without a guard. A test file does `import app`. What happens?"
+        options:
+          - text: "The server starts during the import, and the test waits forever"
+            correct: true
+            why: "Put `app.run()` under `if __name__ == \"__main__\":`."
+          - text: "Nothing, import never runs code"
+            why: "Import runs the whole file."
+          - text: "The test gets an error at once"
+            why: "It does not end: the server waits for requests."
+      - kind: mcq
+        id: q-firewall
+        objective: O3
+        prompt: "Windows asks whether Python may use the network. You are at home. What do you allow?"
+        options:
+          - text: "Private networks only"
+            correct: true
+            why: "In a public network, strangers could open your server."
+          - text: "Public and private networks"
+            why: "Public networks are full of strangers."
+          - text: "Nothing: then the phone works anyway"
+            why: "Without the firewall rule, the phone cannot connect."
+
+  # 7. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-start
+    objective: O1
+    prompt: "How do you start the Flask app of `app.py` from the terminal?"
+    options:
+      - text: "`flask --app app run`"
+        correct: true
+        why: "Or `python app.py` with `app.run()` at the end, under the guard."
+      - text: "`pip install app`"
+        why: "pip installs packages."
+      - text: "`open app.py`"
+        why: "Flask starts it: `flask --app app run`."
+  - kind: mcq
+    id: r-stop
+    objective: O1
+    prompt: "How do you stop a Flask server in the terminal?"
+    options:
+      - text: "Ctrl + C"
+        correct: true
+        why: "The server stops, and the prompt comes back."
+      - text: "Close the browser"
+        why: "The server does not care about the browser."
+      - text: "It stops by itself after each request"
+        why: "It waits for requests until you stop it."
+  - kind: mcq
+    id: r-host
+    objective: O2
+    prompt: "What does `--host 0.0.0.0` do?"
+    options:
+      - text: "The server listens on all addresses: other devices in the network can reach it"
+        correct: true
+        why: "Without it, only 127.0.0.1."
+      - text: "It puts the site on the internet"
+        why: "Only your local network, unless you open the router."
+      - text: "It makes the server faster"
+        why: "It changes who can reach it."
+  - kind: mcq
+    id: r-ip
+    objective: O2
+    prompt: "How do you find the address of a Pi in your network?"
+    options:
+      - text: "`hostname -I` on the Pi"
+        correct: true
+        why: "On Windows: `ipconfig`."
+      - text: "It is always 127.0.0.1"
+        why: "127.0.0.1 is the computer itself, on every computer."
+      - text: "`flask --version`"
+        why: "That shows the version of Flask."
+  - kind: mcq
+    id: r-production
+    objective: O3
+    prompt: "Flask says \"This is a development server\". What does a real site use?"
+    options:
+      - text: "A production server like waitress or gunicorn"
+        correct: true
+        why: "The development server is for learning and testing."
+      - text: "The same, with --debug"
+        why: "Debug mode is even less safe."
+      - text: "No server"
+        why: "Every site needs a server."

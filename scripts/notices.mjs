@@ -118,6 +118,22 @@ section(
     readFileSync(join(root, 'licenses', 'numpy-LICENSE.txt'), 'utf8'),
   ].join('\n'),
 );
+// Flask and the packages it needs, in public/pyodide (scripts/copy-pyodide.mjs).
+const PYTHON_PACKAGES = [
+  ['Flask', '3.1.3', 'BSD-3-Clause', 'flask'],
+  ['Werkzeug', '3.1.9', 'BSD-3-Clause', 'werkzeug'],
+  ['Jinja2', '3.1.6', 'BSD-3-Clause', 'jinja2'],
+  ['MarkupSafe', '3.0.3', 'BSD-3-Clause', 'markupsafe'],
+  ['Click', '8.3.1', 'BSD-3-Clause', 'click'],
+  ['itsdangerous', '2.2.0', 'BSD-3-Clause', 'itsdangerous'],
+  ['Blinker', '1.9.0', 'MIT', 'blinker'],
+];
+for (const [name, version, license, file] of PYTHON_PACKAGES) {
+  section(
+    `${name} ${version}, a Python package in public/pyodide (${license})`,
+    ['Used without changes.', '', readFileSync(join(root, 'licenses', `${file}-LICENSE.txt`), 'utf8')].join('\n'),
+  );
+}
 section(
   'CPython 3.14 standard library and interpreter, inside Pyodide (PSF License)',
   [
@@ -139,4 +155,4 @@ section(
 const text = `${parts.join('\n').replace(/\r\n/g, '\n')}\n`;
 writeFileSync(join(root, 'THIRD-PARTY-NOTICES.txt'), text);
 copyFileSync(join(root, 'THIRD-PARTY-NOTICES.txt'), join(root, 'public', 'THIRD-PARTY-NOTICES.txt'));
-console.log(`[notices] ${found.size + 5} parts written to THIRD-PARTY-NOTICES.txt`);
+console.log(`[notices] ${found.size + 5 + PYTHON_PACKAGES.length} parts written to THIRD-PARTY-NOTICES.txt`);

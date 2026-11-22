@@ -16,18 +16,21 @@ import { validateLesson } from '../src/engine/validate.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const lessonsDir = join(root, 'content', 'lessons');
-// Pyodide as the page has it: the core and numpy from public/pyodide
-// (scripts/copy-pyodide.mjs puts them there).
-const lock = JSON.parse(readFileSync(join(root, 'node_modules', 'pyodide', 'pyodide-lock.json'), 'utf8'));
-if (!existsSync(join(root, 'public', 'pyodide', lock.packages.numpy.file_name))) {
+// Pyodide as the page has it: the core, numpy and Flask from public/pyodide
+// (scripts/copy-pyodide.mjs puts them there, and adds Flask to its lock file).
+const ownLock = join(root, 'public', 'pyodide', 'pyodide-lock.json');
+const ready = existsSync(ownLock) && Object.values(JSON.parse(readFileSync(ownLock, 'utf8')).packages)
+  .every((p) => !['numpy', 'flask'].includes(p.name.toLowerCase()) || existsSync(join(root, 'public', 'pyodide', p.file_name)));
+if (!ready || !JSON.parse(readFileSync(ownLock, 'utf8')).packages.flask) {
   execFileSync(process.execPath, [join(root, 'scripts', 'copy-pyodide.mjs')], { stdio: 'inherit' });
 }
 const pyodide = await loadPyodide({ indexURL: join(root, 'public', 'pyodide') + '/' });
-await pyodide.loadPackage('numpy', { messageCallback: () => undefined });
+await pyodide.loadPackage(['numpy', 'flask'], { messageCallback: () => undefined });
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'harness.py'), 'utf8'));
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'shell.py'), 'utf8'));
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'gpio.py'), 'utf8'));
 pyodide.runPython(readFileSync(join(root, 'src', 'py', 'plot.py'), 'utf8'));
+pyodide.runPython(readFileSync(join(root, 'src', 'py', 'server.py'), 'utf8'));
 const shellFn = pyodide.globals.get('shell');
 const shell = (request) => JSON.parse(shellFn(JSON.stringify(request)));
 const run = pyodide.globals.get('run');

@@ -129,6 +129,7 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
     bench.setFiles(result.files);
     bench.setWindow(result.gui);
     bench.setCharts(result.plot);
+    bench.setServer(result.server);
     bench.showError(result.error);
     bench.markLine(result.error?.line ?? null, 'error');
     setChecks(result.checks.map((c) => c.pass));

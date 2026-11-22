@@ -1,0 +1,582 @@
+id: web-how
+order: 401
+title: How the web works
+summary: What happens when you open a web page. Read the parts of a URL, and the request and the response that travel between a browser and a server.
+minutes: 40
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Name the parts of a URL - scheme, host, port, path and query - and read them with urllib.parse
+  - id: O2
+    text: Describe an HTTP request (method, path, headers) and an HTTP response (status, headers, body)
+  - id: O3
+    text: Read a status code by its first digit - success, redirect, client error, server error
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: client-server
+    type: theory
+    objective: O1
+    title: A browser asks, a server answers
+    body: |
+      When you open a web page, two programs talk:
+
+      - The **client** asks. Usually a browser, but a Python program with
+        `requests` is a client too.
+      - The **server** answers. A program on another computer that waits
+        for questions. In this path you write your own server.
+
+      The client finds the server by its **URL**:
+
+      ```text
+      https://www.example.com:8080/search?q=pi&page=2
+      └─┬─┘   └──────┬──────┘ └┬─┘└──┬──┘ └────┬────┘
+      scheme       host      port  path      query
+      ```
+
+      - **scheme**: how to talk. `https` is `http` with encryption (the
+        lock in the browser).
+      - **host**: which computer. DNS turns the name into an IP address,
+        like a phone book. `localhost` (`127.0.0.1`) is your own computer.
+      - **port**: which program on that computer. Without a port, `http`
+        uses 80 and `https` uses 443.
+      - **path**: which page on that server.
+      - **query**: extra questions, as `name=value` pairs after `?`,
+        joined with `&`.
+    keys:
+      - code: "client / server"
+        means: "The program that asks / the program that answers."
+      - code: "https://host:port/path?query"
+        means: "The parts of a URL."
+      - code: "127.0.0.1"
+        means: "localhost: your own computer."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: split
+    type: demo
+    visual: none
+    objective: O1
+    title: Take a URL apart
+    intro: |
+      `urllib.parse` (in the standard library) cuts a URL into its parts.
+      Press **Run**. Then try your own URLs.
+    code: |
+      from urllib.parse import urlsplit, parse_qs
+
+      url = "https://www.example.com:8080/search?q=pi&page=2"
+      parts = urlsplit(url)
+      print("scheme:", parts.scheme)
+      print("host:", parts.hostname)
+      print("port:", parts.port)
+      print("path:", parts.path)
+      print("query:", parts.query)
+      print(parse_qs(parts.query))
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and 'port: 8080' in out"
+      - text: "Remove `:8080` from the URL. What is the port now?"
+        expr: "err is None and 'port: None' in out"
+      - text: "Try `http://127.0.0.1:5000/hello?name=Ann`."
+        expr: "err is None and 'host: 127.0.0.1' in out and 'name' in out"
+    investigate:
+      - kind: mcq
+        id: i-noport
+        prompt: "Without `:8080`, `parts.port` is `None`. Which port does the browser use then for this `https` URL?"
+        options:
+          - text: "443, the port of https"
+            correct: true
+            why: "No port in the URL means the usual one: 80 for http, 443 for https."
+          - text: "80"
+            why: "80 is for `http`. This URL is `https`."
+          - text: "No port: it cannot connect"
+            why: "Every connection has a port. The URL can leave out the usual one."
+      - kind: mcq
+        id: i-qs
+        prompt: "Why does `parse_qs` give `['pi']`, a list, and not `'pi'`?"
+        options:
+          - text: "A query may give the same name more than once, like `tag=a&tag=b`"
+            correct: true
+            why: "Then the list is `['a', 'b']`. Take `[0]` for the first value."
+          - text: "Because the value is a number"
+            why: "`pi` is text. Every value in a query is text."
+          - text: "It is a mistake of urllib"
+            why: "It is on purpose: one name may have many values."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-parts
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Where does it connect?
+    prompt: |
+      **Complete `where(url)`**: it gives back the host and the port. When
+      the URL has no port, use the usual one: 443 for `https`, 80 for
+      `http`.
+
+      ```text
+      ('www.example.com', 443)
+      ('127.0.0.1', 5000)
+      ('neverssl.com', 80)
+      ```
+    starter: |
+      from urllib.parse import urlsplit
+
+
+      def where(url):
+          parts = urlsplit(url)
+          port = parts.port
+          if port is None:
+              port = ___
+          return ___
+
+
+      print(where("https://www.example.com/news"))
+      print(where("http://127.0.0.1:5000/hello"))
+      print(where("http://neverssl.com"))
+    solution: |
+      from urllib.parse import urlsplit
+
+
+      def where(url):
+          parts = urlsplit(url)
+          port = parts.port
+          if port is None:
+              port = 443 if parts.scheme == "https" else 80
+          return parts.hostname, port
+
+
+      print(where("https://www.example.com/news"))
+      print(where("http://127.0.0.1:5000/hello"))
+      print(where("http://neverssl.com"))
+    after: >-
+      A browser does the same before every request: which computer, and
+      which program on it. Then DNS finds the IP address of the host.
+    checks:
+      - expr: "callable(ns.get('where')) and where('https://a.org/x') == ('a.org', 443) and where('http://b.net') == ('b.net', 80)"
+        pass: "Without a port: 443 for https, 80 for http"
+        hint: "`port = 443 if parts.scheme == \"https\" else 80`."
+      - expr: "callable(ns.get('where')) and where('http://localhost:8000/') == ('localhost', 8000) and where('https://c.io:9443/a?b=1') == ('c.io', 9443)"
+        pass: "A port in the URL wins"
+        hint: "Keep `port = parts.port` when it is not `None`."
+      - expr: "err is None and lines == [\"('www.example.com', 443)\", \"('127.0.0.1', 5000)\", \"('neverssl.com', 80)\"]"
+        pass: "It prints the three pairs"
+        hint: "`return parts.hostname, port`."
+    hints:
+      - "`parts.scheme` is `\"https\"` or `\"http\"`."
+      - "`port = 443 if parts.scheme == \"https\" else 80`."
+      - "Give back two values: `return parts.hostname, port`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: messages
+    type: theory
+    objective: O2
+    title: Request and response
+    body: |
+      The client and the server send each other **text messages**, in a
+      fixed form: **HTTP**. The browser sends a **request**:
+
+      ```text
+      GET /search?q=pi HTTP/1.1
+      Host: www.example.com
+      Accept: text/html
+      ```
+
+      The first line has the **method** and the **path**. Then the
+      **headers**: `Name: value`, one per line. The usual methods:
+
+      - `GET`: give me this page. (Typing an address, clicking a link.)
+      - `POST`: here is new data. (Sending a form.)
+      - `PUT` and `DELETE`: change or remove something (APIs).
+
+      The server sends a **response**:
+
+      ```text
+      HTTP/1.1 200 OK
+      Content-Type: text/html; charset=utf-8
+      Content-Length: 42
+
+      <h1>Results</h1><p>3.14159...</p>
+      ```
+
+      The first line has the **status code**. Then headers, then an
+      **empty line**, then the **body**: the page itself, or JSON, or an
+      image. Each line ends with `\r\n` (two characters: back to the
+      start, new line).
+    keys:
+      - code: "GET /path HTTP/1.1"
+        means: "The first line of a request: method and path."
+      - code: "HTTP/1.1 200 OK"
+        means: "The first line of a response: the status."
+      - code: "Content-Type: text/html"
+        means: "A header: what kind of body follows."
+
+  # 5. DEMO: sealed ------------------------------------------------------------
+  - id: browse
+    type: demo
+    visual: none
+    sealed: true
+    objective: O2
+    title: Look inside the messages
+    intro: |
+      Press **Run**: a small weather site starts, and a browser opens its
+      home page. Click the links. Then open the tab **HTTP messages**: it
+      shows the request of the browser and the response of the server.
+
+      Look for:
+
+      - the method and the path in the first line of the request,
+      - the status code, and the `Content-Type` of each page,
+      - the page that sends you on to another one (status 302), and the
+        address that does not exist.
+
+      Under the output you see the log of the server: one line for each
+      request, with its status code.
+    experiments:
+      - text: "Start the site."
+        expr: "err is None and served"
+    code: |
+      from flask import Flask, abort, jsonify, redirect
+
+      app = Flask(__name__)
+
+
+      @app.route("/")
+      def home():
+          return """<h1>Weather station</h1>
+      <ul>
+      <li><a href="/today">Today</a></li>
+      <li><a href="/api/today">Today, as JSON</a></li>
+      <li><a href="/old-today">An old address</a></li>
+      <li><a href="/admin">Admin</a></li>
+      <li><a href="/tomorrow">Tomorrow</a></li>
+      </ul>"""
+
+
+      @app.route("/today")
+      def today():
+          return "<h1>Today</h1><p>Sunny, 21.5 °C, wind 12 km/h.</p><p><a href='/'>Home</a></p>"
+
+
+      @app.route("/api/today")
+      def api_today():
+          return jsonify(sky="sunny", temperature=21.5, wind=12)
+
+
+      @app.route("/old-today")
+      def old_today():
+          return redirect("/today")
+
+
+      @app.route("/admin")
+      def admin():
+          abort(403)
+
+
+      app.run()
+
+  # 6. EXERCISE: independent -------------------------------------------------
+  - id: ex-read
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Read a response
+    prompt: |
+      `raw` is a whole HTTP response, as text. **Write `read(raw)`**: it
+      gives back three things - the status code (an `int`), the headers
+      (a dictionary) and the body (text).
+
+      Headers and body are apart at the first empty line (`"\r\n\r\n"`).
+      Each header line is `Name: value`.
+
+      ```text
+      404
+      text/html
+      <h1>Not here</h1>
+      ```
+    given: |
+      raw = "\r\n".join([
+          "HTTP/1.1 404 NOT FOUND",
+          "Content-Type: text/html",
+          "Content-Length: 18",
+          "",
+          "<h1>Not here</h1>",
+      ])
+    starter: |
+      # raw exists: a whole HTTP response.
+
+
+      def read(raw):
+          ...
+
+
+      status, headers, body = read(raw)
+      print(status)
+      print(headers["Content-Type"])
+      print(body)
+    solution: |
+      def read(raw):
+          head, body = raw.split("\r\n\r\n", 1)
+          lines = head.split("\r\n")
+          status = int(lines[0].split()[1])
+          headers = {}
+          for line in lines[1:]:
+              name, value = line.split(": ", 1)
+              headers[name] = value
+          return status, headers, body
+
+
+      status, headers, body = read(raw)
+      print(status)
+      print(headers["Content-Type"])
+      print(body)
+    after: >-
+      This is the first thing every client does with an answer. `requests`
+      does it for you: `r.status_code`, `r.headers` and `r.text`.
+    checks:
+      - expr: "callable(ns.get('read')) and read('HTTP/1.1 200 OK\\r\\nA: 1\\r\\n\\r\\nhi')[0] == 200 and read('HTTP/1.1 503 SERVICE UNAVAILABLE\\r\\n\\r\\n')[0] == 503"
+        pass: "The status code, as an int"
+        hint: "The first line is `HTTP/1.1 404 NOT FOUND`: `int(first_line.split()[1])`."
+        misconceptions:
+          - when: "callable(ns.get('read')) and read('HTTP/1.1 200 OK\\r\\nA: 1\\r\\n\\r\\nhi')[0] == '200'"
+            say: "The status is the text `'200'`. Make it a number with `int()`."
+      - expr: "callable(ns.get('read')) and read('HTTP/1.1 200 OK\\r\\nA: 1\\r\\nB-C: x: y\\r\\n\\r\\nhi')[1] == {'A': '1', 'B-C': 'x: y'}"
+        pass: "The headers as a dictionary (a value may have `: ` in it)"
+        hint: "`name, value = line.split(\": \", 1)`: cut at the first `: ` only."
+      - expr: "callable(ns.get('read')) and read('HTTP/1.1 200 OK\\r\\nA: 1\\r\\n\\r\\nline 1\\r\\n\\r\\nline 2')[2] == 'line 1\\r\\n\\r\\nline 2' and read('HTTP/1.1 204 NO CONTENT\\r\\n\\r\\n')[2] == ''"
+        pass: "The body is everything after the first empty line"
+        hint: "`head, body = raw.split(\"\\r\\n\\r\\n\", 1)`: cut once."
+      - expr: "err is None and lines == ['404', 'text/html', '<h1>Not here</h1>']"
+        pass: "It prints 404, text/html and the body"
+        hint: "Keep the three prints."
+    hints:
+      - "First cut the head from the body: `raw.split(\"\\r\\n\\r\\n\", 1)`."
+      - "Then the head into lines: `head.split(\"\\r\\n\")`. Line 0 is the status line."
+      - "For each other line: `name, value = line.split(\": \", 1)`."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: codes
+    type: theory
+    objective: O3
+    title: Status codes
+    body: |
+      The first digit of the status code says what kind of answer it is:
+
+      | Code | Kind | Examples |
+      |---|---|---|
+      | 2xx | success | 200 OK, 201 Created |
+      | 3xx | go somewhere else | 301 Moved Permanently, 302 Found, 304 Not Modified |
+      | 4xx | the **client** made a mistake | 400 Bad Request, 403 Forbidden, 404 Not Found, 405 Method Not Allowed |
+      | 5xx | the **server** made a mistake | 500 Internal Server Error, 503 Service Unavailable |
+
+      With a 3xx answer, the header `Location` says where to go, and the
+      browser goes there by itself. A 4xx answer means "change your
+      request". A 5xx answer means "the server has a problem": in your own
+      server, that is a bug in your code.
+    keys:
+      - code: "2xx / 3xx"
+        means: "Success / go to the Location."
+      - code: "4xx"
+        means: "The client's mistake (404: no such page)."
+      - code: "5xx"
+        means: "The server's mistake (500: an error in its code)."
+
+  # 8. EXERCISE: debug -------------------------------------------------------
+  - id: ex-kind
+    type: exercise
+    fade: debug
+    objective: O3
+    title: What kind of answer?
+    prompt: |
+      `kind(code)` should say what kind of answer a status code is. Two
+      codes get the wrong kind. **Find the mistakes and fix them**:
+
+      ```text
+      200 success
+      302 redirect
+      400 client error
+      404 client error
+      500 server error
+      ```
+    starter: |
+      def kind(code):
+          if code < 300:
+              return "success"
+          elif code < 400:
+              return "redirect"
+          elif code > 400 and code < 500:
+              return "client error"
+          else:
+              return "redirect"
+
+
+      for code in [200, 302, 400, 404, 500]:
+          print(code, kind(code))
+    solution: |
+      def kind(code):
+          if code < 300:
+              return "success"
+          elif code < 400:
+              return "redirect"
+          elif code < 500:
+              return "client error"
+          else:
+              return "server error"
+
+
+      for code in [200, 302, 400, 404, 500]:
+          print(code, kind(code))
+    after: >-
+      Only the first digit counts: `code // 100` gives 2, 3, 4 or 5. A new
+      code like 418 is still a client error.
+    checks:
+      - expr: "callable(ns.get('kind')) and [kind(c) for c in [200, 201, 204, 299]] == ['success'] * 4 and [kind(c) for c in [301, 302, 304]] == ['redirect'] * 3"
+        pass: "2xx and 3xx are right"
+        hint: "Keep the first two tests."
+      - expr: "callable(ns.get('kind')) and [kind(c) for c in [400, 403, 404, 405, 418, 499]] == ['client error'] * 6"
+        pass: "Every 4xx code is a client error, also 400"
+        hint: "`code > 400` leaves out 400 itself."
+      - expr: "callable(ns.get('kind')) and [kind(c) for c in [500, 502, 503]] == ['server error'] * 3"
+        pass: "5xx is a server error"
+        hint: "The last `return` gives the wrong kind."
+      - expr: "err is None and lines == ['200 success', '302 redirect', '400 client error', '404 client error', '500 server error']"
+        pass: "It prints the five lines"
+        hint: "Keep the loop and its print."
+    hints:
+      - "Which kind does `kind(400)` give now? Follow the `elif` lines."
+      - "`elif code < 500:` is enough: smaller codes were taken before."
+      - "And the `else` is for 5xx: `return \"server error\"`."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-port
+        objective: O1
+        prompt: "What does the port in `http://192.168.1.20:8080/` choose?"
+        options:
+          - text: "Which program on that computer gets the request"
+            correct: true
+            why: "One computer can run many servers, each on its own port."
+          - text: "Which computer gets the request"
+            why: "That is the host, `192.168.1.20`."
+          - text: "Which page of the site"
+            why: "That is the path, here `/`."
+      - kind: predict
+        id: q-query
+        objective: O1
+        code: |
+          from urllib.parse import urlsplit, parse_qs
+
+          parts = urlsplit("http://localhost:5000/shop?item=tea&size=big")
+          print(parts.path)
+          print(parse_qs(parts.query)["size"][0])
+        explain: "The path ends at `?`. The query is `item=tea&size=big`: `size` has one value, `big`."
+      - kind: mcq
+        id: q-form
+        objective: O2
+        prompt: "You fill in a form and press **Send**. Which method does the browser use for a form that sends new data?"
+        options:
+          - text: "POST"
+            correct: true
+            why: "POST sends new data in the body of the request."
+          - text: "GET"
+            why: "GET asks for a page. A search form may use GET, but new data goes with POST."
+          - text: "DELETE"
+            why: "DELETE removes something."
+      - kind: mcq
+        id: q-500
+        objective: O3
+        prompt: "Your own server answers `500 Internal Server Error`. Where is the problem?"
+        options:
+          - text: "In the code of your server: look at its log"
+            correct: true
+            why: "5xx is the server's mistake. The server log shows the error."
+          - text: "In the URL you typed"
+            why: "A wrong URL gives 404, a client error."
+          - text: "In the internet connection"
+            why: "Without a connection there is no answer at all, not a status code."
+      - kind: mcq
+        id: q-empty
+        objective: O2
+        prompt: "How does a client know where the headers of a response end?"
+        options:
+          - text: "At the first empty line; the body comes after it"
+            correct: true
+            why: "That is `\\r\\n\\r\\n`: the end of the last header line, then an empty line."
+          - text: "After 10 lines"
+            why: "A response may have any number of headers."
+          - text: "At the first `<`"
+            why: "The body may be JSON or an image, without `<`."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-parts
+    objective: O1
+    prompt: "In `https://shop.example/cart?id=7`, what is the path?"
+    options:
+      - text: "/cart"
+        correct: true
+        why: "The query `id=7` comes after the `?`."
+      - text: "shop.example"
+        why: "That is the host."
+      - text: "/cart?id=7"
+        why: "That is the path with the query."
+  - kind: mcq
+    id: r-localhost
+    objective: O1
+    prompt: "What is `127.0.0.1`?"
+    options:
+      - text: "localhost: the computer you are on"
+        correct: true
+        why: "A request to it never leaves your computer."
+      - text: "The address of Google"
+        why: "It is your own computer, on every computer."
+      - text: "The router"
+        why: "The router often has an address like 192.168.1.1."
+  - kind: mcq
+    id: r-request
+    objective: O2
+    prompt: "What is in the first line of an HTTP request?"
+    options:
+      - text: "The method and the path, like `GET /today HTTP/1.1`"
+        correct: true
+        why: "Then the headers follow."
+      - text: "The status code"
+        why: "That is in the first line of the response."
+      - text: "The body"
+        why: "The body comes after the headers and an empty line."
+  - kind: mcq
+    id: r-404
+    objective: O3
+    prompt: "What does 404 mean?"
+    options:
+      - text: "Not Found: the server has no page at that path"
+        correct: true
+        why: "A 4xx code: the client asked for something wrong."
+      - text: "The server crashed"
+        why: "That is 500."
+      - text: "Go to another address"
+        why: "That is 3xx, with a Location header."
+  - kind: mcq
+    id: r-302
+    objective: O3
+    prompt: "A response has the status 302 and `Location: /today`. What does the browser do?"
+    options:
+      - text: "It sends a new request for /today by itself"
+        correct: true
+        why: "That is a redirect."
+      - text: "It shows an error"
+        why: "3xx is not an error."
+      - text: "It shows an empty page"
+        why: "It follows the Location."
