@@ -109,8 +109,9 @@ steps:
       print("nearest:", labels[np.argmin(d)])
       print("3 nearest:", labels[np.argsort(d)[:3]])
 
+      # "C0" is the first colour of matplotlib (blue), "C1" the second (orange).
       colors = ["C0" if label == "Adelie" else "C1" for label in labels]
-      plt.scatter(train[:, 0], train[:, 1], c=colors)
+      plt.scatter(train[:, 0], train[:, 1], c=colors)   # c=: one colour per point
       plt.scatter([new[0]], [new[1]], color="red", marker="x", label="new penguin")
       plt.xlabel("bill (mm)")
       plt.ylabel("flipper (mm)")

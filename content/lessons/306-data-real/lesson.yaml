@@ -80,7 +80,7 @@ steps:
 
       def fit(X, y):
           X = np.asarray(X)
-          if X.ndim != 2:
+          if X.ndim != 2:          # ndim: the number of dimensions, 2 for a table
               raise ValueError("Expected 2D array, got 1D array instead. "
                                "Reshape your data using array.reshape(-1, 1)")
           w, b = np.polyfit(X[:, 0], y, 1)
@@ -182,7 +182,9 @@ steps:
 
       X_train, X_test, y_train, y_test = split(X, y, 0.25, 0)
       print(len(X_train), len(X_test))
+      # concatenate joins the two tables: together, are they all the cars?
       print(sorted(np.concatenate([X_train, X_test])[:, 0]) == sorted(X[:, 0]))
+      # .all(): is every answer still 10 times its own car?
       print(bool((X_test[:, 0] * 10 == y_test).all()))
     solution: |
       def split(X, y, test_size, seed):
@@ -195,7 +197,9 @@ steps:
 
       X_train, X_test, y_train, y_test = split(X, y, 0.25, 0)
       print(len(X_train), len(X_test))
+      # concatenate joins the two tables: together, are they all the cars?
       print(sorted(np.concatenate([X_train, X_test])[:, 0]) == sorted(X[:, 0]))
+      # .all(): is every answer still 10 times its own car?
       print(bool((X_test[:, 0] * 10 == y_test).all()))
     after: >-
       Every car is in exactly one of the two sets, and every answer stays
