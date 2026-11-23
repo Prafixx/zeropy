@@ -1,0 +1,701 @@
+id: git
+order: 38
+title: Git
+summary: Save versions of your project, go back when something breaks, try ideas on a branch, and put the project online on GitHub.
+minutes: 55
+outcomes: [A10]
+
+objectives:
+  - id: O1
+    text: Install git and tell it who you are
+  - id: O2
+    text: Make a repository, keep .venv out of it, and save versions with add and commit
+  - id: O3
+    text: Read the state and the history (status, diff, log), and throw away a change with restore
+  - id: O4
+    text: Try an idea on a branch, and merge it back into main
+  - id: O5
+    text: Put a repository on GitHub with push
+
+steps:
+  # 1. THEORY ---------------------------------------------------------------
+  - id: what-git
+    type: theory
+    objective: O2
+    title: Save points for your project
+    body: |
+      **git** keeps the history of a project folder. Each time that the
+      project works, you save a **commit**: a picture of all files, with a
+      short message, your name and the time. Later you can see what
+      changed, and go back when something breaks.
+
+      Your work passes three places:
+
+      1. **Your folder**: the files as you edit them.
+      2. **Staging**: the changes for the next commit. `git add` puts
+         changes here.
+      3. **History**: the commits. `git commit` saves the staging as a new
+         commit.
+
+      The folder with its history is a **repository**. **GitHub** is a
+      website that keeps a copy of a repository online: a backup, and a
+      place to share your work.
+    keys:
+      - code: "commit"
+        means: "A saved version of all files, with a message."
+      - code: "git add"
+        means: "Choose the changes for the next commit."
+      - code: "repository"
+        means: "A folder whose history git keeps (in a hidden folder `.git`)."
+
+  # 2. THEORY ---------------------------------------------------------------
+  - id: install
+    type: theory
+    objective: O1
+    title: Install and set up git
+    body: |
+      - **Windows:** download git from [git-scm.com](https://git-scm.com/)
+        and install it with the default options. Then open a new terminal.
+      - **macOS:** type `git --version`. If git is missing, macOS offers to
+        install the "command line developer tools": accept.
+      - **Linux (Debian, Ubuntu):** `sudo apt install git`.
+
+      Then tell git your name and email, once. They go into every commit.
+
+      ```
+      git config --global user.name "Ana Lima"
+      git config --global user.email "ana@example.com"
+      git config --global init.defaultBranch main
+      ```
+
+      The last line gives new repositories the main line `main`. On
+      GitHub, the name and email of commits are public. If you do not want
+      that for your email, GitHub gives you a private one (on GitHub:
+      **Settings → Emails**).
+    keys:
+      - code: "git --version"
+        means: "Shows if git is installed, and which version."
+      - code: "git config --global"
+        means: "A setting for all your repositories on this computer, like your name."
+
+  # 3. LOCAL: SETUP ---------------------------------------------------------
+  - id: check-setup
+    type: local
+    objective: O1
+    title: Is git ready?
+    prompt: |
+      **Install git and set your name and email.**
+
+      1. Install git, and open a new terminal in VS Code.
+      2. Run the three `git config` lines, with your own name and email.
+      3. Download `check.py` **again**, into `colors`: this task needs the
+         new version. Run the check in `colors`.
+
+      The check only tells the course **if** a name and an email are set.
+      It never reports them.
+    task: git
+    needs: 3
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      git: "2.56.0.windows.1"
+      git_name: "yes"
+      git_email: "yes"
+      repo: "no"
+    checks:
+      - expr: "report.get('git', 'no') != 'no'"
+        pass: "git runs in your terminal"
+        hint: "Install git, then close the terminal and open a new one."
+      - expr: "report.get('git_name') == 'yes' and report.get('git_email') == 'yes'"
+        pass: "git knows your name and email"
+        hint: "Run `git config --global user.name \"Your Name\"` and `git config --global user.email \"you@example.com\"`."
+        misconceptions:
+          - when: "report.get('git_name') == 'no'"
+            say: "git has no name for you yet. Run `git config --global user.name \"Your Name\"`, with quotes around the name."
+          - when: "report.get('git_email') == 'no'"
+            say: "git has no email for you yet. Run `git config --global user.email \"you@example.com\"`."
+    hints:
+      - "If the terminal says that `git` is not found, open a new terminal: it sees new programs only when it starts."
+      - "Put the name in quotes, because it has a space: `\"Ana Lima\"`."
+      - "Run the check with the new `check.py`: the old one does not know the task `git`."
+    after: >-
+      git is ready. You set this up once for each computer, not for each
+      project.
+
+  # 4. THEORY ---------------------------------------------------------------
+  - id: first-commit
+    type: theory
+    objective: O2
+    title: The first commit
+    body: |
+      In the terminal, in `colors`:
+
+      1. `git init` makes the repository.
+      2. Make a file `.gitignore` (with the dot) with these lines. git
+         ignores what it names.
+         ```
+         .venv/
+         __pycache__/
+         ```
+      3. `git status` shows new and changed files.
+      4. `git add .` puts all changes into staging. The `.` means: this
+         folder.
+      5. `git commit -m "First version"` saves the commit.
+      6. `git log --oneline` shows the history.
+
+      `.venv` stays out because it is large and `requirements.txt` makes it
+      again. (Python 3.13 and newer also put a small `.gitignore` inside
+      `.venv`. Write your own anyway: it works with every version.)
+
+      A good message says what changed: `Add a red line`, not `changes`.
+    keys:
+      - code: "git init"
+        means: "Make this folder a repository. Once for each project."
+      - code: ".gitignore"
+        means: "A file with names that git ignores, one on each line."
+      - code: "git commit -m \"...\""
+        means: "Save the staging as a commit, with this message."
+
+  # 5. LOCAL: COMMIT --------------------------------------------------------
+  - id: check-commit
+    type: local
+    objective: O2
+    title: Your first commit
+    prompt: |
+      **Make `colors` a repository and commit it.**
+
+      Follow the six steps: `git init`, `.gitignore`, `git status`,
+      `git add .`, `git commit -m "First version"`, `git log --oneline`.
+      Then run the check in `colors`.
+
+      Before you commit, read `git status`: `.venv` must not be in the
+      list.
+    task: git
+    needs: 3
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      git: "2.56.0.windows.1"
+      git_name: "yes"
+      git_email: "yes"
+      repo: "here"
+      commits: "1"
+      changes: "0"
+      branches: "1"
+      on_main: "yes"
+      merged: "no"
+      gitignore: "yes"
+      venv_ignored: "yes"
+      venv_tracked: "no"
+      tracked: "4"
+      colors_tracked: "yes"
+      reqs_tracked: "yes"
+      remote: "no"
+      upstream: "no"
+    checks:
+      - expr: "report.get('repo') == 'here'"
+        pass: "`colors` is a repository"
+        hint: "In `colors`, run `git init`."
+        misconceptions:
+          - when: "report.get('git') == 'no'"
+            say: "This terminal does not find git. Open a new terminal (or install git), then run the check again."
+          - when: "report.get('repo') == 'above'"
+            say: "The repository starts in a folder above `colors`, so it holds more than this project. One project, one repository: run `git init` in `colors`."
+          - when: "report.get('repo') == 'no'"
+            say: "`colors` is not a repository yet. In `colors`, run `git init`."
+      - expr: "report.get('gitignore') == 'yes' and report.get('venv_ignored', 'yes') == 'yes' and report.get('venv_tracked', 'no') == 'no'"
+        pass: "`.gitignore` keeps `.venv` out"
+        hint: "Make a file `.gitignore` in `colors` with the line `.venv/`."
+        misconceptions:
+          - when: "report.get('venv_tracked') == 'yes'"
+            say: "The repository holds `.venv`. Put `.venv/` into `.gitignore`, then run `git rm -r --cached .venv` and commit. This removes it from git, not from your folder."
+          - when: "report.get('gitignore') == 'no'"
+            say: "There is no `.gitignore` in `colors`. Check the name: it starts with a dot and has no `.txt` at the end."
+          - when: "report.get('venv_ignored') == 'no'"
+            say: "`.gitignore` does not name `.venv`. Add the line `.venv/` and save."
+      - expr: "int(report.get('commits', '0')) >= 1 and report.get('colors_tracked') == 'yes'"
+        pass: "There is a commit with `colors.py`"
+        hint: "Run `git add .`, then `git commit -m \"First version\"`."
+        misconceptions:
+          - when: "report.get('commits', '0') == '0'"
+            say: "There is no commit yet. Run `git add .`, then `git commit -m \"First version\"`."
+          - when: "report.get('colors_tracked') == 'no'"
+            say: "The commit does not hold `colors.py`. Run `git add colors.py` and commit again."
+      - expr: "report.get('changes') == '0'"
+        pass: "Everything is committed"
+        hint: "`git status` shows what is not committed. Add it and commit."
+    hints:
+      - "Make `.gitignore` in VS Code: **File → New File**, name `.gitignore`, in `colors`."
+      - "If `git commit` says `Author identity unknown`, set your name and email first (the step before)."
+      - "If `git commit` opens a full screen with `~` lines, press Esc, type `:q!` and Enter. Then commit with `-m \"message\"`."
+    after: >-
+      Your project has its first save point. From now on: when something
+      works, `git add .` and `git commit -m "..."`.
+
+  # 6. DRILL ----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O3
+    title: Read git
+    items:
+      - kind: mcq
+        id: d-untracked
+        objective: O3
+        prompt: "`git status` shows `Untracked files:` and then `colors.py`. What does it mean?"
+        options:
+          - text: "git sees the file, but it is not in any commit yet. `git add` adds it"
+            correct: true
+            why: "New files are untracked until you add and commit them."
+          - text: "The file has an error"
+            why: "git does not read Python. It only keeps versions."
+          - text: "The file is ignored"
+            why: "Ignored files are not shown at all."
+      - kind: mcq
+        id: d-nothing-added
+        objective: O2
+        prompt: "`git commit -m \"Add red\"` says `no changes added to commit`. What did you forget?"
+        options:
+          - text: "`git add`, before the commit"
+            correct: true
+            why: "A commit saves the staging. Without `git add`, the staging is empty."
+          - text: "To save the file in the editor"
+            why: "Then git would see no change at all. Here it sees changes, but none are added."
+          - text: "`git init`"
+            why: "Without a repository, the message is `not a git repository`."
+      - kind: mcq
+        id: d-not-repo
+        objective: O3
+        prompt: "git says `fatal: not a git repository`. What is wrong?"
+        options:
+          - text: "The terminal is in a folder without a repository: `cd` to the project, or `git init`"
+            correct: true
+            why: "git commands work only inside a repository."
+          - text: "git is not installed"
+            why: "Then the terminal would not find `git` at all."
+          - text: "The last commit failed"
+            why: "This message is about the folder, not about a commit."
+      - kind: mcq
+        id: d-identity
+        objective: O1
+        prompt: "`git commit` says `Author identity unknown`. What do you do?"
+        options:
+          - text: "Set `user.name` and `user.email` with `git config --global`"
+            correct: true
+            why: "Every commit needs a name and an email."
+          - text: "Make an account on GitHub"
+            why: "A commit is local. git only needs the two settings."
+          - text: "Run `git init` again"
+            why: "The repository is fine. git does not know who you are."
+      - kind: mcq
+        id: d-editor
+        objective: O2
+        prompt: "You typed `git commit` without `-m`. The terminal shows a full screen with `~` on many lines. What is it?"
+        options:
+          - text: "An editor that waits for the message. Press Esc, type `:q!`, Enter, then use `-m`"
+            correct: true
+            why: "Without `-m`, git opens an editor (often Vim) for the message. `:q!` leaves it without a commit."
+          - text: "git crashed: close the terminal"
+            why: "Nothing crashed. It is an editor, and `:q!` leaves it."
+          - text: "The history of the project"
+            why: "That is `git log`. This screen waits for a message."
+
+  # 7. THEORY ---------------------------------------------------------------
+  - id: history
+    type: theory
+    objective: O4
+    title: History and branches
+    body: |
+      | Command | What it does |
+      | --- | --- |
+      | `git status` | New and changed files |
+      | `git diff` | The changed lines, not added yet |
+      | `git log --oneline` | The commits, newest first |
+      | `git restore colors.py` | Throw away the changes since the last commit |
+
+      `git restore` cannot be undone: the changes are gone.
+
+      ## Branches
+
+      A **branch** is a line of commits. `main` is the main line. Try an
+      idea on its own branch: `main` stays safe, and you merge the idea
+      only if it works.
+
+      | Step | Command |
+      | --- | --- |
+      | Make a branch and go to it | `git switch -c more-colors` |
+      | Change, then commit there | `git add .` and `git commit -m "..."` |
+      | Go back to main | `git switch main` |
+      | Bring the commits into main | `git merge more-colors` |
+
+      If the branch and `main` both changed the same lines, git stops with
+      a **conflict**. VS Code then shows both versions, and you choose.
+    keys:
+      - code: "git diff"
+        means: "What changed, line by line: `-` old, `+` new."
+      - code: "git switch -c more-colors"
+        means: "Make the branch `more-colors` and go to it."
+      - code: "git merge more-colors"
+        means: "Bring the commits of `more-colors` into the branch you are on."
+
+  # 8. DRILL ----------------------------------------------------------------
+  - id: drill-history
+    type: drill
+    objective: O3
+    title: Read the history
+    items:
+      - kind: mcq
+        id: d-diff
+        objective: O3
+        prompt: "`git diff` shows `-rich.print(\"[blue]Sky[/blue]\")` and `+rich.print(\"[green]Sky[/green]\")`. What changed?"
+        options:
+          - text: "The line with blue was replaced by a line with green"
+            correct: true
+            why: "`-` is the old line, `+` is the new one."
+          - text: "A green line was added, and the blue line stays"
+            why: "The `-` says that the blue line is gone."
+          - text: "Both lines were deleted"
+            why: "Only `-` lines are deleted. `+` lines are new."
+      - kind: mcq
+        id: d-log
+        objective: O3
+        prompt: "`git log --oneline` shows `a1b2c3d Add red`, and under it `9f8e7d6 First version`. Which commit is newer?"
+        options:
+          - text: "`Add red`"
+            correct: true
+            why: "The log starts with the newest commit."
+          - text: "`First version`"
+            why: "That is the oldest one: it is at the bottom."
+          - text: "You cannot tell"
+            why: "The order tells you: newest first."
+      - kind: mcq
+        id: d-clean
+        objective: O3
+        prompt: "`git status` says `nothing to commit, working tree clean`. What does it mean?"
+        options:
+          - text: "Every change is in a commit"
+            correct: true
+            why: "Your folder is the same as the last commit."
+          - text: "The folder has no files"
+            why: "It has files. They are all committed."
+          - text: "The commits were deleted"
+            why: "`clean` is about the folder, and it is good news."
+      - kind: mcq
+        id: d-branch-file
+        objective: O4
+        prompt: "On the branch `more-colors` you commit a new line. Then you run `git switch main`. Is the new line in `colors.py` now?"
+        options:
+          - text: "No. It is on `more-colors` until you merge it into `main`"
+            correct: true
+            why: "`git switch` changes the files in your folder to the version of that branch."
+          - text: "Yes. A commit changes every branch"
+            why: "A commit is added to the branch you are on, and only to it."
+          - text: "The line is lost"
+            why: "It is safe on `more-colors`. `git switch more-colors` shows it again."
+      - kind: mcq
+        id: d-restore-gone
+        objective: O3
+        prompt: "You run `git restore colors.py` and then want your changes back. Can git give them back?"
+        options:
+          - text: "No. The changes were not in a commit, so they are gone"
+            correct: true
+            why: "git only keeps what was committed. Commit often."
+          - text: "Yes, with `git log`"
+            why: "`log` shows commits. The changes were never committed."
+          - text: "Yes, they are on GitHub"
+            why: "Only pushed commits are on GitHub."
+
+  # 9. LOCAL: BRANCH --------------------------------------------------------
+  - id: check-branch
+    type: local
+    objective: O4
+    title: An idea on a branch
+    prompt: |
+      **Add a color on a branch, then merge it into `main`.**
+
+      1. `git switch -c more-colors`
+      2. Add one more line in color to `colors.py`, and run it.
+      3. Look at `git diff`, then add and commit the change.
+      4. `git switch main`. Look at `colors.py`: the new line is not
+         there.
+      5. `git merge more-colors`. Now it is.
+
+      Keep the branch, and run the check in `colors`.
+    task: git
+    needs: 3
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      git: "2.56.0.windows.1"
+      git_name: "yes"
+      git_email: "yes"
+      repo: "here"
+      commits: "2"
+      changes: "0"
+      branches: "2"
+      on_main: "yes"
+      merged: "yes"
+      gitignore: "yes"
+      venv_ignored: "yes"
+      venv_tracked: "no"
+      tracked: "4"
+      colors_tracked: "yes"
+      reqs_tracked: "yes"
+      remote: "no"
+      upstream: "no"
+    checks:
+      - expr: "int(report.get('branches', '0')) >= 2"
+        pass: "There is a second branch"
+        hint: "Run `git switch -c more-colors`."
+      - expr: "int(report.get('commits', '0')) >= 2"
+        pass: "The change is committed"
+        hint: "On the branch: `git add .`, then `git commit -m \"Add a color\"`."
+      - expr: "report.get('on_main') == 'yes'"
+        pass: "You are back on `main`"
+        hint: "Run `git switch main`."
+      - expr: "report.get('merged') == 'yes'"
+        pass: "The branch is merged into `main`"
+        hint: "On `main`, run `git merge more-colors`."
+      - expr: "report.get('changes') == '0'"
+        pass: "Everything is committed"
+        hint: "`git status` shows what is not committed. Add it and commit."
+        misconceptions:
+          - when: "report.get('changes', '0') != '0' and report.get('merged') == 'yes'"
+            say: "There are changes after the merge. Commit them, or throw them away with `git restore` and the name of the file."
+    hints:
+      - "`git branch` lists the branches. A `*` marks the one you are on."
+      - "If `git switch main` says that your changes would be lost, commit them first."
+      - "If the merge says `Already up to date`, the branch has no new commit: commit on the branch first, then merge again."
+    after: >-
+      This is how real projects grow: each idea on a branch, merged when it
+      works. `main` always holds a version that works.
+
+  # 10. THEORY --------------------------------------------------------------
+  - id: github
+    type: theory
+    objective: O5
+    title: Your project on GitHub
+    body: |
+      1. Make a free account on [github.com](https://github.com).
+      2. On GitHub, choose **New repository**. Name it `colors`. Add **no**
+         README and no other files: the repository must be empty.
+      3. GitHub shows commands. In the terminal, in `colors`, run the
+         `git remote add origin ...` line that GitHub shows you, with your
+         address. Then:
+         ```
+         git push -u origin main
+         ```
+      4. The first time, VS Code asks you to sign in to GitHub in the
+         browser. (On Windows, git may open its own sign-in window: that is
+         fine too.) Never type your GitHub password into the terminal.
+
+      `-u origin main` connects your `main` to the one on GitHub. After
+      that, each new commit goes online with only `git push`.
+
+      A public repository can be read by everyone. Never commit passwords
+      or keys.
+    keys:
+      - code: "origin"
+        means: "The usual name of the copy online."
+      - code: "git push"
+        means: "Send your new commits to GitHub."
+      - code: "git pull"
+        means: "Get new commits from GitHub, for example from another computer."
+
+  # 11. LOCAL: PUSH ---------------------------------------------------------
+  - id: check-push
+    type: local
+    objective: O5
+    title: Online
+    prompt: |
+      **Put `colors` on GitHub.** Follow the four steps, then open your
+      repository on GitHub: you see `colors.py`, `requirements.txt` and
+      `.gitignore`, but no `.venv`.
+
+      Run the check in `colors`. It reports only that the copy online is
+      on github.com, never its address.
+    task: git
+    needs: 3
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      git: "2.56.0.windows.1"
+      git_name: "yes"
+      git_email: "yes"
+      repo: "here"
+      commits: "2"
+      changes: "0"
+      branches: "2"
+      on_main: "yes"
+      merged: "yes"
+      gitignore: "yes"
+      venv_ignored: "yes"
+      venv_tracked: "no"
+      tracked: "4"
+      colors_tracked: "yes"
+      reqs_tracked: "yes"
+      remote: "github.com"
+      upstream: "yes"
+      ahead: "0"
+    checks:
+      - expr: "report.get('remote') == 'github.com'"
+        pass: "The repository has a copy on GitHub"
+        hint: "Run the `git remote add origin ...` line that GitHub shows for your new repository."
+        misconceptions:
+          - when: "report.get('remote') == 'no'"
+            say: "The repository has no `origin` yet. Copy the `git remote add origin ...` line from GitHub and run it in `colors`."
+          - when: "report.get('remote') not in ('no', 'github.com', None)"
+            say: "`origin` is not on github.com. Fix it with `git remote set-url origin` and the address from GitHub."
+      - expr: "report.get('upstream') == 'yes'"
+        pass: "`main` is connected to GitHub"
+        hint: "Run `git push -u origin main` once."
+      - expr: "report.get('ahead') == '0'"
+        pass: "All commits are online"
+        hint: "Run `git push`."
+    hints:
+      - "If `git push` says `rejected` and `fetch first`, the repository on GitHub is not empty. Delete it on GitHub (**Settings**, at the bottom), make it again with no files, and push again."
+      - "If it says `src refspec main does not match any`, your branch has another name. `git branch -M main` renames it to `main`."
+      - "If the sign-in does not open, use the **Source Control** view of VS Code: its **Publish Branch** button signs you in."
+    after: >-
+      Your project is online, with its whole history. On any computer:
+      `git clone`, make a venv, `pip install -r requirements.txt`, and you
+      can work.
+
+  # 12. QUIZ ----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-add
+        objective: O2
+        prompt: "What does `git add colors.py` do?"
+        options:
+          - text: "It puts the changes of `colors.py` into the next commit"
+            correct: true
+            why: "`git commit` then saves them in the history."
+          - text: "It saves a commit"
+            why: "That is `git commit`. `add` only chooses."
+          - text: "It sends the file to GitHub"
+            why: "That is `git push`, and it sends commits, not files."
+      - kind: mcq
+        id: q-restore
+        objective: O3
+        prompt: "You broke `colors.py` and want the version of the last commit back. Which command?"
+        options:
+          - text: "`git restore colors.py`"
+            correct: true
+            why: "It throws away the changes since the last commit. They cannot come back."
+          - text: "`git diff colors.py`"
+            why: "`diff` only shows the changes."
+          - text: "`git commit colors.py`"
+            why: "That would save the broken version."
+      - kind: mcq
+        id: q-ignore
+        objective: O2
+        prompt: "Why is `.venv` in `.gitignore`?"
+        options:
+          - text: "It is large, and `requirements.txt` makes it again"
+            correct: true
+            why: "The repository keeps your code and the list of packages, not the packages."
+          - text: "git cannot read Python"
+            why: "git keeps any file. `.venv` is only not worth keeping."
+          - text: "Otherwise the venv stops working"
+            why: "It would work. The repository would only be large and messy."
+      - kind: mcq
+        id: q-branch
+        objective: O4
+        prompt: "Why try a new idea on a branch?"
+        options:
+          - text: "`main` stays as it is, and you merge the idea only if it works"
+            correct: true
+            why: "If the idea fails, you switch back to `main`, and nothing is broken."
+          - text: "Branches make the program faster"
+            why: "Branches are about history, not speed."
+          - text: "git needs a branch for each file"
+            why: "A branch holds all files. It is a line of commits."
+      - kind: mcq
+        id: q-push
+        objective: O5
+        prompt: "You made a new commit, but GitHub does not show it. Why?"
+        options:
+          - text: "A commit is local. `git push` sends it to GitHub"
+            correct: true
+            why: "Commit, then push."
+          - text: "GitHub needs a day"
+            why: "A push shows on GitHub at once."
+          - text: "The commit failed"
+            why: "`git log --oneline` would show it. It is only not pushed yet."
+
+  # 13. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-commit
+    objective: O2
+    prompt: "What is a commit?"
+    options:
+      - text: "A saved version of all files of the project, with a message"
+        correct: true
+        why: "You can always see it again, and go back to it."
+      - text: "A file on GitHub"
+        why: "Commits live in your repository. GitHub can hold a copy."
+      - text: "One changed line"
+        why: "A commit holds all the changes that you added."
+  - kind: mcq
+    id: r-status
+    objective: O3
+    prompt: "Which command shows the new and changed files?"
+    options:
+      - text: "`git status`"
+        correct: true
+        why: "Run it often: it also says what to do next."
+      - text: "`git log`"
+        why: "`log` shows the commits."
+      - text: "`git init`"
+        why: "`init` makes a repository."
+  - kind: mcq
+    id: r-log
+    objective: O3
+    prompt: "Which command lists the commits, one on each line?"
+    options:
+      - text: "`git log --oneline`"
+        correct: true
+        why: "The newest commit comes first."
+      - text: "`git diff`"
+        why: "`diff` shows changed lines."
+      - text: "`git list`"
+        why: "There is no `git list`."
+  - kind: mcq
+    id: r-switch
+    objective: O4
+    prompt: "Which command makes the branch `fix-title` and goes to it?"
+    options:
+      - text: "`git switch -c fix-title`"
+        correct: true
+        why: "Without `-c`, `git switch` goes to a branch that exists."
+      - text: "`git merge fix-title`"
+        why: "`merge` brings the commits of a branch into the one you are on."
+      - text: "`git init fix-title`"
+        why: "That makes a new repository."
+  - kind: mcq
+    id: r-identity
+    objective: O1
+    prompt: "`git commit` says `Author identity unknown`. What is missing?"
+    options:
+      - text: "Your name and email in `git config`"
+        correct: true
+        why: "`git config --global user.name \"...\"` and `user.email`."
+      - text: "A GitHub account"
+        why: "Commits are local. They do not need GitHub."
+      - text: "A `.gitignore`"
+        why: "`.gitignore` is not needed for a commit."

@@ -1,0 +1,674 @@
+id: packaging
+order: 53
+title: Package with PyInstaller
+summary: Turn your to-do app into a program that anyone can start with a double-click, without Python - and make sure it never loses its data.
+minutes: 40
+outcomes: [A11]
+
+objectives:
+  - id: O1
+    text: Say what PyInstaller makes, and for which systems
+  - id: O2
+    text: Save the data of an app in the home folder, so it stays the same wherever the program starts
+  - id: O3
+    text: Build a program with pyinstaller, find it in dist, and build again after a change
+  - id: O4
+    text: Find out why a built program does not start, and keep build and dist out of git
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: package
+    type: theory
+    objective: O1
+    title: A program without Python
+    body: |
+      Your to-do app needs Python, tkinter and your file. A friend has
+      none of these. **PyInstaller** puts them all into one program:
+
+      ```
+      pip install pyinstaller
+      pyinstaller --onefile --windowed todo.py
+      ```
+
+      - `--onefile`: one single file, `dist/todo.exe` on Windows.
+      - `--windowed`: no terminal window behind the app.
+
+      | System | You get | Note |
+      | --- | --- | --- |
+      | Windows | `dist/todo.exe` | about 10 to 15 MB: Python is inside |
+      | macOS | `dist/todo.app` | build with `--windowed` only, without `--onefile` |
+      | Linux | `dist/todo` | |
+
+      PyInstaller builds only for the system that it runs on. A program
+      for Windows must be built on Windows, one for macOS on a Mac.
+
+      Before you build, one thing must be right: **where the app keeps its
+      data**.
+    keys:
+      - code: "pyinstaller --onefile --windowed todo.py"
+        means: "Build one program file, without a terminal window."
+      - code: "dist/"
+        means: "The folder with the finished program."
+      - code: "build/"
+        means: "Work files of PyInstaller. You can delete them."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: data-place
+    type: theory
+    objective: O2
+    title: Where does the data go?
+    body: |
+      `Path("tasks.json")` means: `tasks.json` in the **working folder**,
+      the folder where the program was started. In your course folder that
+      is fine. But a program can be started from anywhere:
+
+      | Place | In code | Problem |
+      | --- | --- | --- |
+      | The working folder | `Path("tasks.json")` | Another start folder: other tasks, or none |
+      | Next to the code | `Path(__file__).parent` | With `--onefile`, the code runs from a temporary folder, which is deleted |
+      | The **home folder** | `Path.home()` | None: it is always the same folder for this user |
+
+      So a packaged app keeps its data in the home folder, with a name
+      that says which app it belongs to:
+
+      ```python
+      TASKS_FILE = Path.home() / "todo-tasks.json"
+      ```
+
+      `Path.home()` is `C:\Users\Ana` on Windows, `/Users/ana` on macOS
+      and `/home/ana` on Linux. In this page it is a folder `home`, which
+      you see under the output.
+    keys:
+      - code: "Path.home()"
+        means: "The home folder of the user: the same for every start."
+      - code: "Path.home() / \"todo-tasks.json\""
+        means: "A file in the home folder."
+      - code: "Path(\"tasks.json\")"
+        means: "A file in the folder where the program was started."
+
+  # 3. DRILL -----------------------------------------------------------------
+  - id: drill-place
+    type: drill
+    objective: O2
+    title: Where does it go?
+    items:
+      - kind: mcq
+        id: d-cwd
+        objective: O2
+        prompt: "An app saves to `Path(\"notes.txt\")`. Ana starts it once from the Desktop, once from Documents. What happens?"
+        options:
+          - text: "Two files, one in each folder: she sees different notes"
+            correct: true
+            why: "A relative path is in the folder where the program was started."
+          - text: "One file next to the program"
+            why: "A relative path follows the working folder, not the program."
+          - text: "An error"
+            why: "It works. It only writes in a different place each time."
+      - kind: mcq
+        id: d-home
+        objective: O2
+        prompt: "Which path is the same for every start of the program?"
+        options:
+          - text: "`Path.home() / \"notes.txt\"`"
+            correct: true
+            why: "The home folder of the user does not depend on where the program started."
+          - text: "`Path(\"notes.txt\")`"
+            why: "That depends on the working folder."
+          - text: "`Path(\"..\") / \"notes.txt\"`"
+            why: "`..` is the folder above the working folder: it moves too."
+      - kind: mcq
+        id: d-file
+        objective: O2
+        prompt: "Why not save next to the code with `Path(__file__).parent` in a `--onefile` program?"
+        options:
+          - text: "The code runs from a temporary folder, which is deleted after each run"
+            correct: true
+            why: "The tasks would be gone at the next start."
+          - text: "`__file__` does not exist in Python"
+            why: "It exists: the path of the running file. In a one-file program it is temporary."
+          - text: "It is too slow"
+            why: "Speed is not the problem. The folder disappears."
+      - kind: mcq
+        id: d-name
+        objective: O2
+        prompt: "Why `todo-tasks.json`, and not only `tasks.json`, in the home folder?"
+        options:
+          - text: "Many apps share the home folder: the name says which app the file belongs to"
+            correct: true
+            why: "Another app could use `tasks.json` too."
+          - text: "JSON files need a dash"
+            why: "Any name works. A clear one avoids trouble."
+          - text: "PyInstaller needs it"
+            why: "PyInstaller does not care about your data files."
+      - kind: mcq
+        id: d-mac
+        objective: O1
+        prompt: "You have a Windows PC. Can you build the program for a friend with a Mac?"
+        options:
+          - text: "No: PyInstaller builds for the system it runs on. The Mac program must be built on a Mac"
+            correct: true
+            why: "Your friend can build it from your code, with the same command."
+          - text: "Yes, with `--mac`"
+            why: "There is no such option."
+          - text: "Yes: `todo.exe` runs on a Mac"
+            why: "An `.exe` is a Windows program."
+
+  # 4. EXERCISE: debug -------------------------------------------------------
+  - id: ex-home
+    type: exercise
+    fade: debug
+    objective: O2
+    title: Tasks that stay
+    prompt: |
+      This to-do app works here. As a packaged program, it would lose its
+      tasks when it starts from another folder: it saves to `tasks.json`
+      in the working folder.
+
+      **Make it keep its tasks in the home folder**: add `TASKS_FILE =
+      Path.home() / "todo-tasks.json"` above the class, and use it
+      everywhere instead of `"tasks.json"`. Run it, add a task, and look
+      under the output: the file is in `home`.
+    starter: |
+      import json
+      import tkinter as tk
+      from pathlib import Path
+      from tkinter import messagebox
+
+      def add_task(tasks, text):
+          text = text.strip()
+          if not text:
+              raise ValueError("A task needs a text.")
+          return tasks + [text]
+
+      def save_tasks(tasks, path):
+          Path(path).write_text(json.dumps(tasks, indent=2))
+
+      def load_tasks(path):
+          path = Path(path)
+          if not path.exists():
+              return []
+          return json.loads(path.read_text())
+
+      class TodoApp:
+          def __init__(self, root):
+              root.title("To-do")
+              self.tasks = load_tasks("tasks.json")
+              self.entry = tk.Entry(root, width=30)
+              self.entry.grid(row=0, column=0, padx=8, pady=8)
+              add = tk.Button(root, text="Add", command=self.add)
+              add.grid(row=0, column=1, padx=(0, 8))
+              self.listbox = tk.Listbox(root, width=40)
+              self.listbox.grid(row=1, column=0, columnspan=2)
+              self.show()
+
+          def show(self):
+              self.listbox.delete(0, tk.END)
+              for task in self.tasks:
+                  self.listbox.insert(tk.END, task)
+
+          def add(self):
+              try:
+                  self.tasks = add_task(self.tasks, self.entry.get())
+              except ValueError as error:
+                  messagebox.showerror("To-do", str(error))
+                  return
+              self.entry.delete(0, tk.END)
+              save_tasks(self.tasks, "tasks.json")
+              self.show()
+
+      if __name__ == "__main__":
+          root = tk.Tk()
+          app = TodoApp(root)
+          root.mainloop()
+    solution: |
+      import json
+      import tkinter as tk
+      from pathlib import Path
+      from tkinter import messagebox
+
+      def add_task(tasks, text):
+          text = text.strip()
+          if not text:
+              raise ValueError("A task needs a text.")
+          return tasks + [text]
+
+      def save_tasks(tasks, path):
+          Path(path).write_text(json.dumps(tasks, indent=2))
+
+      def load_tasks(path):
+          path = Path(path)
+          if not path.exists():
+              return []
+          return json.loads(path.read_text())
+
+      TASKS_FILE = Path.home() / "todo-tasks.json"
+
+      class TodoApp:
+          def __init__(self, root):
+              root.title("To-do")
+              self.tasks = load_tasks(TASKS_FILE)
+              self.entry = tk.Entry(root, width=30)
+              self.entry.grid(row=0, column=0, padx=8, pady=8)
+              add = tk.Button(root, text="Add", command=self.add)
+              add.grid(row=0, column=1, padx=(0, 8))
+              self.listbox = tk.Listbox(root, width=40)
+              self.listbox.grid(row=1, column=0, columnspan=2)
+              self.show()
+
+          def show(self):
+              self.listbox.delete(0, tk.END)
+              for task in self.tasks:
+                  self.listbox.insert(tk.END, task)
+
+          def add(self):
+              try:
+                  self.tasks = add_task(self.tasks, self.entry.get())
+              except ValueError as error:
+                  messagebox.showerror("To-do", str(error))
+                  return
+              self.entry.delete(0, tk.END)
+              save_tasks(self.tasks, TASKS_FILE)
+              self.show()
+
+      if __name__ == "__main__":
+          root = tk.Tk()
+          app = TodoApp(root)
+          root.mainloop()
+    after: >-
+      One name, `TASKS_FILE`, says where the data lives. If it must move
+      one day, you change one line.
+    cases:
+      - {}
+      - label: "the home folder already has tasks"
+        files:
+          home/todo-tasks.json: |
+            ["Old task"]
+      - label: "the working folder has an old `tasks.json`"
+        files:
+          tasks.json: |
+            ["Not mine"]
+    checks:
+      - expr: "err is None and gui_items() == __import__('json').loads(start_files.get('home/todo-tasks.json', '[]'))"
+        pass: "At the start, the app shows the tasks of the home folder"
+        hint: "Load from `TASKS_FILE`: `self.tasks = load_tasks(TASKS_FILE)`."
+        misconceptions:
+          - when: "'todo-tasks.json' not in src and 'Path.home()' in src"
+            say: "The file in the home folder must be named `todo-tasks.json`, so it is clear which app it belongs to."
+          - when: "err == 'NameError'"
+            say: "`TASKS_FILE` must be made before the class uses it: put `TASKS_FILE = Path.home() / \"todo-tasks.json\"` above `class TodoApp:`."
+          - when: "err is None and gui_items() == __import__('json').loads(start_files.get('tasks.json', '[]')) and 'tasks.json' in start_files"
+            say: "The app still loads `tasks.json` from the working folder. Load `TASKS_FILE` instead."
+      - expr: "gui_find('Add') is not None and (gui_type(0, 'Pay rent'), gui_click('Add'), (lambda home: home.exists() and 'Pay rent' in home.read_text())(__import__('pathlib').Path.home() / 'todo-tasks.json'))[2]"
+        pass: "A new task is saved in `home/todo-tasks.json`"
+        hint: "Save to `TASKS_FILE`: `save_tasks(self.tasks, TASKS_FILE)`."
+        misconceptions:
+          - when: "__import__('os').path.exists('tasks.json') and 'Pay rent' in open('tasks.json').read()"
+            say: "The task went into `tasks.json` of the working folder. Save to `TASKS_FILE`."
+          - when: "__import__('pathlib').Path.home().joinpath('todo-tasks.json').exists() is False and __import__('pathlib').Path.home().joinpath('tasks.json').exists()"
+            say: "The file is in the home folder, but its name is `tasks.json`. Use `todo-tasks.json`, so it is clear which app it belongs to."
+      - expr: "'\"tasks.json\"' not in src and \"'tasks.json'\" not in src"
+        pass: "`\"tasks.json\"` is gone from the code"
+        hint: "Replace each `\"tasks.json\"` with `TASKS_FILE`."
+    hints:
+      - "Add the line `TASKS_FILE = Path.home() / \"todo-tasks.json\"` above `class TodoApp:`."
+      - "Two places use `\"tasks.json\"`: `load_tasks(...)` in `__init__` and `save_tasks(...)` in `add`."
+      - "Replace both with `TASKS_FILE`, without quotes: it is a name."
+
+  # 5. LOCAL -----------------------------------------------------------------
+  - id: check-data
+    type: local
+    objective: O2
+    title: Your app saves at home
+    prompt: |
+      **Change your own `todo.py`** in the folder `todo` in the same way:
+      `TASKS_FILE = Path.home() / "todo-tasks.json"`, used for loading and
+      saving.
+
+      Start it, add a task, and find `todo-tasks.json` in your home
+      folder. Then download `check.py` **again** into `todo`, activate the
+      venv of `todo` (make one with `python -m venv .venv` if there is
+      none), and run the check. It starts a copy of your app from another
+      folder, with a temporary home folder, and adds a task.
+    task: build
+    needs: 10
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      venv_exists: "yes"
+      in_venv: "yes"
+      venv_here: "yes"
+      pyinstaller: "no"
+      data_place: "home"
+      program: "no"
+      spec: "no"
+      ignores_build: "no"
+    checks:
+      - expr: "report.get('data_place') == 'home'"
+        pass: "The app saves its tasks in the home folder"
+        hint: "`TASKS_FILE = Path.home() / \"todo-tasks.json\"`, used in `load_tasks` and `save_tasks`."
+        misconceptions:
+          - when: "report.get('todo_exists') == 'no'"
+            say: "There is no `todo.py` in this folder. Run the check in `todo`."
+          - when: "report.get('data_place') == 'cwd'"
+            say: "The app saves in the folder where it was started. Use `TASKS_FILE = Path.home() / \"todo-tasks.json\"`."
+          - when: "report.get('data_place') == 'program'"
+            say: "The app saves next to `todo.py`. A `--onefile` program runs from a temporary folder: use `Path.home()`."
+          - when: "report.get('data_place') in ('error', 'nobuttons', 'timeout')"
+            say: "The check could not run your app, or found no **Add** button and entry. Run `python todo.py` and try it."
+      - expr: "report.get('in_venv') == 'yes' and report.get('venv_here') == 'yes'"
+        pass: "The venv of `todo` is active"
+        hint: "In `todo`: `python -m venv .venv`, then activate it. PyInstaller goes into this venv in the next step."
+    hints:
+      - "`from pathlib import Path` is already at the top of the app."
+      - "After the change, your old tasks are in `tasks.json` of the folder. Copy them into `todo-tasks.json` in your home folder if you want to keep them."
+      - "On Windows, the home folder is `C:\\Users\\` and your user name."
+    after: >-
+      Your app now keeps its tasks in one place, wherever it starts. Now
+      it is ready to be packaged.
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: build
+    type: theory
+    objective: O3
+    title: Build, test, build again
+    body: |
+      In the folder `todo`, with the venv active:
+
+      1. `pip install pyinstaller`
+      2. `pyinstaller --onefile --windowed todo.py` (on macOS:
+         `pyinstaller --windowed todo.py`). It takes about a minute.
+      3. Start the program in `dist`: double-click it in the file manager.
+
+      PyInstaller also makes a folder `build` and a file `todo.spec`. Put
+      `build/` and `dist/` into `.gitignore`: each build makes them again,
+      and they are large.
+
+      ## When the program does not start
+
+      With `--windowed`, there is no terminal, so you do not see the error.
+      Build once **without** `--windowed`, and start the program from a
+      terminal: `dist\todo.exe` (Windows) or `./dist/todo`. The traceback
+      appears there.
+
+      A `ModuleNotFoundError` in the built program means that a package
+      was missing in the venv where PyInstaller ran: install it there, and
+      build again.
+
+      **After each change of `todo.py`, build again**: the program in
+      `dist` has the old code inside.
+    keys:
+      - code: "pip install pyinstaller"
+        means: "Install PyInstaller into the active venv."
+      - code: "--windowed"
+        means: "No terminal: good for users, but errors are hidden."
+      - code: "build/ and dist/"
+        means: "Made by each build: keep them out of git."
+
+  # 7. DRILL -----------------------------------------------------------------
+  - id: drill-build
+    type: drill
+    objective: O4
+    title: Problems with a build
+    items:
+      - kind: mcq
+        id: d-nothing
+        objective: O4
+        prompt: "You double-click `todo.exe`, and nothing happens. How do you see the error?"
+        options:
+          - text: "Build without `--windowed`, and start the program from a terminal"
+            correct: true
+            why: "Then the traceback is printed in the terminal."
+          - text: "Build again with the same command"
+            why: "The same build hides the same error."
+          - text: "Restart the computer"
+            why: "The program has an error. You need to see it."
+      - kind: mcq
+        id: d-old
+        objective: O3
+        prompt: "You fixed a bug in `todo.py`, but `dist/todo.exe` still has it. Why?"
+        options:
+          - text: "The program in `dist` has the old code inside: build again"
+            correct: true
+            why: "PyInstaller copies your code when it builds."
+          - text: "PyInstaller ignores changes"
+            why: "It uses the code at the time of the build."
+          - text: "The bug is in Python"
+            why: "The program has the old copy of your code."
+      - kind: mcq
+        id: d-module
+        objective: O4
+        prompt: "The built program says `ModuleNotFoundError: No module named 'requests'`. `python todo.py` works. Why?"
+        options:
+          - text: "PyInstaller ran in a Python where `requests` is not installed. Install it in that venv, and build again"
+            correct: true
+            why: "PyInstaller packs the packages of the Python that runs it."
+          - text: "PyInstaller cannot pack packages"
+            why: "It can. It packs those of its own venv."
+          - text: "The program needs internet to install it"
+            why: "The program installs nothing. The package must be inside."
+      - kind: mcq
+        id: d-git
+        objective: O4
+        prompt: "What goes into `.gitignore` for a project with PyInstaller?"
+        options:
+          - text: "`build/` and `dist/`, next to `.venv/`"
+            correct: true
+            why: "They are large, and each build makes them again."
+          - text: "`todo.py`"
+            why: "That is your code: it belongs in git."
+          - text: "Nothing: git needs the program"
+            why: "Git keeps the code. The program is built from it."
+      - kind: mcq
+        id: d-size
+        objective: O1
+        prompt: "`todo.exe` is 12 MB, but `todo.py` is only 3 KB. Why?"
+        options:
+          - text: "Python itself and tkinter are inside the program"
+            correct: true
+            why: "That is why it runs on a computer without Python."
+          - text: "PyInstaller adds empty space"
+            why: "The size is Python and its parts."
+          - text: "The tasks are inside"
+            why: "The tasks are in the home folder, not in the program."
+
+  # 8. LOCAL -----------------------------------------------------------------
+  - id: check-build
+    type: local
+    objective: O3
+    title: Your own program
+    prompt: |
+      **Build your to-do app.**
+
+      1. In `todo`, with the venv active: `pip install pyinstaller`.
+      2. `pyinstaller --onefile --windowed todo.py` (on macOS:
+         `pyinstaller --windowed todo.py`).
+      3. Open `dist`, and start the program with a double-click. Add a
+         task, close it, and start it again: the task is still there.
+      4. Add `build/` and `dist/` to `.gitignore` (make the file if there
+         is none).
+      5. Run the check again.
+
+      If you like, send the program to a friend with the same system. On
+      their computer, the system may warn about an unknown program: it is
+      not signed, which is normal for small projects.
+    task: build
+    needs: 10
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      venv_exists: "yes"
+      in_venv: "yes"
+      venv_here: "yes"
+      pyinstaller: "6.22.3"
+      data_place: "home"
+      program: "yes"
+      program_fresh: "yes"
+      spec: "yes"
+      ignores_build: "yes"
+    checks:
+      - expr: "report.get('pyinstaller', 'no') != 'no'"
+        pass: "PyInstaller is installed in the venv"
+        hint: "With `(.venv)` in the prompt: `pip install pyinstaller`."
+        misconceptions:
+          - when: "report.get('in_venv') == 'no'"
+            say: "The venv is not active. Activate it, then install PyInstaller and run the check again."
+      - expr: "report.get('program') in ('yes', 'app') and report.get('program_fresh') == 'yes'"
+        pass: "A built program is in `dist`, with the newest code"
+        hint: "`pyinstaller --onefile --windowed todo.py` in `todo`."
+        misconceptions:
+          - when: "report.get('program') == 'no'"
+            say: "There is no program in `dist`. Run `pyinstaller --onefile --windowed todo.py` in the folder `todo`, and read the last lines it prints."
+          - when: "report.get('program_fresh') == 'no'"
+            say: "`todo.py` changed after the build, so the program has old code. Build again."
+      - expr: "report.get('data_place') == 'home'"
+        pass: "The app still saves in the home folder"
+        hint: "Keep `TASKS_FILE = Path.home() / \"todo-tasks.json\"`."
+      - expr: "report.get('ignores_build') == 'yes'"
+        pass: "`.gitignore` keeps `build/` and `dist/` out of git"
+        hint: "Add two lines to `.gitignore`: `build/` and `dist/`."
+    hints:
+      - "The build prints many lines. The last one says where the program is: `dist`."
+      - "If the program does not start, build without `--windowed` and start it from the terminal to see the error."
+      - "`.gitignore` is a text file in `todo`, one name on each line: `.venv/`, `build/`, `dist/`."
+    after: >-
+      You built a real program. A double-click starts it, it keeps its
+      data, and your project is clean in git. Next: your own app, from
+      the idea to the program.
+
+  # 9. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-what
+        objective: O1
+        prompt: "What does `pyinstaller --onefile todo.py` make?"
+        options:
+          - text: "One program file in `dist`, with Python and your code inside"
+            correct: true
+            why: "It runs without Python on a computer with the same system."
+          - text: "A faster `todo.py`"
+            why: "The code runs at the same speed. It is packed with Python."
+          - text: "An installer for Python"
+            why: "It packs Python into your program instead."
+      - kind: mcq
+        id: q-home
+        objective: O2
+        prompt: "Where should a packaged app keep its data?"
+        options:
+          - text: "In the home folder: `Path.home() / \"app-data.json\"`"
+            correct: true
+            why: "The same folder for every start of the program."
+          - text: "In the working folder: `Path(\"data.json\")`"
+            why: "That changes with the folder where the program starts."
+          - text: "Inside the `.exe`"
+            why: "A program cannot change its own file while it runs."
+      - kind: mcq
+        id: q-windowed
+        objective: O4
+        prompt: "What is the cost of `--windowed`?"
+        options:
+          - text: "Errors are not shown, because there is no terminal"
+            correct: true
+            why: "To find a crash, build without it and start from a terminal."
+          - text: "The window has no buttons"
+            why: "The window is the same. Only the terminal is missing."
+          - text: "It works only on macOS"
+            why: "It works on Windows and macOS."
+      - kind: mcq
+        id: q-rebuild
+        objective: O3
+        prompt: "When must you run PyInstaller again?"
+        options:
+          - text: "After each change of the code that the program should have"
+            correct: true
+            why: "The program holds a copy of the code at the time of the build."
+          - text: "Every time you start the program"
+            why: "A built program starts without PyInstaller."
+          - text: "Never: it updates itself"
+            why: "It does not know about your changes."
+      - kind: mcq
+        id: q-systems
+        objective: O1
+        prompt: "Your friend has Linux, you have Windows. What do you send?"
+        options:
+          - text: "The code: your friend builds it with PyInstaller on Linux, or runs it with Python"
+            correct: true
+            why: "A program is built for one system."
+          - text: "`todo.exe`"
+            why: "Linux does not run Windows programs."
+          - text: "The `build` folder"
+            why: "`build` holds work files only."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-dist
+    objective: O3
+    prompt: "Where is the finished program after `pyinstaller`?"
+    options:
+      - text: "In the folder `dist`"
+        correct: true
+        why: "`build` holds work files. `dist` holds the program."
+      - text: "In the folder `build`"
+        why: "`build` holds only work files."
+      - text: "Next to `todo.py`, as `todo.exe`"
+        why: "It goes into `dist`."
+  - kind: mcq
+    id: r-cwd
+    objective: O2
+    prompt: "What is the working folder of a program?"
+    options:
+      - text: "The folder where it was started. Relative paths like `Path(\"a.txt\")` are in it"
+        correct: true
+        why: "It can be a different folder for every start."
+      - text: "Always the folder of the program file"
+        why: "Only if you start it there."
+      - text: "Always the home folder"
+        why: "The home folder is `Path.home()`."
+  - kind: mcq
+    id: r-hidden
+    objective: O4
+    prompt: "A `--windowed` program closes at once, with no message. What is the first step?"
+    options:
+      - text: "Build without `--windowed`, and start it from a terminal to read the error"
+        correct: true
+        why: "The traceback then appears in the terminal."
+      - text: "Add `--onefile` twice"
+        why: "That changes nothing."
+      - text: "Delete `dist` and give up"
+        why: "The error is there to be read: show it first."
+  - kind: mcq
+    id: r-ignore
+    objective: O4
+    prompt: "Why keep `dist/` out of git?"
+    options:
+      - text: "It is large, and each build makes it again from the code"
+        correct: true
+        why: "Git keeps the code, the program is built from it."
+      - text: "Git cannot store programs"
+        why: "It can, but it should not: they are large and built again."
+      - text: "PyInstaller deletes git"
+        why: "PyInstaller does not touch git."
+  - kind: mcq
+    id: r-home
+    objective: O2
+    prompt: "Which line gives a file in the home folder of the user?"
+    options:
+      - text: "`Path.home() / \"todo-tasks.json\"`"
+        correct: true
+        why: "`/` joins a folder and a name."
+      - text: "`Path(\"home/todo-tasks.json\")`"
+        why: "That is a folder named `home` in the working folder."
+      - text: "`Path(\"~/todo-tasks.json\")`"
+        why: "`Path` does not change `~` by itself. Use `Path.home()`."

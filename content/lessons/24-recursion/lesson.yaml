@@ -1,0 +1,612 @@
+id: recursion
+order: 24
+title: Recursion
+summary: A function that calls itself, on a smaller part of the problem each time. The natural tool for nested data, like folders inside folders.
+minutes: 40
+outcomes: [A1, A3]
+
+objectives:
+  - id: O1
+    text: Explain recursion - a base case that stops, and a call on a smaller problem
+  - id: O2
+    text: Write recursive functions on numbers and lists
+  - id: O3
+    text: Walk nested data - lists in lists, folders in folders - with recursion
+  - id: O4
+    text: Read a RecursionError, and choose between recursion and a loop
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: idea
+    type: theory
+    objective: O1
+    title: A function that calls itself
+    body: |
+      A function may call **itself**. Each call works on a **smaller**
+      problem, until the problem is so small that the answer is clear:
+
+      ```python
+      def countdown(n):
+          if n == 0:              # the base case: stop
+              print("Go!")
+              return
+          print(n)
+          countdown(n - 1)        # the same job, one smaller
+      ```
+
+      `countdown(3)` prints 3, then calls `countdown(2)`, which prints 2,
+      then calls `countdown(1)`... until `countdown(0)` prints `Go!` and
+      stops.
+
+      Every recursive function has two parts:
+
+      - the **base case**: a small input with a direct answer, and no call;
+      - the **recursive case**: a call on a **smaller** input.
+
+      Each call has its own `n`, in its own box on the **call stack** (you
+      saw the stack in the lesson on the debugger). The calls wait for each
+      other, then end in reverse order.
+    keys:
+      - code: "base case"
+        means: "A small input with a direct answer: no more calls."
+      - code: "countdown(n - 1)"
+        means: "The same function, on a smaller problem."
+      - code: "call stack"
+        means: "One box per running call, each with its own names."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: factorial
+    type: demo
+    visual: none
+    objective: O2
+    title: Down, then back up
+    intro: |
+      `factorial(n)` is `n × (n-1) × ... × 1`. The prints show each call
+      going down, and each answer coming back up. Press **Run**, then try
+      other numbers.
+    code: |
+      def factorial(n, depth=0):
+          pad = "  " * depth
+          print(f"{pad}factorial({n})")
+          if n == 1:
+              print(f"{pad}-> 1")
+              return 1
+          result = n * factorial(n - 1, depth + 1)
+          print(f"{pad}-> {result}")
+          return result
+
+
+      print(factorial(4))
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and lines[-1] == '24'"
+      - text: "Try `factorial(6)`."
+        expr: "err is None and lines[-1] == '720'"
+      - text: "Try `factorial(0)`. What happens, and why?"
+        expr: "err is not None and 'factorial(0)' in src"
+    investigate:
+      - kind: mcq
+        id: i-order
+        prompt: "`factorial(4)` is printed first, but its answer `-> 24` comes last. Why?"
+        options:
+          - text: "Each call waits for the call below it, so the first call ends last"
+            correct: true
+            why: "The answers come back up the stack in reverse order."
+          - text: "Python sorts the prints"
+            why: "The prints come in the order they run."
+          - text: "The program runs twice"
+            why: "It runs once: down through the calls, then back up."
+      - kind: mcq
+        id: i-zero
+        prompt: "`factorial(0)` never gives an answer: the program is stopped. Why?"
+        options:
+          - text: "0 never reaches the base case `n == 1`: n goes 0, -1, -2 ... forever"
+            correct: true
+            why: "A base case must be reached by every input. `if n <= 1:` would fix it. Without the prints, Python itself would stop it with a RecursionError."
+          - text: "Python cannot multiply by 0"
+            why: "It can. The calls never stop."
+          - text: "0 is not a number"
+            why: "It is. The base case is never reached."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-total
+    type: exercise
+    fade: completion
+    objective: O2
+    title: The sum of a list, without a loop
+    prompt: |
+      **Replace the two `___`**: the sum of an empty list is 0 (the base
+      case). Else, the sum is the first number plus the sum of the rest.
+
+      ```text
+      10
+      0
+      ```
+    starter: |
+      def total(numbers):
+          if not numbers:
+              return ___
+          return numbers[0] + ___
+
+
+      print(total([1, 2, 3, 4]))
+      print(total([]))
+    solution: |
+      def total(numbers):
+          if not numbers:
+              return 0
+          return numbers[0] + total(numbers[1:])
+
+
+      print(total([1, 2, 3, 4]))
+      print(total([]))
+    after: >-
+      `numbers[1:]` is one shorter each time, so the list is sure to become
+      empty: the base case is always reached.
+    checks:
+      - expr: "callable(ns.get('total')) and total([5]) == 5 and total([2, 8, -1]) == 9 and total([]) == 0"
+        pass: "It adds any list"
+        hint: "`return numbers[0] + total(numbers[1:])`."
+        misconceptions:
+          - when: "callable(ns.get('total')) and raises(total, [1, 2]) == 'RecursionError'"
+            say: "The list never gets shorter: call `total` on `numbers[1:]`, not on `numbers`."
+      - expr: "'for ' not in src and 'while ' not in src and 'sum(' not in src"
+        pass: "No loop and no sum(): only recursion"
+        hint: "Let `total` call itself."
+      - expr: "lines == ['10', '0']"
+        pass: "It prints 10 and 0"
+        hint: "Keep the prints."
+    hints:
+      - "The base case: an empty list has the sum 0."
+      - "The rest of the list is `numbers[1:]`."
+      - "`return numbers[0] + total(numbers[1:])`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: nested
+    type: theory
+    objective: O3
+    title: Data inside data
+    body: |
+      Recursion shines when data has the **same shape inside itself**: lists
+      in lists, folders in folders, comments with replies.
+
+      ```python
+      tree = {"name": "home", "size": 0, "children": [
+          {"name": "photo.jpg", "size": 300, "children": []},
+          {"name": "music", "size": 0, "children": [
+              {"name": "song.mp3", "size": 500, "children": []},
+          ]},
+      ]}
+
+
+      def total_size(folder):
+          size = folder["size"]
+          for child in folder["children"]:
+              size = size + total_size(child)    # the same job, inside
+          return size
+      ```
+
+      You do not need to know how deep the folders go: each call handles
+      one folder, and asks its children. A folder without children is the
+      base case: the loop does not run, and no call is made.
+
+      For a list in a list, ask each item: `isinstance(item, list)`. If it
+      is a list, call the function on it; else, it is a plain value.
+    keys:
+      - code: "for child in folder[\"children\"]:"
+        means: "Each part is handled by the same function."
+      - code: "isinstance(item, list)"
+        means: "Is this a list inside the list?"
+      - code: "no children"
+        means: "The base case of a tree: no more calls."
+
+  # 5. EXERCISE: independent -------------------------------------------------
+  - id: ex-deep-sum
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Numbers in lists in lists
+    prompt: |
+      **Write `deep_sum(items)`**: the sum of all numbers in a list that
+      may hold lists, which may hold lists, and so on.
+
+      ```text
+      21
+      0
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(deep_sum([1, [2, 3], [4, [5, [6]]]]))
+      print(deep_sum([]))
+    solution: |
+      def deep_sum(items):
+          total = 0
+          for item in items:
+              if isinstance(item, list):
+                  total = total + deep_sum(item)
+              else:
+                  total = total + item
+          return total
+
+
+      print(deep_sum([1, [2, 3], [4, [5, [6]]]]))
+      print(deep_sum([]))
+    after: >-
+      A loop goes along one list; recursion goes down into each inner list.
+      Together they reach every number, at any depth.
+    checks:
+      - expr: "callable(ns.get('deep_sum')) and deep_sum([1, 2]) == 3 and deep_sum([[[[7]]]]) == 7 and deep_sum([[], [1, [2, []]], 3]) == 6 and deep_sum([]) == 0"
+        pass: "It adds numbers at any depth"
+        hint: "For each item: a list goes to `deep_sum(item)`, a number is added."
+        misconceptions:
+          - when: "callable(ns.get('deep_sum')) and raises(deep_sum, [1, [2]]) == 'TypeError'"
+            say: "A list cannot be added to a number. Ask `isinstance(item, list)` first."
+      - expr: "'deep_sum(' in src.split('def deep_sum', 1)[-1].split('print(', 1)[0]"
+        pass: "deep_sum calls itself"
+        hint: "Inside `deep_sum`, call `deep_sum(item)` for an inner list."
+      - expr: "lines == ['21', '0']"
+        pass: "It prints 21 and 0"
+        hint: "Keep the prints."
+    hints:
+      - "Start with `total = 0`, and loop over the items."
+      - "`if isinstance(item, list):` then add `deep_sum(item)`."
+      - "Else add the item itself. Return the total."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-power
+    type: exercise
+    fade: debug
+    objective: O4
+    title: A power that never stops
+    prompt: |
+      `power(base, exp)` should give `base ** exp`, with recursion. It stops
+      with a `RecursionError`. **Find the missing part and fix it**:
+
+      ```text
+      8
+      1
+      ```
+    starter: |
+      def power(base, exp):
+          return base * power(base, exp - 1)
+
+
+      print(power(2, 3))
+      print(power(5, 0))
+    solution: |
+      def power(base, exp):
+          if exp == 0:
+              return 1
+          return base * power(base, exp - 1)
+
+
+      print(power(2, 3))
+      print(power(5, 0))
+    after: >-
+      Without a base case, `exp` goes 3, 2, 1, 0, -1 ... until Python stops
+      it at about 1000 calls: "maximum recursion depth exceeded". Every
+      recursion needs a way out.
+    checks:
+      - expr: "callable(ns.get('power')) and power(2, 3) == 8 and power(5, 0) == 1 and power(3, 4) == 81"
+        pass: "power works, also for exp 0"
+        hint: "Add a base case: `if exp == 0: return 1`."
+      - expr: "lines == ['8', '1']"
+        pass: "It prints 8 and 1"
+        hint: "Keep the prints."
+    hints:
+      - "Read the error: the calls never end. Where should they stop?"
+      - "Any number to the power 0 is 1."
+      - "At the start: `if exp == 0: return 1`."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: when
+    type: theory
+    objective: O4
+    title: Recursion or a loop?
+    body: |
+      Python allows about **1000** calls inside each other. A list of 5000
+      numbers is too long for `total(numbers[1:])`: it ends in a
+      `RecursionError`. Each call also copies `numbers[1:]`, so it is slow.
+
+      A good rule:
+
+      - **flat data** (a list, a count, a range): use a **loop**;
+      - **nested data** of unknown depth (trees, folders, nested lists,
+        JSON with lists in dictionaries): use **recursion**.
+
+      Some problems are much shorter with recursion, like all orders of a
+      few letters, or the path through a maze. Many sorting methods work
+      this way too: split the problem in two, solve each half, join.
+    keys:
+      - code: "about 1000 calls"
+        means: "Python's limit for calls inside each other."
+      - code: "flat data"
+        means: "A loop is simpler and faster."
+      - code: "nested data"
+        means: "Recursion follows its shape."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-count-files
+    type: exercise
+    fade: independent
+    objective: O3
+    title: How many files?
+    prompt: |
+      A folder is a dictionary with a `name` and a list `children`. A file
+      is a dictionary with a `name` and **no** `children` key. **Write
+      `count_files(folder)`**: the number of files inside, at any depth.
+
+      ```text
+      4
+      ```
+    given: |
+      tree = {"name": "home", "children": [
+          {"name": "notes.txt"},
+          {"name": "photos", "children": [
+              {"name": "cat.jpg"},
+              {"name": "dog.jpg"},
+              {"name": "old", "children": []},
+          ]},
+          {"name": "music", "children": [
+              {"name": "song.mp3"},
+          ]},
+      ]}
+    starter: |
+      # tree exists. Your function here.
+
+
+      print(count_files(tree))
+    solution: |
+      def count_files(folder):
+          count = 0
+          for child in folder["children"]:
+              if "children" in child:
+                  count = count + count_files(child)
+              else:
+                  count = count + 1
+          return count
+
+
+      print(count_files(tree))
+    after: >-
+      Two kinds of things, two answers: a file counts 1, a folder asks its
+      own children. The empty folder `old` gives 0, with no special code.
+    checks:
+      - expr: "callable(ns.get('count_files')) and count_files({'name': 'a', 'children': []}) == 0 and count_files({'name': 'a', 'children': [{'name': 'x'}, {'name': 'y'}]}) == 2"
+        pass: "It counts the files of a flat folder"
+        hint: "A child without `\"children\"` is a file: count 1."
+      - expr: "callable(ns.get('count_files')) and count_files({'name': 'a', 'children': [{'name': 'b', 'children': [{'name': 'c', 'children': [{'name': 'deep.txt'}]}]}, {'name': 'x'}]}) == 2"
+        pass: "It counts files at any depth"
+        hint: "For a folder, add `count_files(child)`."
+        misconceptions:
+          - when: "callable(ns.get('count_files')) and raises(count_files, {'name': 'a', 'children': [{'name': 'x'}]}) == 'KeyError'"
+            say: "A file has no `children` key. Check `\"children\" in child` before you call `count_files(child)`."
+      - expr: "lines == ['4']"
+        pass: "It prints 4"
+        hint: "Keep the print."
+    hints:
+      - "Loop over `folder[\"children\"]`."
+      - "`if \"children\" in child:` it is a folder: add `count_files(child)`."
+      - "Else it is a file: add 1."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: predict
+        id: q-stars
+        objective: O1
+        code: |
+          def stars(n):
+              if n == 0:
+                  return ""
+              return "*" + stars(n - 1)
+
+
+          print(stars(3))
+          print(len(stars(5)))
+        explain: "stars(3) is \"*\" + stars(2) = \"*\" + \"*\" + stars(1) ... = \"***\". The base case gives the empty text."
+      - kind: mcq
+        id: q-base
+        objective: O1
+        prompt: "What must every recursive function have?"
+        options:
+          - text: "A base case that every input reaches, without another call"
+            correct: true
+            why: "Without it, the calls never end."
+          - text: "A loop"
+            why: "Recursion repeats without a loop."
+          - text: "A global variable"
+            why: "Each call has its own names."
+      - kind: mcq
+        id: q-when
+        objective: O4
+        prompt: "You must add 100 000 numbers in a list. Recursion or a loop?"
+        options:
+          - text: "A loop (or sum()): flat data, and recursion would pass the limit of about 1000 calls"
+            correct: true
+            why: "Recursion is for nested data of unknown depth."
+          - text: "Recursion: it is faster"
+            why: "It is slower here, and too deep."
+          - text: "Either, it does not matter"
+            why: "Recursion ends in a RecursionError here."
+      - kind: mcq
+        id: q-tree
+        objective: O3
+        prompt: "Why is recursion a good fit for folders inside folders?"
+        options:
+          - text: "Each folder has the same shape as the whole, so one function can handle any depth"
+            correct: true
+            why: "Each call handles one folder and asks its children."
+          - text: "Folders cannot be read with a loop"
+            why: "A loop reads one level; recursion goes down."
+          - text: "Because files are small"
+            why: "It is about the nested shape, not the size."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-what
+    objective: O1
+    prompt: "What is recursion?"
+    options:
+      - text: "A function that calls itself on a smaller problem"
+        correct: true
+        why: "Until it reaches the base case."
+      - text: "A loop with while"
+        why: "Recursion repeats with calls, not with a loop."
+      - text: "A function that calls another function"
+        why: "That is a normal call."
+  - kind: mcq
+    id: r-stack
+    objective: O1
+    prompt: "In `countdown(3)`, which call ends first?"
+    options:
+      - text: "The deepest one, countdown(0)"
+        correct: true
+        why: "The calls end in reverse order, from the top of the stack."
+      - text: "countdown(3)"
+        why: "It waits for all the calls below it."
+      - text: "They all end at the same time"
+        why: "One after the other, in reverse order."
+  - kind: mcq
+    id: r-error
+    objective: O4
+    prompt: "What does a RecursionError usually mean?"
+    options:
+      - text: "The base case is missing, or never reached"
+        correct: true
+        why: "Or the data is deeper than about 1000 levels."
+      - text: "A name is spelled wrong"
+        why: "That is a NameError."
+      - text: "The function has no return"
+        why: "That gives None, not a RecursionError."
+  - kind: mcq
+    id: r-nested
+    objective: O3
+    prompt: "In `deep_sum`, what does the function do with an item that is a list?"
+    options:
+      - text: "It calls deep_sum on that list, and adds the result"
+        correct: true
+        why: "The same job, one level deeper."
+      - text: "It skips it"
+        why: "Its numbers would be lost."
+      - text: "It adds the list itself"
+        why: "A list cannot be added to a number."
+  - kind: mcq
+    id: r-smaller
+    objective: O2
+    prompt: "Why does `total(numbers[1:])` reach its base case?"
+    options:
+      - text: "The list gets one shorter each call, so it becomes empty"
+        correct: true
+        why: "The recursive call must always be on a smaller problem."
+      - text: "Python stops it after 10 calls"
+        why: "The limit is about 1000, and that is an error."
+      - text: "Because of the return"
+        why: "Because the list shrinks."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-palindrome
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A palindrome, from both ends
+    prompt: |
+      **Replace the two `___`**: a text of 0 or 1 letters is a palindrome.
+      Else, the first and last letters must be the same, and the middle
+      must be a palindrome too.
+
+      ```text
+      True
+      False
+      ```
+    starter: |
+      def is_palindrome(text):
+          if len(text) <= 1:
+              return ___
+          return text[0] == text[-1] and ___
+
+
+      print(is_palindrome("racecar"))
+      print(is_palindrome("rocket"))
+    solution: |
+      def is_palindrome(text):
+          if len(text) <= 1:
+              return True
+          return text[0] == text[-1] and is_palindrome(text[1:-1])
+
+
+      print(is_palindrome("racecar"))
+      print(is_palindrome("rocket"))
+    after: >-
+      `text[1:-1]` is two letters shorter each time, so it always reaches 0
+      or 1 letters.
+    checks:
+      - expr: "callable(ns.get('is_palindrome')) and [is_palindrome(t) for t in ['', 'a', 'abba', 'abcba', 'ab', 'abca']] == [True, True, True, True, False, False]"
+        pass: "It is right for short and long texts"
+        hint: "`return text[0] == text[-1] and is_palindrome(text[1:-1])`."
+      - expr: "lines == ['True', 'False']"
+        pass: "It prints True and False"
+        hint: "Keep the prints."
+    hints:
+      - "The base case: a very short text is always a palindrome."
+      - "The middle is `text[1:-1]`."
+      - "`text[0] == text[-1] and is_palindrome(text[1:-1])`."
+  - id: x-flatten
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Flatten a list
+    prompt: |
+      **Write `flatten(items)`**: one flat list with all values of a list
+      that may hold lists at any depth, in the same order.
+
+      ```text
+      [1, 2, 3, 4, 5]
+      []
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(flatten([1, [2, [3, 4]], [[5]]]))
+      print(flatten([]))
+    solution: |
+      def flatten(items):
+          flat = []
+          for item in items:
+              if isinstance(item, list):
+                  flat = flat + flatten(item)
+              else:
+                  flat.append(item)
+          return flat
+
+
+      print(flatten([1, [2, [3, 4]], [[5]]]))
+      print(flatten([]))
+    after: >-
+      The same shape as `deep_sum`: only the way to join the answers changed,
+      from `+` on numbers to `+` on lists.
+    checks:
+      - expr: "callable(ns.get('flatten')) and flatten([1, 2]) == [1, 2] and flatten([[['a']], 'b', [['c', ['d']]]]) == ['a', 'b', 'c', 'd'] and flatten([[], [[]]]) == []"
+        pass: "It flattens lists at any depth, in order"
+        hint: "A list item goes to `flatten(item)`; a value is appended."
+      - expr: "lines == ['[1, 2, 3, 4, 5]', '[]']"
+        pass: "It prints the flat lists"
+        hint: "Keep the prints."
+    hints:
+      - "Start with `flat = []`."
+      - "For an inner list: `flat = flat + flatten(item)`."
+      - "For a value: `flat.append(item)`."

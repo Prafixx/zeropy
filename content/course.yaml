@@ -49,6 +49,7 @@ modules:
       - { id: flexible-calls, title: "zip, *args and **kwargs" }
       - { id: functions-as-values, title: Functions as values }
       - { id: decomposition, title: Split a problem }
+      - { id: recursion, title: Recursion }
       - { id: type-hints, title: Type hints }
       - { id: reading-docs, title: Reading the docs }
       - { id: standard-library, title: Modules and the standard library }
@@ -82,6 +83,7 @@ modules:
       - { id: composition-and-dataclasses, title: Composition and dataclasses }
       - { id: inheritance, title: "Inheritance and super()" }
       - { id: classes-in-depth, title: Classes in depth }
+      - { id: special-methods, title: Properties and special methods }
       - { id: exceptions-in-depth, title: Exceptions in depth }
       - { id: pytest, title: Tests with pytest }
       - { id: debugging-2, title: The debugger }
