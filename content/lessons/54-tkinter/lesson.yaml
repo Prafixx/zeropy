@@ -1,5 +1,5 @@
 id: tkinter
-order: 53
+order: 54
 title: Windows and buttons
 summary: Make a program with a real window - labels, an entry and buttons - that waits for clicks and answers them.
 minutes: 40

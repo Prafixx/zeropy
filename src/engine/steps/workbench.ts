@@ -34,8 +34,14 @@ export interface Workbench {
   setFiles(files?: Record<string, string>): void;
   showError(error: PyError | null): void;
   markLine(line: number | null, kind?: 'run' | 'error'): void;
+  /** Marks the line of an error, in the tab of its file. Null clears the mark. */
+  markError(error: PyError | null): void;
+  /** The code of main.py. */
   getCode(): string;
   setCode(code: string): void;
+  /** The other files of the program (the tabs after main.py), with their texts now. */
+  getSources(): Record<string, string>;
+  setSources(texts: Record<string, string>): void;
   dispose(): void;
 }
 
@@ -50,13 +56,22 @@ export interface WorkbenchOptions {
   tall?: boolean;
   /** Files in the folder before each run. */
   files?: Record<string, string>;
+  /** More files of the program, each in a tab after main.py (a project). */
+  sources?: { name: string; code: string }[];
 }
+
+const MAIN = 'main.py';
 
 export function createWorkbench(options: WorkbenchOptions): Workbench {
   let editor: CodeEditor | null = null;
   let busy = false;
   let disposed = false;
   let pending = options.code.trimEnd();
+  // The tabs: main.py first, then the other files. A file keeps its own text
+  // and undo history in the editor; this is the text before it was shown.
+  const startText = new Map<string, string>([[MAIN, pending], ...(options.sources ?? []).map((s): [string, string] => [s.name, s.code.trimEnd()])]);
+  const tabNames = [...startText.keys()];
+  let current = MAIN;
 
   const status = h('span', { class: 'bench-status', 'aria-live': 'polite' });
   const runButton = button(options.runLabel ?? 'Run', { kind: 'primary', small: true, icon: 'play', onClick: () => run() });
@@ -83,7 +98,7 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
   const frame = h(
     'div',
     { class: 'bench-frame' },
-    h('div', { class: 'bench-bar' }, h('span', { class: 'bench-file' }, 'main.py'), status, runButton),
+    h('div', { class: 'bench-bar' }, fileTabs(), status, runButton),
     mount,
   );
   const el = h(
@@ -99,6 +114,33 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
   );
   setOutput('');
   setFiles();
+
+  /** The name of the file, or a tab for each file of the program. */
+  function fileTabs(): HTMLElement {
+    if (tabNames.length === 1) return h('span', { class: 'bench-file' }, MAIN);
+    const tabs = tabNames.map((name) => {
+      const tab = h('button', { type: 'button', class: 'bench-tab', role: 'tab', 'aria-selected': String(name === current) }, name);
+      tab.addEventListener('click', () => showTab(name));
+      return tab;
+    });
+    return h('div', { class: 'bench-tabs', role: 'tablist', 'aria-label': 'Files of the program' }, ...tabs);
+  }
+
+  function showTab(name: string): void {
+    if (name === current || !tabNames.includes(name) || !editor) return;
+    current = name;
+    editor.switchTo(name, startText.get(name) ?? '');
+    frame.querySelectorAll<HTMLElement>('.bench-tab').forEach((tab) => {
+      const on = tab.textContent === name;
+      tab.setAttribute('aria-selected', String(on));
+      // A narrow screen scrolls the row of tabs: keep the shown one in view.
+      if (on && tab.parentElement) tab.parentElement.scrollLeft = Math.max(0, tab.offsetLeft - tab.parentElement.offsetLeft - 8);
+    });
+  }
+
+  function textOf(name: string): string {
+    return editor?.valueOf(name) ?? startText.get(name) ?? '';
+  }
 
   const stopStatus = onPyStatus((s) => {
     status.textContent =
@@ -191,7 +233,25 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
   }
 
   function getCode(): string {
-    return editor ? editor.getValue() : pending;
+    return editor ? textOf(MAIN) : pending;
+  }
+
+  function getSources(): Record<string, string> {
+    return Object.fromEntries(tabNames.slice(1).map((name) => [name, textOf(name)]));
+  }
+
+  /** Replaces the text of some files; the shown tab stays. */
+  function setText(name: string, code: string): void {
+    if (!editor) {
+      startText.set(name, code);
+      if (name === MAIN) pending = code;
+      return;
+    }
+    const back = current;
+    showTab(name);
+    if (current === name) editor.setValue(code);
+    else startText.set(name, code);
+    showTab(back);
   }
 
   function setOutput(text: string): void {
@@ -265,7 +325,8 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
   function setFiles(files?: Record<string, string>): void {
     const start = options.files ?? {};
     const now = files ?? start;
-    const names = [...new Set([...Object.keys(now), ...(files ? Object.keys(start) : [])])];
+    // The files of the program are in the tabs, not in this list.
+    const names = [...new Set([...Object.keys(now), ...(files ? Object.keys(start) : [])])].filter((name) => tabNames.length === 1 || !tabNames.includes(name));
     if (names.length === 0) {
       filesSlot.replaceChildren();
       return;
@@ -317,10 +378,25 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     setFiles,
     showError,
     getCode,
+    getSources,
     markLine: (line, kind) => editor?.markLine(line, kind),
+    markError(error) {
+      editor?.clearMarks();
+      const file = error?.at?.file;
+      if (file && file !== MAIN && tabNames.includes(file)) {
+        showTab(file);
+        editor?.markLine(error?.at?.line ?? null, 'error');
+        return;
+      }
+      if (error?.line) showTab(MAIN);
+      editor?.markLine(error?.line ?? null, 'error');
+    },
     setCode(code) {
       pending = code;
-      editor?.setValue(code);
+      setText(MAIN, code);
+    },
+    setSources(texts) {
+      for (const [name, code] of Object.entries(texts)) if (tabNames.includes(name)) setText(name, code);
     },
     dispose() {
       disposed = true;

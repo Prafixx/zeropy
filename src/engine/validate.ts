@@ -292,4 +292,14 @@ function checkExercise(step: Record<string, unknown>, where: string, out: string
   if (!Array.isArray(step.hints) || step.hints.length < 2) {
     out.push(`${where}: exercise needs at least 2 hints`);
   }
+  // More files of the program: real module names, each with a solution.
+  if (step.modules !== undefined) {
+    if (!isRec(step.modules)) out.push(`${where}: "modules" must map file names to {starter, solution}`);
+    else
+      for (const [name, file] of Object.entries(step.modules)) {
+        if (!/^[a-z_][a-z0-9_]*\.py$/.test(name) || name === 'main.py') out.push(`${where}: module "${name}" needs a name like models.py (not main.py)`);
+        if (!isRec(file) || typeof file.solution !== 'string') out.push(`${where}: module "${name}" needs a solution`);
+        else if (file.starter !== undefined && typeof file.starter !== 'string') out.push(`${where}: module "${name}": the starter must be text`);
+      }
+  }
 }

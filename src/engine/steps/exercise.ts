@@ -59,15 +59,27 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
   const own = step.carry
     ? (loadCode(lessonId, step.id) ?? (step.prev ? loadCode(lessonId, `${step.prev}:ok`) : undefined))
     : undefined;
+  // The other files of a project (models.py ...), each in its own tab.
+  const moduleNames = Object.keys(step.modules ?? {});
+  const ownSources = moduleNames.map((name) => {
+    const mine = step.carry
+      ? (loadCode(lessonId, `${step.id}@${name}`) ?? (step.prev ? loadCode(lessonId, `${step.prev}:ok@${name}`) : undefined))
+      : undefined;
+    return { name, code: mine ?? step.modules?.[name].starter ?? '' };
+  });
   const baseButton = button('Load a working version of the last step', {
     kind: 'ghost',
     small: true,
     onClick: () => {
-      if (step.base && window.confirm('Replace your code with a working version of the last step?')) bench.setCode(step.base);
+      const all = moduleNames.length ? ' (all files)' : '';
+      if (step.base && window.confirm(`Replace your code${all} with a working version of the last step?`)) {
+        bench.setCode(step.base);
+        bench.setSources(step.baseModules ?? {});
+      }
     },
   });
   baseButton.hidden = !step.base;
-  const bench = createWorkbench({ code: own ?? step.starter, onRun, tall: step.carry, files: step.files });
+  const bench = createWorkbench({ code: own ?? step.starter, onRun, tall: step.carry, files: step.files, sources: ownSources });
   // A Raspberry Pi program: the board plays the run. An input on it runs the
   // code again from that moment (it is not one more attempt).
   const board = step.board
@@ -109,9 +121,13 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
   function showSolution(): void {
     if (!solved) helped = true;
     solutionButton.hidden = true;
+    // A project of several files: each file of the solution with its name.
+    const parts = moduleNames.length
+      ? [['main.py', step.solution], ...moduleNames.map((name) => [name, step.modules?.[name].solution ?? ''])]
+      : [['', step.solution]];
     solutionSlot.replaceChildren(
       h('div', { class: 'given-label' }, solved ? 'One possible solution:' : 'One possible solution. Type it yourself, then run it:'),
-      codeBlock(step.solution).el,
+      ...parts.flatMap(([name, code]) => (name ? [h('div', { class: 'solution-file' }, icon('file', 15), name), codeBlock(code).el] : [codeBlock(code).el])),
     );
     place(solutionSlot);
   }
@@ -139,7 +155,11 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
 
   async function onRun(code: string, from?: number): Promise<void> {
     if (board && from === undefined) board.reset();
-    if (step.carry) saveCode(lessonId, step.id, code);
+    const sources = bench.getSources();
+    if (step.carry) {
+      saveCode(lessonId, step.id, code);
+      for (const [name, text] of Object.entries(sources)) saveCode(lessonId, `${step.id}@${name}`, text);
+    }
     // Case 1 is the code as written: it gets the answers the learner types.
     const done = await bench.interact((stdin, seed) =>
       runPython({
@@ -149,6 +169,7 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
         ),
         pytest: step.pytest,
         checks: step.checks.map((c) => ({ expr: c.expr, misconceptions: c.misconceptions })),
+        sources,
       }),
     );
     if (!done || disposed) return;
@@ -161,12 +182,15 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
     bench.setCharts(result.plot);
     bench.setServer(result.server);
     bench.showError(result.error);
-    bench.markLine(result.error?.line ?? null, 'error');
+    bench.markError(result.error);
     setChecks(result.checks.map((c) => c.pass));
 
     const failedIndex = result.checks.findIndex((c) => !c.pass);
     if (failedIndex === -1) {
-      if (step.carry) saveCode(lessonId, `${step.id}:ok`, code);
+      if (step.carry) {
+        saveCode(lessonId, `${step.id}:ok`, code);
+        for (const [name, text] of Object.entries(sources)) saveCode(lessonId, `${step.id}:ok@${name}`, text);
+      }
       if (!solved) {
         solved = true;
         ctx.grade(attempts === 1);

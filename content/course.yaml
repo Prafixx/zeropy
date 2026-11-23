@@ -90,6 +90,7 @@ modules:
       - { id: pytest, title: Tests with pytest }
       - { id: debugging-2, title: The debugger }
       - { id: ai-assistant, title: Working with an AI assistant }
+      - { id: project-library, title: "Project: a library manager" }
 
   - title: Desktop app
     goal: Build, test and package your own app.

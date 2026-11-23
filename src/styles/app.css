@@ -1400,6 +1400,46 @@ code {
   font: 600 13px/1 var(--font-mono);
   color: var(--code-dim);
 }
+/* A project of several files: one tab per file. */
+.bench-tabs {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  margin-left: -8px;
+  /* On a narrow screen the tabs stay in one row and scroll sideways. */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bench-tab {
+  flex: none;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  font: 600 13px/1 var(--font-mono);
+  color: var(--code-dim);
+  cursor: pointer;
+}
+.bench-tab:hover {
+  color: var(--code-text);
+}
+.bench-tab[aria-selected='true'] {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--code-text);
+}
+.bench-tab:focus-visible {
+  outline: 2px solid var(--sun);
+  outline-offset: 1px;
+}
+.solution-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font: 600 14px/1.2 var(--font-mono);
+  color: var(--ink-2);
+}
 .bench-status {
   flex: 1;
   font: 500 13px/1.2 var(--font-mono);

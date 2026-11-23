@@ -192,6 +192,12 @@ ${error.traceback}`;
     what: 'Python stopped because of an error.',
     tryThis: 'Read the last line of the message. It names the problem.',
   };
-  const where = error.line ? `Line ${error.line}` : 'Your code';
+  // An error in another file of the learner (a module of a project) names that file.
+  const where =
+    error.at && error.at.file !== 'main.py'
+      ? `${error.at.file}, line ${error.at.line}`
+      : error.line
+        ? `Line ${error.line}`
+        : 'Your code';
   return { ...base, where };
 }

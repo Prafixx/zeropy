@@ -265,28 +265,28 @@ steps:
           - when: "len(test_results) > 0 and not tests_pass()"
             say: "A test fails with the right function, so the test is wrong. Read its `E` line."
       - expr: |-
-          fails_with('''
+          tests_pass() and fails_with('''
           def is_valid_pin(pin):
               return len(pin) >= 4 and pin.isdigit()
           ''')
         pass: "Your tests catch a PIN with too many digits"
         hint: "Test five digits: `assert not is_valid_pin(\"12345\")`."
       - expr: |-
-          fails_with('''
+          tests_pass() and fails_with('''
           def is_valid_pin(pin):
               return len(pin) == 4
           ''')
         pass: "Your tests catch letters in a PIN"
         hint: "Test a PIN with a letter: `assert not is_valid_pin(\"12a4\")`."
       - expr: |-
-          fails_with('''
+          tests_pass() and fails_with('''
           def is_valid_pin(pin):
               return pin.isdigit() and 1000 <= int(pin) <= 9999
           ''')
         pass: "Your tests catch a PIN that starts with 0"
         hint: "`\"0473\"` is a valid PIN. A version with `int(pin)` thinks it has 3 digits."
       - expr: |-
-          fails_with('''
+          tests_pass() and fails_with('''
           def is_valid_pin(pin):
               return 3 <= len(pin) <= 4 and pin.isdigit()
           ''')
@@ -837,7 +837,7 @@ extra:
           - when: "len(test_results) > 0 and not tests_pass()"
             say: "A test fails with the real function: check its expected value."
       - expr: |-
-          fails_with('''
+          tests_pass() and fails_with('''
           def minutes(text):
               match = re.fullmatch(r"(?:(\d+)h)?(?:(\d+)m)?", text)
               if not text or not match:
@@ -848,7 +848,7 @@ extra:
         pass: "Your tests catch hours that are not × 60"
         hint: "Test a time with hours: `minutes(\"2h\") == 120`."
       - expr: |-
-          fails_with('''
+          tests_pass() and fails_with('''
           def minutes(text):
               match = re.fullmatch(r"(?:(\d+)h)?(?:(\d+)m)?", text)
               if not match:
@@ -859,7 +859,7 @@ extra:
         pass: "Your tests catch an empty text that gives 0"
         hint: "Test that `minutes(\"\")` raises a ValueError."
       - expr: |-
-          fails_with('''
+          tests_pass() and fails_with('''
           def minutes(text):
               match = re.search(r"(?:(\d+)h)?(?:(\d+)m)?", text)
               if not text:
@@ -870,7 +870,7 @@ extra:
         pass: "Your tests catch a function that accepts any text"
         hint: "Test a text that is not a time, like `\"abc\"`."
       - expr: |-
-          fails_with('''
+          tests_pass() and fails_with('''
           def minutes(text):
               match = re.fullmatch(r"(?:(\d+)h)?(?:(\d+)m)?", text)
               if not text or not match:
@@ -881,7 +881,7 @@ extra:
         pass: "Your tests catch lost minutes"
         hint: "Test a time with minutes, like `\"1h30m\"`."
       - expr: |-
-          fails_with('''
+          tests_pass() and fails_with('''
           def minutes(text):
               match = re.fullmatch(r"(?:(\d+)h)?(?:(\d+)m)?", text)
               if not text or not match:

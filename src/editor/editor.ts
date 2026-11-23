@@ -48,6 +48,15 @@ export interface CodeEditor {
   /** Highlights one line (1-based) or clears the highlight with null. */
   markLine(line: number | null, kind?: 'run' | 'error'): void;
   focus(): void;
+  /**
+   * Shows another file (a tab). Each file keeps its own text, undo history
+   * and cursor. A file seen for the first time starts with `doc`.
+   */
+  switchTo(key: string, doc: string): void;
+  /** The text of a file: the shown one, or one that was shown before. */
+  valueOf(key: string): string | undefined;
+  /** Clears the line highlight in every file. */
+  clearMarks(): void;
   destroy(): void;
 }
 
@@ -94,10 +103,9 @@ function remeasureWhenSettled(view: EditorView): void {
 }
 
 export function createEditor(parent: HTMLElement, options: EditorOptions): CodeEditor {
-  const view = new EditorView({
-    parent,
-    state: EditorState.create({
-      doc: options.doc,
+  const makeState = (doc: string): EditorState =>
+    EditorState.create({
+      doc,
       extensions: [
         lineNumbers(),
         measureSlot.of([]),
@@ -130,15 +138,38 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): CodeE
           if (update.docChanged) options.onChange?.();
         }),
       ],
-    }),
-  });
+    });
+  const view = new EditorView({ parent, state: makeState(options.doc) });
   remeasureWhenSettled(view);
+  // The files that are not shown now (tabs), each with its own state.
+  const others = new Map<string, EditorState>();
+  let shown = 'main.py';
 
   return {
     getValue: () => view.state.doc.toString(),
     setValue: (code) => view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: code } }),
-    markLine: (line, kind = 'run') => view.dispatch({ effects: setLineMark.of({ line, kind }) }),
+    markLine(line, kind = 'run') {
+      const effects: StateEffect<unknown>[] = [setLineMark.of({ line, kind })];
+      // An error far down a long file: bring its line into view.
+      if (kind === 'error' && line !== null && line >= 1 && line <= view.state.doc.lines) {
+        effects.push(EditorView.scrollIntoView(view.state.doc.line(line).from, { y: 'center' }));
+      }
+      view.dispatch({ effects });
+    },
     focus: () => view.focus(),
+    switchTo(key, doc) {
+      if (key === shown) return;
+      others.set(shown, view.state);
+      view.setState(others.get(key) ?? makeState(doc));
+      others.delete(key);
+      shown = key;
+    },
+    valueOf: (key) => (key === shown ? view.state.doc.toString() : others.get(key)?.doc.toString()),
+    clearMarks() {
+      const clear = setLineMark.of({ line: null, kind: 'run' });
+      view.dispatch({ effects: clear });
+      for (const [key, state] of others) others.set(key, state.update({ effects: clear }).state);
+    },
     destroy: () => view.destroy(),
   };
 }

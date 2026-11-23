@@ -1,5 +1,5 @@
 id: packaging
-order: 55
+order: 56
 title: Package with PyInstaller
 summary: Turn your to-do app into a program that anyone can start with a double-click, without Python - and make sure it never loses its data.
 minutes: 40

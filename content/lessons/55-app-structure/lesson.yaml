@@ -1,5 +1,5 @@
 id: app-structure
-order: 54
+order: 55
 title: Structure of an app
 summary: Build a to-do app the way real apps are built - a class for the window, plain functions for the logic, and a file that remembers.
 minutes: 45

@@ -22,6 +22,8 @@ _json_module = json  # _request() has a parameter called json, like requests
 from contextlib import redirect_stderr, redirect_stdout
 
 _FILE = "main.py"
+# No __pycache__ folders next to the learner's files.
+sys.dont_write_bytecode = True
 _MAX_STEPS = 400  # trace steps that are recorded for the stepper
 _MAX_LINES = 100_000  # lines a program may run before it is stopped
 # Extensions (gpio.py) add hooks: start(case) before a run, end(exc) after it,
@@ -178,26 +180,59 @@ def _real_errno(text):
     return text
 
 
+def _rel(name):
+    """The name of a learner's file as the learner sees it: models.py, not
+    /home/learner-2/models.py. Other names stay as they are."""
+    if name and name.startswith(_HOME):
+        rest = name[len(_HOME):]
+        return rest.split("/", 1)[1] if "/" in rest else rest
+    return name
+
+
+def _own_frames(exc):
+    """The frames of the learner's files (main.py and the files in the folder),
+    with short file names."""
+    frames = []
+    for f in traceback.extract_tb(exc.__traceback__):
+        if f.filename == _FILE or (f.filename or "").startswith(_HOME):
+            _ = f.line  # read the line while the full path still finds it
+            f.filename = _rel(f.filename)
+            frames.append(f)
+    return frames
+
+
 def _describe(exc):
-    """Short, real traceback that shows only the learner's file."""
+    """Short, real traceback that shows only the learner's files.
+    "line" is the last line of main.py in it; "at" is where the error really
+    happened, also in another file of the learner (a module of a project)."""
     line = None
+    at = None
     if isinstance(exc, _Stopped):
-        frames = [f for f in traceback.extract_tb(exc.__traceback__) if f.filename == _FILE]
+        frames = _own_frames(exc)
+        main = [f for f in frames if f.filename == _FILE]
         return {
             "type": "Timeout",
             "message": str(exc),
-            "line": frames[-1].lineno if frames else None,
+            "line": main[-1].lineno if main else None,
+            "at": {"file": frames[-1].filename, "line": frames[-1].lineno} if frames else None,
             "traceback": f"Stopped: {exc} Python did not reach the end of the program.",
             "needsInput": False,
         }
     if isinstance(exc, SyntaxError):
-        line = exc.lineno
+        name = _rel(exc.filename) if exc.filename else _FILE
+        line = exc.lineno if name == _FILE else None
+        at = {"file": name, "line": exc.lineno}
         message = exc.msg or str(exc)
         text = "".join(traceback.format_exception_only(type(exc), exc))
+        if exc.filename and name != exc.filename:
+            text = text.replace(exc.filename, name)
     else:
-        frames = [f for f in traceback.extract_tb(exc.__traceback__) if f.filename == _FILE]
+        frames = _own_frames(exc)
+        main = [f for f in frames if f.filename == _FILE]
+        if main:
+            line = main[-1].lineno
         if frames:
-            line = frames[-1].lineno
+            at = {"file": frames[-1].filename, "line": frames[-1].lineno}
         message = str(exc)
         text = "".join(
             ["Traceback (most recent call last):\n"]
@@ -211,6 +246,7 @@ def _describe(exc):
         "type": "EOFError" if needs_input else type(exc).__name__,
         "message": message,
         "line": line,
+        "at": at,
         "traceback": text.rstrip().replace("_NeedInput", "EOFError"),
         "needsInput": needs_input,
     }
@@ -303,7 +339,7 @@ def _files_in(path):
     """The text files in a folder after the run: {"notes.txt": "..."}."""
     found = {}
     for root, dirs, names in os.walk(path):
-        dirs.sort()
+        dirs[:] = sorted(d for d in dirs if d != "__pycache__")
         for name in sorted(names):
             if len(found) >= _MAX_FILES:
                 return found
@@ -539,11 +575,26 @@ def _tests_of(ns):
             if name.startswith("test") and callable(fn) and getattr(getattr(fn, "__code__", None), "co_filename", "") == _FILE]
 
 
+def _all_tests(ns):
+    """Every test, as pytest finds them: (file, name, function). First the
+    tests in main.py, then the tests of each test file of the learner
+    (test_*.py in the working folder, in the order of their names)."""
+    tests = [(_FILE, name, fn) for name, fn in _tests_of(ns)]
+    for entry in sorted(os.listdir(".")):
+        if not (entry.startswith("test_") and entry.endswith(".py")):
+            continue
+        module = importlib.import_module(entry[:-3])
+        path = getattr(module, "__file__", "") or ""
+        tests += [(_rel(path), name, fn) for name, fn in list(vars(module).items())
+                  if name.startswith("test") and callable(fn) and getattr(getattr(fn, "__code__", None), "co_filename", "") == path]
+    return tests
+
+
 _OPS = {ast.Eq: "==", ast.NotEq: "!=", ast.Lt: "<", ast.LtE: "<=", ast.Gt: ">", ast.GtE: ">=",
         ast.Is: "is", ast.IsNot: "is not", ast.In: "in", ast.NotIn: "not in"}
 
 
-def _assert_detail(exc, src_lines, test_code=None):
+def _assert_detail(exc, src_lines, test_code=None, filename=_FILE):
     """What pytest shows under a failing test: the line of the test, and the
     values. An error inside a called function points at the line of the
     test that made the call."""
@@ -551,7 +602,7 @@ def _assert_detail(exc, src_lines, test_code=None):
     last = None
     in_test = None
     while tb is not None:
-        if tb.tb_frame.f_code.co_filename == _FILE:
+        if tb.tb_frame.f_code.co_filename == filename:
             last = tb
         if tb.tb_frame.f_code is test_code:
             in_test = tb
@@ -583,18 +634,26 @@ def _assert_detail(exc, src_lines, test_code=None):
 
 def _run_tests(ns, src):
     """Runs the tests. Returns one result for each: name, outcome, and details."""
-    src_lines = src.splitlines()
+    lines_of = {_FILE: src.splitlines()}
     results = []
-    for name, fn in _tests_of(ns):
+    for file, name, fn in _all_tests(ns):
+        code = getattr(fn, "__code__", None)
+        path = code.co_filename if code else _FILE
+        if file not in lines_of:
+            try:
+                with open(path, encoding="utf-8") as handle:
+                    lines_of[file] = handle.read().splitlines()
+            except OSError:
+                lines_of[file] = []
         try:
             fn()
-            results.append({"name": name, "outcome": "passed", "error": None})
+            results.append({"file": file, "name": name, "outcome": "passed", "error": None})
         except _Stopped:
             raise
         except BaseException as exc:  # a test may raise anything
-            line_no, source, detail = _assert_detail(exc, src_lines, getattr(fn, "__code__", None))
+            line_no, source, detail = _assert_detail(exc, lines_of[file], code, path)
             outcome = "failed" if isinstance(exc, AssertionError) else "error"
-            results.append({"name": name, "outcome": "failed", "error": type(exc).__name__, "line": line_no,
+            results.append({"file": file, "name": name, "outcome": "failed", "error": type(exc).__name__, "line": line_no,
                             "source": source, "detail": detail, "kind": outcome})
     return results
 
@@ -603,13 +662,19 @@ def _report(results):
     """The test report, in the style of pytest."""
     if not results:
         return "collected 0 items\n\nno tests ran: write functions whose names start with test_\n"
-    marks = "".join("." if r["outcome"] == "passed" else "F" for r in results)
-    lines = [f"collected {len(results)} item{'s' if len(results) != 1 else ''}", "", f"main.py {marks}"]
+    files = []
+    for r in results:
+        if r.get("file", _FILE) not in files:
+            files.append(r.get("file", _FILE))
+    lines = [f"collected {len(results)} item{'s' if len(results) != 1 else ''}", ""]
+    for file in files:
+        marks = "".join("." if r["outcome"] == "passed" else "F" for r in results if r.get("file", _FILE) == file)
+        lines.append(f"{file} {marks}")
     failed = [r for r in results if r["outcome"] != "passed"]
     for r in failed:
         lines += ["", f"___ {r['name']} ___", f">   {r['source']}"]
         lines += [f"E   {part}" for part in r["detail"].splitlines()]
-        lines.append(f"main.py:{r['line']}: {r['error']}")
+        lines.append(f"{r.get('file', _FILE)}:{r['line']}: {r['error']}")
     passed = len(results) - len(failed)
     summary = ", ".join(part for part in (f"{len(failed)} failed" if failed else "", f"{passed} passed" if passed else "") if part)
     lines += ["", f"=== {summary} ==="]
@@ -1338,19 +1403,59 @@ def _check_env(result):
 
     def tests_pass():
         """True when the learner has tests and all of them pass."""
-        found = _tests_of(ns)
+        found = _all_tests(ns)
         return bool(found) and all(r["outcome"] == "passed" for r in _run_tests(ns, result["src"]))
 
-    def fails_with(code):
+    def fails_with(code, module=None):
         """True when at least one test fails after `code` replaced a part of
-        the program (for example a function with a bug). Then it is put back."""
-        saved = dict(ns)
+        the program (for example a function with a bug). Then it is put back.
+        With `module` ("models"), the code runs inside that file of the
+        learner: it can replace a method of a class (Library.find = ...), so
+        the tests in a test file meet the bug too."""
+        if module is None:
+            saved = dict(ns)
+            try:
+                exec(compile(code, "mutant.py", "exec"), ns)
+                return any(r["outcome"] != "passed" for r in _run_tests(ns, result["src"]))
+            finally:
+                ns.clear()
+                ns.update(saved)
+        target = vars(sys.modules.get(module) or importlib.import_module(module))
+        saved = dict(target)
+        classes = {name: dict(vars(value)) for name, value in saved.items()
+                   if isinstance(value, type) and value.__module__ == target.get("__name__")}
+        rebound = []
         try:
-            exec(compile(code, "mutant.py", "exec"), ns)
+            exec(compile(code, "mutant.py", "exec"), target)
+            # A file that did `from storage import load` has its own name for
+            # the old function: it gets the new one too.
+            changed = {k: (saved[k], v) for k, v in target.items() if k in saved and v is not saved[k]}
+            spaces = [ns] + [vars(m) for m in list(sys.modules.values())
+                             if (getattr(m, "__file__", None) or "").startswith(_HOME) and vars(m) is not target]
+            for space in spaces:
+                for k, (old, new) in changed.items():
+                    if space.get(k) is old:
+                        rebound.append((space, k, old))
+                        space[k] = new
             return any(r["outcome"] != "passed" for r in _run_tests(ns, result["src"]))
         finally:
-            ns.clear()
-            ns.update(saved)
+            for space, k, old in rebound:
+                space[k] = old
+            for name, attrs in classes.items():
+                cls = saved[name]
+                for attr in [a for a in vars(cls) if a not in attrs]:
+                    try:
+                        delattr(cls, attr)
+                    except (AttributeError, TypeError):
+                        pass
+                for attr, value in attrs.items():
+                    if vars(cls).get(attr) is not value:
+                        try:
+                            setattr(cls, attr, value)
+                        except (AttributeError, TypeError):
+                            pass
+            target.clear()
+            target.update(saved)
 
     # The window of this case. Checks click and type like a user.
     gui_state = result["gui"]
@@ -1462,6 +1567,11 @@ def run(request_json):
     req = json.loads(request_json)
     src = req["code"]
     cases = req.get("cases") or [{}]
+    # The learner's other files of a project (models.py, storage.py): in the
+    # folder of every case, next to main.py, so main.py can import them.
+    sources = req.get("sources") or {}
+    if sources:
+        cases = [{**case, "files": {**(case.get("files") or {}), **sources}} for case in cases]
     results = [_execute(src, case, bool(req.get("trace")) and i == 0, i, bool(req.get("pytest"))) for i, case in enumerate(cases)]
     envs = [_check_env(r) for r in results]
     # Helpers of an extension, only for a run that used it (a Pi program).

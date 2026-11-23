@@ -1,6 +1,7 @@
 // Finds lessons and scenes by file name. Adding a lesson folder is enough.
 import type { SceneFactory } from '@/kit/stage';
 import type { Course, CoursePath, Item, Lesson } from './types';
+import { inheritModules } from './modules';
 import courseData from '../../content/course.yaml';
 
 const lessonFiles = import.meta.glob<Lesson>('../../content/lessons/*/lesson.yaml', {
@@ -44,6 +45,8 @@ for (const [path, lesson] of Object.entries(lessonFiles)) {
     if (step.type === 'worked') step.check.objective ??= step.objective;
     if (step.type === 'quiz' || step.type === 'drill' || step.type === 'investigate') step.items.forEach((item) => (item.objective ??= step.objective));
   }
+  inheritModules(lesson.steps);
+  inheritModules(lesson.extra);
   const scenePath = path.replace('lesson.yaml', 'scene.ts');
   entries.set(lesson.id, { lesson, scene: sceneFiles[scenePath] });
 }

@@ -12,6 +12,7 @@ import { loadPyodide } from 'pyodide';
 import { pauseAt, pausesOf, valueAt } from '../src/engine/debug-session.ts';
 import { parseReport, SEAL_SALT } from '../src/engine/local-report.ts';
 import { traceRows } from '../src/engine/trace-table.ts';
+import { inheritModules, moduleTexts } from '../src/engine/modules.ts';
 import { validateLesson } from '../src/engine/validate.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -67,6 +68,9 @@ for (const folder of readdirSync(lessonsDir)) {
   const lesson = load(readFileSync(join(lessonsDir, folder, 'lesson.yaml'), 'utf8'));
   console.log(`${folder}`);
   for (const problem of validateLesson(lesson)) fail(problem);
+  // The files of project steps, as the app gets them from the registry.
+  inheritModules(lesson.steps ?? []);
+  inheritModules(lesson.extra ?? []);
 
   const items = [...(lesson.review ?? [])];
   let lastCarry = null;
@@ -160,7 +164,7 @@ for (const folder of readdirSync(lessonsDir)) {
       stdin: c.stdin ?? sample,
       set: c.set ?? (c.stdin ? undefined : sampleSet),
     }));
-    const solved = call({ code: step.solution, cases, pytest: step.pytest, checks: step.checks });
+    const solved = call({ code: step.solution, cases, pytest: step.pytest, checks: step.checks, sources: moduleTexts(step, 'solution') });
     solved.checks.forEach((check, i) => {
       if (!check.pass) fail(`${step.id}: solution fails check ${i + 1} (${step.checks[i].expr})`);
     });
@@ -168,7 +172,7 @@ for (const folder of readdirSync(lessonsDir)) {
     // code must not pass yet: every step has to ask for something new.
     const starter = step.carry ? (lastCarry?.solution ?? step.starter ?? '') : step.starter;
     if (step.carry) lastCarry = step;
-    const start = call({ code: starter, cases, pytest: step.pytest, checks: step.checks });
+    const start = call({ code: starter, cases, pytest: step.pytest, checks: step.checks, sources: moduleTexts(step, 'starter') });
     if (start.checks.every((check) => check.pass)) fail(`${step.id}: starter already passes`);
     console.log(`  ok   ${step.id} (${step.checks.length} checks, ${cases.length} cases)`);
   }

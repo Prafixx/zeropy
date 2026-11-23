@@ -295,6 +295,8 @@ export interface ExerciseStep extends StepBase {
   /** Set by the registry for carry steps: id and solution of the step before. */
   prev?: string;
   base?: string;
+  /** Set by the registry for carry steps with modules: the files of the step before. */
+  baseModules?: Record<string, string>;
   /** Set by the registry for "Practice more" exercises (lesson.extra). */
   isExtra?: boolean;
   prompt: string;
@@ -306,6 +308,13 @@ export interface ExerciseStep extends StepBase {
   web?: Web;
   /** Run the test functions after the program, like pytest, and print the report. */
   pytest?: boolean;
+  /**
+   * More files of the learner's program, each in its own tab next to
+   * main.py (a project of several files). In a carry step, a file that is
+   * not listed comes from the step before, and a missing starter is the
+   * file as the step before left it. The registry fills them in.
+   */
+  modules?: Record<string, { starter?: string; solution: string }>;
   /** A Raspberry Pi program: show the board, and play the run on it. */
   board?: boolean;
   starter: string;
@@ -505,6 +514,8 @@ export interface PyError {
   type: string;
   message: string;
   line: number | null;
+  /** Where it really happened: main.py, or another file of the learner (models.py). */
+  at?: { file: string; line: number | null } | null;
   traceback: string;
   /** The program called input() and no answer was left. */
   needsInput?: boolean;
@@ -532,6 +543,8 @@ export interface RunRequest {
   pytest?: boolean;
   cases?: Case[];
   checks?: { expr: string; misconceptions?: { when: string; say: string }[] }[];
+  /** The learner's other files (models.py): written next to main.py in every case. */
+  sources?: Record<string, string>;
 }
 
 /** One widget of a window of the pretend tkinter (see harness.py). */
