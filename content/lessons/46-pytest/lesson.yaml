@@ -750,3 +750,146 @@ review:
         why: "`assert` only checks. It changes nothing."
       - text: "It prints the grade"
         why: "`assert` prints nothing when it is true."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-raises
+    type: exercise
+    fade: completion
+    objective: O3
+    title: A test for an error
+    pytest: true
+    prompt: |
+      **Replace the two `___`** in `test_too_big`: it checks that
+      `percent("120")` raises a `ValueError`. Run it: both tests must pass.
+    starter: |
+      import pytest
+
+
+      def percent(text):
+          value = int(text)
+          if not 0 <= value <= 100:
+              raise ValueError("A percent is from 0 to 100.")
+          return value
+
+
+      def test_normal():
+          assert percent("42") == 42
+
+
+      def test_too_big():
+          with pytest.raises(___):
+              percent(___)
+    solution: |
+      import pytest
+
+
+      def percent(text):
+          value = int(text)
+          if not 0 <= value <= 100:
+              raise ValueError("A percent is from 0 to 100.")
+          return value
+
+
+      def test_normal():
+          assert percent("42") == 42
+
+
+      def test_too_big():
+          with pytest.raises(ValueError):
+              percent("120")
+    after: >-
+      `pytest.raises` passes only when the block raises that error. If
+      `percent` forgot its check, this test would fail: it guards the rule.
+    checks:
+      - expr: "len(test_results) >= 2 and tests_pass()"
+        pass: "Both tests pass"
+        hint: "`with pytest.raises(ValueError):` and `percent(\"120\")`."
+        misconceptions:
+          - when: "len(test_results) > 0 and not tests_pass()"
+            say: "A test fails. Read its line in the report: which error, which value?"
+      - expr: |-
+          fails_with('''
+          def percent(text):
+              return int(text)
+          ''')
+        pass: "The test catches a percent without the check"
+        hint: "The value in the call must be outside 0 to 100."
+    hints:
+      - "`pytest.raises(...)` takes the kind of error."
+      - "`pytest.raises(ValueError)`."
+      - "Call it with a value that is too big: `percent(\"120\")`."
+  - id: x-palindrome-tests
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Tests for palindromes
+    pytest: true
+    prompt: |
+      `is_palindrome(text)` says if a text reads the same both ways,
+      **without caring about capitals and spaces**: `"Never odd or even"`
+      is one.
+
+      **Write at least three tests.** The check puts bugs into the function,
+      one at a time, and your tests must catch each.
+    starter: |
+      def is_palindrome(text):
+          letters = text.lower().replace(" ", "")
+          return letters == letters[::-1]
+
+
+      # Your tests here.
+    solution: |
+      def is_palindrome(text):
+          letters = text.lower().replace(" ", "")
+          return letters == letters[::-1]
+
+
+      def test_simple():
+          assert is_palindrome("level")
+          assert not is_palindrome("python")
+
+
+      def test_capitals():
+          assert is_palindrome("Anna")
+
+
+      def test_spaces():
+          assert is_palindrome("never odd or even")
+    after: >-
+      Each rule needs its own test: one for "same both ways", one for
+      capitals, one for spaces, and one that must say False.
+    checks:
+      - expr: "len(test_results) >= 3 and tests_pass()"
+        pass: "At least three tests, all passing with the real function"
+        hint: "Functions named `test_...` with `assert is_palindrome(...)`."
+        misconceptions:
+          - when: "len(test_results) == 0"
+            say: "No tests found. Each test is a function whose name starts with `test_`."
+      - expr: |-
+          fails_with('''
+          def is_palindrome(text):
+              letters = text.replace(" ", "")
+              return letters == letters[::-1]
+          ''')
+        pass: "Your tests catch a version that cares about capitals"
+        hint: "Test a word with a capital, like \"Anna\"."
+      - expr: |-
+          fails_with('''
+          def is_palindrome(text):
+              letters = text.lower()
+              return letters == letters[::-1]
+          ''')
+        pass: "Your tests catch a version that cares about spaces"
+        hint: "Test a sentence with spaces, like \"never odd or even\"."
+      - expr: |-
+          fails_with('''
+          def is_palindrome(text):
+              return True
+          ''')
+        pass: "Your tests catch a version that always says True"
+        hint: "Test a text that is not a palindrome too: `assert not is_palindrome(\"python\")`."
+    hints:
+      - "A test is a function `test_...` with `assert`."
+      - "One test per rule: both ways, capitals, spaces."
+      - "And one text that is not a palindrome, with `assert not ...`."

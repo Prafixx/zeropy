@@ -671,3 +671,146 @@ review:
         why: "That would say that a car is an engine."
       - text: "Neither: it needs one class"
         why: "Two classes are fine here: `Car` holds an `Engine`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-puppy
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A puppy says it louder
+    prompt: |
+      **Replace the two `___`**: `Dog` inherits from `Animal`, and `Puppy`
+      says what a dog says, plus `!`, with `super()`.
+
+      ```text
+      ...
+      Woof
+      Woof!
+      ```
+    starter: |
+      class Animal:
+          def speak(self):
+              return "..."
+
+
+      class Dog(___):
+          def speak(self):
+              return "Woof"
+
+
+      class Puppy(Dog):
+          def speak(self):
+              return ___ + "!"
+
+
+      for pet in [Animal(), Dog(), Puppy()]:
+          print(pet.speak())
+    solution: |
+      class Animal:
+          def speak(self):
+              return "..."
+
+
+      class Dog(Animal):
+          def speak(self):
+              return "Woof"
+
+
+      class Puppy(Dog):
+          def speak(self):
+              return super().speak() + "!"
+
+
+      for pet in [Animal(), Dog(), Puppy()]:
+          print(pet.speak())
+    after: >-
+      `super().speak()` calls the version of the parent, so when the dog
+      starts to say "Wuff", the puppy follows without a change.
+    checks:
+      - expr: "callable(ns.get('Dog')) and issubclass(Dog, Animal) and issubclass(Puppy, Dog)"
+        pass: "Dog is an Animal, Puppy is a Dog"
+        hint: "`class Dog(Animal):`."
+      - expr: "'super().speak()' in src"
+        pass: "Puppy uses the parent's speak"
+        hint: "`return super().speak() + \"!\"`."
+        misconceptions:
+          - when: "'\"Woof!\"' in src or \"'Woof!'\" in src"
+            say: "Typing \"Woof!\" works today, but not when Dog changes. Use `super().speak()`."
+      - expr: "err is None and lines == ['...', 'Woof', 'Woof!']"
+        pass: "It prints the three sounds"
+        hint: "Keep the loop."
+    hints:
+      - "The parent goes in brackets after the class name."
+      - "`class Dog(Animal):`."
+      - "`super().speak()` gives what the parent says."
+  - id: x-manager
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A manager with a team
+    prompt: |
+      `Employee` keeps a name and a salary. **Write `Manager`**, which
+      inherits from `Employee` and also keeps a list `team` (empty at the
+      start), with a method `add(name)`. Use `super().__init__`.
+
+      ```text
+      Ana 5000 ['Bo', 'Cy']
+      ```
+    starter: |
+      class Employee:
+          def __init__(self, name, salary):
+              self.name = name
+              self.salary = salary
+
+
+      # Your Manager here.
+
+
+      boss = Manager("Ana", 5000)
+      boss.add("Bo")
+      boss.add("Cy")
+      print(boss.name, boss.salary, boss.team)
+    solution: |
+      class Employee:
+          def __init__(self, name, salary):
+              self.name = name
+              self.salary = salary
+
+
+      class Manager(Employee):
+          def __init__(self, name, salary):
+              super().__init__(name, salary)
+              self.team = []
+
+          def add(self, name):
+              self.team.append(name)
+
+
+      boss = Manager("Ana", 5000)
+      boss.add("Bo")
+      boss.add("Cy")
+      print(boss.name, boss.salary, boss.team)
+    after: >-
+      `super().__init__` lets the parent set the name and the salary; the
+      child only adds what is new. A manager **is an** employee.
+    checks:
+      - expr: "callable(ns.get('Manager')) and issubclass(Manager, Employee)"
+        pass: "Manager inherits from Employee"
+        hint: "`class Manager(Employee):`."
+      - expr: "callable(ns.get('Manager')) and (lambda m: (m.name, m.salary, m.team))(Manager('Eva', 10)) == ('Eva', 10, [])"
+        pass: "A manager has a name, a salary and an empty team"
+        hint: "`super().__init__(name, salary)`, then `self.team = []`."
+        misconceptions:
+          - when: "callable(ns.get('Manager')) and raises(Manager, 'Eva', 10) is None and not hasattr(Manager('Eva', 10), 'name')"
+            say: "The name is missing: the `__init__` of Manager replaces the parent's. Call `super().__init__(name, salary)`."
+      - expr: "callable(ns.get('Manager')) and Manager('a', 1).team is not Manager('b', 2).team and 'super().__init__' in src"
+        pass: "Each manager has their own team, with super().__init__"
+        hint: "Make the list in `__init__`."
+      - expr: "lines == [\"Ana 5000 ['Bo', 'Cy']\"]"
+        pass: "It prints the manager"
+        hint: "Keep the last lines."
+    hints:
+      - "`class Manager(Employee):` and its own `__init__(self, name, salary)`."
+      - "First `super().__init__(name, salary)`, then `self.team = []`."
+      - "`def add(self, name): self.team.append(name)`."

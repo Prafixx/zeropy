@@ -601,3 +601,116 @@ review:
         why: "Each call of the class makes a new object with its own attributes."
       - text: "Only the first attribute"
         why: "No attribute is shared."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-rectangle
+    type: exercise
+    fade: completion
+    objective: O4
+    title: A class for rectangles
+    prompt: |
+      **Replace the three `___`**: keep the width and the height in the
+      object, and give back the area in the method.
+
+      ```text
+      12
+      50
+      ```
+    starter: |
+      class Rectangle:
+          def __init__(self, width, height):
+              ___ = width
+              ___ = height
+
+          def area(self):
+              return ___
+
+
+      print(Rectangle(3, 4).area())
+      print(Rectangle(5, 10).area())
+    solution: |
+      class Rectangle:
+          def __init__(self, width, height):
+              self.width = width
+              self.height = height
+
+          def area(self):
+              return self.width * self.height
+
+
+      print(Rectangle(3, 4).area())
+      print(Rectangle(5, 10).area())
+    after: >-
+      `self.width = width` keeps the value in the object, so another method
+      can read it later with `self.width`.
+    checks:
+      - expr: "callable(ns.get('Rectangle')) and Rectangle(2, 7).width == 2 and Rectangle(2, 7).height == 7"
+        pass: "Each rectangle keeps its width and height"
+        hint: "`self.width = width` and `self.height = height`."
+      - expr: "callable(ns.get('Rectangle')) and Rectangle(2, 7).area() == 14 and Rectangle(0, 3).area() == 0"
+        pass: "area gives width times height"
+        hint: "`return self.width * self.height`."
+      - expr: "lines == ['12', '50']"
+        pass: "It prints 12 and 50"
+        hint: "Keep the prints."
+    hints:
+      - "Attributes are written with `self.`."
+      - "`self.width = width`."
+      - "In `area`: `return self.width * self.height`."
+  - id: x-lamp
+    type: exercise
+    fade: debug
+    objective: O5
+    title: A lamp that will not switch
+    prompt: |
+      The program stops with a `TypeError` about positional arguments.
+      **Fix the class**:
+
+      ```text
+      True
+      False
+      ```
+    starter: |
+      class Lamp:
+          def __init__(self):
+              self.on = False
+
+          def switch():
+              self.on = not self.on
+
+
+      lamp = Lamp()
+      lamp.switch()
+      print(lamp.on)
+      lamp.switch()
+      print(lamp.on)
+    solution: |
+      class Lamp:
+          def __init__(self):
+              self.on = False
+
+          def switch(self):
+              self.on = not self.on
+
+
+      lamp = Lamp()
+      lamp.switch()
+      print(lamp.on)
+      lamp.switch()
+      print(lamp.on)
+    after: >-
+      `lamp.switch()` gives the object to the method as the first argument.
+      Without `self` in the `def`, there is no place for it: "takes 0
+      positional arguments but 1 was given".
+    checks:
+      - expr: "err is None and lines == ['True', 'False']"
+        pass: "The lamp switches on, then off"
+        hint: "Every method needs `self` as its first parameter."
+      - expr: "callable(ns.get('Lamp')) and (lambda l: (l.switch(), l.on)[1])(Lamp()) is True"
+        pass: "switch changes the lamp"
+        hint: "`def switch(self):`."
+    hints:
+      - "Read the message: how many arguments, and how many given?"
+      - "`lamp.switch()` gives `lamp` to the method."
+      - "`def switch(self):`."

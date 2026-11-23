@@ -646,3 +646,128 @@ review:
         why: "`print` found a `__str__` on it, so it is an object."
       - text: "The text is too long"
         why: "Any length is fine. It must be a `str`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-account
+    type: exercise
+    fade: completion
+    objective: O2
+    title: No money, no withdrawal
+    prompt: |
+      **Replace the two `___`**: `withdraw` refuses an amount bigger than
+      the balance with a `ValueError`, **before** it changes anything.
+
+      ```text
+      70
+      Not enough money: 70 left
+      70
+      ```
+    starter: |
+      class Account:
+          def __init__(self, balance):
+              self.balance = balance
+
+          def withdraw(self, amount):
+              if ___:
+                  raise ___
+              self.balance = self.balance - amount
+
+
+      acc = Account(100)
+      acc.withdraw(30)
+      print(acc.balance)
+      try:
+          acc.withdraw(500)
+      except ValueError as error:
+          print(error)
+      print(acc.balance)
+    solution: |
+      class Account:
+          def __init__(self, balance):
+              self.balance = balance
+
+          def withdraw(self, amount):
+              if amount > self.balance:
+                  raise ValueError(f"Not enough money: {self.balance} left")
+              self.balance = self.balance - amount
+
+
+      acc = Account(100)
+      acc.withdraw(30)
+      print(acc.balance)
+      try:
+          acc.withdraw(500)
+      except ValueError as error:
+          print(error)
+      print(acc.balance)
+    after: >-
+      Check first, change after. If the change came first, a refused
+      withdrawal would still have taken the money.
+    checks:
+      - expr: "callable(ns.get('Account')) and (lambda a: (a.withdraw(40), a.balance)[1])(Account(50)) == 10"
+        pass: "A normal withdrawal takes the money"
+        hint: "Keep the last line of `withdraw`."
+      - expr: "callable(ns.get('Account')) and (lambda a: (raises(a.withdraw, 60), a.balance))(Account(50)) == ('ValueError', 50)"
+        pass: "Too much: ValueError, and the balance stays"
+        hint: "`if amount > self.balance: raise ValueError(...)`."
+        misconceptions:
+          - when: "callable(ns.get('Account')) and (lambda a: (raises(a.withdraw, 60), a.balance))(Account(50))[1] == -10"
+            say: "The money is taken before the error. Check first, then change."
+      - expr: "err is None and lines == ['70', 'Not enough money: 70 left', '70']"
+        pass: "It prints 70, the message, and 70"
+        hint: "`ValueError(f\"Not enough money: {self.balance} left\")`."
+    hints:
+      - "The test: is the amount bigger than the balance?"
+      - "`if amount > self.balance:`"
+      - "`raise ValueError(f\"Not enough money: {self.balance} left\")`."
+  - id: x-temp-str
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A clear print
+    prompt: |
+      **Write the class `Temperature`**: it keeps `celsius`, and `print`
+      shows it like `21.5 °C`.
+
+      ```text
+      21.5 °C
+      -3.0 °C
+      ```
+    starter: |
+      # Your class here.
+
+
+      print(Temperature(21.5))
+      print(Temperature(-3.0))
+    solution: |
+      class Temperature:
+          def __init__(self, celsius):
+              self.celsius = celsius
+
+          def __str__(self):
+              return f"{self.celsius} °C"
+
+
+      print(Temperature(21.5))
+      print(Temperature(-3.0))
+    after: >-
+      `print` calls `__str__` for you. Without it, you would see something
+      like `<Temperature object at 0x...>`.
+    checks:
+      - expr: "callable(ns.get('Temperature')) and Temperature(7.5).celsius == 7.5"
+        pass: "It keeps celsius"
+        hint: "`self.celsius = celsius` in `__init__`."
+      - expr: "callable(ns.get('Temperature')) and str(Temperature(7.5)) == '7.5 °C'"
+        pass: "str() shows the value with °C"
+        hint: "`def __str__(self): return f\"{self.celsius} °C\"`."
+        misconceptions:
+          - when: "callable(ns.get('Temperature')) and raises(str, Temperature(7.5)) == 'TypeError'"
+            say: "`__str__` must give back a text with `return`, not print it."
+      - expr: "lines == ['21.5 °C', '-3.0 °C']"
+        pass: "print shows both temperatures"
+        hint: "Keep the prints."
+    hints:
+      - "A class with `__init__` and `__str__`."
+      - "`__str__` returns a text."
+      - "`return f\"{self.celsius} °C\"`."

@@ -709,3 +709,140 @@ review:
         why: "requests has no timeout of its own."
       - text: "It raises `HTTPError`"
         why: "No answer means no status code."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-weather-status
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Check the status first
+    prompt: |
+      A weather API answers `{"temp": 4.5}` for a city it knows, and the
+      status **404** for a city it does not know. **Replace the two `___`**:
+      give back `None` when the status is not 200, else the temperature.
+
+      ```text
+      4.5
+      None
+      ```
+    web:
+      "https://api.weather.test/now?city=Oslo":
+        json: {temp: 4.5}
+      "https://api.weather.test/now?city=Lima":
+        json: {temp: 18.25}
+      "https://api.weather.test/now":
+        status: 404
+        json: {error: unknown city}
+    starter: |
+      import requests
+
+      URL = "https://api.weather.test/now"
+
+
+      def temperature(city):
+          response = requests.get(URL, params={"city": city}, timeout=5)
+          if ___:
+              return None
+          return ___
+
+
+      print(temperature("Oslo"))
+      print(temperature("Atlantis"))
+    solution: |
+      import requests
+
+      URL = "https://api.weather.test/now"
+
+
+      def temperature(city):
+          response = requests.get(URL, params={"city": city}, timeout=5)
+          if response.status_code != 200:
+              return None
+          return response.json()["temp"]
+
+
+      print(temperature("Oslo"))
+      print(temperature("Atlantis"))
+    after: >-
+      For a 404 the body is an error, not data: reading `["temp"]` from it
+      would raise a KeyError. Check the status before you read the JSON.
+    checks:
+      - expr: "callable(ns.get('temperature')) and temperature('Lima') == 18.25 and temperature('Oslo') == 4.5"
+        pass: "It gives the temperature of a known city"
+        hint: "`return response.json()[\"temp\"]`."
+      - expr: "callable(ns.get('temperature')) and temperature('Nowhere') is None"
+        pass: "An unknown city gives None"
+        hint: "`if response.status_code != 200: return None`."
+        misconceptions:
+          - when: "callable(ns.get('temperature')) and raises(temperature, 'Nowhere') == 'KeyError'"
+            say: "The 404 answer has no `\"temp\"`. Check `response.status_code` before you read the JSON."
+      - expr: "lines == ['4.5', 'None']"
+        pass: "It prints 4.5 and None"
+        hint: "Keep the prints."
+    hints:
+      - "The status is in `response.status_code`."
+      - "`if response.status_code != 200: return None`."
+      - "Then `return response.json()[\"temp\"]`."
+  - id: x-offline
+    type: exercise
+    fade: independent
+    objective: O4
+    title: No internet, no crash
+    prompt: |
+      **Write `fetch(url)`**: it gives back the JSON of the answer, or
+      `None` when there is no connection or no answer in time. Then the
+      program prints what it got. Use a timeout of 5 seconds.
+
+      ```text
+      None
+      ```
+    web: {}
+    starter: |
+      import requests
+
+      # Your function here.
+
+
+      print(fetch("https://api.weather.test/now?city=Oslo"))
+    solution: |
+      import requests
+
+
+      def fetch(url):
+          try:
+              response = requests.get(url, timeout=5)
+          except (requests.ConnectionError, requests.Timeout):
+              return None
+          return response.json()
+
+
+      print(fetch("https://api.weather.test/now?city=Oslo"))
+    after: >-
+      Without internet, `requests.get` raises a ConnectionError; a slow
+      server raises a Timeout. Catching both keeps the program alive. The
+      check also ran it with a working web.
+    cases:
+      - {}
+      - label: "the web works"
+        web:
+          "https://api.weather.test/now?city=Oslo":
+            json: {temp: 4.5}
+      - label: "the server is too slow"
+        web:
+          "https://api.weather.test/now?city=Oslo":
+            error: Timeout
+    checks:
+      - expr: "err is None and lines[-1:] in (['None'], [\"{'temp': 4.5}\"])"
+        pass: "It never crashes, and prints the JSON or None"
+        hint: "Put the request into `try:` and catch `requests.ConnectionError` and `requests.Timeout`."
+        misconceptions:
+          - when: "err in ('ConnectionError', 'ReadTimeout', 'Timeout')"
+            say: "The request failed and the program stopped. Catch the error with `try` and `except`."
+      - expr: "all(r['timeout'] for r in requests_made)"
+        pass: "The request has a timeout"
+        hint: "`requests.get(url, timeout=5)`."
+    hints:
+      - "The request goes into a `try:` block."
+      - "`except (requests.ConnectionError, requests.Timeout): return None`."
+      - "Else `return response.json()`."

@@ -672,3 +672,117 @@ review:
         why: "That is the answer for a normal class: two different objects."
       - text: "An error"
         why: "The dataclass wrote `==` for you."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-point
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Points for free
+    prompt: |
+      **Replace the two `___`**: make `Point` a dataclass with two whole
+      numbers `x` and `y`. Then `__init__`, a clear print and `==` come for
+      free.
+
+      ```text
+      Point(x=2, y=3)
+      True
+      ```
+    starter: |
+      from dataclasses import dataclass
+
+
+      ___
+      class Point:
+          ___
+          y: int
+
+
+      p = Point(2, 3)
+      print(p)
+      print(p == Point(2, 3))
+    solution: |
+      from dataclasses import dataclass
+
+
+      @dataclass
+      class Point:
+          x: int
+          y: int
+
+
+      p = Point(2, 3)
+      print(p)
+      print(p == Point(2, 3))
+    after: >-
+      Two lines of fields replaced an `__init__`, a `__repr__` and an
+      `__eq__`. Use a dataclass for objects that mainly hold data.
+    checks:
+      - expr: "callable(ns.get('Point')) and hasattr(Point, '__dataclass_fields__') and list(Point.__dataclass_fields__) == ['x', 'y']"
+        pass: "Point is a dataclass with x and y"
+        hint: "`@dataclass` above the class, and `x: int` and `y: int`."
+      - expr: "err is None and lines == ['Point(x=2, y=3)', 'True']"
+        pass: "It prints the point and True"
+        hint: "Keep the prints."
+    hints:
+      - "A decorator goes on the line above `class`."
+      - "`@dataclass`."
+      - "Fields are written like `x: int`."
+  - id: x-shared-tags
+    type: exercise
+    fade: debug
+    objective: O4
+    title: A list for each note
+    prompt: |
+      Each note should have its own list of tags. The program stops with a
+      `ValueError` about a mutable default. **Fix the field**:
+
+      ```text
+      ['home']
+      []
+      ```
+    starter: |
+      from dataclasses import dataclass, field
+
+
+      @dataclass
+      class Note:
+          text: str
+          tags: list = []
+
+
+      a = Note("milk")
+      b = Note("call Ana")
+      a.tags.append("home")
+      print(a.tags)
+      print(b.tags)
+    solution: |
+      from dataclasses import dataclass, field
+
+
+      @dataclass
+      class Note:
+          text: str
+          tags: list = field(default_factory=list)
+
+
+      a = Note("milk")
+      b = Note("call Ana")
+      a.tags.append("home")
+      print(a.tags)
+      print(b.tags)
+    after: >-
+      One `[]` in the class would be shared by every note, so Python
+      refuses it. `default_factory=list` makes a new list for each note.
+    checks:
+      - expr: "err is None and lines == [\"['home']\", '[]']"
+        pass: "Each note has its own tags"
+        hint: "`tags: list = field(default_factory=list)`."
+      - expr: "a.tags is not b.tags"
+        pass: "Two notes, two lists"
+        hint: "`field(default_factory=list)` makes a new list each time."
+    hints:
+      - "Read the last line of the message."
+      - "A list default must be made new for each object."
+      - "`tags: list = field(default_factory=list)`."

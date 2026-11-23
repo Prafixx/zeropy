@@ -601,3 +601,119 @@ review:
         why: "The parents are searched from left to right."
       - text: "In `object`"
         why: "`object` comes last."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-ticket-count
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Numbered tickets
+    prompt: |
+      **Replace the two `___`**: the class counts all tickets, and each
+      ticket gets the next number.
+
+      ```text
+      1 2 3
+      3
+      ```
+    starter: |
+      class Ticket:
+          count = 0
+
+          def __init__(self):
+              ___ = Ticket.count + 1
+              self.number = ___
+
+
+      a, b, c = Ticket(), Ticket(), Ticket()
+      print(a.number, b.number, c.number)
+      print(Ticket.count)
+    solution: |
+      class Ticket:
+          count = 0
+
+          def __init__(self):
+              Ticket.count = Ticket.count + 1
+              self.number = Ticket.count
+
+
+      a, b, c = Ticket(), Ticket(), Ticket()
+      print(a.number, b.number, c.number)
+      print(Ticket.count)
+    after: >-
+      `Ticket.count` belongs to the class, so all tickets share it.
+      `self.count = ...` would make a new attribute in one ticket, and the
+      class would stay at 0.
+    checks:
+      - expr: "err is None and lines == ['1 2 3', '3']"
+        pass: "Tickets get 1, 2, 3, and the class counts 3"
+        hint: "`Ticket.count = Ticket.count + 1` and `self.number = Ticket.count`."
+        misconceptions:
+          - when: "err is None and lines == ['1 1 1', '0']"
+            say: "`self.count` made a count in each ticket. Change the class attribute: `Ticket.count`."
+      - expr: "a.number != b.number and Ticket.count >= 3"
+        pass: "Each ticket has its own number"
+        hint: "`self.number` is per ticket, `Ticket.count` is shared."
+    hints:
+      - "A class attribute is written with the class name."
+      - "`Ticket.count = Ticket.count + 1`."
+      - "`self.number = Ticket.count`."
+  - id: x-has-all
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Has it got everything?
+    prompt: |
+      **Write `has_all(obj, names)`**: `True` when the object has every
+      attribute in the list `names`, else `False`. Use `hasattr`.
+
+      ```text
+      True
+      False
+      ```
+    starter: |
+      class Book:
+          def __init__(self):
+              self.title = "Dune"
+              self.pages = 412
+
+
+      # Your function here.
+
+
+      print(has_all(Book(), ["title", "pages"]))
+      print(has_all(Book(), ["title", "author"]))
+    solution: |
+      class Book:
+          def __init__(self):
+              self.title = "Dune"
+              self.pages = 412
+
+
+      def has_all(obj, names):
+          for name in names:
+              if not hasattr(obj, name):
+                  return False
+          return True
+
+
+      print(has_all(Book(), ["title", "pages"]))
+      print(has_all(Book(), ["title", "author"]))
+    after: >-
+      `hasattr` asks without the risk of an AttributeError. The same works
+      for any object: a book, a list, a module.
+    checks:
+      - expr: "callable(ns.get('has_all')) and has_all(Book(), ['title']) is True and has_all(Book(), []) is True and has_all(Book(), ['author']) is False"
+        pass: "True only when all attributes are there"
+        hint: "Ask `hasattr(obj, name)` for each name."
+      - expr: "callable(ns.get('has_all')) and has_all([], ['append', 'sort']) is True and has_all('text', ['append']) is False"
+        pass: "It works for any object"
+        hint: "Use `hasattr`, not a test of the class."
+      - expr: "'hasattr(' in src"
+        pass: "It uses hasattr"
+        hint: "`hasattr(obj, name)`."
+    hints:
+      - "Loop over `names`."
+      - "`hasattr(obj, name)` is True or False."
+      - "Return False at the first missing one, True after the loop."

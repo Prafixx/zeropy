@@ -498,3 +498,116 @@ review:
         why: "That is for system errors like Ctrl+C."
       - text: "`object`"
         why: "Only classes of the error tree can be raised."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-sold-out
+    type: exercise
+    fade: completion
+    objective: O4
+    title: An error of your own
+    prompt: |
+      **Replace the two `___`**: `OutOfStock` gives the parent a clear
+      message, and keeps the item in an attribute.
+
+      ```text
+      cake is sold out
+      cake
+      ```
+    starter: |
+      class OutOfStock(Exception):
+          def __init__(self, item):
+              ___(f"{item} is sold out")
+              ___ = item
+
+
+      try:
+          raise OutOfStock("cake")
+      except OutOfStock as error:
+          print(error)
+          print(error.item)
+    solution: |
+      class OutOfStock(Exception):
+          def __init__(self, item):
+              super().__init__(f"{item} is sold out")
+              self.item = item
+
+
+      try:
+          raise OutOfStock("cake")
+      except OutOfStock as error:
+          print(error)
+          print(error.item)
+    after: >-
+      `super().__init__(message)` makes `print(error)` show the message; the
+      attribute keeps the data for the code that catches it.
+    checks:
+      - expr: "callable(ns.get('OutOfStock')) and issubclass(OutOfStock, Exception) and str(OutOfStock('tea')) == 'tea is sold out'"
+        pass: "The error shows its message"
+        hint: "`super().__init__(f\"{item} is sold out\")`."
+      - expr: "callable(ns.get('OutOfStock')) and OutOfStock('tea').item == 'tea'"
+        pass: "It keeps the item"
+        hint: "`self.item = item`."
+      - expr: "err is None and lines == ['cake is sold out', 'cake']"
+        pass: "It prints the message and the item"
+        hint: "Keep the try and except at the end."
+    hints:
+      - "The parent `Exception` keeps the message."
+      - "`super().__init__(f\"{item} is sold out\")`."
+      - "`self.item = item`."
+  - id: x-except-order
+    type: exercise
+    fade: debug
+    objective: O1
+    title: Branches that never run
+    prompt: |
+      `safe_number` should say what went wrong. But it always says
+      `something went wrong`. **Fix the order of the branches**:
+
+      ```text
+      50.0
+      cannot divide by 0
+      not a number
+      ```
+    starter: |
+      def safe_number(text):
+          try:
+              return 100 / int(text)
+          except Exception:
+              return "something went wrong"
+          except ZeroDivisionError:
+              return "cannot divide by 0"
+          except ValueError:
+              return "not a number"
+
+
+      for text in ["2", "0", "abc"]:
+          print(safe_number(text))
+    solution: |
+      def safe_number(text):
+          try:
+              return 100 / int(text)
+          except ZeroDivisionError:
+              return "cannot divide by 0"
+          except ValueError:
+              return "not a number"
+          except Exception:
+              return "something went wrong"
+
+
+      for text in ["2", "0", "abc"]:
+          print(safe_number(text))
+    after: >-
+      Python takes the first branch that fits, and `Exception` fits almost
+      every error. Specific branches first, the general one last.
+    checks:
+      - expr: "callable(ns.get('safe_number')) and safe_number('4') == 25.0 and safe_number('0') == 'cannot divide by 0' and safe_number('x') == 'not a number'"
+        pass: "Each error gets its own message"
+        hint: "Put `except Exception:` last."
+      - expr: "err is None and lines == ['50.0', 'cannot divide by 0', 'not a number']"
+        pass: "It prints the three answers"
+        hint: "Keep the loop."
+    hints:
+      - "Which branch does Python try first?"
+      - "`Exception` is the parent of ZeroDivisionError and ValueError."
+      - "Move `except Exception:` with its line to the end."

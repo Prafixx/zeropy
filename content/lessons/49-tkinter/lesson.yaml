@@ -645,3 +645,127 @@ review:
         why: "`pady` is room in pixels, not rows."
       - text: "It makes the text 10 big"
         why: "The size of the text is the `font`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-double-window
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A window that doubles
+    prompt: |
+      **Replace the two `___`**: the button runs `double`, and `double`
+      shows the result in the label. Run it, type `21`, click **Double**:
+      `Double: 42`.
+    starter: |
+      import tkinter as tk
+
+
+      def double():
+          number = int(entry.get())
+          ___
+
+
+      root = tk.Tk()
+      root.title("Doubler")
+      entry = tk.Entry(root, width=10)
+      entry.pack(padx=20, pady=(10, 0))
+      tk.Button(root, text="Double", command=___).pack(pady=5)
+      result = tk.Label(root, text="")
+      result.pack(pady=(0, 10))
+      root.mainloop()
+    solution: |
+      import tkinter as tk
+
+
+      def double():
+          number = int(entry.get())
+          result.config(text=f"Double: {number * 2}")
+
+
+      root = tk.Tk()
+      root.title("Doubler")
+      entry = tk.Entry(root, width=10)
+      entry.pack(padx=20, pady=(10, 0))
+      tk.Button(root, text="Double", command=double).pack(pady=5)
+      result = tk.Label(root, text="")
+      result.pack(pady=(0, 10))
+      root.mainloop()
+    after: >-
+      `command=double` gives the function itself; the window calls it on
+      each click. `config(text=...)` changes what the label shows.
+    checks:
+      - expr: "err is None and gui_title == 'Doubler' and gui_find('Double') is not None"
+        pass: "The window has its button"
+        hint: "Keep the window lines."
+      - expr: "gui_find('Double') is not None and (gui_type(0, '21'), gui_click('Double'), 'Double: 42' in gui_texts())[2] and (gui_type(0, '5'), gui_click('Double'), 'Double: 10' in gui_texts())[2]"
+        pass: "A click shows the double"
+        hint: "`command=double`, and `result.config(text=f\"Double: {number * 2}\")`."
+        misconceptions:
+          - when: "'command=double()' in src.replace(' ', '')"
+            say: "`command=double()` calls the function at once, while the window is made. Write `command=double`, without brackets."
+    hints:
+      - "The button needs the function itself."
+      - "`command=double`."
+      - "`result.config(text=f\"Double: {number * 2}\")`."
+  - id: x-greeter-bugs
+    type: exercise
+    fade: debug
+    objective: O4
+    title: A greeter with three bugs
+    prompt: |
+      This window should greet the name in the entry. It has the **three
+      usual bugs** of a window. Run it, try it, and **fix all three**: the
+      label must show `Hello, Ana!` after a click.
+    starter: |
+      import tkinter as tk
+
+
+      def greet():
+          label.text = f"Hello, {entry.get()}!"
+
+
+      root = tk.Tk()
+      root.title("Greeter")
+      entry = tk.Entry(root)
+      entry.pack()
+      tk.Button(root, text="Greet", command=greet()).pack()
+      label = tk.Label(root, text="")
+      root.mainloop()
+    solution: |
+      import tkinter as tk
+
+
+      def greet():
+          label.config(text=f"Hello, {entry.get()}!")
+
+
+      root = tk.Tk()
+      root.title("Greeter")
+      entry = tk.Entry(root)
+      entry.pack()
+      tk.Button(root, text="Greet", command=greet).pack()
+      label = tk.Label(root, text="")
+      label.pack()
+      root.mainloop()
+    after: >-
+      Three classics: `command=f()` calls too early, a widget that is not
+      packed is never shown, and `label.text = ...` changes nothing on the
+      screen. Remember them: you will meet them again.
+    checks:
+      - expr: "err is None and gui_window is not None and all(w.manager is not None for w in gui_window.winfo_children())"
+        pass: "Every widget is shown"
+        hint: "The label needs `.pack()` too."
+        misconceptions:
+          - when: "err == 'NameError'"
+            say: "`command=greet()` calls `greet` while the window is made, before `label` exists. Write `command=greet`."
+      - expr: "gui_find('Greet') is not None and (gui_type(0, 'Ana'), gui_click('Greet'), 'Hello, Ana!' in gui_texts())[2]"
+        pass: "A click greets the name"
+        hint: "`label.config(text=...)` changes the label."
+        misconceptions:
+          - when: "'label.text' in src"
+            say: "`label.text = ...` only makes a Python attribute; the window does not see it. Use `label.config(text=...)`."
+    hints:
+      - "Run it: which error comes first, and why?"
+      - "`command=greet` without brackets, and `label.pack()`."
+      - "In `greet`: `label.config(text=f\"Hello, {entry.get()}!\")`."

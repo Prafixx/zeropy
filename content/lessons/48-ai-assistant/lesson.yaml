@@ -554,3 +554,94 @@ review:
         why: "The AI cannot fix the problem it caused in your project. You decide what goes in."
       - text: "Nobody"
         why: "Someone used it. That is you."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-empty-text
+    type: exercise
+    fade: debug
+    objective: O2
+    title: The AI forgot the empty text
+    prompt: |
+      An AI wrote `average_word_length`. It works for normal text, but a
+      border test with an empty text stops with an error. **Fix it**: an
+      empty text gives 0.
+
+      ```text
+      4.0
+      0
+      ```
+    starter: |
+      def average_word_length(text):
+          words = text.split()
+          return sum(len(w) for w in words) / len(words)
+
+
+      print(average_word_length("tree bird"))
+      print(average_word_length(""))
+    solution: |
+      def average_word_length(text):
+          words = text.split()
+          if not words:
+              return 0
+          return sum(len(w) for w in words) / len(words)
+
+
+      print(average_word_length("tree bird"))
+      print(average_word_length(""))
+    after: >-
+      AI code often works for the typical case and fails at the border.
+      Test empty values, one value, and odd input before you trust it.
+    checks:
+      - expr: "callable(ns.get('average_word_length')) and average_word_length('') == 0 and average_word_length('   ') == 0"
+        pass: "An empty text gives 0"
+        hint: "`if not words: return 0`."
+      - expr: "callable(ns.get('average_word_length')) and average_word_length('ab abcd') == 3.0"
+        pass: "Normal text still works"
+        hint: "Keep the last line."
+      - expr: "lines == ['4.0', '0']"
+        pass: "It prints 4.0 and 0"
+        hint: "Keep the prints."
+    hints:
+      - "What is `len(words)` for an empty text?"
+      - "Check for no words before you divide."
+      - "`if not words: return 0`."
+  - id: x-no-such-method
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A method that does not exist
+    prompt: |
+      An AI said: "use `text.reverse()` to reverse a text". The program
+      stops with an `AttributeError`. Check: `"reverse" in dir(str)` is
+      `False`. **Fix it** with a slice that steps backwards.
+
+      ```text
+      olleh
+      ```
+    starter: |
+      def backwards(text):
+          return text.reverse()
+
+
+      print(backwards("hello"))
+    solution: |
+      def backwards(text):
+          return text[::-1]
+
+
+      print(backwards("hello"))
+    after: >-
+      Lists have `reverse()`, texts do not. AI tools mix such names up.
+      `dir()` and `help()` tell you in a second what really exists.
+    checks:
+      - expr: "callable(ns.get('backwards')) and backwards('abc') == 'cba' and backwards('') == ''"
+        pass: "It reverses any text"
+        hint: "`return text[::-1]`."
+      - expr: "lines == ['olleh']"
+        pass: "It prints olleh"
+        hint: "Keep the print."
+    hints:
+      - "Read the message: which object has no `reverse`?"
+      - "A slice can take a step: `[start:stop:step]`."
+      - "A step of -1 goes backwards: `text[::-1]`."

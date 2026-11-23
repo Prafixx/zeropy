@@ -498,3 +498,98 @@ review:
         why: "The print only shows the result."
       - text: "At the name of the variable"
         why: "The name is fine. A line resets the value."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-reset
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A total that forgets
+    prompt: |
+      `total_minutes` should add all practice sessions. It gives only the
+      last one. Compare what `total` **is** in each round with what it
+      **should be** (print it, or use the debugger of the lesson), and fix
+      it.
+
+      ```text
+      85
+      ```
+    starter: |
+      def total_minutes(sessions):
+          for minutes in sessions:
+              total = 0
+              total = total + minutes
+          return total
+
+
+      print(total_minutes([30, 15, 40]))
+    solution: |
+      def total_minutes(sessions):
+          total = 0
+          for minutes in sessions:
+              total = total + minutes
+          return total
+
+
+      print(total_minutes([30, 15, 40]))
+    after: >-
+      In round two, `total` should be 45 but is 15: it was set back to 0.
+      A start value belongs before the loop.
+    checks:
+      - expr: "callable(ns.get('total_minutes')) and total_minutes([1, 2, 3]) == 6 and total_minutes([10]) == 10 and total_minutes([]) == 0"
+        pass: "It adds all sessions, also none"
+        hint: "Move `total = 0` above the `for`."
+      - expr: "lines == ['85']"
+        pass: "It prints 85"
+        hint: "Keep the print."
+    hints:
+      - "Print `total` inside the loop. What is it in round two?"
+      - "`total = 0` runs in every round."
+      - "Put `total = 0` before the loop."
+  - id: x-last-missing
+    type: exercise
+    fade: debug
+    objective: O3
+    title: The biggest is never the last
+    prompt: |
+      `biggest` gives 9 for `[3, 9, 4, 12]`. Watch `i` in each round:
+      which places does the loop visit? **Fix it**:
+
+      ```text
+      12
+      ```
+    starter: |
+      def biggest(nums):
+          best = nums[0]
+          for i in range(1, len(nums) - 1):
+              if nums[i] > best:
+                  best = nums[i]
+          return best
+
+
+      print(biggest([3, 9, 4, 12]))
+    solution: |
+      def biggest(nums):
+          best = nums[0]
+          for i in range(1, len(nums)):
+              if nums[i] > best:
+                  best = nums[i]
+          return best
+
+
+      print(biggest([3, 9, 4, 12]))
+    after: >-
+      `i` went 1, 2: never 3, the last place. `range(1, len(nums))` stops
+      just before `len(nums)`, which is exactly the last place.
+    checks:
+      - expr: "callable(ns.get('biggest')) and biggest([1, 5]) == 5 and biggest([7]) == 7 and biggest([2, 8, 1]) == 8"
+        pass: "It finds the biggest, also at the end"
+        hint: "`range(1, len(nums))`."
+      - expr: "lines == ['12']"
+        pass: "It prints 12"
+        hint: "Keep the print."
+    hints:
+      - "Print `i` in the loop. Which values does it take?"
+      - "`range` stops before its stop value already."
+      - "`range(1, len(nums))`."
