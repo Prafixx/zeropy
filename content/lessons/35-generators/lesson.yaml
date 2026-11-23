@@ -1,0 +1,615 @@
+id: generators
+order: 35
+title: Iterators and generators
+summary: How a for loop really gets its values, and how to make values one at a time with yield - for big files, endless rows and pipelines that use almost no memory.
+minutes: 40
+outcomes: [A1, A3, A4]
+
+objectives:
+  - id: O1
+    text: Explain how for works with iter() and next(), and what StopIteration means
+  - id: O2
+    text: Write a generator function with yield, and know that it makes values only when asked
+  - id: O3
+    text: Use generator expressions, and know that a generator can be used only once
+  - id: O4
+    text: Read a big file lazily, and take parts of a stream with itertools
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: iter-next
+    type: theory
+    objective: O1
+    title: What for really does
+    body: |
+      A list, a text, a dictionary, a file: all can be **iterated**. A `for`
+      loop asks for an **iterator** with `iter()`, then calls `next()` on it
+      again and again:
+
+      ```python
+      it = iter(["a", "b"])
+      next(it)        # 'a'
+      next(it)        # 'b'
+      next(it)        # StopIteration: there is nothing left
+      ```
+
+      `StopIteration` is not a bug: it is how an iterator says "done", and
+      `for` catches it to end the loop. So this loop:
+
+      ```python
+      for letter in ["a", "b"]:
+          print(letter)
+      ```
+
+      works like a `while` that calls `next()` until `StopIteration`. An
+      iterator only goes **forward**, one value at a time, and remembers
+      where it is.
+    keys:
+      - code: "iter(values)"
+        means: "Get an iterator: a cursor on the values."
+      - code: "next(it)"
+        means: "The next value."
+      - code: "StopIteration"
+        means: "No values left: for ends here."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: yield-demo
+    type: demo
+    visual: none
+    objective: O2
+    title: A function that pauses
+    intro: |
+      A function with `yield` is a **generator**. Each `yield` hands out one
+      value, and the function **pauses** there until the next value is
+      asked for. Press **Run**, and watch the order of the lines.
+    code: |
+      def countdown(n):
+          print("start")
+          while n > 0:
+              print(f"  (making {n})")
+              yield n
+              n = n - 1
+          print("end")
+
+
+      for number in countdown(3):
+          print("got", number)
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and lines[0] == 'start' and lines[-1] == 'end'"
+      - text: "Replace the loop by `print(list(countdown(3)))`."
+        expr: "err is None and '[3, 2, 1]' in out"
+      - text: "Try `gen = countdown(2)` and `print(next(gen))`, without a loop."
+        expr: "err is None and 'next(' in src"
+    investigate:
+      - kind: mcq
+        id: i-pause
+        prompt: "Why do `(making 2)` and `got 3` take turns, instead of all `making` lines first?"
+        options:
+          - text: "The generator pauses at each yield, until the loop asks for the next value"
+            correct: true
+            why: "Values are made one at a time, only when needed."
+          - text: "Python runs two programs at once"
+            why: "It is one program: the generator and the loop take turns."
+          - text: "print is slow"
+            why: "The order comes from yield pausing the function."
+      - kind: mcq
+        id: i-call
+        prompt: "What does `countdown(3)` give back, before any loop runs?"
+        options:
+          - text: "A generator object: no line of the function has run yet"
+            correct: true
+            why: "Even `start` is printed only at the first next()."
+          - text: "The list [3, 2, 1]"
+            why: "`list(countdown(3))` makes that list."
+          - text: "3"
+            why: "The values come one by one, when asked."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-evens
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Even numbers, one at a time
+    prompt: |
+      **Replace the two `___`**: the generator gives the even numbers from
+      0 up to and with `limit`.
+
+      ```text
+      [0, 2, 4, 6, 8]
+      20
+      ```
+    starter: |
+      def evens(limit):
+          n = 0
+          while n <= limit:
+              ___
+              n = ___
+
+
+      print(list(evens(8)))
+      print(sum(evens(8)))
+    solution: |
+      def evens(limit):
+          n = 0
+          while n <= limit:
+              yield n
+              n = n + 2
+
+
+      print(list(evens(8)))
+      print(sum(evens(8)))
+    after: >-
+      `list`, `sum`, `max` and `for` all take a generator. Each call of
+      `evens(8)` gives a fresh generator, so the second line starts again
+      at 0.
+    checks:
+      - expr: "callable(ns.get('evens')) and list(evens(5)) == [0, 2, 4] and list(evens(0)) == [0] and list(evens(-1)) == []"
+        pass: "It gives the even numbers up to limit"
+        hint: "`yield n`, then `n = n + 2`."
+      - expr: "callable(ns.get('evens')) and type(evens(4)).__name__ == 'generator'"
+        pass: "evens is a generator"
+        hint: "Use `yield`, not a list and `return`."
+        misconceptions:
+          - when: "callable(ns.get('evens')) and isinstance(evens(4), list)"
+            say: "It builds the whole list first. Hand out each value with `yield n`."
+      - expr: "lines == ['[0, 2, 4, 6, 8]', '20']"
+        pass: "It prints the list and 20"
+        hint: "Keep the prints."
+    hints:
+      - "`yield` hands out one value and pauses."
+      - "`yield n`."
+      - "Even numbers go up by 2: `n = n + 2`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: lazy
+    type: theory
+    objective: O3
+    title: Lazy values, and only once
+    body: |
+      A **generator expression** is a comprehension with round brackets:
+
+      ```python
+      squares = (n * n for n in range(1_000_000))
+      total = sum(squares)
+      ```
+
+      A list comprehension with `[...]` would first build a list of one
+      million numbers. The generator makes each square when `sum` asks for
+      it, and forgets it: almost no memory. In a call you can leave out the
+      extra brackets: `sum(n * n for n in range(10))`.
+
+      The price: a generator can be used **only once**. When it is empty,
+      it stays empty:
+
+      ```python
+      squares = (n * n for n in range(4))
+      sum(squares)     # 14
+      sum(squares)     # 0: nothing left
+      ```
+
+      Need the values twice? Make a list (`list(...)`), or make a new
+      generator each time (call the generator function again).
+    keys:
+      - code: "(x * 2 for x in values)"
+        means: "A generator expression: values made on demand."
+      - code: "sum(x for x in values)"
+        means: "No extra brackets needed in a call."
+      - code: "used once"
+        means: "An empty generator stays empty."
+
+  # 5. EXERCISE: debug -------------------------------------------------------
+  - id: ex-twice
+    type: exercise
+    fade: debug
+    objective: O3
+    title: The average that is zero
+    prompt: |
+      The total is right, but the count is 0, so the average stops with a
+      `ZeroDivisionError`. **Find why, and fix it** so both lines are right:
+
+      ```text
+      total: 60
+      average: 20.0
+      ```
+    starter: |
+      prices = [10, 20, 30]
+      doubled = (p * 2 for p in prices)
+      total = sum(doubled) // 2
+      count = len(list(doubled))
+      print("total:", total)
+      print("average:", total / count)
+    solution: |
+      prices = [10, 20, 30]
+      doubled = [p * 2 for p in prices]
+      total = sum(doubled) // 2
+      count = len(list(doubled))
+      print("total:", total)
+      print("average:", total / count)
+    after: >-
+      `sum` used up the generator, so `list(doubled)` got nothing. Values
+      needed twice belong in a list: square brackets.
+    checks:
+      - expr: "err is None and lines == ['total: 60', 'average: 20.0']"
+        pass: "Both lines are right"
+        hint: "The generator is empty after `sum`. Make `doubled` a list."
+        misconceptions:
+          - when: "err == 'ZeroDivisionError'"
+            say: "`count` is still 0: `doubled` is used up by `sum`. Use `[...]` to make a list."
+      - expr: "isinstance(ns.get('doubled'), list) or src.count('p * 2 for p in prices') >= 2"
+        pass: "The values can be used twice"
+        hint: "`doubled = [p * 2 for p in prices]`."
+    hints:
+      - "Print `list(doubled)` after the `sum` line. What is in it?"
+      - "A generator can be used once."
+      - "Square brackets: `doubled = [p * 2 for p in prices]`."
+
+  # 6. EXERCISE: independent -------------------------------------------------
+  - id: ex-read-numbers
+    type: exercise
+    fade: independent
+    objective: O4
+    title: A file, one line at a time
+    prompt: |
+      `readings.txt` (see the files) has one number per line, and some
+      empty lines. **Write a generator `numbers(path)`**: it opens the file,
+      and yields each number as a float, skipping empty lines. Then print
+      the sum.
+
+      ```text
+      12.5
+      ```
+    files:
+      readings.txt: |
+        2.5
+
+        4.0
+        6.0
+
+    starter: |
+      # Your generator here.
+
+
+      print(sum(numbers("readings.txt")))
+    solution: |
+      def numbers(path):
+          with open(path) as f:
+              for line in f:
+                  if line.strip():
+                      yield float(line)
+
+
+      print(sum(numbers("readings.txt")))
+    after: >-
+      A file is an iterator of lines too: `for line in f` reads one line at
+      a time. With a generator on top, a file of many gigabytes can be summed
+      with almost no memory.
+    cases:
+      - {}
+      - label: "another readings.txt"
+        files:
+          readings.txt: "1\n\n\n-3.5\n10\n"
+    checks:
+      - expr: "callable(ns.get('numbers')) and type(numbers('readings.txt')).__name__ == 'generator'"
+        pass: "numbers is a generator"
+        hint: "Use `yield float(line)` inside the loop."
+      - expr: "callable(ns.get('numbers')) and list(numbers('readings.txt')) == [float(l) for l in files['readings.txt'].splitlines() if l.strip()]"
+        pass: "It yields each number as a float, without the empty lines"
+        hint: "`if line.strip(): yield float(line)`."
+        misconceptions:
+          - when: "callable(ns.get('numbers')) and raises(list, numbers('readings.txt')) == 'ValueError'"
+            say: "An empty line cannot be a float. Skip it: `if line.strip():`."
+      - expr: "lines[-1:] == [str(sum(float(l) for l in files['readings.txt'].splitlines() if l.strip()))]"
+        pass: "It prints the sum"
+        hint: "Keep the last line."
+    hints:
+      - "`with open(path) as f:` and `for line in f:`."
+      - "Skip lines that are empty after `strip()`."
+      - "`yield float(line)`."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: itertools
+    type: theory
+    objective: O4
+    title: Tools for streams
+    body: |
+      The module `itertools` has small tools that work on any iterable, also
+      endless ones:
+
+      ```python
+      from itertools import count, islice, chain, groupby
+
+      count(1)                         # 1, 2, 3, ... forever
+      list(islice(count(1), 5))        # [1, 2, 3, 4, 5]: the first 5
+      list(chain([1, 2], [3]))         # [1, 2, 3]: one after the other
+      for letter, words in groupby(["ant", "ape", "bee"], key=lambda w: w[0]):
+          print(letter, list(words))   # a ['ant', 'ape']  then  b ['bee']
+      ```
+
+      `islice` is the slice for iterators: an endless generator has no
+      `[:5]`, but `islice(gen, 5)` takes its first five values. `groupby`
+      groups values that **come one after the other** with the same key,
+      so sort the values first when needed.
+
+      Tools like these can be joined into a **pipeline**: read lines, keep
+      some, change them, take the first ten. Each value flows through the
+      whole pipe before the next one is read.
+    keys:
+      - code: "islice(gen, n)"
+        means: "The first n values of any iterator."
+      - code: "count(start)"
+        means: "Numbers without end."
+      - code: "chain(a, b)"
+        means: "a, then b, as one stream."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-squares-stream
+    type: exercise
+    fade: completion
+    objective: O4
+    title: The first squares of an endless stream
+    prompt: |
+      `squares()` never ends. **Replace the two `___`**: make the squares
+      of 1, 2, 3 ..., and take only the first `n` of them with `islice`.
+
+      ```text
+      [1, 4, 9, 16, 25]
+      ```
+    starter: |
+      from itertools import count, islice
+
+
+      def squares():
+          for n in count(1):
+              yield ___
+
+
+      first = list(islice(___))
+      print(first)
+    solution: |
+      from itertools import count, islice
+
+
+      def squares():
+          for n in count(1):
+              yield n * n
+
+
+      first = list(islice(squares(), 5))
+      print(first)
+    after: >-
+      `list(squares())` would never end. `islice` asks for five values, and
+      then stops asking: the generator stays paused forever, which is fine.
+    checks:
+      - expr: "callable(ns.get('squares')) and list(islice(squares(), 3)) == [1, 4, 9]"
+        pass: "squares gives 1, 4, 9 ..."
+        hint: "`yield n * n`."
+      - expr: "err is None and first == [1, 4, 9, 16, 25]"
+        pass: "first is the first five squares"
+        hint: "`islice(squares(), 5)`."
+      - expr: "lines == ['[1, 4, 9, 16, 25]']"
+        pass: "It prints them"
+        hint: "Keep the print."
+    hints:
+      - "The square of n is `n * n`."
+      - "`islice` takes the iterator and how many values."
+      - "`list(islice(squares(), 5))`."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: predict
+        id: q-gen
+        objective: O3
+        code: |
+          gen = (n * 10 for n in range(3))
+          print(next(gen))
+          print(list(gen))
+          print(list(gen))
+        explain: "next() takes the first value, 0. list() takes the rest, [10, 20]. Then the generator is empty."
+      - kind: mcq
+        id: q-memory
+        objective: O3
+        prompt: "Why is `sum(n * n for n in range(10_000_000))` better than `sum([n * n for n in range(10_000_000)])`?"
+        options:
+          - text: "It never builds the list of ten million numbers: each one is made and forgotten"
+            correct: true
+            why: "The result is the same; the memory is almost none."
+          - text: "It gives another result"
+            why: "Both give the same sum."
+          - text: "Round brackets are faster to type"
+            why: "The point is memory."
+      - kind: mcq
+        id: q-stop
+        objective: O1
+        prompt: "What does `next()` raise when an iterator has no values left?"
+        options:
+          - text: "StopIteration"
+            correct: true
+            why: "A for loop catches it and ends."
+          - text: "IndexError"
+            why: "That is for a wrong index in a list."
+          - text: "None, without an error"
+            why: "It raises StopIteration."
+      - kind: mcq
+        id: q-endless
+        objective: O4
+        prompt: "`gen` never ends. How do you get its first 10 values?"
+        options:
+          - text: "`list(islice(gen, 10))`"
+            correct: true
+            why: "islice stops after 10 values."
+          - text: "`list(gen)[:10]`"
+            why: "`list(gen)` never ends."
+          - text: "`gen[:10]`"
+            why: "A generator has no slices."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-yield
+    objective: O2
+    prompt: "What does `yield` do in a function?"
+    options:
+      - text: "It hands out one value and pauses the function until the next value is asked"
+        correct: true
+        why: "A function with yield is a generator."
+      - text: "It ends the function, like return"
+        why: "It pauses, it does not end."
+      - text: "It prints a value"
+        why: "It gives the value to the caller."
+  - kind: mcq
+    id: r-for
+    objective: O1
+    prompt: "What does a for loop do with a list, behind the scenes?"
+    options:
+      - text: "It gets an iterator with iter(), and calls next() until StopIteration"
+        correct: true
+        why: "That works for every iterable."
+      - text: "It counts the items with len()"
+        why: "Many iterables have no length at all."
+      - text: "It copies the list"
+        why: "It walks it with an iterator."
+  - kind: mcq
+    id: r-once
+    objective: O3
+    prompt: "You call `sum(gen)` twice on the same generator. What is the second result?"
+    options:
+      - text: "0: the generator is already empty"
+        correct: true
+        why: "A generator can be used only once."
+      - text: "The same sum"
+        why: "Only a list gives the same values again."
+      - text: "An error"
+        why: "No error: it is just empty."
+  - kind: mcq
+    id: r-file
+    objective: O4
+    prompt: "Why is `for line in f` good for a huge file?"
+    options:
+      - text: "It reads one line at a time, so the file never has to fit in memory"
+        correct: true
+        why: "A file object is an iterator of lines."
+      - text: "It reads the whole file faster"
+        why: "It reads it bit by bit."
+      - text: "It skips empty lines"
+        why: "It gives every line; skip them yourself."
+  - kind: mcq
+    id: r-call
+    objective: O2
+    prompt: "`gen = countdown(3)` with a generator function. What has run?"
+    options:
+      - text: "Nothing of its body yet: it runs at the first next()"
+        correct: true
+        why: "Calling a generator function only makes the generator."
+      - text: "The whole function"
+        why: "It runs step by step, when asked."
+      - text: "The first line"
+        why: "Not even the first line."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-fib
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Fibonacci without end
+    prompt: |
+      In the Fibonacci numbers, each number is the sum of the two before it:
+      0, 1, 1, 2, 3, 5, 8 ... **Replace the two `___`** in the generator.
+
+      ```text
+      [0, 1, 1, 2, 3, 5, 8, 13]
+      ```
+    starter: |
+      from itertools import islice
+
+
+      def fib():
+          a, b = 0, 1
+          while True:
+              ___
+              a, b = ___
+
+
+      print(list(islice(fib(), 8)))
+    solution: |
+      from itertools import islice
+
+
+      def fib():
+          a, b = 0, 1
+          while True:
+              yield a
+              a, b = b, a + b
+
+
+      print(list(islice(fib(), 8)))
+    after: >-
+      `while True` is fine in a generator: it only runs as far as someone
+      asks. `a, b = b, a + b` moves both numbers on in one step.
+    checks:
+      - expr: "callable(ns.get('fib')) and list(islice(fib(), 12)) == [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]"
+        pass: "It gives the Fibonacci numbers"
+        hint: "`yield a`, then `a, b = b, a + b`."
+      - expr: "lines == ['[0, 1, 1, 2, 3, 5, 8, 13]']"
+        pass: "It prints the first eight"
+        hint: "Keep the print."
+    hints:
+      - "Hand out `a` each round."
+      - "The new pair is the old `b` and the sum."
+      - "`yield a` and `a, b = b, a + b`."
+  - id: x-pipeline
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A small pipeline
+    prompt: |
+      **Write a generator `long_words(words, n)`**: it yields the words that
+      are longer than `n` letters, in capitals. Then print the first two of
+      them, with `islice`.
+
+      ```text
+      ['PYTHON', 'GENERATOR']
+      ```
+    starter: |
+      from itertools import islice
+
+      words = ["a", "python", "is", "generator", "fun", "iterator"]
+      # Your generator, then the print.
+    solution: |
+      from itertools import islice
+
+      words = ["a", "python", "is", "generator", "fun", "iterator"]
+
+
+      def long_words(words, n):
+          for word in words:
+              if len(word) > n:
+                  yield word.upper()
+
+
+      print(list(islice(long_words(words, 3), 2)))
+    after: >-
+      The third long word, `iterator`, is never made into capitals: `islice`
+      stopped asking after two. That is what lazy means.
+    checks:
+      - expr: "callable(ns.get('long_words')) and type(long_words([], 1)).__name__ == 'generator' and list(long_words(['ab', 'abcd', 'xyz'], 2)) == ['ABCD', 'XYZ']"
+        pass: "long_words yields the long words in capitals"
+        hint: "`if len(word) > n: yield word.upper()`."
+      - expr: "lines == [\"['PYTHON', 'GENERATOR']\"]"
+        pass: "It prints the first two"
+        hint: "`list(islice(long_words(words, 3), 2))`."
+    hints:
+      - "Loop over the words, and test their length."
+      - "`yield word.upper()`."
+      - "Take two with `islice(long_words(words, 3), 2)`."

@@ -1,0 +1,1069 @@
+id: project-library
+order: 56
+title: "Project: a library manager"
+summary: Build a tool of four files - models, storage, tests and the app - the way real Python projects are split.
+minutes: 75
+outcomes: [A1, A6, A8, A9]
+
+objectives:
+  - id: O1
+    text: Split a program into files with one job each, and import from one file into another
+  - id: O2
+    text: Write a class that keeps the rules of its data, and refuses a bad change with an error
+  - id: O3
+    text: Save objects to a JSON file and load them back as objects
+  - id: O4
+    text: Test a project of several files with a test file that catches real bugs
+
+steps:
+  # 1. USE THE FINISHED TOOL -------------------------------------------------
+  - id: play
+    type: demo
+    visual: none
+    sealed: true
+    objective: O1
+    title: Use the finished tool
+    intro: |
+      This project builds a **library manager**: a tool that knows the books
+      of a small library, and who has borrowed which. Press **Play** and type
+      commands, like `list`, `find austen`, `borrow dune`, `return emma`,
+      `add Walden; Henry Thoreau; 1854` and `quit`.
+
+      Try something wrong too: borrow a book twice, or add a book with no
+      year. The code is hidden. You will write it yourself, in **four
+      files**.
+    files:
+      library.json: &start |
+        [
+          {"title": "Dune", "author": "Frank Herbert", "year": 1965, "borrowed": false},
+          {"title": "Emma", "author": "Jane Austen", "year": 1815, "borrowed": true},
+          {"title": "Ulysses", "author": "James Joyce", "year": 1922, "borrowed": false}
+        ]
+    code: |
+      import json
+      from dataclasses import asdict, dataclass
+      from pathlib import Path
+
+
+      @dataclass
+      class Book:
+          title: str
+          author: str
+          year: int
+          borrowed: bool = False
+
+
+      class Library:
+          def __init__(self):
+              self.books = {}
+
+          def add(self, book):
+              if book.title.lower() in self.books:
+                  raise ValueError(f"{book.title} is already in the library.")
+              self.books[book.title.lower()] = book
+
+          def get(self, title):
+              if title.lower() not in self.books:
+                  raise ValueError(f"No book called {title}.")
+              return self.books[title.lower()]
+
+          def borrow(self, title):
+              book = self.get(title)
+              if book.borrowed:
+                  raise ValueError(f"{book.title} is already borrowed.")
+              book.borrowed = True
+              return book
+
+          def give_back(self, title):
+              book = self.get(title)
+              if not book.borrowed:
+                  raise ValueError(f"{book.title} was not borrowed.")
+              book.borrowed = False
+              return book
+
+          @property
+          def available(self):
+              return [book for book in self if not book.borrowed]
+
+          def find(self, text):
+              text = text.lower()
+              return [book for book in self if text in book.title.lower() or text in book.author.lower()]
+
+          def __len__(self):
+              return len(self.books)
+
+          def __iter__(self):
+              return iter(sorted(self.books.values(), key=lambda book: book.title))
+
+
+      def save(library, name):
+          Path(name).write_text(json.dumps([asdict(book) for book in library], indent=2))
+
+
+      def load(name):
+          library = Library()
+          if Path(name).exists():
+              for item in json.loads(Path(name).read_text()):
+                  library.add(Book(**item))
+          return library
+
+
+      def show(book):
+          line = f"{book.title} - {book.author}, {book.year}"
+          return line + " (borrowed)" if book.borrowed else line
+
+
+      def parse_book(text):
+          parts = [part.strip() for part in text.split(";")]
+          if len(parts) != 3 or not all(parts) or not parts[2].isdigit():
+              raise ValueError("Use: add title; author; year")
+          return Book(parts[0], parts[1], int(parts[2]))
+
+
+      library = load("library.json")
+      print(f"{len(library)} books, {len(library.available)} here.")
+      while True:
+          word, _, rest = input("> ").strip().partition(" ")
+          word, rest = word.lower(), rest.strip()
+          try:
+              if word == "quit":
+                  save(library, "library.json")
+                  print("Saved.")
+                  break
+              elif word == "list":
+                  for book in library:
+                      print(show(book))
+              elif word == "find":
+                  found = library.find(rest)
+                  for book in found:
+                      print(show(book))
+                  if not found:
+                      print("Nothing found.")
+              elif word == "add":
+                  book = parse_book(rest)
+                  library.add(book)
+                  print(f"Added {book.title}.")
+              elif word == "borrow":
+                  print(f"You borrowed {library.borrow(rest).title}.")
+              elif word == "return":
+                  print(f"Thank you for {library.give_back(rest).title}.")
+              else:
+                  print("Commands: list, find, add, borrow, return, quit")
+          except ValueError as error:
+              print(error)
+    experiments:
+      - text: "Type `list` to see all books."
+        expr: "any(l.endswith('(borrowed)') for l in lines)"
+      - text: "Borrow a book: `borrow dune`. Then try to borrow it again."
+        expr: "any(l.startswith('You borrowed') for l in lines) and any(l.endswith('is already borrowed.') for l in lines)"
+      - text: "Add a book: `add Walden; Henry Thoreau; 1854`."
+        expr: "any(l.startswith('Added ') for l in lines)"
+      - text: "Type `quit`, and look at `library.json` under the output."
+        expr: "'Saved.' in lines"
+
+  # 2. THE PLAN --------------------------------------------------------------
+  - id: plan
+    type: theory
+    objective: O1
+    title: Four files, one job each
+    body: |
+      ## Why more than one file?
+
+      The finished tool has about 130 lines. In one file you scroll a lot,
+      and a change to the screen can break the saving. Real projects split
+      the code by **job**: each file does one thing, and you can read, test
+      and change it alone.
+
+      ```text
+      main.py           the app: commands, input and print
+        │ imports
+      storage.py        save and load the JSON file
+        │ imports
+      models.py         Book and Library: the data and its rules
+
+      test_library.py   tests: they import models.py and storage.py
+      ```
+
+      ## Import from your own file
+
+      A file next to `main.py` is a **module**. `from models import Book`
+      runs `models.py` once and gives you its name `Book`. Write the name of
+      the file without `.py`. The arrows go one way: `models.py` imports
+      nothing of yours, so you can test it alone.
+
+      In this project the editor has a **tab for each file**. Run always
+      starts `main.py`, like `python main.py` on your computer.
+
+      ## The plan
+
+      Steps 1 to 4 build the files from the bottom: models, then storage.
+      Steps 5 and 6 give you only the description, like a real task: the
+      tests, then the app.
+    keys:
+      - code: "from models import Book"
+        means: "Runs `models.py` once, then gives you `Book`."
+      - code: "import storage"
+        means: "The whole module: `storage.load(...)`."
+      - code: "models.py"
+        means: "No `input` and no `print`: only data and rules."
+      - code: "test_library.py"
+        means: "pytest finds the files whose names start with `test_`."
+
+  # 3. STEP 1 ----------------------------------------------------------------
+  - id: m1-book
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O1
+    title: "Step 1: a Book in models.py"
+    prompt: |
+      **In the tab `models.py`**, write a dataclass `Book` with the fields
+      `title` (a `str`), `author` (a `str`), `year` (an `int`) and
+      `borrowed` (a `bool`, `False` if you do not give it).
+
+      **In `main.py`**, import `Book` from `models.py`, make the book
+      `Dune` by `Frank Herbert` from `1965`, and print it.
+
+      ```text
+      Book(title='Dune', author='Frank Herbert', year=1965, borrowed=False)
+      ```
+    starter: |
+      # Import Book from models.py, make a book and print it.
+    modules:
+      models.py:
+        starter: |
+          from dataclasses import dataclass
+
+        solution: &models1 |
+          from dataclasses import dataclass
+
+
+          @dataclass
+          class Book:
+              title: str
+              author: str
+              year: int
+              borrowed: bool = False
+    solution: |
+      from models import Book
+
+      book = Book("Dune", "Frank Herbert", 1965)
+      print(book)
+    after: >-
+      `main.py` does not know how a Book is made, only that it exists. That
+      line between the files is what lets you change one file without
+      breaking the other.
+    checks:
+      - expr: "'models.py' in files and hasattr(__import__('models'), 'Book') and list(getattr(__import__('models').Book, '__dataclass_fields__', {})) == ['title', 'author', 'year', 'borrowed']"
+        pass: "`models.py` has a dataclass `Book` with title, author, year and borrowed"
+        hint: "`@dataclass` above `class Book:`, and the four fields with their types."
+      - expr: "hasattr(__import__('models'), 'Book') and raises(__import__('models').Book, 'a', 'b', 1) is None and __import__('models').Book('a', 'b', 1).borrowed is False"
+        pass: "`borrowed` is `False` when you do not give it"
+        hint: "`borrowed: bool = False`. A field with a default comes last."
+      - expr: "err is None and 'class Book' not in src and 'models' in src"
+        pass: "`main.py` imports `Book` from `models.py`; it does not make its own"
+        hint: "`from models import Book` at the top of `main.py`."
+        misconceptions:
+          - when: "'class Book' in src"
+            say: "`Book` belongs in `models.py`. In `main.py`, write only `from models import Book`."
+          - when: "err == 'ModuleNotFoundError'"
+            say: "Python looks for the file `models.py`. Write the name without `.py`: `from models import Book`."
+      - expr: "lines[-1:] == [\"Book(title='Dune', author='Frank Herbert', year=1965, borrowed=False)\"]"
+        pass: "It prints the book"
+        hint: "`print(Book(\"Dune\", \"Frank Herbert\", 1965))`."
+    hints:
+      - "Click the tab `models.py` above the editor to write the class there."
+      - "In `models.py`: `@dataclass`, `class Book:`, then `title: str`, `author: str`, `year: int`, `borrowed: bool = False`."
+      - "In `main.py`: `from models import Book`, then `print(Book(\"Dune\", \"Frank Herbert\", 1965))`."
+
+  # 4. STEP 2 ----------------------------------------------------------------
+  - id: m2-library
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 2: a Library that keeps its rules"
+    prompt: |
+      **Add the class `Library` to `models.py`.** It keeps the books in a
+      dictionary, by title in small letters, so `dune` finds `Dune`.
+
+      - `add(book)` adds a book. A title that is already there (in any
+        capitals) raises `ValueError(f"{book.title} is already in the library.")`.
+      - `get(title)` gives back the book with that title, in any capitals,
+        or raises `ValueError(f"No book called {title}.")`.
+      - `len(library)` is the number of books, and `for book in library`
+        gives the books sorted by title.
+
+      **In `main.py`**, make a library, add `Emma` (`Jane Austen`, `1815`)
+      and `Dune`, then print how many books there are and each title.
+
+      ```text
+      2
+      Dune
+      Emma
+      ```
+    modules:
+      models.py:
+        solution: &models2 |
+          from dataclasses import dataclass
+
+
+          @dataclass
+          class Book:
+              title: str
+              author: str
+              year: int
+              borrowed: bool = False
+
+
+          class Library:
+              def __init__(self):
+                  self.books = {}
+
+              def add(self, book):
+                  if book.title.lower() in self.books:
+                      raise ValueError(f"{book.title} is already in the library.")
+                  self.books[book.title.lower()] = book
+
+              def get(self, title):
+                  if title.lower() not in self.books:
+                      raise ValueError(f"No book called {title}.")
+                  return self.books[title.lower()]
+
+              def __len__(self):
+                  return len(self.books)
+
+              def __iter__(self):
+                  return iter(sorted(self.books.values(), key=lambda book: book.title))
+    solution: |
+      from models import Book, Library
+
+      library = Library()
+      library.add(Book("Emma", "Jane Austen", 1815))
+      library.add(Book("Dune", "Frank Herbert", 1965))
+      print(len(library))
+      for book in library:
+          print(book.title)
+    after: >-
+      The rules live in the class, so no part of the program can add a book
+      twice, not even by mistake. A rule in one place is a rule everywhere.
+    checks:
+      - &c-iter
+        expr: |-
+          (lambda m: (lambda lib: (lib.add(m.Book('Emma', 'Jane Austen', 1815)), lib.add(m.Book('Dune', 'Frank Herbert', 1965)), len(lib), [b.title for b in lib])[2:])(m.Library()))(__import__('models')) == (2, ['Dune', 'Emma'])
+        pass: "`add`, `len` and `for` work; the books come sorted by title"
+        hint: "`__len__` gives `len(self.books)`; `__iter__` gives `iter(sorted(...))` with `key=lambda book: book.title`."
+        misconceptions:
+          - when: "not hasattr(__import__('models'), 'Library')"
+            say: "There is no class `Library` in `models.py` yet. Write it in that tab, under `Book`."
+      - &c-twice
+        expr: |-
+          (lambda m: (lambda lib: (lib.add(m.Book('Dune', 'Frank Herbert', 1965)), raises(lib.add, m.Book('DUNE', 'X', 2000)), len(lib))[1:])(m.Library()))(__import__('models')) == ('ValueError', 1)
+        pass: "A title that is already there, in any capitals, raises `ValueError`"
+        hint: "Keep the books by `book.title.lower()`, and check `in self.books` first."
+      - &c-get
+        expr: |-
+          (lambda m: (lambda lib: (lib.add(m.Book('Dune', 'Frank Herbert', 1965)), lib.get('dUNE').title, raises(lib.get, 'Emma'))[1:])(m.Library()))(__import__('models')) == ('Dune', 'ValueError')
+        pass: "`get` finds a title in any capitals, and raises `ValueError` for a missing one"
+        hint: "`if title.lower() not in self.books: raise ValueError(...)`."
+        misconceptions:
+          - when: "hasattr(__import__('models'), 'Library') and raises(__import__('models').Library().get, 'x') == 'KeyError'"
+            say: "A missing title gives a `KeyError` from the dictionary. Check first, and raise `ValueError(f\"No book called {title}.\")`."
+      - expr: "err is None and lines == ['2', 'Dune', 'Emma']"
+        pass: "`main.py` prints the number of books and the titles"
+        hint: "`print(len(library))`, then `for book in library: print(book.title)`."
+    hints:
+      - "`def __init__(self): self.books = {}`."
+      - "`add`: `if book.title.lower() in self.books: raise ValueError(...)`, else `self.books[book.title.lower()] = book`."
+      - "`__iter__`: `return iter(sorted(self.books.values(), key=lambda book: book.title))`."
+
+  # 5. STEP 3 ----------------------------------------------------------------
+  - id: m3-borrow
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O2
+    title: "Step 3: borrow, return and find"
+    prompt: |
+      **Add four parts to `Library`:**
+
+      - `borrow(title)`: marks the book as borrowed and gives it back. A
+        book that is already borrowed raises
+        `ValueError(f"{book.title} is already borrowed.")`.
+      - `give_back(title)`: the other way. A book that is not borrowed
+        raises `ValueError(f"{book.title} was not borrowed.")`.
+      - `available`: a **property**, the list of books that are not
+        borrowed, sorted by title.
+      - `find(text)`: the list of books whose title or author has `text` in
+        it, in any capitals, sorted by title.
+
+      Use `get` in `borrow` and `give_back`: a missing title then raises its
+      error by itself. **In `main.py`**, add `Ulysses` (`James Joyce`,
+      `1922`) too, borrow `emma`, and print the titles of the available
+      books and of `find("ja")`.
+
+      ```text
+      ['Dune', 'Ulysses']
+      ['Emma', 'Ulysses']
+      ```
+    modules:
+      models.py:
+        solution: &models3 |
+          from dataclasses import dataclass
+
+
+          @dataclass
+          class Book:
+              title: str
+              author: str
+              year: int
+              borrowed: bool = False
+
+
+          class Library:
+              def __init__(self):
+                  self.books = {}
+
+              def add(self, book):
+                  if book.title.lower() in self.books:
+                      raise ValueError(f"{book.title} is already in the library.")
+                  self.books[book.title.lower()] = book
+
+              def get(self, title):
+                  if title.lower() not in self.books:
+                      raise ValueError(f"No book called {title}.")
+                  return self.books[title.lower()]
+
+              def borrow(self, title):
+                  book = self.get(title)
+                  if book.borrowed:
+                      raise ValueError(f"{book.title} is already borrowed.")
+                  book.borrowed = True
+                  return book
+
+              def give_back(self, title):
+                  book = self.get(title)
+                  if not book.borrowed:
+                      raise ValueError(f"{book.title} was not borrowed.")
+                  book.borrowed = False
+                  return book
+
+              @property
+              def available(self):
+                  return [book for book in self if not book.borrowed]
+
+              def find(self, text):
+                  text = text.lower()
+                  return [book for book in self if text in book.title.lower() or text in book.author.lower()]
+
+              def __len__(self):
+                  return len(self.books)
+
+              def __iter__(self):
+                  return iter(sorted(self.books.values(), key=lambda book: book.title))
+    solution: |
+      from models import Book, Library
+
+      library = Library()
+      library.add(Book("Emma", "Jane Austen", 1815))
+      library.add(Book("Dune", "Frank Herbert", 1965))
+      library.add(Book("Ulysses", "James Joyce", 1922))
+      library.borrow("emma")
+      print([book.title for book in library.available])
+      print([book.title for book in library.find("ja")])
+    after: >-
+      `available` and `find` loop over `self`: they use `__iter__`, so they
+      come sorted for free. Small methods that use each other keep a class
+      short.
+    checks:
+      - *c-iter
+      - *c-twice
+      - &c-borrow
+        expr: |-
+          (lambda m: (lambda lib: (lib.add(m.Book('Dune', 'Frank Herbert', 1965)), lib.borrow('dune').borrowed, raises(lib.borrow, 'Dune'), lib.give_back('DUNE').borrowed, raises(lib.give_back, 'Dune'), raises(lib.borrow, 'Nope'))[1:])(m.Library()))(__import__('models')) == (True, 'ValueError', False, 'ValueError', 'ValueError')
+        pass: "`borrow` and `give_back` change the book, and refuse a wrong change"
+        hint: "`book = self.get(title)`, check `book.borrowed`, then change it and `return book`."
+        misconceptions:
+          - when: "hasattr(__import__('models'), 'Library') and hasattr(__import__('models').Library, 'borrow') and (lambda m: (lambda lib: (lib.add(m.Book('A', 'B', 1)), lib.borrow('A'), raises(lib.borrow, 'A'))[2])(m.Library()))(__import__('models')) is None"
+            say: "A book can be borrowed twice. Check `if book.borrowed:` first, and raise the error."
+      - &c-available
+        expr: |-
+          (lambda m: isinstance(m.Library.__dict__.get('available'), property) and (lambda lib: (lib.add(m.Book('Emma', 'Jane Austen', 1815)), lib.add(m.Book('Dune', 'Frank Herbert', 1965)), lib.add(m.Book('Cosmos', 'Carl Sagan', 1980)), lib.borrow('Dune'), [b.title for b in lib.available])[-1])(m.Library()) == ['Cosmos', 'Emma'])(__import__('models'))
+        pass: "`available` is a property with the books that are not borrowed, sorted"
+        hint: "`@property` above `def available(self):`, then `[book for book in self if not book.borrowed]`."
+        misconceptions:
+          - when: "callable(getattr(__import__('models').Library, 'available', None)) and not isinstance(__import__('models').Library.__dict__.get('available'), property)"
+            say: "`available` is a method now, so `library.available` gives the method itself. Put `@property` above it."
+      - &c-find
+        expr: |-
+          (lambda m: (lambda lib: (lib.add(m.Book('Ulysses', 'James Joyce', 1922)), lib.add(m.Book('Emma', 'Jane Austen', 1815)), lib.add(m.Book('Dune', 'Frank Herbert', 1965)), [b.title for b in lib.find('JA')], [b.title for b in lib.find('dune')], lib.find('zzz'))[3:])(m.Library()))(__import__('models')) == (['Emma', 'Ulysses'], ['Dune'], [])
+        pass: "`find` looks in titles and authors, in any capitals, sorted"
+        hint: "`text = text.lower()`, then test `text in book.title.lower() or text in book.author.lower()`."
+        misconceptions:
+          - when: "hasattr(__import__('models').Library, 'find') and (lambda m: (lambda lib: (lib.add(m.Book('Emma', 'Jane Austen', 1815)), [b.title for b in lib.find('Jane')], [b.title for b in lib.find('JANE')])[1:])(m.Library()))(__import__('models')) == (['Emma'], [])"
+            say: "The search cares about capitals: `JANE` finds nothing. Compare `text.lower()` with `author.lower()` and `title.lower()`."
+      - expr: "err is None and lines == [\"['Dune', 'Ulysses']\", \"['Emma', 'Ulysses']\"]"
+        pass: "`main.py` prints the available books and the books found"
+        hint: "`print([book.title for book in library.available])`, then the same for `library.find(\"ja\")`."
+    hints:
+      - "`borrow`: `book = self.get(title)`, `if book.borrowed: raise ValueError(...)`, `book.borrowed = True`, `return book`."
+      - "`available` with `@property`: `return [book for book in self if not book.borrowed]`."
+      - "`find`: `text = text.lower()` first, then a list comprehension over `self`."
+
+  # 6. STEP 4 ----------------------------------------------------------------
+  - id: m4-storage
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O3
+    title: "Step 4: storage.py"
+    prompt: |
+      **In the new tab `storage.py`**, write two functions:
+
+      - `save(library, name)` writes the books to the file as a JSON list
+        of dictionaries, with `indent=2`. `asdict(book)` from `dataclasses`
+        makes the dictionary of one book.
+      - `load(name)` gives back a new `Library` with the books of the file.
+        Without the file, the library is empty. `Book(**item)` makes a
+        book from one dictionary.
+
+      **`main.py` is now the start of the app:** load `library.json`, and
+      print how many books there are, and how many are here.
+
+      ```text
+      3 books, 2 here.
+      ```
+    files:
+      library.json: *start
+    modules:
+      storage.py:
+        starter: |
+          import json
+          from dataclasses import asdict
+          from pathlib import Path
+
+          from models import Book, Library
+
+        solution: &storage |
+          import json
+          from dataclasses import asdict
+          from pathlib import Path
+
+          from models import Book, Library
+
+
+          def save(library, name):
+              data = [asdict(book) for book in library]
+              Path(name).write_text(json.dumps(data, indent=2))
+
+
+          def load(name):
+              library = Library()
+              path = Path(name)
+              if not path.exists():
+                  return library
+              for item in json.loads(path.read_text()):
+                  library.add(Book(**item))
+              return library
+    solution: &main4 |
+      from storage import load
+
+      library = load("library.json")
+      print(f"{len(library)} books, {len(library.available)} here.")
+    after: >-
+      Only `storage.py` knows that the data is JSON. To keep it in a
+      database one day, you change one file, and `main.py` never knows.
+    cases:
+      - {}
+      - label: "there is no `library.json` yet"
+        files: {}
+    checks:
+      - &c-round
+        expr: |-
+          (lambda m, s: (lambda lib: (lib.add(m.Book('Dune', 'Frank Herbert', 1965)), lib.add(m.Book('Emma', 'Jane Austen', 1815)), lib.borrow('Emma'), s.save(lib, 'check.json'), [(b.title, b.author, b.year, b.borrowed) for b in s.load('check.json')])[-1])(m.Library()))(__import__('models'), __import__('storage')) == [('Dune', 'Frank Herbert', 1965, False), ('Emma', 'Jane Austen', 1815, True)]
+        pass: "Saved books load again the same, also `borrowed`"
+        hint: "`save`: `[asdict(book) for book in library]`; `load`: `library.add(Book(**item))` for each item."
+        misconceptions:
+          - when: "'storage.py' in files and not hasattr(__import__('storage'), 'load')"
+            say: "`storage.py` has no function `load` yet. Write `save` and `load` in that tab."
+          - when: "err == 'TypeError' and 'JSON serializable' in out"
+            say: "`json` cannot write a `Book`. Make a dictionary of each book first: `asdict(book)`."
+      - expr: |-
+          (lambda m, s: (lambda lib: (lib.add(m.Book('Dune', 'Frank Herbert', 1965)), s.save(lib, 'look.json'), open('look.json').read())[-1])(m.Library()))(__import__('models'), __import__('storage')).lstrip().startswith('[') and '\n' in open('look.json').read().strip() and __import__('json').loads(open('look.json').read())[0].get('title') == 'Dune'
+        pass: "The file is a JSON list of dictionaries, easy to read"
+        hint: "`Path(name).write_text(json.dumps(data, indent=2))`."
+      - expr: "isinstance(__import__('storage').load('nothing.json'), __import__('models').Library) and len(__import__('storage').load('nothing.json')) == 0"
+        pass: "Without the file, `load` gives an empty `Library`"
+        hint: "`if not path.exists(): return library` before you read."
+        misconceptions:
+          - when: "raises(__import__('storage').load, 'nothing.json') == 'FileNotFoundError'"
+            say: "Without the file, `read_text` fails. Check `path.exists()` first."
+      - expr: |-
+          err is None and lines[-1:] == [(lambda d: '{} books, {} here.'.format(len(d), sum(1 for b in d if not b['borrowed'])))(__import__('json').loads(start_files['library.json']) if 'library.json' in start_files else [])]
+        pass: "`main.py` loads the file and says how many books there are and how many are here"
+        hint: "`library = load(\"library.json\")`, then `print(f\"{len(library)} books, {len(library.available)} here.\")`."
+    hints:
+      - "`save`: `data = [asdict(book) for book in library]`, then `Path(name).write_text(json.dumps(data, indent=2))`."
+      - "`load`: `library = Library()`; if the file exists, `for item in json.loads(...)`: `library.add(Book(**item))`."
+      - "`main.py`: `from storage import load` is the only import it needs now."
+
+  # 7. STEP 5 ----------------------------------------------------------------
+  - id: m5-tests
+    type: exercise
+    fade: milestone
+    carry: true
+    pytest: true
+    objective: O4
+    title: "Step 5: tests that catch bugs"
+    prompt: |
+      **This step gives you only the task**, like a real one. In the new
+      tab `test_library.py`, write **at least six tests** for `models.py`
+      and `storage.py`.
+
+      The check puts **seven different bugs** into your files, one at a
+      time, and runs your tests each time. Every bug must make at least
+      one test fail. The bugs are in these places:
+
+      - adding a book that is already there,
+      - finding by author, and in any capitals,
+      - borrowing a book twice,
+      - what `available` gives back,
+      - a title that does not exist,
+      - saving and loading a borrowed book.
+
+      A function that makes a small library, used by every test, saves
+      many lines. Run shows the pytest report under the output.
+    files:
+      library.json: *start
+    modules:
+      test_library.py:
+        starter: |
+          import pytest
+
+          from models import Book, Library
+          from storage import load, save
+
+
+          # Your tests here.
+        solution: |
+          import pytest
+
+          from models import Book, Library
+          from storage import load, save
+
+
+          def small_library():
+              library = Library()
+              library.add(Book("Dune", "Frank Herbert", 1965))
+              library.add(Book("Emma", "Jane Austen", 1815))
+              return library
+
+
+          def test_add_the_same_title_twice():
+              library = small_library()
+              with pytest.raises(ValueError):
+                  library.add(Book("dune", "Someone", 2000))
+              assert len(library) == 2
+
+
+          def test_find_by_author_in_capitals():
+              assert [book.title for book in small_library().find("AUSTEN")] == ["Emma"]
+
+
+          def test_borrow_twice():
+              library = small_library()
+              library.borrow("Dune")
+              with pytest.raises(ValueError):
+                  library.borrow("dune")
+
+
+          def test_available_after_borrow_and_return():
+              library = small_library()
+              library.borrow("Emma")
+              assert [book.title for book in library.available] == ["Dune"]
+              library.give_back("Emma")
+              assert [book.title for book in library.available] == ["Dune", "Emma"]
+
+
+          def test_unknown_title():
+              with pytest.raises(ValueError):
+                  small_library().borrow("Ulysses")
+
+
+          def test_save_and_load():
+              library = small_library()
+              library.borrow("Emma")
+              save(library, "test.json")
+              again = load("test.json")
+              assert [(book.title, book.borrowed) for book in again] == [("Dune", False), ("Emma", True)]
+    solution: *main4
+    after: >-
+      Seven bugs, six tests: each test is about one rule, and its name says
+      which. When a test fails one day, the name tells you where to look.
+    checks:
+      - expr: "len([r for r in test_results if r.get('file') == 'test_library.py']) >= 6 and tests_pass()"
+        pass: "At least six tests in `test_library.py`, all passing with your code"
+        hint: "Functions whose names start with `test_`, in the tab `test_library.py`."
+        misconceptions:
+          - when: "len([r for r in test_results if r.get('file') == 'test_library.py']) > 0 and not tests_pass()"
+            say: "A test fails with your own code. Read the report under the output: is the test wrong, or the code?"
+          - when: "len([r for r in test_results if r.get('file') != 'test_library.py']) > 0"
+            say: "The tests are in `main.py`. Move them to the tab `test_library.py`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          _real_add = Library.add
+          def _add(self, book):
+              try:
+                  _real_add(self, book)
+              except ValueError:
+                  pass
+          Library.add = _add
+          ''', 'models')
+        pass: "Your tests catch a second book with the same title"
+        hint: "Add a title that is already there, and expect a `ValueError` with `pytest.raises`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          _real_find = Library.find
+          def _find(self, text):
+              return [book for book in _real_find(self, text) if text.lower() in book.title.lower()]
+          Library.find = _find
+          ''', 'models')
+        pass: "Your tests catch a search that looks only at titles"
+        hint: "Find a book by its author."
+      - expr: |-
+          tests_pass() and fails_with('''
+          _real_find = Library.find
+          def _find(self, text):
+              return [book for book in _real_find(self, text) if text in book.title or text in book.author]
+          Library.find = _find
+          ''', 'models')
+        pass: "Your tests catch a search that cares about capitals"
+        hint: "Search with other capitals than in the book, like `AUSTEN`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def _borrow(self, title):
+              book = self.get(title)
+              book.borrowed = True
+              return book
+          Library.borrow = _borrow
+          ''', 'models')
+        pass: "Your tests catch a book that can be borrowed twice"
+        hint: "Borrow the same book two times; the second time must raise `ValueError`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          Library.available = property(lambda self: list(self))
+          ''', 'models')
+        pass: "Your tests catch `available` with the borrowed books in it"
+        hint: "Borrow a book, then check the titles in `library.available`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def _get(self, title):
+              for book in self:
+                  if book.title.lower() == title.lower():
+                      return book
+              return None
+          Library.get = _get
+          ''', 'models')
+        pass: "Your tests catch a missing title that gives no error"
+        hint: "Borrow a title that is not in the library, and expect a `ValueError`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          _real_load = load
+          def load(name):
+              library = _real_load(name)
+              for book in library:
+                  book.borrowed = False
+              return library
+          ''', 'storage')
+        pass: "Your tests catch a borrowed book that is not borrowed after loading"
+        hint: "Borrow a book, `save`, `load` the file again, and check `borrowed`."
+    hints:
+      - "First `def small_library():` with two books, and `return library`."
+      - "One test for each rule: `with pytest.raises(ValueError):` for each refused change."
+      - "Save and load: borrow one book, `save(library, \"test.json\")`, `load(\"test.json\")`, and compare titles and `borrowed`."
+
+  # 8. STEP 6 ----------------------------------------------------------------
+  - id: m6-app
+    type: exercise
+    fade: milestone
+    carry: true
+    objective: O1
+    title: "Step 6: the app"
+    prompt: |
+      **This step gives you only the task.** Finish `main.py`: after the
+      line with the number of books, repeat `input("> ")`. The first word
+      is the command (any capitals); the rest of the line is its text.
+
+      | Command | What it does |
+      | --- | --- |
+      | `list` | Each book, sorted: `Dune - Frank Herbert, 1965`, and ` (borrowed)` at the end of a borrowed one. |
+      | `find TEXT` | The books found, in the same form, or `Nothing found.` |
+      | `add TITLE; AUTHOR; YEAR` | Adds the book and prints `Added Walden.` Text in another form prints `Use: add title; author; year` |
+      | `borrow TITLE` | Prints `You borrowed Dune.` |
+      | `return TITLE` | Prints `Thank you for Dune.` |
+      | `quit` | Saves to `library.json`, prints `Saved.` and stops. |
+      | anything else | Prints `Commands: list, find, add, borrow, return, quit` |
+
+      When the library refuses a change, print its message (like
+      `Dune is already borrowed.`) and go on. Keep `models.py` and
+      `storage.py` as they are: the app only uses them.
+    files:
+      library.json: *start
+    solution: |
+      from models import Book
+      from storage import load, save
+
+      FILE = "library.json"
+      HELP = "Commands: list, find, add, borrow, return, quit"
+
+
+      def show(book):
+          line = f"{book.title} - {book.author}, {book.year}"
+          return line + " (borrowed)" if book.borrowed else line
+
+
+      def parse_book(text):
+          parts = [part.strip() for part in text.split(";")]
+          if len(parts) != 3 or not all(parts) or not parts[2].isdigit():
+              raise ValueError("Use: add title; author; year")
+          return Book(parts[0], parts[1], int(parts[2]))
+
+
+      library = load(FILE)
+      print(f"{len(library)} books, {len(library.available)} here.")
+
+      while True:
+          word, _, rest = input("> ").strip().partition(" ")
+          word = word.lower()
+          rest = rest.strip()
+          try:
+              if word == "quit":
+                  save(library, FILE)
+                  print("Saved.")
+                  break
+              elif word == "list":
+                  for book in library:
+                      print(show(book))
+              elif word == "find":
+                  found = library.find(rest)
+                  for book in found:
+                      print(show(book))
+                  if not found:
+                      print("Nothing found.")
+              elif word == "add":
+                  book = parse_book(rest)
+                  library.add(book)
+                  print(f"Added {book.title}.")
+              elif word == "borrow":
+                  print(f"You borrowed {library.borrow(rest).title}.")
+              elif word == "return":
+                  print(f"Thank you for {library.give_back(rest).title}.")
+              else:
+                  print(HELP)
+          except ValueError as error:
+              print(error)
+    after: >-
+      The whole app is a loop that reads, calls one method and prints. All
+      the rules are in `models.py`, tested by `test_library.py`. This is the
+      shape of most real tools, from small scripts to big programs.
+    cases:
+      - {}
+      - label: "the user types `list`, then `quit`"
+        stdin: ["list", "quit"]
+      - label: "the user borrows `dune` two times, returns `Emma` and quits"
+        stdin: ["borrow dune", "borrow Dune", "return Emma", "quit"]
+      - label: "the user adds `Walden`, adds `Dune` again, types `add Hamlet`, searches and quits"
+        stdin: ["add Walden; Henry Thoreau; 1854", "add Dune; Someone; 2000", "add Hamlet", "find WALDEN", "find zzz", "quit"]
+      - label: "there is no `library.json`; the user borrows `Dune`, types `dance`, then `QUIT`"
+        files: {}
+        stdin: ["borrow Dune", "dance", "QUIT"]
+    checks:
+      - *c-borrow
+      - *c-round
+      - expr: "err is None and asked == len(inputs)"
+        pass: "The app reads commands until `quit`, and asks for nothing more"
+        hint: "`while True:` and `break` after `quit`."
+        misconceptions:
+          - when: "err == 'EOFError' or (err is None and asked > len(inputs))"
+            say: "The app does not stop. After `quit`, end the loop with `break`."
+          - when: "err == 'ValueError'"
+            say: "A refused change stops the app. Put the commands in `try:`, and `print(error)` in `except ValueError as error:`."
+      - expr: "inputs != ['list', 'quit'] or (lambda want: [l for l in lines if l in want] == want)(['Dune - Frank Herbert, 1965', 'Emma - Jane Austen, 1815 (borrowed)', 'Ulysses - James Joyce, 1922', 'Saved.'])"
+        pass: "`list` shows each book in the right form, sorted"
+        hint: "`f\"{book.title} - {book.author}, {book.year}\"`, and `\" (borrowed)\"` at the end of a borrowed book."
+      - expr: "inputs != ['borrow dune', 'borrow Dune', 'return Emma', 'quit'] or ((lambda want: [l for l in lines if l in want] == want)(['You borrowed Dune.', 'Dune is already borrowed.', 'Thank you for Emma.', 'Saved.']) and [b['borrowed'] for b in __import__('json').loads(files['library.json'])] == [True, False, False])"
+        pass: "`borrow` and `return` work, a refused change prints its message, and `quit` saves"
+        hint: "`print(f\"You borrowed {library.borrow(rest).title}.\")`, and `except ValueError as error: print(error)`."
+      - expr: "inputs[:1] != ['add Walden; Henry Thoreau; 1854'] or ((lambda want: [l for l in lines if l in want] == want)(['Added Walden.', 'Dune is already in the library.', 'Use: add title; author; year', 'Walden - Henry Thoreau, 1854', 'Nothing found.', 'Saved.']) and len(__import__('json').loads(files['library.json'])) == 4)"
+        pass: "`add` and `find` work, and bad `add` text prints how to use it"
+        hint: "Split the text at `;` and `strip` each part. Wrong parts: `raise ValueError(\"Use: add title; author; year\")`."
+        misconceptions:
+          - when: "inputs[:1] == ['add Walden; Henry Thoreau; 1854'] and 'Use: add title; author; year' not in lines and 'Added Walden.' in lines"
+            say: "`add Hamlet` has no author and no year. Check that there are 3 parts and that the year is a number, else raise `ValueError(\"Use: add title; author; year\")`."
+      - expr: "inputs[:1] != ['borrow Dune'] or ((lambda want: [l for l in lines if l in want] == want)(['0 books, 0 here.', 'No book called Dune.', 'Commands: list, find, add, borrow, return, quit', 'Saved.']) and __import__('json').loads(files['library.json']) == [])"
+        pass: "Without a file the app starts empty; unknown commands show the list of commands; `QUIT` works"
+        hint: "Clean the command with `.lower()`, and print the commands in the last `else`."
+      - expr: "syntax('ClassDef') == 0 and not uses('json')"
+        pass: "`main.py` uses `models.py` and `storage.py`; it does not do their work again"
+        hint: "Use `load`, `save` and the methods of `Library`; no `json` and no class in `main.py`."
+    hints:
+      - "`word, _, rest = input(\"> \").strip().partition(\" \")` splits the first word from the rest."
+      - "All commands go inside one `try:`, with `except ValueError as error: print(error)` after them."
+      - "Write two small functions in `main.py`: `show(book)` gives the line of a book; `parse_book(text)` makes a Book or raises the `Use:` error."
+
+  # 9. LOOK BACK -------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Look back at your work
+    items:
+      - kind: mcq
+        id: q-where-rule
+        objective: O2
+        prompt: "Why is the rule \"no book twice\" in `Library.add`, and not in the `add` command of `main.py`?"
+        options:
+          - text: "In the class, every part of the program meets the rule, also `load` and the tests"
+            correct: true
+            why: "A rule in one place holds everywhere. A rule in the app holds only for one command."
+          - text: "`main.py` cannot raise errors"
+            why: "Any file can raise errors."
+          - text: "It makes no difference"
+            why: "`load` adds books too, without the command."
+      - kind: mcq
+        id: q-import-name
+        objective: O1
+        prompt: "`main.py` has `from models import Book`. What does Python look for?"
+        options:
+          - text: "A file `models.py`, first in the folder of `main.py`"
+            correct: true
+            why: "The folder of the program comes first, then the standard library."
+          - text: "A function called `models`"
+            why: "`models` is the name of a module: the file `models.py`."
+          - text: "A file `Book.py`"
+            why: "`Book` is a name inside `models.py`."
+      - kind: mcq
+        id: q-which-file
+        objective: O3
+        prompt: "One day the library should keep its books in a database, not in JSON. Which files change?"
+        options:
+          - text: "Only `storage.py`, and the test of saving and loading"
+            correct: true
+            why: "Only `storage.py` knows how the data is kept."
+          - text: "All four"
+            why: "`models.py` and `main.py` do not know about JSON."
+          - text: "Only `main.py`"
+            why: "`main.py` only calls `load` and `save`."
+      - kind: predict
+        id: q-asdict
+        objective: O3
+        code: |
+          from dataclasses import asdict, dataclass
+
+          @dataclass
+          class Book:
+              title: str
+              year: int
+
+          data = asdict(Book("Dune", 1965))
+          print(data)
+          print(Book(**data) == Book("Dune", 1965))
+        explain: "`asdict` makes a dictionary of the fields. `**data` gives each key as a named argument, so the same book comes back, and dataclasses compare their fields."
+      - kind: mcq
+        id: q-bugs
+        objective: O4
+        prompt: "Your tests pass. Why did the check also put bugs into your code?"
+        options:
+          - text: "Tests that pass with a bug do not protect you; each bug must make a test fail"
+            correct: true
+            why: "A test is good when it fails for a real mistake."
+          - text: "To make your code slower"
+            why: "The bugs are put in only for the check, then taken out."
+          - text: "Because pytest needs bugs to run"
+            why: "pytest runs with or without bugs."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 6
+
+review:
+  - kind: mcq
+    id: r-module
+    objective: O1
+    prompt: "What is a module in Python?"
+    options:
+      - text: "A `.py` file that another file can import"
+        correct: true
+        why: "Your own `models.py` is a module, like `json` or `random`."
+      - text: "A class with many methods"
+        why: "A class lives inside a module."
+      - text: "A folder of programs"
+        why: "A folder of modules is a package."
+  - kind: mcq
+    id: r-direction
+    objective: O1
+    prompt: "In a good project, which file imports nothing of yours?"
+    options:
+      - text: "`models.py`: the data and its rules"
+        correct: true
+        why: "So you can test it alone, and every other file can use it."
+      - text: "`main.py`"
+        why: "`main.py` imports the others to make the app."
+      - text: "The test file"
+        why: "The tests import what they test."
+  - kind: predict
+    id: r-property
+    objective: O2
+    code: |
+      class Shelf:
+          def __init__(self):
+              self.books = ["Dune", "Emma"]
+
+          @property
+          def count(self):
+              return len(self.books)
+
+      shelf = Shelf()
+      shelf.books.append("Ulysses")
+      print(shelf.count)
+    explain: "A property is computed each time you read it, so it sees the third book. You read it without `()`."
+  - kind: predict
+    id: r-iter
+    objective: O2
+    code: |
+      class Shelf:
+          def __init__(self):
+              self.books = ["Emma", "Dune"]
+
+          def __iter__(self):
+              return iter(sorted(self.books))
+
+      for book in Shelf():
+          print(book)
+    explain: "`for` asks the object for an iterator with `__iter__`, and this one gives the titles sorted."
+  - kind: mcq
+    id: r-json-object
+    objective: O3
+    prompt: "Why does `json.dumps(book)` fail for a dataclass `Book`?"
+    options:
+      - text: "`json` knows lists, dictionaries, texts, numbers, booleans and None, not your classes"
+        correct: true
+        why: "Make a dictionary first with `asdict(book)`."
+      - text: "Dataclasses cannot be saved at all"
+        why: "They can, as dictionaries."
+      - text: "The book is too big"
+        why: "Size is not the problem: the type is."
+  - kind: mcq
+    id: r-test-file
+    objective: O4
+    prompt: "How does pytest find your tests in a project?"
+    options:
+      - text: "Files named `test_*.py`, and in them the functions named `test_...`"
+        correct: true
+        why: "That is why the file is `test_library.py`."
+      - text: "Every function in every file"
+        why: "Only the functions whose names start with `test`."
+      - text: "Only the functions in `main.py`"
+        why: "pytest looks for test files, not for `main.py`."

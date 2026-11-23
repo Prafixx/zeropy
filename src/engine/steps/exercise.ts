@@ -79,7 +79,9 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
     },
   });
   baseButton.hidden = !step.base;
-  const bench = createWorkbench({ code: own ?? step.starter, onRun, tall: step.carry, files: step.files, sources: ownSources });
+  // A command-line program: case 1 runs with the words the learner types.
+  const argv = cases.some((c) => c.argv) ? (cases[0].argv ?? []) : undefined;
+  const bench = createWorkbench({ code: own ?? step.starter, onRun, tall: step.carry, files: step.files, sources: ownSources, argv });
   // A Raspberry Pi program: the board plays the run. An input on it runs the
   // code again from that moment (it is not one more attempt).
   const board = step.board
@@ -165,7 +167,9 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
       runPython({
         code,
         cases: cases.map((c, i) =>
-          i === 0 ? { ...c, stdin, seed, gpio: board ? { ...c.gpio, events: [...(c.gpio?.events ?? []), ...board.inputs()] } : c.gpio } : c,
+          i === 0
+            ? { ...c, stdin, seed, argv: bench.getArgv() ?? c.argv, gpio: board ? { ...c.gpio, events: [...(c.gpio?.events ?? []), ...board.inputs()] } : c.gpio }
+            : c,
         ),
         pytest: step.pytest,
         checks: step.checks.map((c) => ({ expr: c.expr, misconceptions: c.misconceptions })),
@@ -178,6 +182,7 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
     if (board) board.play(result.gpio, result.stdout, from);
     else bench.setOutput(result.stdout);
     bench.setFiles(result.files);
+    bench.setExitCode(result.exitCode);
     bench.setWindow(result.gui);
     bench.setCharts(result.plot);
     bench.setServer(result.server);

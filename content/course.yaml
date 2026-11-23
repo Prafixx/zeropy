@@ -61,6 +61,7 @@ modules:
     lessons:
       - { id: files, title: Files and paths }
       - { id: json, title: JSON }
+      - { id: bytes-and-binary, title: Bytes and binary files }
       - { id: exceptions, title: Exceptions }
       - { id: csv-and-comprehensions, title: CSV and comprehensions }
       - { id: generators, title: Iterators and generators }
@@ -73,6 +74,7 @@ modules:
     lessons:
       - { id: local-setup, title: Install Python and an editor }
       - { id: venv-and-pip, title: Packages with venv and pip }
+      - { id: command-line-tools, title: Command-line tools }
       - { id: git, title: Git }
       - { id: web-apis, title: Web APIs }
       - { id: project-weather-tool, title: "Project: weather tool", kind: project }
@@ -88,6 +90,7 @@ modules:
       - { id: special-methods, title: Properties and special methods }
       - { id: exceptions-in-depth, title: Exceptions in depth }
       - { id: pytest, title: Tests with pytest }
+      - { id: pytest-2, title: "Better tests: parametrize and fixtures" }
       - { id: debugging-2, title: The debugger }
       - { id: ai-assistant, title: Working with an AI assistant }
       - { id: project-library, title: "Project: a library manager" }

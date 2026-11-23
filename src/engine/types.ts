@@ -161,6 +161,8 @@ export interface Case {
   stdin?: string[];
   /** Makes random numbers repeat for this case. */
   seed?: number;
+  /** The words after the program name: `python main.py report --top 3` is ["report", "--top", "3"]. */
+  argv?: string[];
   /** Files in the folder before the run: {"notes.txt": "..."}. */
   files?: Record<string, string>;
   /** Answers of the pretend web for `requests` (see harness.py). */
@@ -259,6 +261,8 @@ export interface DemoStep extends StepBase {
   web?: Web;
   /** Run the test functions after the program, like pytest, and print the report. */
   pytest?: boolean;
+  /** A command-line program: the words after `python main.py`, which the learner can change. */
+  argv?: string[];
   experiments: { text: string; expr: string }[];
   /**
    * Questions about how the code works. The registry turns them into an
@@ -667,6 +671,8 @@ export interface RunResult {
   checks: CheckResult[];
   /** The text files in the folder after the run (first case). */
   files?: Record<string, string>;
+  /** The code of sys.exit() in the first case; 0 when the program just ends. */
+  exitCode?: number;
   /** A program that used gpiozero: its devices and timeline (first case). */
   gpio?: GpioRun | null;
   /** A program that used matplotlib.pyplot: its figures (first case). */

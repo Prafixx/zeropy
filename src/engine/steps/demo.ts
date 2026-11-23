@@ -183,6 +183,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
     sealed: step.sealed,
     runLabel: step.sealed ? 'Play' : undefined,
     files: step.files,
+    argv: step.argv,
     onEdit: () => options.onEdit?.(bench.getCode()),
   });
   // A Raspberry Pi program: the board plays the run; an input runs it again from that moment.
@@ -377,6 +378,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
     );
     bench.setOutput(result.stdout);
     bench.setFiles(result.files);
+    bench.setExitCode(result.exitCode);
     bench.setWindow(result.gui);
     bench.setCharts(result.plot);
     bench.setServer(result.server);
@@ -391,7 +393,7 @@ export function renderDemo(step: DemoStep, ctx: StepContext, options: DemoOption
       runPython({
         code,
         trace: hasStage,
-        cases: [{ stdin, seed, files: step.files, web: step.web, gpio: board ? { events: board.inputs() } : undefined }],
+        cases: [{ stdin, seed, argv: bench.getArgv(), files: step.files, web: step.web, gpio: board ? { events: board.inputs() } : undefined }],
         pytest: step.pytest,
         checks: step.experiments.map((e) => ({ expr: e.expr })),
       }),

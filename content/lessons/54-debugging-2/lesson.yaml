@@ -1,0 +1,595 @@
+id: debugging-2
+order: 54
+title: The debugger
+summary: Stop a program in the middle, look at every variable, and walk through it line by line, into calls and out again. Then do it in VS Code.
+minutes: 40
+outcomes: [A1]
+
+objectives:
+  - id: O1
+    text: Stop a program with a breakpoint, and read its variables there
+  - id: O2
+    text: Walk through a program with Step over, Step into and Step out, and read the call stack
+  - id: O3
+    text: Find a bug by comparing what a variable is with what it should be
+  - id: O4
+    text: Use the debugger of VS Code on your own computer
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: why
+    type: theory
+    objective: O1
+    title: Stop the program and look
+    body: |
+      With `print` you see a few values, after the program ran. A
+      **debugger** stops the program in the middle, and shows **every**
+      variable at that moment. Then you move on, one line at a time.
+
+      - A **breakpoint** is a line where the program will stop. Click the
+        line number to set one: a red dot appears.
+      - When the program stops on a line, that line has **not run yet**.
+
+      | Button | Key | What it does |
+      | --- | --- | --- |
+      | Continue | F5 | Run to the next breakpoint |
+      | Step over | F10 | Run this line, and stop on the next one |
+      | Step into | F11 | Go into the function that this line calls |
+      | Step out | Shift+F11 | Finish this call, and stop where it was called |
+
+      These are the buttons and keys of the debugger of VS Code. This page
+      has a small copy of it, so you can practise here first.
+    keys:
+      - code: "breakpoint"
+        means: "A red dot on a line: the program stops before it runs."
+      - code: "F10"
+        means: "Step over: one line, also a whole function call."
+      - code: "F11"
+        means: "Step into: go inside the function that is called."
+
+  # 2. DEBUGGER --------------------------------------------------------------
+  - id: first
+    type: debugger
+    objective: O1
+    title: Your first breakpoint
+    prompt: |
+      This program adds up prices. **Click the number 4** to set a
+      breakpoint, and press **Continue**. Read the variables, press
+      **Continue** again, and so on.
+    code: |
+      prices = [3, 5, 2, 7]
+      total = 0
+      for price in prices:
+          total = total + price
+      print("Total:", total)
+    tasks:
+      - do: "At the first stop on line 4, what is `total`?"
+        line: 4
+        hit: 1
+        name: total
+      - do: "At the third stop on line 4, what is `price`?"
+        line: 4
+        hit: 3
+        name: price
+      - do: "At that third stop, what is `total`?"
+        line: 4
+        hit: 3
+        name: total
+      - do: "Stop on line 5, before the `print` runs. (Tip: Step over, or a second breakpoint.)"
+        line: 5
+    hints:
+      - "Click the line number 4 on the left of the code: a red dot appears. Then press Continue."
+      - "The line where the program stops has not run yet. At the first stop, nothing was added."
+      - "Count the stops: each Continue stops on line 4 once more, with the next `price`."
+    after: >-
+      The values that you read are the values **before** line 4 runs. That
+      is why `total` was 0 at the first stop: the first price was not added
+      yet.
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: into
+    type: theory
+    objective: O2
+    title: Into calls, and out again
+    body: |
+      When the line calls a function of your program:
+
+      - **Step over** runs the whole call, and stops on the next line.
+      - **Step into** goes into the function, and stops on its first line.
+      - **Step out** runs the rest of the call, and stops back in the code
+        that called it.
+
+      The **call stack** shows where you are: the current function on top,
+      and under it the code that called it. `<module>` is the program
+      itself. The **Variables** panel shows the locals of the current call
+      first, then the globals.
+
+      Use Step over for lines that you trust, and Step into for a function
+      that you suspect.
+    keys:
+      - code: "Call stack"
+        means: "The calls that run now. The top one is where you are."
+      - code: "Locals"
+        means: "The names of the current call: its parameters and variables."
+      - code: "Step out"
+        means: "Back to the caller, with the rest of the call done."
+
+  # 4. DEBUGGER --------------------------------------------------------------
+  - id: calls
+    type: debugger
+    objective: O2
+    title: Inside the calls
+    prompt: |
+      `report` calls `average`. Start with **Step over** (F10), then use
+      **Step into** (F11) on a line with a call. Watch the call stack.
+    code: |
+      def average(numbers):
+          total = sum(numbers)
+          count = len(numbers)
+          return total / count
+
+      def report(name, numbers):
+          mean = average(numbers)
+          print(f"{name}: {mean}")
+
+      report("Ana", [4, 8, 9])
+      report("Ben", [5, 5])
+    tasks:
+      - do: "Step into `report`, and then into `average`, so that `average()` is on top of the call stack."
+        frame: average
+      - do: "When `average` runs for Ben, what is `total` on line 4?"
+        line: 4
+        hit: 2
+        name: total
+      - do: "When the program stops on line 8 for Ana, what is `mean`?"
+        line: 8
+        hit: 1
+        name: mean
+    hints:
+      - "Step over (F10) stops on line 10. Step into (F11) there goes into `report`. On line 7, Step into again goes into `average`."
+      - "For Ben, `average` runs the second time. A breakpoint on line 4 and two Continues get you there."
+      - "Step out (Shift+F11) inside `average` finishes it: you are back in `report`, with `mean` set."
+    after: >-
+      The call stack showed `average()` on top of `report()`: one call
+      inside the other. Each call has its own `total` and its own `numbers`.
+
+  # 5. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O2
+    title: Which button?
+    items:
+      - kind: mcq
+        id: d-trust
+        objective: O2
+        prompt: "The program stops on `data = load_file(name)`. You trust `load_file`. Which button?"
+        options:
+          - text: "Step over (F10)"
+            correct: true
+            why: "It runs the whole call, and stops on the next line."
+          - text: "Step into (F11)"
+            why: "That walks through `load_file`, line by line. You trust it, so skip it."
+          - text: "Restart"
+            why: "That starts again from the beginning."
+      - kind: mcq
+        id: d-suspect
+        objective: O2
+        prompt: "`total = add_tax(price)` gives a wrong total. The program stops on that line. Which button shows why?"
+        options:
+          - text: "Step into (F11), to walk through `add_tax`"
+            correct: true
+            why: "The wrong value comes from inside the function."
+          - text: "Step over (F10)"
+            why: "Then you see the wrong result, but not where it comes from."
+          - text: "Continue (F5)"
+            why: "That runs on to the next breakpoint."
+      - kind: mcq
+        id: d-out
+        objective: O2
+        prompt: "You are deep inside a long function, and the rest of it is fine. How do you get back to the caller?"
+        options:
+          - text: "Step out (Shift+F11)"
+            correct: true
+            why: "It finishes the call and stops in the code that called it."
+          - text: "Step over many times"
+            why: "That works, but Step out does it at once."
+          - text: "Close the editor"
+            why: "That stops the debugger."
+      - kind: mcq
+        id: d-not-yet
+        objective: O1
+        prompt: "The program stops on `count = count + 1`. The Variables panel shows `count` = 3. What is `count` after this line?"
+        options:
+          - text: "4: the line has not run yet"
+            correct: true
+            why: "The debugger stops before the line runs."
+          - text: "3: the line already ran"
+            why: "The marked line is the next one to run."
+          - text: "You cannot know"
+            why: "The line adds 1 to 3."
+      - kind: mcq
+        id: d-loop
+        objective: O1
+        prompt: "A breakpoint is inside a loop that runs 10 times. How often does Continue stop there?"
+        options:
+          - text: "10 times, once in each round"
+            correct: true
+            why: "The program stops each time it reaches the line."
+          - text: "Once"
+            why: "A breakpoint stops every time, not only the first."
+          - text: "Never: loops are skipped"
+            why: "Lines in loops are lines like any other."
+
+  # 6. DEBUGGER --------------------------------------------------------------
+  - id: hunt
+    type: debugger
+    objective: O3
+    title: Catch the bug in the act
+    prompt: |
+      `best_score` should give the highest score, 12. It gives 9. **Set a
+      breakpoint on line 4**, and watch `best` in each round.
+    code: |
+      def best_score(scores):
+          for score in scores:
+              best = 0
+              if score > best:
+                  best = score
+          return best
+
+      print(best_score([7, 12, 9]))
+    tasks:
+      - do: "In the first round, `best` became 7. At the second stop on line 4, what is `best`?"
+        line: 4
+        hit: 2
+        name: best
+      - do: "At the third stop on line 4, what is `score`?"
+        line: 4
+        hit: 3
+        name: score
+    hints:
+      - "Click the number 4, then press Continue. Each Continue is one round of the loop."
+      - "Look at `best` at the second stop. It should still be 7."
+      - "Which line runs just before line 4, in every round?"
+    after: >-
+      `best` was 0 again in every round: line 3 resets it, because it is
+      inside the loop. The debugger showed the bug at the moment it
+      happened. Now fix it.
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-best
+    type: exercise
+    fade: debug
+    objective: O3
+    title: Fix best_score
+    prompt: |
+      You saw the bug: line 3 sets `best = 0` in every round. **Fix
+      `best_score`**, so that it prints 12.
+    starter: |
+      def best_score(scores):
+          for score in scores:
+              best = 0
+              if score > best:
+                  best = score
+          return best
+
+      print(best_score([7, 12, 9]))
+    solution: |
+      def best_score(scores):
+          best = 0
+          for score in scores:
+              if score > best:
+                  best = score
+          return best
+
+      print(best_score([7, 12, 9]))
+    after: >-
+      The start value belongs before the loop: it is set once, and each
+      round only compares with it.
+    checks:
+      - expr: "err is None and lines == ['12']"
+        pass: "It prints 12"
+        hint: "Move `best = 0` above the `for` line, one level out."
+        misconceptions:
+          - when: "err == 'UnboundLocalError'"
+            say: "`best` has no value before the loop now. Keep `best = 0`, but put it before the `for` line."
+      - expr: "callable(ns.get('best_score')) and best_score([3, 9, 4]) == 9 and best_score([5]) == 5 and best_score([2, 8, 8, 1]) == 8"
+        pass: "`best_score` finds the highest score of any list"
+        hint: "`best = 0` once, before the loop."
+    hints:
+      - "Which line must run only once?"
+      - "`best = 0` sets the start value. It belongs before the loop."
+      - "Move line 3 up, above `for score in scores:`, and indent it one level less."
+
+  # 8. LOCAL -----------------------------------------------------------------
+  - id: check-shop
+    type: local
+    objective: O4
+    title: The debugger of VS Code
+    prompt: |
+      **Find and fix a bug with the debugger of VS Code.**
+
+      1. In `python-course`, make a folder `shop` and a file `shop.py`
+         with this code. It prints 4.5, but the right total is 13.5.
+         ```python
+         def total(cart):
+             result = 0
+             for name, price, count in cart:
+                 result = price * count
+             return result
+
+         cart = [
+             ("tea", 2.5, 2),
+             ("cake", 4.0, 1),
+             ("milk", 1.5, 3),
+         ]
+         print("Total:", total(cart))
+         ```
+      2. Click **left of the line number 4**: a red dot.
+      3. Press **F5** (or **Run → Start Debugging**). If VS Code asks,
+         choose **Python Debugger**, then **Python File**.
+      4. The program stops on line 4. Look at **Variables**, press
+         **Continue** (F5), and watch `result`. Fix the bug.
+      5. Download `check.py` **again** into `shop`, and run the check.
+    task: shop
+    needs: 7
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      shop_exists: "yes"
+      shop_ok: "yes"
+      total_right: "3/3"
+    checks:
+      - expr: "report.get('shop_exists') == 'yes' and report.get('shop_ok') == 'yes'"
+        pass: "`shop.py` is there, and it runs"
+        hint: "Save `shop.py` in `shop`, next to `check.py`."
+        misconceptions:
+          - when: "report.get('shop_exists') == 'no'"
+            say: "There is no `shop.py` in this folder. Save it in `shop`, and run the check there."
+          - when: "report.get('shop_ok') == 'no'"
+            say: "`shop.py` stops with an error. Run it, and read the last line of the message."
+      - expr: "report.get('total_right') == '3/3'"
+        pass: "`total` gives the right sum for every cart"
+        hint: "In the loop, `result` must grow: add to it, do not replace it."
+        misconceptions:
+          - when: "report.get('total_right') in ('2/3', '1/3', '0/3')"
+            say: "`total` is still wrong for a cart with more than one item. Stop on line 4 twice: does `result` keep the value of the round before?"
+    hints:
+      - "If F5 does nothing, check that the Python extension is installed, and that `shop.py` is the open file."
+      - "At the second stop on line 4, `result` is 5.0, from the tea. After line 4 runs, it is 4.0: the tea is gone."
+      - "`result = result + price * count` keeps what was there."
+    after: >-
+      You used a real debugger on your own computer. Next time a program
+      gives a strange result, stop it where the value goes wrong instead of
+      guessing.
+
+  # 9. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-breakpoint
+        objective: O1
+        prompt: "What does a breakpoint do?"
+        options:
+          - text: "The program stops before that line runs, and you can look at all variables"
+            correct: true
+            why: "Then you move on with Continue or the Step buttons."
+          - text: "It removes the line from the program"
+            why: "The line still runs. The program only waits before it."
+          - text: "It prints the line"
+            why: "It prints nothing. The Variables panel shows the values."
+      - kind: mcq
+        id: q-stack
+        objective: O2
+        prompt: "The call stack shows `average()` above `report()` above `<module>`. Where are you?"
+        options:
+          - text: "In `average`, which `report` called, which the program called"
+            correct: true
+            why: "The top of the stack is the current call."
+          - text: "In `report`"
+            why: "`report` waits for `average` to give back its value."
+          - text: "At the start of the program"
+            why: "`<module>` is at the bottom: two calls run on top of it."
+      - kind: mcq
+        id: q-over-into
+        objective: O2
+        prompt: "What is the difference between Step over and Step into, on a line that calls a function?"
+        options:
+          - text: "Step over runs the whole call; Step into stops inside the function"
+            correct: true
+            why: "Use Step into for a function you suspect."
+          - text: "Step over skips the line, so it does not run"
+            why: "Every line runs. Step over only does not stop inside the call."
+          - text: "There is no difference"
+            why: "They differ only on lines with a call of your code."
+      - kind: mcq
+        id: q-find
+        objective: O3
+        prompt: "How do you find a bug with the debugger?"
+        options:
+          - text: "Stop where the value should be right, and compare it with what you expected"
+            correct: true
+            why: "The first place where a value is wrong is near the bug."
+          - text: "Step through every line of the program, always"
+            why: "That works for small programs, but breakpoints near the problem are faster."
+          - text: "Let the debugger fix it"
+            why: "The debugger shows. You decide and fix."
+      - kind: mcq
+        id: q-vscode
+        objective: O4
+        prompt: "How do you start the debugger in VS Code?"
+        options:
+          - text: "Set a breakpoint, then press F5 (Run → Start Debugging)"
+            correct: true
+            why: "The first time, choose Python Debugger and Python File."
+          - text: "Type `debug` in the terminal"
+            why: "The debugger starts from VS Code itself."
+          - text: "Add `print(debug)` to the code"
+            why: "That is a NameError, not the debugger."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-f10
+    objective: O2
+    prompt: "Which key is Step over in VS Code?"
+    options:
+      - text: "F10"
+        correct: true
+        why: "F11 is Step into, Shift+F11 Step out, F5 Continue."
+      - text: "F5"
+        why: "F5 starts the debugger, or continues to the next breakpoint."
+      - text: "F1"
+        why: "F1 opens the command list of VS Code."
+  - kind: mcq
+    id: r-not-run
+    objective: O1
+    prompt: "The debugger stops on line 7. Has line 7 run?"
+    options:
+      - text: "Not yet: it is the next line to run"
+        correct: true
+        why: "The Variables panel shows the values before line 7."
+      - text: "Yes, just now"
+        why: "The debugger stops before the line."
+      - text: "Half of it"
+        why: "A line runs as a whole, after the stop."
+  - kind: mcq
+    id: r-into
+    objective: O2
+    prompt: "You are on `x = convert(text)` and want to see what happens inside `convert`. Which button?"
+    options:
+      - text: "Step into"
+        correct: true
+        why: "It stops on the first line of `convert`."
+      - text: "Step out"
+        why: "That leaves the current call."
+      - text: "Step over"
+        why: "That runs `convert` without stopping in it."
+  - kind: mcq
+    id: r-locals
+    objective: O2
+    prompt: "Inside a call of `average(numbers)`, what does the Variables panel show first?"
+    options:
+      - text: "The locals of this call, like `numbers`"
+        correct: true
+        why: "Then the globals of the program."
+      - text: "Only the globals"
+        why: "Locals come first: the names of the current call."
+      - text: "The lines of the function"
+        why: "The code shows the lines. The panel shows values."
+  - kind: mcq
+    id: r-reset
+    objective: O3
+    prompt: "In a loop, a variable is 0 again in every round, but it should grow. Where do you look first?"
+    options:
+      - text: "For a line inside the loop that sets it to 0"
+        correct: true
+        why: "A start value belongs before the loop."
+      - text: "At the print at the end"
+        why: "The print only shows the result."
+      - text: "At the name of the variable"
+        why: "The name is fine. A line resets the value."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-reset
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A total that forgets
+    prompt: |
+      `total_minutes` should add all practice sessions. It gives only the
+      last one. Compare what `total` **is** in each round with what it
+      **should be** (print it, or use the debugger of the lesson), and fix
+      it.
+
+      ```text
+      85
+      ```
+    starter: |
+      def total_minutes(sessions):
+          for minutes in sessions:
+              total = 0
+              total = total + minutes
+          return total
+
+
+      print(total_minutes([30, 15, 40]))
+    solution: |
+      def total_minutes(sessions):
+          total = 0
+          for minutes in sessions:
+              total = total + minutes
+          return total
+
+
+      print(total_minutes([30, 15, 40]))
+    after: >-
+      In round two, `total` should be 45 but is 15: it was set back to 0.
+      A start value belongs before the loop.
+    checks:
+      - expr: "callable(ns.get('total_minutes')) and total_minutes([1, 2, 3]) == 6 and total_minutes([10]) == 10 and total_minutes([]) == 0"
+        pass: "It adds all sessions, also none"
+        hint: "Move `total = 0` above the `for`."
+      - expr: "lines == ['85']"
+        pass: "It prints 85"
+        hint: "Keep the print."
+    hints:
+      - "Print `total` inside the loop. What is it in round two?"
+      - "`total = 0` runs in every round."
+      - "Put `total = 0` before the loop."
+  - id: x-last-missing
+    type: exercise
+    fade: debug
+    objective: O3
+    title: The biggest is never the last
+    prompt: |
+      `biggest` gives 9 for `[3, 9, 4, 12]`. Watch `i` in each round:
+      which places does the loop visit? **Fix it**:
+
+      ```text
+      12
+      ```
+    starter: |
+      def biggest(nums):
+          best = nums[0]
+          for i in range(1, len(nums) - 1):
+              if nums[i] > best:
+                  best = nums[i]
+          return best
+
+
+      print(biggest([3, 9, 4, 12]))
+    solution: |
+      def biggest(nums):
+          best = nums[0]
+          for i in range(1, len(nums)):
+              if nums[i] > best:
+                  best = nums[i]
+          return best
+
+
+      print(biggest([3, 9, 4, 12]))
+    after: >-
+      `i` went 1, 2: never 3, the last place. `range(1, len(nums))` stops
+      just before `len(nums)`, which is exactly the last place.
+    checks:
+      - expr: "callable(ns.get('biggest')) and biggest([1, 5]) == 5 and biggest([7]) == 7 and biggest([2, 8, 1]) == 8"
+        pass: "It finds the biggest, also at the end"
+        hint: "`range(1, len(nums))`."
+      - expr: "lines == ['12']"
+        pass: "It prints 12"
+        hint: "Keep the print."
+    hints:
+      - "Print `i` in the loop. Which values does it take?"
+      - "`range` stops before its stop value already."
+      - "`range(1, len(nums))`."

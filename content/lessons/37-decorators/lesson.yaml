@@ -1,0 +1,733 @@
+id: decorators
+order: 37
+title: Decorators and context managers
+summary: Add the same behaviour to many functions with one line - logging, counting, checking - and make your own `with` blocks that always clean up.
+minutes: 45
+outcomes: [A1, A3]
+
+objectives:
+  - id: O1
+    text: Explain a decorator - a function that takes a function and gives back a new one - and the @ line
+  - id: O2
+    text: Write a decorator that works for any function, with *args, **kwargs and functools.wraps
+  - id: O3
+    text: Explain what with guarantees, and write a context manager with contextlib.contextmanager
+  - id: O4
+    text: Choose a decorator or a context manager for a job that repeats around code
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: wrap
+    type: theory
+    objective: O1
+    title: A function around a function
+    body: |
+      You know that a function can take a function and make a new one (the
+      lesson "Functions as values"). A **decorator** does exactly that, to
+      add something before or after a function:
+
+      ```python
+      def shout(func):
+          def wrapper(name):
+              return func(name).upper()
+          return wrapper
+
+
+      def greet(name):
+          return f"hello, {name}"
+
+
+      greet = shout(greet)        # greet is now the wrapper
+      greet("ana")                # 'HELLO, ANA'
+      ```
+
+      Python has a short way to write `greet = shout(greet)`: put
+      `@shout` on the line above the `def`:
+
+      ```python
+      @shout
+      def greet(name):
+          return f"hello, {name}"
+      ```
+
+      You already used decorators: `@app.route(...)`, `@property`,
+      `@dataclass`.
+    keys:
+      - code: "@shout above def greet"
+        means: "The same as greet = shout(greet)."
+      - code: "def wrapper(...)"
+        means: "The new function, which calls the old one."
+      - code: "return wrapper"
+        means: "The decorator gives back the new function."
+
+  # 2. DEMO -----------------------------------------------------------------
+  - id: log-demo
+    type: demo
+    visual: none
+    objective: O2
+    title: A decorator for any function
+    intro: |
+      `log` works for every function: `*args` and `**kwargs` take any
+      arguments and pass them on. Press **Run**, then decorate your own
+      function.
+    code: |
+      import functools
+
+
+      def log(func):
+          @functools.wraps(func)
+          def wrapper(*args, **kwargs):
+              print(f"calling {func.__name__}{args}")
+              result = func(*args, **kwargs)
+              print(f"{func.__name__} gave {result!r}")
+              return result
+          return wrapper
+
+
+      @log
+      def add(a, b):
+          return a + b
+
+
+      @log
+      def greet(name, greeting="Hi"):
+          return f"{greeting}, {name}!"
+
+
+      add(2, 3)
+      greet("Bo", greeting="Hello")
+      print(add.__name__)
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and lines[-1] == 'add'"
+      - text: "Write your own function with `@log` above it, and call it."
+        expr: "err is None and src.count('@log') >= 3"
+      - text: "Remove the line `@functools.wraps(func)`. What does the last line print now?"
+        expr: "err is None and lines[-1] == 'wrapper'"
+    investigate:
+      - kind: mcq
+        id: i-args
+        prompt: "Why does the wrapper use `*args` and `**kwargs`?"
+        options:
+          - text: "So it takes any arguments, and passes them on to the real function"
+            correct: true
+            why: "Then one decorator fits functions with any parameters."
+          - text: "Because decorators must use stars"
+            why: "Only a wrapper for any function needs them."
+          - text: "To make the function faster"
+            why: "It is about the arguments, not speed."
+      - kind: mcq
+        id: i-wraps
+        prompt: "What does `@functools.wraps(func)` keep?"
+        options:
+          - text: "The name and the docstring of the real function"
+            correct: true
+            why: "Without it, every decorated function would be called `wrapper`, also in error messages and help()."
+          - text: "The result of the function"
+            why: "The result comes from `return result`."
+          - text: "A copy of the arguments"
+            why: "It copies the name and the docs."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-count
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Count the calls
+    prompt: |
+      **Replace the two `___`**: the wrapper adds 1 to `wrapper.calls`, and
+      gives back the result of the real function.
+
+      ```text
+      7
+      2
+      ```
+    starter: |
+      import functools
+
+
+      def count_calls(func):
+          @functools.wraps(func)
+          def wrapper(*args, **kwargs):
+              wrapper.calls = ___
+              return ___
+          wrapper.calls = 0
+          return wrapper
+
+
+      @count_calls
+      def add(a, b):
+          return a + b
+
+
+      add(1, 2)
+      print(add(3, 4))
+      print(add.calls)
+    solution: |
+      import functools
+
+
+      def count_calls(func):
+          @functools.wraps(func)
+          def wrapper(*args, **kwargs):
+              wrapper.calls = wrapper.calls + 1
+              return func(*args, **kwargs)
+          wrapper.calls = 0
+          return wrapper
+
+
+      @count_calls
+      def add(a, b):
+          return a + b
+
+
+      add(1, 2)
+      print(add(3, 4))
+      print(add.calls)
+    after: >-
+      A function is an object, so it can have attributes like `calls`. Each
+      decorated function gets its own wrapper, with its own count.
+    checks:
+      - expr: "callable(ns.get('count_calls')) and (lambda f: (f(2), f(3), f.calls))(count_calls(lambda x: x * 10)) == (20, 30, 2)"
+        pass: "It counts, and keeps the result"
+        hint: "`wrapper.calls = wrapper.calls + 1` and `return func(*args, **kwargs)`."
+        misconceptions:
+          - when: "callable(ns.get('count_calls')) and count_calls(lambda x: x * 10)(2) is None"
+            say: "The wrapper gives back None. Return the result: `return func(*args, **kwargs)`."
+      - expr: "callable(ns.get('count_calls')) and (lambda a, b: (a(), a(), b(), (a.calls, b.calls))[3])(count_calls(lambda: 1), count_calls(lambda: 2)) == (2, 1)"
+        pass: "Each function has its own count"
+        hint: "Keep `wrapper.calls = 0` inside `count_calls`."
+      - expr: "lines == ['7', '2']"
+        pass: "It prints 7 and 2"
+        hint: "Keep the lines at the end."
+    hints:
+      - "Add one to the count first."
+      - "`wrapper.calls = wrapper.calls + 1`."
+      - "Then `return func(*args, **kwargs)`."
+
+  # 4. EXERCISE: independent -------------------------------------------------
+  - id: ex-positive
+    type: exercise
+    fade: independent
+    objective: O2
+    title: A decorator that checks
+    prompt: |
+      **Write the decorator `positive`**: before it calls the function, it
+      checks that every argument is a number above 0. If not, it raises a
+      `ValueError`, and the function is not called.
+
+      ```text
+      12
+      ValueError: all values must be above 0
+      ```
+    starter: |
+      # Your decorator here.
+
+
+      @positive
+      def area(width, height):
+          return width * height
+
+
+      print(area(3, 4))
+      try:
+          area(3, -4)
+      except ValueError as error:
+          print("ValueError:", error)
+    solution: |
+      import functools
+
+
+      def positive(func):
+          @functools.wraps(func)
+          def wrapper(*args):
+              for value in args:
+                  if value <= 0:
+                      raise ValueError("all values must be above 0")
+              return func(*args)
+          return wrapper
+
+
+      @positive
+      def area(width, height):
+          return width * height
+
+
+      print(area(3, 4))
+      try:
+          area(3, -4)
+      except ValueError as error:
+          print("ValueError:", error)
+    after: >-
+      The check is written once, and any function gets it with one line.
+      That is the job of a decorator: the same thing around many functions.
+    checks:
+      - expr: "callable(ns.get('positive')) and positive(lambda a, b, c: a + b + c)(1, 2, 3) == 6 and raises(positive(lambda a: a), 0) == 'ValueError' and raises(positive(lambda a, b: a), 5, -1) == 'ValueError'"
+        pass: "It passes good values and refuses 0 and negatives"
+        hint: "Loop over `args` and `raise ValueError(...)` for a value `<= 0`."
+      - expr: "callable(ns.get('positive')) and (lambda calls: (raises(positive(lambda a: calls.append(a)), -1), calls)[1])([]) == []"
+        pass: "The function is not called for a bad value"
+        hint: "Check before you call `func`."
+      - expr: "err is None and lines == ['12', 'ValueError: all values must be above 0'] and area.__name__ == 'area'"
+        pass: "It prints 12 and the message, and area keeps its name"
+        hint: "`raise ValueError(\"all values must be above 0\")`, and `@functools.wraps(func)`."
+    hints:
+      - "A decorator takes `func`, and returns a `wrapper` that takes `*args`."
+      - "In the wrapper: check each value first; raise for `value <= 0`."
+      - "Then `return func(*args)`. Add `@functools.wraps(func)` to keep the name."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: with
+    type: theory
+    objective: O3
+    title: Blocks that always clean up
+    body: |
+      `with open(...) as f:` closes the file at the end of the block, **also
+      when an error happens inside**. An object that can do this is a
+      **context manager**. The easiest way to write one:
+
+      ```python
+      from contextlib import contextmanager
+
+
+      @contextmanager
+      def tag(name):
+          print(f"<{name}>")       # before the block
+          try:
+              yield                # the block runs here
+          finally:
+              print(f"</{name}>")  # after the block, always
+
+
+      with tag("p"):
+          print("text")
+      ```
+
+      It prints `<p>`, `text`, `</p>`. The `yield` marks the place of the
+      block. `finally` makes the last part run even when the block raises an
+      error, and the error still goes on to the caller.
+
+      Use a context manager for "set up, do the work, clean up" around a
+      block: open and close, start and stop a timer, lock and unlock, move
+      into a folder and back. Use a decorator for the same thing around a
+      whole function.
+    keys:
+      - code: "with cm():"
+        means: "Set up, run the block, clean up: always."
+      - code: "@contextmanager + yield"
+        means: "Write one from a generator: yield is the block."
+      - code: "try: yield / finally:"
+        means: "The cleanup runs also after an error."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-finally
+    type: exercise
+    fade: debug
+    objective: O3
+    title: A light that stays on
+    prompt: |
+      `light()` turns a lamp on for the block, and off after it. But when
+      the block raises an error, the lamp stays on. **Fix the context
+      manager**, so `off` is always printed.
+
+      ```text
+      on
+      working
+      off
+      on
+      off
+      caught: oops
+      ```
+    starter: |
+      from contextlib import contextmanager
+
+
+      @contextmanager
+      def light():
+          print("on")
+          yield
+          print("off")
+
+
+      with light():
+          print("working")
+
+      try:
+          with light():
+              raise RuntimeError("oops")
+      except RuntimeError as error:
+          print("caught:", error)
+    solution: |
+      from contextlib import contextmanager
+
+
+      @contextmanager
+      def light():
+          print("on")
+          try:
+              yield
+          finally:
+              print("off")
+
+
+      with light():
+          print("working")
+
+      try:
+          with light():
+              raise RuntimeError("oops")
+      except RuntimeError as error:
+          print("caught:", error)
+    after: >-
+      The error comes out of the `yield`. Without `finally`, the line after
+      it never runs. With it, cleanup is guaranteed, and the error still
+      reaches the caller.
+    checks:
+      - expr: "err is None and lines == ['on', 'working', 'off', 'on', 'off', 'caught: oops']"
+        pass: "off is printed, also after the error"
+        hint: "Put `yield` in a `try:`, and `print(\"off\")` in `finally:`."
+        misconceptions:
+          - when: "err is None and lines == ['on', 'working', 'off', 'on', 'off']"
+            say: "The error is swallowed: `except` without a raise hides it. Use `finally`, so the error goes on."
+    hints:
+      - "Where does the error come out of, inside `light`?"
+      - "The code after `yield` must run in every case."
+      - "`try:` around `yield`, and `finally: print(\"off\")`."
+
+  # 7. EXERCISE: independent -------------------------------------------------
+  - id: ex-indent
+    type: exercise
+    fade: independent
+    objective: O4
+    title: A context manager for indentation
+    prompt: |
+      **Write a context manager `indented()`** with `@contextmanager`: inside
+      its block, the function `say(text)` prints with 4 more spaces in
+      front. Blocks can be inside blocks. Use the list `level` (given) to
+      keep the depth.
+
+      ```text
+      Shopping
+          fruit
+              apple
+          bread
+      ```
+    given: |
+      level = [0]
+
+
+      def say(text):
+          print(" " * (4 * level[0]) + text)
+    starter: |
+      from contextlib import contextmanager
+
+      # level and say() exist. Your context manager here.
+
+
+      say("Shopping")
+      with indented():
+          say("fruit")
+          with indented():
+              say("apple")
+          say("bread")
+    solution: |
+      from contextlib import contextmanager
+
+
+      @contextmanager
+      def indented():
+          level[0] = level[0] + 1
+          try:
+              yield
+          finally:
+              level[0] = level[0] - 1
+
+
+      say("Shopping")
+      with indented():
+          say("fruit")
+          with indented():
+              say("apple")
+          say("bread")
+    after: >-
+      Set up (one level deeper), run the block, clean up (one level back):
+      also when the block fails. Nested `with` blocks stack up nicely.
+    checks:
+      - expr: "err is None and lines == ['Shopping', '    fruit', '        apple', '    bread']"
+        pass: "The levels go in and out"
+        hint: "Add 1 to `level[0]` before `yield`, and take it away after."
+      - expr: "callable(ns.get('indented')) and (lambda: (raises(lambda: exec('with indented():\\n    raise KeyError()', ns)), level[0])[1])() == 0"
+        pass: "The level comes back, also after an error"
+        hint: "Take the level back in `finally:`."
+    hints:
+      - "`@contextmanager` and `def indented():`."
+      - "Before `yield`: one level more. After it: one level less."
+      - "Put the step back in `finally:`, so an error cannot skip it."
+
+  # 8. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: predict
+        id: q-twice
+        objective: O1
+        code: |
+          def twice(func):
+              def wrapper():
+                  func()
+                  func()
+              return wrapper
+
+
+          @twice
+          def hello():
+              print("hi")
+
+
+          hello()
+        explain: "`hello` is now the wrapper, which calls the real hello two times."
+      - kind: mcq
+        id: q-at
+        objective: O1
+        prompt: "What does `@timer` above `def work():` mean?"
+        options:
+          - text: "`work = timer(work)`"
+            correct: true
+            why: "The decorator gets the function and gives back the new one."
+          - text: "`timer()` runs before every line of work"
+            why: "It wraps the whole function once."
+          - text: "`work()` is called at once"
+            why: "Nothing is called: the function is only wrapped."
+      - kind: mcq
+        id: q-finally
+        objective: O3
+        prompt: "In a `@contextmanager`, why put `yield` in `try:` with a `finally:`?"
+        options:
+          - text: "So the cleanup runs also when the block raises an error"
+            correct: true
+            why: "And the error still reaches the caller."
+          - text: "So no error ever reaches the caller"
+            why: "`finally` does not catch the error."
+          - text: "Python needs it for every generator"
+            why: "Only cleanup that must always run needs it."
+      - kind: mcq
+        id: q-choose
+        objective: O4
+        prompt: "You want to measure how long a few lines in the middle of a function take. Which tool fits?"
+        options:
+          - text: "A context manager: `with timer():` around those lines"
+            correct: true
+            why: "A decorator works on a whole function; a with block on any lines."
+          - text: "A decorator on the function"
+            why: "That measures the whole function."
+          - text: "A generator expression"
+            why: "That makes values, it does not wrap code."
+
+  # 9. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-decorator
+    objective: O1
+    prompt: "What is a decorator?"
+    options:
+      - text: "A function that takes a function and gives back a new function around it"
+        correct: true
+        why: "Written with @ above a def."
+      - text: "A class for HTML"
+        why: "It is about functions."
+      - text: "A comment above a function"
+        why: "It changes the function."
+  - kind: mcq
+    id: r-wraps
+    objective: O2
+    prompt: "What happens without `functools.wraps` in a decorator?"
+    options:
+      - text: "The decorated function is called `wrapper`, and loses its docstring"
+        correct: true
+        why: "wraps copies the name and docs of the real function."
+      - text: "The function stops working"
+        why: "It works; only the name and docs are lost."
+      - text: "The arguments are lost"
+        why: "`*args, **kwargs` pass them on."
+  - kind: mcq
+    id: r-return
+    objective: O2
+    prompt: "A wrapper calls `func(*args)` but has no return. What do callers get?"
+    options:
+      - text: "None"
+        correct: true
+        why: "The wrapper must `return func(*args, **kwargs)`."
+      - text: "The real result"
+        why: "Only if the wrapper returns it."
+      - text: "An error"
+        why: "No error: just None."
+  - kind: mcq
+    id: r-with
+    objective: O3
+    prompt: "What does `with open(\"a.txt\") as f:` promise?"
+    options:
+      - text: "The file is closed at the end of the block, also after an error"
+        correct: true
+        why: "That is what a context manager is for."
+      - text: "No error can happen in the block"
+        why: "Errors can happen; cleanup still runs."
+      - text: "The file is read at once"
+        why: "It is opened; you read it yourself."
+  - kind: mcq
+    id: r-yield-cm
+    objective: O3
+    prompt: "In a `@contextmanager` function, what is the `yield`?"
+    options:
+      - text: "The place where the with block runs"
+        correct: true
+        why: "Before it is the set-up, after it the cleanup."
+      - text: "The return value of the function"
+        why: "It marks where the block goes."
+      - text: "A pause of one second"
+        why: "It hands control to the block."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-cache
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Remember the answers
+    prompt: |
+      A slow function should not compute the same answer twice. **Replace
+      the two `___`**: the wrapper keeps each result in `cache`, by its
+      arguments, and computes only new ones.
+
+      ```text
+      computing 4
+      16
+      16
+      computing 5
+      25
+      ```
+    starter: |
+      def remember(func):
+          cache = {}
+
+          def wrapper(*args):
+              if args not in cache:
+                  cache[args] = ___
+              return ___
+          return wrapper
+
+
+      @remember
+      def square(n):
+          print("computing", n)
+          return n * n
+
+
+      print(square(4))
+      print(square(4))
+      print(square(5))
+    solution: |
+      def remember(func):
+          cache = {}
+
+          def wrapper(*args):
+              if args not in cache:
+                  cache[args] = func(*args)
+              return cache[args]
+          return wrapper
+
+
+      @remember
+      def square(n):
+          print("computing", n)
+          return n * n
+
+
+      print(square(4))
+      print(square(4))
+      print(square(5))
+    after: >-
+      `args` is a tuple, so it can be a dictionary key. Python has this
+      decorator ready made: `functools.cache`.
+    checks:
+      - expr: "err is None and lines == ['computing 4', '16', '16', 'computing 5', '25']"
+        pass: "Each answer is computed once"
+        hint: "`cache[args] = func(*args)` and `return cache[args]`."
+        misconceptions:
+          - when: "err is None and lines.count('computing 4') == 2"
+            say: "4 is computed twice: the wrapper does not use the cache. Return `cache[args]`."
+      - expr: "callable(ns.get('remember')) and (lambda calls: (lambda f: (f(2), f(2), f(3), len(calls)))(remember(lambda n: calls.append(n) or n)))([])[3] == 2"
+        pass: "It works for any function"
+        hint: "Keep the cache inside `remember`."
+    hints:
+      - "Store the real result: call `func`."
+      - "`cache[args] = func(*args)`."
+      - "Give back what is in the cache: `return cache[args]`."
+  - id: x-timer-cm
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A timer for a block
+    prompt: |
+      **Write a context manager `timer(label)`** with `@contextmanager`: it
+      notes `time.perf_counter()` before the block, and after it prints
+      the label and `done`. Then use it around the loop.
+
+      ```text
+      count: done
+      49995000
+      ```
+    starter: |
+      import time
+      from contextlib import contextmanager
+
+      # Your context manager here.
+
+
+      total = 0
+      # Put the loop into a with timer("count") block.
+      for n in range(10000):
+          total = total + n
+      print(total)
+    solution: |
+      import time
+      from contextlib import contextmanager
+
+
+      @contextmanager
+      def timer(label):
+          start = time.perf_counter()
+          try:
+              yield
+          finally:
+              seconds = time.perf_counter() - start
+              print(f"{label}: done")
+
+
+      total = 0
+      with timer("count"):
+          for n in range(10000):
+              total = total + n
+      print(total)
+    after: >-
+      On your own computer, print `seconds` too: then you know how long a
+      part of your program really takes. Here the time would change every
+      run, so the check only looks for `done`.
+    checks:
+      - expr: "err is None and lines == ['count: done', '49995000']"
+        pass: "The block is timed, then the total is printed"
+        hint: "Wrap the loop in `with timer(\"count\"):`, and print in `finally:`."
+      - expr: "syntax('With') >= 1 and 'perf_counter' in src and '@contextmanager' in src"
+        pass: "A context manager with perf_counter, used with with"
+        hint: "`@contextmanager def timer(label):` with `start = time.perf_counter()`."
+    hints:
+      - "`@contextmanager` and `def timer(label):`."
+      - "`start = time.perf_counter()`, then `try: yield`, `finally:` print."
+      - "Indent the loop under `with timer(\"count\"):`."

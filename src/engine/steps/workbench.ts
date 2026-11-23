@@ -41,6 +41,10 @@ export interface Workbench {
   setCode(code: string): void;
   /** The other files of the program (the tabs after main.py), with their texts now. */
   getSources(): Record<string, string>;
+  /** The words after `python main.py` in the command field (a command-line program). */
+  getArgv(): string[] | undefined;
+  /** Shows the exit code of sys.exit() next to the output (nothing for 0). */
+  setExitCode(code?: number): void;
   setSources(texts: Record<string, string>): void;
   dispose(): void;
 }
@@ -58,6 +62,21 @@ export interface WorkbenchOptions {
   files?: Record<string, string>;
   /** More files of the program, each in a tab after main.py (a project). */
   sources?: { name: string; code: string }[];
+  /** A command-line program: a field for the words after `python main.py`. */
+  argv?: string[];
+}
+
+/** A command line as words, like a shell: "a b" and 'a b' are one word. */
+export function splitArgs(text: string): string[] {
+  const words: string[] = [];
+  const pattern = /"([^"]*)"|'([^']*)'|(\S+)/g;
+  for (let m = pattern.exec(text); m; m = pattern.exec(text)) words.push(m[1] ?? m[2] ?? m[3]);
+  return words;
+}
+
+/** The words as the learner would type them: a word with a space gets quotes. */
+export function joinArgs(words: string[]): string {
+  return words.map((w) => (w === '' || /\s/.test(w) ? `"${w}"` : w)).join(' ');
 }
 
 const MAIN = 'main.py';
@@ -85,6 +104,24 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
       )
     : h('div', { class: 'bench-editor' }, h('pre', { class: 'bench-placeholder' }, pending));
   const out = h('pre', { class: 'out-text', 'aria-label': 'Output of the program' });
+  const outLabel = h('div', { class: 'out-label' }, 'Output');
+  // A command-line program: the learner types the words after the program name.
+  const argField = options.argv
+    ? h('input', {
+        class: 'bench-args',
+        type: 'text',
+        autocomplete: 'off',
+        spellcheck: 'false',
+        value: joinArgs(options.argv),
+        'aria-label': 'The words after python main.py',
+      })
+    : null;
+  argField?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') run();
+  });
+  const commandRow = argField
+    ? h('label', { class: 'bench-command' }, h('span', { class: 'bench-prompt' }, '> python main.py'), argField)
+    : null;
   const inputSlot = h('div', { class: 'out-input-slot' });
   let cancelAsk: (() => void) | null = null;
   const errorSlot = h('div', { class: 'bench-error', 'aria-live': 'polite' });
@@ -108,7 +145,7 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     windowSlot,
     serverSlot,
     chartsSlot,
-    h('div', { class: 'bench-out' }, h('div', { class: 'out-label' }, 'Output'), out, inputSlot),
+    h('div', { class: 'bench-out' }, commandRow, outLabel, out, inputSlot),
     filesSlot,
     errorSlot,
   );
@@ -379,6 +416,10 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     showError,
     getCode,
     getSources,
+    getArgv: () => (argField ? splitArgs((argField as HTMLInputElement).value) : undefined),
+    setExitCode(code) {
+      outLabel.textContent = code ? `Output · exit code ${code}` : 'Output';
+    },
     markLine: (line, kind) => editor?.markLine(line, kind),
     markError(error) {
       editor?.clearMarks();

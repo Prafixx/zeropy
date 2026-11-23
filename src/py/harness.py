@@ -346,8 +346,14 @@ def _files_in(path):
             full = os.path.join(root, name)
             rel = os.path.relpath(full, path).replace(os.sep, "/")
             try:
-                with open(full, encoding="utf-8", errors="replace") as handle:
-                    found[rel] = handle.read(_MAX_FILE_CHARS + 1)
+                with open(full, "rb") as handle:
+                    raw = handle.read(_MAX_FILE_CHARS * 4 + 4)
+                try:
+                    text = raw.decode("utf-8")
+                except UnicodeDecodeError as exc:
+                    # A long text file can be cut in the middle of a letter.
+                    text = raw[: exc.start].decode("utf-8") if exc.start >= len(raw) - 3 else None
+                found[rel] = text[: _MAX_FILE_CHARS + 1] if text is not None else f"(binary file, {os.path.getsize(full)} bytes)"
             except OSError:
                 found[rel] = ""
     return found
@@ -552,9 +558,106 @@ class _Approx:
         return f"{self.expected} ± {self.rel * abs(self.expected):.1e}"
 
 
+class _Mark:
+    """pytest.mark: only parametrize does something here."""
+
+    @staticmethod
+    def parametrize(argnames, argvalues, ids=None):
+        names = [n.strip() for n in argnames.split(",")] if isinstance(argnames, str) else list(argnames)
+
+        def mark(fn):
+            # The first decorator is the inner one: keep the order of the file.
+            fn._zp_params = [(names, list(argvalues), ids)] + list(getattr(fn, "_zp_params", []))
+            return fn
+
+        return mark
+
+    def __getattr__(self, name):
+        # Other marks (skip, slow ...) are accepted and change nothing.
+        return lambda *args, **kwargs: (args[0] if len(args) == 1 and callable(args[0]) and not kwargs else (lambda fn: fn))
+
+
+def _fixture(fn=None, **kwargs):
+    """@pytest.fixture or @pytest.fixture(): marks a function as a fixture."""
+    def mark(f):
+        f._zp_fixture = True
+        return f
+    return mark(fn) if callable(fn) else mark
+
+
+class _CaptureResult(tuple):
+    @property
+    def out(self):
+        return self[0]
+
+    @property
+    def err(self):
+        return self[1]
+
+
+class _Capsys:
+    """capsys: catches what the test prints. readouterr() gives it and starts again."""
+
+    def __init__(self):
+        self._out, self._err = io.StringIO(), io.StringIO()
+        self._saved = (sys.stdout, sys.stderr)
+        sys.stdout, sys.stderr = self._out, self._err
+
+    def readouterr(self):
+        result = _CaptureResult((self._out.getvalue(), self._err.getvalue()))
+        self._out.seek(0)
+        self._out.truncate()
+        self._err.seek(0)
+        self._err.truncate()
+        return result
+
+    def _close(self):
+        sys.stdout, sys.stderr = self._saved
+
+
+class _MonkeyPatch:
+    """monkeypatch: changes for one test, put back after it."""
+
+    def __init__(self):
+        self._undo = []
+
+    def setattr(self, target, name, value=None, raising=True):
+        if isinstance(target, str):
+            module_name, _, attr = target.rpartition(".")
+            target, name, value = importlib.import_module(module_name), attr, name
+        if raising and not hasattr(target, name):
+            raise AttributeError(f"{target!r} has no attribute {name!r}")
+        old = getattr(target, name, None)
+        had = hasattr(target, name)
+        self._undo.append(lambda: setattr(target, name, old) if had else delattr(target, name))
+        setattr(target, name, value)
+
+    def setenv(self, name, value):
+        old = os.environ.get(name)
+        self._undo.append(lambda: os.environ.__setitem__(name, old) if old is not None else os.environ.pop(name, None))
+        os.environ[name] = str(value)
+
+    def delenv(self, name, raising=True):
+        if name not in os.environ:
+            if raising:
+                raise KeyError(name)
+            return
+        old = os.environ[name]
+        self._undo.append(lambda: os.environ.__setitem__(name, old))
+        del os.environ[name]
+
+    def _close(self):
+        for undo in reversed(self._undo):
+            undo()
+
+
+class _FixtureError(Exception):
+    pass
+
+
 def _make_pytest():
     module = types.ModuleType("pytest")
-    module.__doc__ = "A small copy of pytest for this page: raises, approx and fail."
+    module.__doc__ = "A small copy of pytest for this page: raises, approx, fail, mark.parametrize and fixtures."
     module.raises = lambda expected, match=None: _Raises(expected, match)
     module.approx = _Approx
 
@@ -563,6 +666,9 @@ def _make_pytest():
 
     module.fail = fail
     module.Failed = _Failed
+    module.mark = _Mark()
+    module.fixture = _fixture
+    module.MonkeyPatch = _MonkeyPatch
     sys.modules["pytest"] = module
 
 
@@ -572,21 +678,123 @@ _make_pytest()
 def _tests_of(ns):
     """The test functions of the learner, in the order of the file."""
     return [(name, fn) for name, fn in list(ns.items())
-            if name.startswith("test") and callable(fn) and getattr(getattr(fn, "__code__", None), "co_filename", "") == _FILE]
+            if name.startswith("test") and callable(fn) and not getattr(fn, "_zp_fixture", False)
+            and getattr(getattr(fn, "__code__", None), "co_filename", "") == _FILE]
+
+
+def _param_id(value, name, index):
+    if isinstance(value, (int, float, str, bool)) or value is None:
+        return str(value)
+    return f"{name}{index}"
+
+
+def _expand(file, name, fn, space):
+    """One test item for each set of values of @pytest.mark.parametrize, like
+    pytest: test_add[1-2-3]. Without parametrize: one item."""
+    items = [(name, {})]
+    for names, values, ids in getattr(fn, "_zp_params", []):
+        rows = []
+        for i, value in enumerate(values):
+            row = tuple(value) if len(names) > 1 else (value,)
+            if len(row) != len(names):
+                raise _FixtureError(f"{name}: parametrize needs {len(names)} values in each set, not {len(row)}")
+            label = ids[i] if ids and i < len(ids) else "-".join(_param_id(v, n, i) for n, v in zip(names, row))
+            rows.append((label, dict(zip(names, row))))
+        items = [
+            (f"{base[:-1]}-{label}]" if base.endswith("]") else f"{base}[{label}]", {**given, **row})
+            for base, given in items for label, row in rows
+        ]
+    return [{"file": file, "name": item, "fn": fn, "params": params, "space": space} for item, params in items]
+
+
+def _arg_names(fn):
+    code = getattr(fn, "__code__", None)
+    if code is None:
+        return []
+    return list(code.co_varnames[: code.co_argcount + code.co_kwonlyargcount])
+
+
+def _call_test(test, on_fail=None):
+    """Calls one test with its parameters and fixtures (also fixtures that
+    use fixtures, and fixtures with yield: the part after yield runs at the
+    end). Built in: tmp_path, capsys, monkeypatch."""
+    fn, params, space = test["fn"], test["params"], test["space"]
+    values = {}
+    closers = []
+
+    def tmp_path():
+        import pathlib
+        safe = "".join(c if c.isalnum() or c in "_-" else "_" for c in test["name"])
+        # Outside the folder of the program, like pytest's own temporary folders.
+        path = pathlib.Path("/tmp/pytest-of-learner") / safe
+        shutil.rmtree(path, ignore_errors=True)
+        path.mkdir(parents=True)
+        return path
+
+    def capsys():
+        cap = _Capsys()
+        closers.append(cap._close)
+        return cap
+
+    def monkeypatch():
+        patch = _MonkeyPatch()
+        closers.append(patch._close)
+        return patch
+
+    built_in = {"tmp_path": tmp_path, "capsys": capsys, "monkeypatch": monkeypatch}
+
+    def get(name, chain=()):
+        if name in values:
+            return values[name]
+        if name in params:
+            value = params[name]
+        elif name in built_in:
+            value = built_in[name]()
+        else:
+            fixture = space.get(name)
+            if not (callable(fixture) and getattr(fixture, "_zp_fixture", False)):
+                raise _FixtureError(f"fixture '{name}' not found")
+            if name in chain:
+                raise _FixtureError(f"fixture '{name}' uses itself")
+            made = fixture(**{arg: get(arg, chain + (name,)) for arg in _arg_names(fixture)})
+            if isinstance(made, types.GeneratorType):
+                value = next(made)
+                closers.append(lambda gen=made: next(gen, None))
+            else:
+                value = made
+        values[name] = value
+        return value
+
+    try:
+        fn(**{arg: get(arg) for arg in _arg_names(fn)})
+    except _Stopped:
+        raise
+    except BaseException as exc:
+        # The values of a failed assert are read now, while the fixtures
+        # (a patched input, a capture) still work as in the test.
+        if on_fail is not None:
+            on_fail(exc)
+        raise
+    finally:
+        for close in reversed(closers):
+            close()
 
 
 def _all_tests(ns):
     """Every test, as pytest finds them: (file, name, function). First the
     tests in main.py, then the tests of each test file of the learner
     (test_*.py in the working folder, in the order of their names)."""
-    tests = [(_FILE, name, fn) for name, fn in _tests_of(ns)]
+    tests = [t for name, fn in _tests_of(ns) for t in _expand(_FILE, name, fn, ns)]
     for entry in sorted(os.listdir(".")):
         if not (entry.startswith("test_") and entry.endswith(".py")):
             continue
         module = importlib.import_module(entry[:-3])
         path = getattr(module, "__file__", "") or ""
-        tests += [(_rel(path), name, fn) for name, fn in list(vars(module).items())
-                  if name.startswith("test") and callable(fn) and getattr(getattr(fn, "__code__", None), "co_filename", "") == path]
+        space = vars(module)
+        tests += [t for name, fn in list(space.items())
+                  if name.startswith("test") and callable(fn) and not getattr(fn, "_zp_fixture", False)
+                  and getattr(getattr(fn, "__code__", None), "co_filename", "") == path
+                  for t in _expand(_rel(path), name, fn, space)]
     return tests
 
 
@@ -612,6 +820,8 @@ def _assert_detail(exc, src_lines, test_code=None, filename=_FILE):
     source = src_lines[line_no - 1].strip() if line_no and line_no <= len(src_lines) else ""
     if isinstance(exc, _Failed):
         return line_no, source, f"Failed: {exc}"
+    if isinstance(exc, _FixtureError):
+        return line_no, source, str(exc)
     if isinstance(exc, AssertionError) and source.startswith("assert"):
         detail = "assert " + (str(exc) if str(exc) else "False")
         try:
@@ -636,7 +846,8 @@ def _run_tests(ns, src):
     """Runs the tests. Returns one result for each: name, outcome, and details."""
     lines_of = {_FILE: src.splitlines()}
     results = []
-    for file, name, fn in _all_tests(ns):
+    for test in _all_tests(ns):
+        file, name, fn = test["file"], test["name"], test["fn"]
         code = getattr(fn, "__code__", None)
         path = code.co_filename if code else _FILE
         if file not in lines_of:
@@ -645,15 +856,29 @@ def _run_tests(ns, src):
                     lines_of[file] = handle.read().splitlines()
             except OSError:
                 lines_of[file] = []
+        found = []
+
+        def on_fail(exc, src_lines=lines_of[file], code=code, path=path):
+            try:
+                found.append(_assert_detail(exc, src_lines, code, path))
+            except _Stopped:
+                raise
+            except BaseException:  # the detail must never stop the report
+                pass
+
         try:
-            fn()
+            _call_test(test, on_fail)
             results.append({"file": file, "name": name, "outcome": "passed", "error": None})
         except _Stopped:
             raise
         except BaseException as exc:  # a test may raise anything
-            line_no, source, detail = _assert_detail(exc, lines_of[file], code, path)
+            line_no, source, detail = found[0] if found else _assert_detail(exc, lines_of[file], code, path)
+            if isinstance(exc, _FixtureError) and code is not None:
+                # Like pytest: the error is at the `def` line of the test.
+                line_no = code.co_firstlineno
+                source = lines_of[file][line_no - 1].strip() if line_no <= len(lines_of[file]) else ""
             outcome = "failed" if isinstance(exc, AssertionError) else "error"
-            results.append({"file": file, "name": name, "outcome": "failed", "error": type(exc).__name__, "line": line_no,
+            results.append({"file": file, "name": name, "outcome": "failed", "error": "FixtureError" if isinstance(exc, _FixtureError) else type(exc).__name__, "line": line_no,
                             "source": source, "detail": detail, "kind": outcome})
     return results
 
@@ -1262,6 +1487,11 @@ def _execute(src, case, trace, index=0, pytest=False):
     # A seed makes random numbers repeat. The page uses one seed for all
     # re-runs of one game, so a secret number stays the same between answers.
     random.seed(case.get("seed"))
+    # The words after the program name, as in `python main.py report --top 3`.
+    real_argv = sys.argv
+    sys.argv = [_FILE] + [str(a) for a in (case.get("argv") or [])]
+    exit_code = 0
+    _reset_logging()
     real_input = builtins.input
     builtins.input = fake_input
     # Each case runs in its own folder. Relative paths like "notes.txt" are
@@ -1309,13 +1539,25 @@ def _execute(src, case, trace, index=0, pytest=False):
                         hook.end(None)
                 finally:
                     sys.settrace(None)
-            except BaseException as exc:  # includes SystemExit and KeyboardInterrupt
+            except SystemExit as exc:
+                # sys.exit() ends a program normally, with an exit code. A
+                # text is printed (to stderr, as Python does) and gives code 1.
+                for hook in _RUN_HOOKS:
+                    hook.end(None)
+                if isinstance(exc.code, str):
+                    out.write(exc.code + "\n")
+                    exit_code = 1
+                else:
+                    exit_code = exc.code if isinstance(exc.code, int) else (0 if exc.code is None else 1)
+            except BaseException as exc:  # includes KeyboardInterrupt
                 for hook in _RUN_HOOKS:
                     hook.end(exc)
                 if not getattr(exc, "_zp_quiet", False):
                     error = _describe(exc)
     finally:
         builtins.input = real_input
+        sys.argv = real_argv
+        _flush_logging()
         ext = {hook.name: hook.finish() for hook in _RUN_HOOKS}
 
     stdout = out.getvalue()
@@ -1336,7 +1578,45 @@ def _execute(src, case, trace, index=0, pytest=False):
                 "ret": step.get("ret"),
             }
         )
-    return {"inputs": list(case.get("stdin") or []), "asked": asked[0], "ns": ns, "pre": pre, "stdout": stdout, "error": error, "steps": shifted, "feeds": feeds, "vars": final, "tree": tree, "src": src, "home": home, "files": files, "start_files": dict(case.get("files") or {}), "web_log": web_log, "test_results": test_results, "gui": _gui.state, "ext": ext}
+    return {"inputs": list(case.get("stdin") or []), "asked": asked[0], "ns": ns, "pre": pre, "stdout": stdout, "error": error, "steps": shifted, "feeds": feeds, "vars": final, "tree": tree, "src": src, "home": home, "files": files, "start_files": dict(case.get("files") or {}), "web_log": web_log, "test_results": test_results, "gui": _gui.state, "ext": ext, "exit_code": exit_code, "argv": list(case.get("argv") or [])}
+
+
+def _reset_logging():
+    """Each run starts with logging as in a new Python: no handlers, level
+    WARNING, no loggers of earlier runs (they would write to old output)."""
+    logging = sys.modules.get("logging")
+    if logging is None:
+        return
+    for handler in list(logging.root.handlers):
+        try:
+            handler.close()
+        except Exception:
+            pass
+        logging.root.removeHandler(handler)
+    logging.root.setLevel(logging.WARNING)
+    for logger in list(logging.Logger.manager.loggerDict.values()):
+        if isinstance(logger, logging.Logger):
+            for handler in list(logger.handlers):
+                try:
+                    handler.close()
+                except Exception:
+                    pass
+                logger.removeHandler(handler)
+    logging.Logger.manager.loggerDict.clear()
+    logging.disable(logging.NOTSET)
+
+
+def _flush_logging():
+    """A log file must be complete when the folder is shown after the run."""
+    logging = sys.modules.get("logging")
+    if logging is None:
+        return
+    for logger in [logging.root] + [l for l in logging.Logger.manager.loggerDict.values() if isinstance(l, logging.Logger)]:
+        for handler in logger.handlers:
+            try:
+                handler.flush()
+            except Exception:
+                pass
 
 
 def _check_env(result):
@@ -1518,6 +1798,9 @@ def _check_env(result):
         start_files=result["start_files"],
         # Requests to the pretend web: [{"method", "url", "base", "params", "timeout"}].
         requests_made=result["web_log"],
+        # The code of sys.exit() (0 when the program just ends), and the words after the program name.
+        exit_code=result["exit_code"],
+        argv=result["argv"],
         # Tests (steps with "pytest"): [{"name", "outcome", "error", ...}].
         test_results=result["test_results"],
         # Windows (pretend tkinter). The names start with gui_, so they do
@@ -1634,6 +1917,7 @@ def run(request_json):
             "feeds": first["feeds"],
             "checks": checks,
             "files": first["files"],
+            "exitCode": first["exit_code"],
             "gpio": first["ext"].get("gpio"),
             "plot": first["ext"].get("plot"),
             "server": first["ext"].get("server"),
