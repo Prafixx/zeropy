@@ -286,7 +286,7 @@ export interface WorkedStep extends StepBase {
 
 export interface ExerciseStep extends StepBase {
   type: 'exercise';
-  fade: 'completion' | 'debug' | 'independent' | 'milestone';
+  fade: 'completion' | 'debug' | 'independent' | 'milestone' | 'challenge';
   /**
    * Project step: the editor starts with the learner's own code from the
    * step before, so one program grows over several steps.

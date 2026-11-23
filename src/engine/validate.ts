@@ -261,7 +261,16 @@ export function validateLesson(data: unknown): string[] {
     else ids.add(step.id);
     if (!text(step.title)) out.push(`${where}: missing title`);
     if (!text(step.objective) || !objectives.has(step.objective)) out.push(`${where}: must name one of the lesson objectives`);
-    if (!['completion', 'debug', 'independent'].includes(String(step.fade))) out.push(`${where}: fade must be completion, debug or independent`);
+    if (!['completion', 'debug', 'independent', 'challenge'].includes(String(step.fade))) out.push(`${where}: fade must be completion, debug, independent or challenge`);
+    if (step.fade === 'challenge') {
+      // A spec, not a guided task: enough checks to catch the edge cases, a
+      // real program to write, and hints for when the learner is stuck.
+      const checks = Array.isArray(step.checks) ? step.checks.length : 0;
+      const lines = text(step.solution) ? step.solution.split('\n').filter((l) => l.trim()).length : 0;
+      if (checks < 4) out.push(`${where}: a challenge needs at least 4 checks`);
+      if (lines < 10) out.push(`${where}: a challenge needs a solution of at least 10 lines (has ${lines})`);
+      if (!Array.isArray(step.hints) || step.hints.length < 3) out.push(`${where}: a challenge needs 3 hints`);
+    }
     if (step.carry !== undefined) out.push(`${where}: an extra stands alone (no carry)`);
     checkExercise(step, where, out);
   });

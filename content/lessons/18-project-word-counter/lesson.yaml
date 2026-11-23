@@ -503,3 +503,142 @@ review:
         why: "`split()` with no argument gives no empty words."
       - text: "An error"
         why: "There is no error. The danger comes later, for example from `clean[0]`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: c-grades
+    type: exercise
+    fade: challenge
+    objective: O4
+    title: "Challenge: a grade report"
+    prompt: |
+      `scores` is a dictionary of names and points (0 to 100). **Print a
+      report**: one line per student, **sorted by name**, with a letter, then
+      the average with 2 decimals, then the best student.
+
+      Letters: 90 or more `A`, 75 or more `B`, 50 or more `C`, else `F`.
+
+      ```text
+      Ana: 91 A
+      Bo: 67 C
+      Cy: 78 B
+      Dan: 45 F
+      Average: 70.25
+      Best: Ana
+      ```
+    given: |
+      scores = {"Dan": 45, "Ana": 91, "Cy": 78, "Bo": 67}
+    starter: |
+      # scores exists. Write the report.
+    solution: |
+      total = 0
+      best = None
+      for name in sorted(scores):
+          points = scores[name]
+          if points >= 90:
+              letter = "A"
+          elif points >= 75:
+              letter = "B"
+          elif points >= 50:
+              letter = "C"
+          else:
+              letter = "F"
+          print(f"{name}: {points} {letter}")
+          total = total + points
+          if best is None or points > scores[best]:
+              best = name
+      print(f"Average: {total / len(scores):.2f}")
+      print(f"Best: {best}")
+    after: >-
+      `sorted(scores)` gives the keys in order. The best-so-far keeps a name,
+      and looks up its points to compare.
+    cases:
+      - {}
+      - label: "the scores are different"
+        setup: 'scores = {"Zoe": 50, "Max": 89.5, "Eva": 100, "Ian": 74}'
+      - label: "there is only one student"
+        setup: 'scores = {"Solo": 90}'
+    checks:
+      - expr: "err is None and lines[:len(scores)] == [f'{n}: {scores[n]} ' + ('A' if scores[n] >= 90 else 'B' if scores[n] >= 75 else 'C' if scores[n] >= 50 else 'F') for n in sorted(scores)]"
+        pass: "One line per student, sorted, with the right letter"
+        hint: "Loop over `sorted(scores)`, and test 90, then 75, then 50."
+        misconceptions:
+          - when: "err is None and len(lines) >= len(scores) and lines[0].split(':')[0] != sorted(scores)[0]"
+            say: "The students are not in order. Loop over `sorted(scores)`."
+      - expr: "f'Average: {sum(scores.values()) / len(scores):.2f}' in lines"
+        pass: "The average, with 2 decimals"
+        hint: "`f\"Average: {total / len(scores):.2f}\"`."
+      - expr: "lines[-1:] == [f'Best: {max(scores, key=scores.get)}']"
+        pass: "The best student is last"
+        hint: "Keep the name with the most points so far."
+      - expr: "len(lines) == len(scores) + 2"
+        pass: "Nothing else is printed"
+        hint: "One line per student, then two lines."
+    hints:
+      - "`for name in sorted(scores):` gives the names in order."
+      - "An if/elif/else gives the letter; add the points to a total."
+      - "Keep the best name: `if best is None or points > scores[best]:`."
+  - id: c-anagrams
+    type: exercise
+    fade: challenge
+    objective: O4
+    title: "Challenge: groups of anagrams"
+    prompt: |
+      Two words are **anagrams** when they have the same letters, in another
+      order: `listen` and `silent`. **Print each group of anagrams in
+      `words`** that has at least two words: the words of a group sorted and
+      joined with spaces, and the groups sorted by their first word.
+
+      ```text
+      elgoog google
+      enlist inlets listen silent
+      ```
+
+      Tip: `"".join(sorted("silent"))` is `"eilnst"`, the same for every
+      anagram of it.
+    given: |
+      words = ["listen", "google", "banana", "silent", "enlist", "elgoog", "inlets", "apple"]
+    starter: |
+      # words exists. Print the groups.
+    solution: |
+      groups = {}
+      for word in words:
+          key = "".join(sorted(word))
+          if key not in groups:
+              groups[key] = []
+          groups[key].append(word)
+      lines_out = []
+      for group in groups.values():
+          if len(group) >= 2:
+              lines_out.append(" ".join(sorted(group)))
+      for line in sorted(lines_out):
+          print(line)
+    after: >-
+      A dictionary from a "signature" to a list is a pattern you will use a
+      lot: grouping. The sorted letters are the signature of an anagram.
+    cases:
+      - {}
+      - label: "the words are different"
+        setup: 'words = ["tea", "eat", "ate", "tan", "nat", "bat"]'
+      - label: "no words are anagrams"
+        setup: 'words = ["one", "two"]'
+    checks:
+      - expr: "err is None and lines == sorted(' '.join(sorted(g)) for g in {k: [w for w in words if ''.join(sorted(w)) == k] for k in {''.join(sorted(w)) for w in words}}.values() if len(g) >= 2)"
+        pass: "Each group once, sorted, groups in order"
+        hint: "Group the words in a dictionary by `\"\".join(sorted(word))`."
+        misconceptions:
+          - when: "err is None and any(len(l.split()) == 1 for l in lines)"
+            say: "A word alone is not a group. Print only groups of 2 or more."
+      - expr: "err is None and all(l.split() == sorted(l.split()) for l in lines)"
+        pass: "The words in each group are sorted"
+        hint: "`\" \".join(sorted(group))`."
+      - expr: "err is None and lines == sorted(lines)"
+        pass: "The groups are sorted"
+        hint: "Collect the lines first, then print `sorted(...)` of them."
+      - expr: "syntax('Dict') + src.count('{}') >= 1"
+        pass: "It groups with a dictionary"
+        hint: "`groups = {}`, with the signature as the key."
+    hints:
+      - "The signature of a word: `\"\".join(sorted(word))`."
+      - "`groups[key].append(word)`, after making an empty list for a new key."
+      - "Keep groups with 2 or more words; sort the words, then sort the lines."

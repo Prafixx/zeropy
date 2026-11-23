@@ -261,7 +261,13 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
         ? h(
             'p',
             { class: 'done-practice', 'data-enter': true },
-            h('span', null, `Want more practice of this lesson? ${lesson.extra.length} extra exercises are waiting:`),
+            h(
+              'span',
+              null,
+              lesson.extra.every((x) => x.fade === 'challenge')
+                ? `${lesson.extra.length} challenges are waiting: bigger tasks from a short description.`
+                : `Want more practice of this lesson? ${lesson.extra.length} extra exercises are waiting:`,
+            ),
             h(
               'a',
               { class: 'btn btn-plain', href: `#/practice/lesson/${lesson.id}` },

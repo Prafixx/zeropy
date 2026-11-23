@@ -655,3 +655,160 @@ review:
         why: "With `or`, taking the key in the kitchen is already a win."
       - text: "Python shows an error"
         why: "Both are correct Python. Only the game logic is wrong."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: c-password
+    type: exercise
+    fade: challenge
+    objective: O1
+    title: "Challenge: a password checker"
+    prompt: |
+      **Write `problems(password, name)`**: it gives back a **list of texts**,
+      one for each rule that the password breaks, in this order:
+
+      1. `"at least 8 characters"`
+      2. `"a digit"` (no character is a digit)
+      3. `"a letter"` (no character is a letter)
+      4. `"no spaces"` (there is a space)
+      5. `"not your name"` (the name is in the password, in any capitals)
+
+      An empty list means the password is fine. Then print the problems of
+      the three passwords at the end, as shown.
+
+      ```text
+      ok
+      a digit, not your name
+      at least 8 characters, a letter
+      ```
+    starter: |
+      # Your function here.
+
+
+      for pw in ["blue-sky-42", "ANA-loves-tea", "1234"]:
+          found = problems(pw, "Ana")
+          print(", ".join(found) if found else "ok")
+    solution: |
+      def problems(password, name):
+          found = []
+          if len(password) < 8:
+              found.append("at least 8 characters")
+          has_digit = False
+          has_letter = False
+          for ch in password:
+              if ch.isdigit():
+                  has_digit = True
+              if ch.isalpha():
+                  has_letter = True
+          if not has_digit:
+              found.append("a digit")
+          if not has_letter:
+              found.append("a letter")
+          if " " in password:
+              found.append("no spaces")
+          if name.lower() in password.lower():
+              found.append("not your name")
+          return found
+
+
+      for pw in ["blue-sky-42", "ANA-loves-tea", "1234"]:
+          found = problems(pw, "Ana")
+          print(", ".join(found) if found else "ok")
+    after: >-
+      One small test per rule, collected in a list: easy to read, easy to
+      extend. `name.lower() in password.lower()` ignores the capitals.
+    checks:
+      - expr: "callable(ns.get('problems')) and problems('good-pass-7', 'bo') == [] and problems('abcdefgh1', 'zz') == []"
+        pass: "A good password has no problems"
+        hint: "Give back an empty list when every rule is kept."
+      - expr: "callable(ns.get('problems')) and problems('short1', 'x') == ['at least 8 characters'] and problems('12345678', 'x') == ['a letter'] and problems('abcdefgh', 'x') == ['a digit']"
+        pass: "Length, digit and letter rules"
+        hint: "`ch.isdigit()` and `ch.isalpha()` for each character."
+      - expr: "callable(ns.get('problems')) and problems('my pass 99', 'x') == ['no spaces'] and problems('xxBOB12345', 'Bob') == ['not your name']"
+        pass: "Spaces and the name (any capitals)"
+        hint: "`\" \" in password`, and `name.lower() in password.lower()`."
+      - expr: "callable(ns.get('problems')) and problems('', 'ann') == ['at least 8 characters', 'a digit', 'a letter'] and problems('a b', 'a') == ['at least 8 characters', 'a digit', 'no spaces', 'not your name']"
+        pass: "Several problems, in the right order"
+        hint: "Test the rules in the order of the task, and append each problem."
+      - expr: "err is None and lines == ['ok', 'a digit, not your name', 'at least 8 characters, a letter']"
+        pass: "It prints the three results"
+        hint: "Keep the loop at the end."
+    hints:
+      - "Start with `found = []`, and append a text for each broken rule."
+      - "Loop over the characters to find a digit and a letter."
+      - "`name.lower() in password.lower()` finds the name in any capitals."
+  - id: c-roman
+    type: exercise
+    fade: challenge
+    objective: O3
+    title: "Challenge: Roman numerals"
+    prompt: |
+      **Write two functions:**
+
+      - `to_roman(n)`: from a number 1 to 3999 to Roman numerals:
+        `to_roman(1994)` is `"MCMXCIV"`.
+      - `from_roman(text)`: back again: `from_roman("MCMXCIV")` is `1994`.
+
+      The values: M 1000, CM 900, D 500, CD 400, C 100, XC 90, L 50, XL 40,
+      X 10, IX 9, V 5, IV 4, I 1. A smaller value **before** a bigger one is
+      taken away (IV is 4).
+
+      ```text
+      MCMXCIV
+      1994
+      ```
+    starter: |
+      # Your two functions here.
+
+
+      print(to_roman(1994))
+      print(from_roman("MCMXCIV"))
+    solution: |
+      VALUES = [(1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
+                (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")]
+
+
+      def to_roman(n):
+          text = ""
+          for value, letters in VALUES:
+              while n >= value:
+                  text = text + letters
+                  n = n - value
+          return text
+
+
+      def from_roman(text):
+          single = {"M": 1000, "D": 500, "C": 100, "L": 50, "X": 10, "V": 5, "I": 1}
+          total = 0
+          for i in range(len(text)):
+              value = single[text[i]]
+              if i + 1 < len(text) and value < single[text[i + 1]]:
+                  total = total - value
+              else:
+                  total = total + value
+          return total
+
+
+      print(to_roman(1994))
+      print(from_roman("MCMXCIV"))
+    after: >-
+      A table of pairs, read from the biggest down: the same trick gives
+      change in coins. The check tried every number from 1 to 3999, both
+      ways.
+    checks:
+      - expr: "callable(ns.get('to_roman')) and [to_roman(n) for n in (1, 4, 9, 14, 40, 90, 400, 1994, 2024, 3999)] == ['I', 'IV', 'IX', 'XIV', 'XL', 'XC', 'CD', 'MCMXCIV', 'MMXXIV', 'MMMCMXCIX']"
+        pass: "to_roman is right, also for 4, 9, 40, 90 and 400"
+        hint: "Take the biggest value that fits, again and again, from a list of pairs with CM, CD, XC, XL, IX, IV."
+      - expr: "callable(ns.get('from_roman')) and [from_roman(t) for t in ('III', 'LVIII', 'MCMXCIV', 'MMMCMXCIX', 'CDXLIV')] == [3, 58, 1994, 3999, 444]"
+        pass: "from_roman is right, also with letters taken away"
+        hint: "A letter smaller than the next one is taken away."
+      - expr: "callable(ns.get('to_roman')) and callable(ns.get('from_roman')) and all(from_roman(to_roman(n)) == n for n in range(1, 4000))"
+        pass: "There and back works for every number from 1 to 3999"
+        hint: "Test both functions with a loop yourself."
+      - expr: "lines == ['MCMXCIV', '1994']"
+        pass: "It prints MCMXCIV and 1994"
+        hint: "Keep the two prints."
+    hints:
+      - "For `to_roman`: a list of (value, letters) pairs from big to small, with the pairs like 900 CM too."
+      - "While `n >= value`: add the letters, and take the value away."
+      - "For `from_roman`: add each letter's value, but subtract it when the next letter is bigger."

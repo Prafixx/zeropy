@@ -63,7 +63,9 @@ modules:
       - { id: json, title: JSON }
       - { id: exceptions, title: Exceptions }
       - { id: csv-and-comprehensions, title: CSV and comprehensions }
+      - { id: generators, title: Iterators and generators }
       - { id: regex, title: Patterns with regular expressions }
+      - { id: decorators, title: Decorators and context managers }
       - { id: project-expense-tracker, title: "Project: expense tracker", kind: project }
 
   - title: Your own machine

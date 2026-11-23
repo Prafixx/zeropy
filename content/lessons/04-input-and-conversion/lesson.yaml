@@ -569,3 +569,145 @@ extra:
       - "Read the message: text and a number cannot be added."
       - "What type is `age`? It comes from `input()`."
       - "`age = int(input(\"Your age: \"))`."
+
+# Challenges of the module: spec only, hidden checks.
+  - id: c-split-bill
+    type: exercise
+    fade: challenge
+    objective: O3
+    title: "Challenge: split the bill"
+    prompt: |
+      **Write a program** that asks three questions, in this order:
+
+      1. the bill (it can have decimals),
+      2. the tip in percent (a whole number),
+      3. the number of people (a whole number).
+
+      Then it prints four lines. Round every amount to 2 decimals with
+      `round(x, 2)`:
+
+      ```text
+      Bill: 60.0 for 3 people
+      Tip (15%): 9.0
+      Total: 69.0
+      Each pays: 23.0
+      ```
+    starter: |
+      # Write the whole program yourself.
+    solution: |
+      bill = float(input("Bill: "))
+      percent = int(input("Tip in %: "))
+      people = int(input("People: "))
+      tip = bill * percent / 100
+      total = bill + tip
+      each = total / people
+      print(f"Bill: {round(bill, 2)} for {people} people")
+      print(f"Tip ({percent}%): {round(tip, 2)}")
+      print(f"Total: {round(total, 2)}")
+      print(f"Each pays: {round(each, 2)}")
+    after: >-
+      Ask, convert, compute, print: the shape of almost every small program.
+      The checks tried a tip of 0%, one person, and a bill with decimals.
+    cases:
+      - {}
+      - label: "the inputs are 60, 15 and 3"
+        stdin: ["60", "15", "3"]
+      - label: "the inputs are 100, 10 and 4"
+        stdin: ["100", "10", "4"]
+      - label: "the inputs are 45.5, 0 and 1"
+        stdin: ["45.5", "0", "1"]
+      - label: "the inputs are 10, 20 and 3"
+        stdin: ["10", "20", "3"]
+    checks:
+      - expr: "len(inputs) == 3 and err is None"
+        pass: "It asks three questions and runs without an error"
+        hint: "Three `input()` calls; turn each answer into a number."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "An answer of `input()` is text. Use `float()` for the bill and `int()` for the others."
+          - when: "err == 'ValueError'"
+            say: "`int()` cannot read decimals: the bill needs `float()`."
+      - expr: "len(lines) >= 4 and lines[-4] == f'Bill: {round(float(inputs[0]), 2)} for {int(inputs[2])} people'"
+        pass: "The first line shows the bill and the people"
+        hint: "`print(f\"Bill: {round(bill, 2)} for {people} people\")`."
+      - expr: "len(lines) >= 3 and lines[-3] == f'Tip ({int(inputs[1])}%): {round(float(inputs[0]) * int(inputs[1]) / 100, 2)}'"
+        pass: "The tip is the bill times the percent, divided by 100"
+        hint: "`tip = bill * percent / 100`."
+      - expr: "len(lines) >= 2 and lines[-2] == f'Total: {round(float(inputs[0]) * (1 + int(inputs[1]) / 100), 2)}' or len(lines) >= 2 and lines[-2] == f'Total: {round(float(inputs[0]) + float(inputs[0]) * int(inputs[1]) / 100, 2)}'"
+        pass: "The total is the bill plus the tip"
+        hint: "`total = bill + tip`."
+      - expr: "len(lines) >= 1 and lines[-1] == f'Each pays: {round((float(inputs[0]) + float(inputs[0]) * int(inputs[1]) / 100) / int(inputs[2]), 2)}'"
+        pass: "Each person pays the total divided by the people"
+        hint: "`each = total / people`, rounded at the end."
+    hints:
+      - "Start with three lines: `bill = float(input(...))`, `percent = int(...)`, `people = int(...)`."
+      - "Compute `tip`, `total` and `each` in three lines."
+      - "Print with f-strings, and `round(x, 2)` inside the braces."
+  - id: c-clock
+    type: exercise
+    fade: challenge
+    objective: O3
+    title: "Challenge: seconds to days and hours"
+    prompt: |
+      **Write a program** that asks for a number of seconds (a whole
+      number), and prints how many whole days, hours, minutes and seconds
+      that is:
+
+      ```text
+      Seconds: 93784
+      Days: 1
+      Hours: 2
+      Minutes: 3
+      Seconds: 4
+      ```
+
+      Use `//` and `%`. No `if` is needed.
+    starter: |
+      # Write the whole program yourself.
+    solution: |
+      total = int(input("Seconds: "))
+      days = total // 86400
+      rest = total % 86400
+      hours = rest // 3600
+      rest = rest % 3600
+      minutes = rest // 60
+      seconds = rest % 60
+      print(f"Days: {days}")
+      print(f"Hours: {hours}")
+      print(f"Minutes: {minutes}")
+      print(f"Seconds: {seconds}")
+    after: >-
+      Each step takes the biggest unit, and keeps the rest for the next one.
+      A day has 24 × 60 × 60 = 86400 seconds.
+    cases:
+      - {}
+      - label: "the input is 93784"
+        stdin: ["93784"]
+      - label: "the input is 59"
+        stdin: ["59"]
+      - label: "the input is 86400"
+        stdin: ["86400"]
+      - label: "the input is 3661"
+        stdin: ["3661"]
+      - label: "the input is 0"
+        stdin: ["0"]
+    checks:
+      - expr: "len(inputs) == 1 and err is None"
+        pass: "It asks once and runs without an error"
+        hint: "`total = int(input(\"Seconds: \"))`."
+      - expr: "len(lines) >= 4 and lines[-4] == f'Days: {int(inputs[0]) // 86400}'"
+        pass: "The days are right"
+        hint: "A day has 86400 seconds: `total // 86400`."
+      - expr: "len(lines) >= 3 and lines[-3] == f'Hours: {int(inputs[0]) % 86400 // 3600}'"
+        pass: "The hours are right, without the full days"
+        hint: "Keep the rest after the days: `total % 86400`, then `// 3600`."
+      - expr: "len(lines) >= 2 and lines[-2] == f'Minutes: {int(inputs[0]) % 3600 // 60}'"
+        pass: "The minutes are right"
+        hint: "The rest after the hours, `// 60`."
+      - expr: "len(lines) >= 1 and lines[-1] == f'Seconds: {int(inputs[0]) % 60}'"
+        pass: "The seconds are right"
+        hint: "`total % 60`."
+    hints:
+      - "First the days: `total // 86400`, and the rest `total % 86400`."
+      - "Then hours from the rest (3600 seconds each), then minutes (60)."
+      - "Four prints at the end, one per unit."

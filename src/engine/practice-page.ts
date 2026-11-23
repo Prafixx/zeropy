@@ -33,7 +33,10 @@ function tasksOf(lesson: Lesson): Task[] {
       if (CODE_ITEMS.has(item.kind)) tasks.push({ kind: 'item', lesson, item, ref: item.id });
     }
   }
-  for (const step of lesson.extra) tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
+  // Challenges are long: they have their own list, not a place in a quick mixed set.
+  for (const step of lesson.extra) {
+    if (step.fade !== 'challenge') tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
+  }
   return tasks;
 }
 
@@ -126,7 +129,7 @@ function topicSet(lessonId: string | undefined, objective: string | undefined): 
     if (item.objective === objective && !tasks.some((t) => t.ref === item.id)) tasks.push({ kind: 'item', lesson, item, ref: item.id });
   }
   for (const step of lesson.extra) {
-    if (step.objective === objective) tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
+    if (step.objective === objective && step.fade !== 'challenge') tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
   }
   const exercises = oldestFirst(tasks.filter((t) => t.kind === 'exercise'), 2);
   const items = oldestFirst(tasks.filter((t) => t.kind === 'item'), 5 - exercises.length);
@@ -222,8 +225,58 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
         h('h2', { class: 'sheet-title', 'data-enter': true }, 'By module'),
         h('p', { class: 'muted', 'data-enter': true }, 'Best at the end of a module: mostly its own lessons, and a little from the modules before.'),
         h('ol', { class: 'practice-list', 'data-enter': true }, ...rows),
+        ...challengeList(),
       ),
     );
+  }
+
+  /** The challenges of all modules: open when their lesson is done. */
+  function challengeList(): HTMLElement[] {
+    const rows = course.modules.flatMap((m, i) =>
+      m.lessons.flatMap((entry) => {
+        const lesson = getLesson(entry.id);
+        if (!lesson) return [];
+        return lesson.extra
+          .filter((step) => step.fade === 'challenge')
+          .map((step) => {
+            const open = lessonState(lesson.id).done;
+            const done = lastPracticed(lesson.id, `extra:${step.id}`) > 0;
+            const start = h(
+              'a',
+              {
+                class: `btn btn-plain btn-small${open ? '' : ' is-disabled'}`,
+                href: `#/practice/lesson/${lesson.id}/${step.id}`,
+                'aria-disabled': open ? null : 'true',
+              },
+              h('span', { class: 'btn-label' }, done ? 'Again' : 'Start'),
+              icon('right', 16),
+            );
+            if (!open) start.addEventListener('click', (event) => event.preventDefault());
+            return h(
+              'li',
+              { class: 'practice-row' },
+              h('span', { class: 'module-num' }, String(i + 1).padStart(2, '0')),
+              h(
+                'span',
+                { class: 'practice-name' },
+                h('strong', null, step.title),
+                h('small', null, done ? `Done · after ${lesson.title}` : open ? `After ${lesson.title}` : `Opens after the lesson ${lesson.title}`),
+              ),
+              start,
+            );
+          });
+      }),
+    );
+    if (!rows.length) return [];
+    return [
+      h('h2', { class: 'sheet-title', 'data-enter': true }, 'Challenges'),
+      h(
+        'p',
+        { class: 'muted', 'data-enter': true },
+        'Bigger tasks, from a short description only, like real work: no starter code, and the checks stay hidden until you are stuck. Two at the end of each module.',
+      ),
+      h('ol', { class: 'practice-list', 'data-enter': true }, ...rows),
+    ];
   }
 
   function run(tasks: Task[]): void {

@@ -113,6 +113,15 @@ input {
 .tag-independent {
   background: var(--tint-good);
 }
+.tag-challenge {
+  background: var(--ink);
+  color: var(--paper);
+}
+.challenge-note {
+  margin: 4px 0 12px;
+  color: var(--ink-2);
+  font-size: 15px;
+}
 
 /* ---------- Prose ---------- */
 .prose {

@@ -1,0 +1,774 @@
+id: capstone
+order: 56
+title: "Capstone: your own app"
+summary: Plan, build, test and ship an app of your own idea - from the first sentence to a program that others can start.
+minutes: 240
+outcomes: [A11, A1, A3, A5, A6, A8, A9, A10]
+
+objectives:
+  - id: O1
+    text: Plan an app - what it does, its data, its functions and its window
+  - id: O2
+    text: Write the logic of your app as plain functions, with tests
+  - id: O3
+    text: Build a window for your app that never crashes on a click and saves its data in the home folder
+  - id: O4
+    text: Ship it - a project with venv, requirements, README, git history, tests and a build
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: brief
+    type: theory
+    objective: O1
+    title: Your app, your idea
+    body: |
+      This is the last project, and the plan is yours. Build a small app
+      with a window that is useful to you. It takes a few hours, over
+      several days.
+
+      ## Your app must
+
+      1. Have a **window**: at least one entry or list, and buttons.
+      2. Keep its **data** in a JSON file in the home folder, and load it
+         at the start.
+      3. Have its **logic** in plain functions, with at least **three
+         tests** that pass (one with `pytest.raises`).
+      4. **Never crash** on a click: bad input gives a message.
+      5. Live in a **project folder** with a venv, `requirements.txt`, a
+         `README.md`, and a git history of at least three commits.
+      6. Be **built** with PyInstaller into a program in `dist`.
+
+      ## Ideas
+
+      - A habit tracker: habits, and how many days you did each one.
+      - Flash cards: words and their meaning, with a test mode.
+      - A reading list: books, and which ones you finished.
+      - A budget: spending by category, with totals.
+      - A workout log, a recipe box, a quiz about your favorite subject.
+
+      Choose something small that you would use. A small app that is
+      finished is worth more than a big one that is not.
+    keys:
+      - code: "app.py"
+        means: "The file that starts your window. The check looks for this name."
+      - code: "test_*.py"
+        means: "Your test files, for pytest."
+      - code: "Path.home() / \"my-app.json\""
+        means: "Where your data lives."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: plan
+    type: theory
+    objective: O1
+    title: A plan in five parts
+    body: |
+      Write the plan in `README.md` before you write code:
+
+      1. **One sentence**: what does the app do? For example: "It tracks
+         my habits, and counts the days that I did each one."
+      2. **The data**: what is in the JSON file? For example: a dictionary
+         `{"Read": 12, "Walk": 30}`.
+      3. **The logic**: the functions, with what they get and what they
+         give back. For example: `add_habit(habits, name)` gives back the
+         new dictionary, and raises `ValueError` for an empty name.
+      4. **The window**: which widgets, and what each button does. A
+         sketch on paper helps.
+      5. **The order of work**, with a commit after each part:
+
+      | Step | Done when |
+      | --- | --- |
+      | Logic and tests | `python -m pytest` passes |
+      | The window | every button works, and bad input gives a message |
+      | Save and load | data stays after closing the window |
+      | Ship | README, requirements, build |
+
+      The logic comes first, because it is the easiest to test. Draft the
+      first two parts in the next two steps of this page, then move to
+      your computer.
+    keys:
+      - code: "git commit -m \"Logic and tests\""
+        means: "A save point after each part."
+      - code: "python -m pytest"
+        means: "Run your tests after each change."
+      - code: "README.md"
+        means: "What the app does, and how to start it."
+
+  # 3. EXERCISE: independent -------------------------------------------------
+  - id: ex-logic
+    type: exercise
+    fade: independent
+    pytest: true
+    objective: O2
+    title: "Part 1: the logic, with tests"
+    prompt: |
+      **Draft the logic of your app here**, with its tests. When you press
+      **Run**, the tests run like with pytest.
+
+      - At least **two** plain functions, and no tkinter.
+      - At least **three** tests that pass, and one of them with
+        `pytest.raises`.
+      - A save and a load function with `DATA_FILE` in the home folder.
+
+      There is no fixed answer: the checks only look at these rules. Copy
+      your code to your computer when it works.
+    starter: |
+      import json
+      from pathlib import Path
+
+      import pytest
+
+      # 1. Where your data lives:
+      DATA_FILE = Path.home() / "my-app.json"
+
+      # 2. Your logic: plain functions, no tkinter.
+
+
+      # 3. Your tests: at least three, one with pytest.raises.
+    solution: |
+      import json
+      from pathlib import Path
+
+      import pytest
+
+      DATA_FILE = Path.home() / "habits.json"
+
+      def add_habit(habits, name):
+          name = name.strip()
+          if not name:
+              raise ValueError("A habit needs a name.")
+          if name in habits:
+              raise ValueError("You track this habit already.")
+          new = dict(habits)
+          new[name] = 0
+          return new
+
+      def mark_done(habits, name):
+          if name not in habits:
+              raise ValueError(f"No habit called {name}.")
+          new = dict(habits)
+          new[name] = new[name] + 1
+          return new
+
+      def save(habits, path=DATA_FILE):
+          Path(path).write_text(json.dumps(habits, indent=2))
+
+      def load(path=DATA_FILE):
+          path = Path(path)
+          if not path.exists():
+              return {}
+          return json.loads(path.read_text())
+
+      def test_add():
+          assert add_habit({}, " Read ") == {"Read": 0}
+
+      def test_add_empty():
+          with pytest.raises(ValueError):
+              add_habit({}, "  ")
+
+      def test_mark_done():
+          assert mark_done({"Read": 2}, "Read") == {"Read": 3}
+
+      def test_save_and_load():
+          save({"Walk": 1}, "test-habits.json")
+          assert load("test-habits.json") == {"Walk": 1}
+    after: >-
+      Your logic is tested before any window exists. When the window shows
+      something strange later, you know that these parts are fine.
+    checks:
+      - expr: "err is None and 'import tkinter' not in src and 'from tkinter' not in src"
+        pass: "The logic runs, without tkinter"
+        hint: "Keep the window for part 2. Here: only plain functions and tests."
+      - expr: "len([n for n, v in ns.items() if not n.startswith('test') and callable(v) and getattr(getattr(v, '__code__', None), 'co_filename', '') == 'main.py']) >= 2"
+        pass: "At least two functions for your logic"
+        hint: "For example one that adds an item, and one that changes or removes one."
+      - expr: "len(test_results) >= 3 and tests_pass()"
+        pass: "At least three tests, and all pass"
+        hint: "Each test is a function `test_...` with `assert`. Read the report under the output."
+        misconceptions:
+          - when: "len(test_results) < 3"
+            say: "pytest found fewer than three tests. Each test is a function whose name starts with `test_`."
+          - when: "not tests_pass()"
+            say: "A test fails. Read its `E` line: is the test wrong, or the function?"
+      - expr: "'pytest.raises' in src and len(test_results) >= 1 and tests_pass()"
+        pass: "A test checks a bad input with `pytest.raises`"
+        hint: "For example: `with pytest.raises(ValueError):` and a call with an empty name."
+      - expr: "'DATA_FILE' in src and 'Path.home()' in src and 'json' in src.replace('import json', '')"
+        pass: "Save and load use JSON and `DATA_FILE` in the home folder"
+        hint: "A `save(data, path=DATA_FILE)` with `json.dumps`, and a `load(path=DATA_FILE)` with `json.loads`, like in lesson 46."
+    hints:
+      - "Start with the data: a list, or a dictionary? Then one function for each change."
+      - "Each function gets the data and gives back the new data. Bad input raises `ValueError`."
+      - "Copy `save` and `load` from the to-do app of lesson 46, with `DATA_FILE` instead of a fixed name."
+
+  # 4. EXERCISE: independent -------------------------------------------------
+  - id: ex-window
+    type: exercise
+    fade: independent
+    objective: O3
+    title: "Part 2: the window"
+    prompt: |
+      **Draft the window of your app here.** Paste your logic from part 1
+      (without the tests) above the class.
+
+      - An app class, with a title for the window and `mainloop()`.
+      - At least one entry or list, and buttons with commands.
+      - A click on any button never crashes, also with a strange input.
+      - Each change is saved to `DATA_FILE` in the home folder.
+
+      The check types `1` into every entry and clicks every button, then
+      does the same with empty entries. Try your app in the window too.
+    starter: |
+      import tkinter as tk
+      from tkinter import messagebox
+
+      # Paste your logic here (without the tests).
+
+
+      # Your app class.
+
+
+      if __name__ == "__main__":
+          root = tk.Tk()
+          # app = MyApp(root)
+          root.mainloop()
+    solution: |
+      import json
+      import tkinter as tk
+      from pathlib import Path
+      from tkinter import messagebox
+
+      DATA_FILE = Path.home() / "habits.json"
+
+      def add_habit(habits, name):
+          name = name.strip()
+          if not name:
+              raise ValueError("A habit needs a name.")
+          if name in habits:
+              raise ValueError("You track this habit already.")
+          new = dict(habits)
+          new[name] = 0
+          return new
+
+      def mark_done(habits, name):
+          if name not in habits:
+              raise ValueError(f"No habit called {name}.")
+          new = dict(habits)
+          new[name] = new[name] + 1
+          return new
+
+      def save(habits, path=DATA_FILE):
+          Path(path).write_text(json.dumps(habits, indent=2))
+
+      def load(path=DATA_FILE):
+          path = Path(path)
+          if not path.exists():
+              return {}
+          return json.loads(path.read_text())
+
+      class HabitApp:
+          def __init__(self, root):
+              root.title("Habits")
+              self.habits = load()
+              self.entry = tk.Entry(root, width=24)
+              self.entry.grid(row=0, column=0, padx=8, pady=8)
+              add = tk.Button(root, text="Add", command=self.add)
+              add.grid(row=0, column=1, padx=(0, 8))
+              self.listbox = tk.Listbox(root, width=36)
+              self.listbox.grid(row=1, column=0, columnspan=2)
+              done = tk.Button(root, text="Done today",
+                               command=self.done)
+              done.grid(row=2, column=0, columnspan=2, pady=8)
+              self.show()
+
+          def show(self):
+              self.names = list(self.habits)
+              self.listbox.delete(0, tk.END)
+              for name, count in self.habits.items():
+                  self.listbox.insert(tk.END, f"{name}: {count}")
+
+          def add(self):
+              try:
+                  self.habits = add_habit(self.habits, self.entry.get())
+              except ValueError as error:
+                  messagebox.showerror("Habits", str(error))
+                  return
+              self.entry.delete(0, tk.END)
+              save(self.habits)
+              self.show()
+
+          def done(self):
+              selection = self.listbox.curselection()
+              if not selection:
+                  return
+              name = self.names[selection[0]]
+              self.habits = mark_done(self.habits, name)
+              save(self.habits)
+              self.show()
+
+      if __name__ == "__main__":
+          root = tk.Tk()
+          app = HabitApp(root)
+          root.mainloop()
+    after: >-
+      The window is short because the logic does the work. Now move both
+      parts to your computer: logic in one file, the window in `app.py`.
+    checks:
+      - expr: "err is None and gui_window is not None and gui_window.looping and gui_title not in ('tk', '')"
+        pass: "A window with its own title, started with `mainloop()`"
+        hint: "`root.title(\"...\")` in your class, and `root.mainloop()` at the end."
+        misconceptions:
+          - when: "err is None and gui_window is not None and gui_title == 'tk'"
+            say: "The window has no title of its own. Give it one in `__init__`: `root.title(\"My app\")`. Did you make the app object: `app = MyApp(root)`?"
+      - expr: "syntax('ClassDef') >= 1"
+        pass: "The window is an app class"
+        hint: "`class MyApp:` with `__init__(self, root)`, like the to-do app."
+      - expr: "len([w for w in gui_widgets('Button') if w.options.get('command')]) >= 1 and len(gui_widgets('Entry')) + len(gui_widgets('Listbox')) >= 1"
+        pass: "It has an entry or a list, and buttons with commands"
+        hint: "Make each widget with `self.` if a method needs it, and place it with `grid` or `pack`."
+        misconceptions:
+          - when: "gui_window is not None and any(w.manager is None for w in gui_window.winfo_children())"
+            say: "A widget is made but not placed, so it is not shown. Call `grid(...)` or `pack()` on it."
+      - expr: "len(gui_widgets('Button')) >= 1 and all((lambda b, text: ([gui_type(e, text) for e in gui_widgets('Entry')], [gui_select(0, l) for l in gui_widgets('Listbox') if l.items], raises(gui_click, b) is None)[2])(b, text) for text in ('1', '') for b in gui_widgets('Button') if b.options.get('command'))"
+        pass: "No click crashes: with `1` in every entry, and with empty entries"
+        hint: "Click each button in the window, and read the message. Catch bad input with `try` and show it with `messagebox`."
+      - expr: "len(gui_widgets('Button')) >= 1 and (all(raises(gui_click, b) is None for b in gui_widgets('Button') if b.options.get('command')) or True) and any(p.is_file() for p in __import__('pathlib').Path.home().rglob('*'))"
+        pass: "A change is saved in the home folder"
+        hint: "After each change, call your `save` function with `DATA_FILE`."
+    hints:
+      - "Start from the to-do app of lesson 46: an entry, a list, two buttons."
+      - "Each method: read the widgets, call your logic in `try`, save, show."
+      - "Click every button in the window once, also with an empty entry. Each one must give a message, not an error."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: ship
+    type: theory
+    objective: O4
+    title: Build it on your computer, and ship it
+    body: |
+      Make a folder for your app in `python-course`, and work in it:
+
+      | Part | Commands and files |
+      | --- | --- |
+      | Start | `git init`, `python -m venv .venv`, activate, `.gitignore` with `.venv/`, `build/`, `dist/` |
+      | Logic | your logic file and `test_....py`; `pip install pytest`; `python -m pytest` |
+      | Window | `app.py`, which imports your logic; `python app.py` |
+      | Ship | `README.md`, `pip freeze > requirements.txt`, `pip install pyinstaller`, `pyinstaller --onefile --windowed app.py` |
+
+      Commit after each part. PyInstaller makes `app.spec`: commit it too.
+
+      Your `README.md` says, in a few lines: what the app does, how to
+      start it (`python app.py`), and how to run the tests.
+
+      If you like, put the project on GitHub (lesson 36): then it is also
+      a page that you can show to others.
+    keys:
+      - code: "app.py"
+        means: "Your window: the check starts this file."
+      - code: "from habits import add_habit"
+        means: "`app.py` imports the logic from your own file `habits.py`."
+      - code: "git log --oneline"
+        means: "Your history: one commit for each part."
+
+  # 6. LOCAL -----------------------------------------------------------------
+  - id: check-capstone
+    type: local
+    objective: O4
+    title: Your app, checked
+    prompt: |
+      **Finish your app on your computer**, then download `check.py`
+      **again** into its folder, activate the venv, and run:
+
+      ```
+      python check.py capstone
+      ```
+
+      The check runs your tests, and starts a copy of `app.py` in a
+      temporary folder with a temporary home folder: it clicks every
+      button, once with `1` in every entry and once with empty entries.
+      Your own data does not change.
+
+      Run it as often as you like. Each line that is not yet green tells
+      you the next thing to do.
+    task: capstone
+    needs: 11
+    example:
+      python: "3.14.7"
+      os: Windows
+      bits: "64"
+      venv_exists: "yes"
+      in_venv: "yes"
+      venv_here: "yes"
+      requirements: "yes"
+      readme_lines: "3"
+      repo: "here"
+      commits: "4"
+      changes: "0"
+      venv_tracked: "no"
+      build_tracked: "no"
+      test_files: "1"
+      tests_passed: "4"
+      tests_failed: "0"
+      app_exists: "yes"
+      window: "yes"
+      title_set: "yes"
+      buttons: "2"
+      inputs: "2"
+      clicks_ok: "yes"
+      saves_home: "yes"
+      program: "yes"
+      program_fresh: "yes"
+    checks:
+      - expr: "report.get('in_venv') == 'yes' and report.get('venv_here') == 'yes' and report.get('requirements') == 'yes'"
+        pass: "The project has its own venv and a `requirements.txt`"
+        hint: "`python -m venv .venv`, activate it, install what you use, then `pip freeze > requirements.txt`."
+        misconceptions:
+          - when: "report.get('venv_exists') == 'no'"
+            say: "There is no `.venv` in this folder. Run the check in the folder of your app, and make a venv there."
+          - when: "report.get('in_venv') == 'no'"
+            say: "The venv is not active. Activate it, then run the check again."
+      - expr: "int(report.get('readme_lines', '0')) >= 3"
+        pass: "`README.md` says what the app does and how to start it"
+        hint: "Write at least three lines in `README.md`: what it does, `python app.py`, and `python -m pytest`."
+      - expr: "report.get('repo') == 'here' and int(report.get('commits', '0')) >= 3 and report.get('changes') == '0' and report.get('venv_tracked') == 'no' and report.get('build_tracked') == 'no'"
+        pass: "A git history of at least three commits, everything committed, no `.venv`, `build` or `dist` in it"
+        hint: "Commit after each part. `.gitignore` holds `.venv/`, `build/` and `dist/`."
+        misconceptions:
+          - when: "report.get('repo') != 'here'"
+            say: "This folder is not its own repository. Run `git init` in the folder of your app."
+          - when: "int(report.get('commits', '0')) < 3"
+            say: "Fewer than three commits. Commit after each part: logic, window, ship."
+          - when: "report.get('venv_tracked') == 'yes' or report.get('build_tracked') == 'yes'"
+            say: "The repository holds `.venv`, `build` or `dist`. Put them into `.gitignore`, and remove them from git with `git rm -r --cached` and the folder name."
+          - when: "report.get('changes', '0') != '0'"
+            say: "Some changes are not committed. `git status` shows them (often `app.spec`): add and commit them."
+      - expr: "int(report.get('test_files', '0')) >= 1 and int(report.get('tests_passed', '0')) >= 3 and report.get('tests_failed') == '0'"
+        pass: "At least three tests, and all pass"
+        hint: "A file `test_....py` with at least three tests. Run `python -m pytest`."
+        misconceptions:
+          - when: "report.get('test_files') == '0'"
+            say: "There is no test file. Its name must start with `test_`, next to your logic."
+          - when: "report.get('tests_failed', '0') != '0'"
+            say: "Some tests fail or cannot run. Run `python -m pytest`, and read the report."
+      - expr: "report.get('app_exists') == 'yes' and report.get('window') == 'yes' and report.get('title_set') == 'yes' and int(report.get('buttons', '0')) >= 1 and int(report.get('inputs', '0')) >= 1"
+        pass: "`app.py` opens a window with a title, inputs and buttons"
+        hint: "`app.py` makes the window: `root.title(...)`, an entry or a list, buttons with commands."
+        misconceptions:
+          - when: "report.get('app_exists') == 'no'"
+            say: "There is no `app.py`. The check starts your window from `app.py`: name your main file like that."
+          - when: "report.get('window') in ('error', 'timeout')"
+            say: "`app.py` stops with an error, or waits too long. Run `python app.py`, and read the terminal."
+          - when: "report.get('window') == 'no'"
+            say: "`app.py` makes no window. Is the start under `if __name__ == \"__main__\":` with `tk.Tk()`?"
+      - expr: "report.get('clicks_ok') == 'yes'"
+        pass: "No click crashes, with `1` or with empty entries"
+        hint: "Click every button once, also with an empty entry. Catch errors with `try`, and show a message."
+      - expr: "report.get('saves_home') == 'yes'"
+        pass: "The app saves its data in the home folder"
+        hint: "After each change, save to `Path.home() / \"my-app.json\"`."
+        misconceptions:
+          - when: "report.get('saves_home') == 'no'"
+            say: "After all the clicks, no file appeared in the home folder. Save after each change, to `Path.home()` and a name of your app."
+      - expr: "report.get('program') == 'yes' and report.get('program_fresh') == 'yes'"
+        pass: "A built program in `dist`, with your newest code"
+        hint: "`pyinstaller --onefile --windowed app.py` (on macOS: `--windowed` only)."
+        misconceptions:
+          - when: "report.get('program_fresh') == 'no'"
+            say: "`app.py` changed after the build. Build again."
+    hints:
+      - "Work part by part, and run the check after each: it shows what is still missing."
+      - "Your main file is `app.py`. Your logic can be in another file, like `habits.py`."
+      - "Stuck on one part? Go back to the lesson for it: 30 venv, 31 git, 37 pytest, 39 and 40 the window, 41 the build."
+    after: >-
+      You planned, built, tested and shipped your own program. That is
+      what a programmer does. Congratulations: you finished the course.
+
+  # 7. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Looking back
+    items:
+      - kind: mcq
+        id: q-first
+        objective: O1
+        prompt: "Why write the logic and its tests before the window?"
+        options:
+          - text: "The logic is the easiest part to test, so the window is built on parts that work"
+            correct: true
+            why: "When something breaks later, you know where it is not."
+          - text: "tkinter needs the tests"
+            why: "tkinter does not know your tests."
+          - text: "It makes the app faster"
+            why: "It makes the work safer, not the program faster."
+      - kind: mcq
+        id: q-small
+        objective: O1
+        prompt: "Your idea is big. What is the best start?"
+        options:
+          - text: "A small first version that works, then one feature at a time"
+            correct: true
+            why: "Each finished step is a commit and a working app."
+          - text: "Write all of it, then run it once"
+            why: "Then a hundred bugs come at once."
+          - text: "Wait until you know everything"
+            why: "You learn the rest while you build."
+      - kind: mcq
+        id: q-crash
+        objective: O3
+        prompt: "A user types `abc` where a number is wanted. What should the app do?"
+        options:
+          - text: "Show a clear message, and keep running"
+            correct: true
+            why: "`try`, `except ValueError`, and `messagebox.showerror`."
+          - text: "Crash, so the user learns"
+            why: "A crash loses the work of the user."
+          - text: "Use 0 without a word"
+            why: "Then the user does not know that the input was wrong."
+      - kind: mcq
+        id: q-readme
+        objective: O4
+        prompt: "What belongs in `README.md`?"
+        options:
+          - text: "What the app does, how to start it, and how to run its tests"
+            correct: true
+            why: "It is the first page that others (and you, later) read."
+          - text: "All the code again"
+            why: "The code is in its files."
+          - text: "Nothing: it is optional"
+            why: "A project without a README is hard to use for anyone else."
+      - kind: mcq
+        id: q-next
+        objective: O4
+        prompt: "You finished the course. What is a good next step?"
+        options:
+          - text: "Build more of your own programs, and read the docs of the tools that you need"
+            correct: true
+            why: "You can now learn a new library from its docs, like in lesson 25."
+          - text: "Stop: you know all of Python"
+            why: "Nobody does. You know enough to learn the rest yourself."
+          - text: "Start the course again from lesson 1"
+            why: "The review cards keep the basics fresh. New projects teach you more."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-parts
+    objective: O1
+    prompt: "In which order do you build an app?"
+    options:
+      - text: "Logic and tests, then the window, then save and load, then ship"
+        correct: true
+        why: "Each part rests on the one before, and each ends with a commit."
+      - text: "Ship first, then the code"
+        why: "There is nothing to ship before the code."
+      - text: "The window first, the tests at the very end"
+        why: "Tests help most while you write the code."
+  - kind: mcq
+    id: r-logic
+    objective: O2
+    prompt: "What makes a logic function easy to test?"
+    options:
+      - text: "It gets values and gives back a value, without a window or input()"
+        correct: true
+        why: "Then one `assert` is a test."
+      - text: "It prints the result"
+        why: "A test needs a value to compare, not text on the screen."
+      - text: "It uses many global names"
+        why: "Global names make results depend on things outside the call."
+  - kind: mcq
+    id: r-save
+    objective: O3
+    prompt: "When should an app save its data?"
+    options:
+      - text: "After each change, to a file in the home folder"
+        correct: true
+        why: "Then no change is lost, wherever the program starts."
+      - text: "Only when the computer shuts down"
+        why: "The app may never see that moment."
+      - text: "Never: the window remembers"
+        why: "A closed window forgets everything."
+  - kind: mcq
+    id: r-ship
+    objective: O4
+    prompt: "Which files does someone need to run your project from git?"
+    options:
+      - text: "The code, the tests, `requirements.txt` and `README.md`"
+        correct: true
+        why: "They make a venv, install from `requirements.txt`, and follow the README."
+      - text: "Your `.venv` folder"
+        why: "Each computer makes its own venv."
+      - text: "The `build` folder"
+        why: "`build` holds only work files of PyInstaller."
+  - kind: mcq
+    id: r-learn
+    objective: O2
+    prompt: "You need a library that the course never showed. How do you start?"
+    options:
+      - text: "Install it in the venv, read its docs, and try a small example"
+        correct: true
+        why: "The same way you learned `requests` and `pytest`."
+      - text: "Guess the names of its functions"
+        why: "The docs show the names and their parameters."
+      - text: "Copy a big program from the web"
+        why: "A small example that you understand comes first."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: c-converter
+    type: exercise
+    fade: challenge
+    objective: O1
+    title: "Challenge: a unit converter window"
+    prompt: |
+      **Write a window app** with the title `Converter`: an entry, two
+      buttons **km → miles** and **miles → km**, and a label for the result.
+
+      - A click converts the number in the entry, and shows for example
+        `5.00 km = 3.11 miles` or `5.00 miles = 8.05 km` (2 decimals;
+        1 km = 0.621371 miles).
+      - Text that is not a number shows `Type a number.`, and the window
+        does not crash.
+
+      Keep the math in its own function, `convert(value, to_miles)`, so it
+      can be tested without the window.
+    starter: |
+      import tkinter as tk
+
+      # Write the whole app yourself.
+    solution: |
+      import tkinter as tk
+
+      MILES_PER_KM = 0.621371
+
+
+      def convert(value, to_miles):
+          return value * MILES_PER_KM if to_miles else value / MILES_PER_KM
+
+
+      def show(to_miles):
+          try:
+              value = float(entry.get())
+          except ValueError:
+              result.config(text="Type a number.")
+              return
+          answer = convert(value, to_miles)
+          if to_miles:
+              result.config(text=f"{value:.2f} km = {answer:.2f} miles")
+          else:
+              result.config(text=f"{value:.2f} miles = {answer:.2f} km")
+
+
+      root = tk.Tk()
+      root.title("Converter")
+      entry = tk.Entry(root, width=12)
+      entry.pack(padx=20, pady=(10, 0))
+      tk.Button(root, text="km → miles", command=lambda: show(True)).pack(pady=4)
+      tk.Button(root, text="miles → km", command=lambda: show(False)).pack(pady=4)
+      result = tk.Label(root, text="")
+      result.pack(pady=(0, 10))
+      root.mainloop()
+    after: >-
+      Two buttons share one function with `lambda`, and the math lives apart
+      from the window, where a test can reach it.
+    checks:
+      - expr: "err is None and gui_title == 'Converter' and len(gui_widgets('Entry')) >= 1 and gui_find('km → miles') is not None and gui_find('miles → km') is not None"
+        pass: "A window Converter with an entry and both buttons"
+        hint: "`root.title(\"Converter\")`, a `tk.Entry`, two `tk.Button`s, each packed."
+      - expr: "gui_find('km → miles') is not None and (gui_type(0, '5'), gui_click('km → miles'), '5.00 km = 3.11 miles' in gui_texts())[2] and (gui_type(0, '5'), gui_click('miles → km'), '5.00 miles = 8.05 km' in gui_texts())[2]"
+        pass: "Both buttons convert, with 2 decimals"
+        hint: "`f\"{value:.2f} km = {answer:.2f} miles\"` and the other way."
+      - expr: "gui_find('km → miles') is not None and (gui_type(0, 'ten'), raises(gui_click, 'km → miles') is None and 'Type a number.' in gui_texts())[1]"
+        pass: "Bad input shows Type a number."
+        hint: "`float(entry.get())` in `try:`, the message in `except ValueError:`."
+      - expr: "callable(ns.get('convert')) and abs(convert(10, True) - 6.21371) < 1e-6 and abs(convert(6.21371, False) - 10) < 1e-6"
+        pass: "convert(value, to_miles) works without the window"
+        hint: "`value * 0.621371` to miles, `value / 0.621371` to km."
+    hints:
+      - "First `convert(value, to_miles)`, then one `show(to_miles)` for the buttons."
+      - "`command=lambda: show(True)` gives the button an argument."
+      - "In `show`: `try: float(entry.get())`, then `result.config(text=...)`."
+  - id: c-quiz-app
+    type: exercise
+    fade: challenge
+    objective: O2
+    title: "Challenge: a quiz window"
+    prompt: |
+      **Write the class `QuizApp`** for the list `QUESTIONS` (given): a
+      label with the question, an entry, and a button **Check**.
+
+      - **Check** compares the answer with the right one (spaces around and
+        capitals do not matter), adds a point when it is right, empties the
+        entry, and shows the next question.
+      - After the last question, the label shows `Score: 2 of 3`.
+
+      The last lines make the window.
+    given: |
+      QUESTIONS = [("2 + 2 = ?", "4"), ("The capital of Peru?", "Lima"), ("3 * 3 = ?", "9")]
+    starter: |
+      import tkinter as tk
+
+      # QUESTIONS exists. Your class here.
+
+
+      root = tk.Tk()
+      root.title("Quiz")
+      app = QuizApp(root)
+      root.mainloop()
+    solution: |
+      import tkinter as tk
+
+
+      class QuizApp:
+          def __init__(self, root):
+              self.index = 0
+              self.score = 0
+              self.label = tk.Label(root, text=QUESTIONS[0][0])
+              self.label.pack(padx=20, pady=(10, 0))
+              self.entry = tk.Entry(root, width=20)
+              self.entry.pack(pady=4)
+              tk.Button(root, text="Check", command=self.check).pack(pady=(0, 10))
+
+          def check(self):
+              if self.index >= len(QUESTIONS):
+                  return
+              answer = self.entry.get().strip().lower()
+              if answer == QUESTIONS[self.index][1].lower():
+                  self.score = self.score + 1
+              self.entry.delete(0, tk.END)
+              self.index = self.index + 1
+              if self.index < len(QUESTIONS):
+                  self.label.config(text=QUESTIONS[self.index][0])
+              else:
+                  self.label.config(text=f"Score: {self.score} of {len(QUESTIONS)}")
+
+
+      root = tk.Tk()
+      root.title("Quiz")
+      app = QuizApp(root)
+      root.mainloop()
+    after: >-
+      The state (which question, how many points) lives in the object, and
+      one method moves it on. That is the shape of most small apps.
+    checks:
+      - expr: "err is None and gui_title == 'Quiz' and '2 + 2 = ?' in gui_texts() and gui_find('Check') is not None"
+        pass: "The window shows the first question and a Check button"
+        hint: "A `tk.Label` with `QUESTIONS[0][0]`, an entry and a button."
+      - expr: "gui_find('Check') is not None and (gui_type(0, ' 4 '), gui_click('Check'), 'The capital of Peru?' in gui_texts())[2]"
+        pass: "Check moves on to the next question"
+        hint: "After a check: `self.index + 1`, and `config(text=...)` with the next question."
+      - expr: "gui_find('Check') is not None and (gui_type(0, 'lima'), gui_click('Check'), gui_type(0, '8'), gui_click('Check'), gui_texts())[4].count('Score: 2 of 3') == 1"
+        pass: "The score is shown at the end, with answers in any capitals"
+        hint: "Compare `answer.strip().lower()` with the right answer in small letters."
+      - expr: "gui_find('Check') is not None and gui_widgets('Entry')[0].get() == ''"
+        pass: "The entry is emptied after each check"
+        hint: "`self.entry.delete(0, tk.END)`."
+    hints:
+      - "Keep `self.index` and `self.score` in the object."
+      - "`check` reads the entry, compares, empties it, and moves the index on."
+      - "At the end: `self.label.config(text=f\"Score: {self.score} of {len(QUESTIONS)}\")`."

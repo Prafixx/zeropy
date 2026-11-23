@@ -549,3 +549,160 @@ review:
         why: "Then several mistakes show up together, and they can be anywhere."
       - text: "Write the last part first"
         why: "The last part usually needs the parts before it, so you cannot run and test it."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: c-fizzbuzz
+    type: exercise
+    fade: challenge
+    objective: O2
+    title: "Challenge: FizzBuzz with a count"
+    prompt: |
+      **Write a program** that asks for a whole number `n`, then prints the
+      numbers from 1 to `n`, one per line, but:
+
+      - `Fizz` instead of a number that can be divided by 3,
+      - `Buzz` instead of a number that can be divided by 5,
+      - `FizzBuzz` instead of a number that can be divided by both.
+
+      At the end it prints how often each word came:
+
+      ```text
+      n: 15
+      1
+      2
+      Fizz
+      ...
+      14
+      FizzBuzz
+      Fizz: 4, Buzz: 2, FizzBuzz: 1
+      ```
+    starter: |
+      # Write the whole program yourself.
+    solution: |
+      n = int(input("n: "))
+      fizz = 0
+      buzz = 0
+      both = 0
+      for i in range(1, n + 1):
+          if i % 15 == 0:
+              print("FizzBuzz")
+              both = both + 1
+          elif i % 3 == 0:
+              print("Fizz")
+              fizz = fizz + 1
+          elif i % 5 == 0:
+              print("Buzz")
+              buzz = buzz + 1
+          else:
+              print(i)
+      print(f"Fizz: {fizz}, Buzz: {buzz}, FizzBuzz: {both}")
+    after: >-
+      The order of the tests matters: 15 can be divided by 3, so the test for
+      both must come first. A famous interview question, now with a twist.
+    cases:
+      - {}
+      - label: "n is 15"
+        stdin: ["15"]
+      - label: "n is 30"
+        stdin: ["30"]
+      - label: "n is 2"
+        stdin: ["2"]
+      - label: "n is 0"
+        stdin: ["0"]
+    checks:
+      - expr: "len(inputs) == 1 and err is None"
+        pass: "It asks once and runs without an error"
+        hint: "`n = int(input(\"n: \"))`."
+      - expr: "lines[-int(inputs[0]) - 1:-1] == ['FizzBuzz' if i % 15 == 0 else 'Fizz' if i % 3 == 0 else 'Buzz' if i % 5 == 0 else str(i) for i in range(1, int(inputs[0]) + 1)] if int(inputs[0]) > 0 else True"
+        pass: "One line per number, with the right words"
+        hint: "Test 15 (both) first, then 3, then 5."
+        misconceptions:
+          - when: "'FizzBuzz' not in out and int(inputs[0]) >= 15"
+            say: "15 shows Fizz, not FizzBuzz: test for both (`i % 15 == 0`) before the others."
+      - expr: "lines[-1:] == [f'Fizz: {len([i for i in range(1, int(inputs[0]) + 1) if i % 3 == 0 and i % 5])}, Buzz: {len([i for i in range(1, int(inputs[0]) + 1) if i % 5 == 0 and i % 3])}, FizzBuzz: {int(inputs[0]) // 15}']"
+        pass: "The last line counts each word"
+        hint: "Three counters, each starting at 0 before the loop."
+      - expr: "len(lines) == int(inputs[0]) + 1 + sum(1 for l in lines if l.startswith('n:'))"
+        pass: "Nothing else is printed"
+        hint: "One line per number, and the count at the end."
+    hints:
+      - "Loop with `for i in range(1, n + 1):`."
+      - "`i % 15 == 0` first, then `elif i % 3 == 0`, then `elif i % 5 == 0`, then `else`."
+      - "Count in three variables, and print them after the loop."
+  - id: c-primes
+    type: exercise
+    fade: challenge
+    objective: O2
+    title: "Challenge: prime numbers"
+    prompt: |
+      A prime number is a whole number above 1 that can only be divided by 1
+      and by itself: 2, 3, 5, 7, 11 ...
+
+      **Write a program** that asks for `n`, prints every prime number from
+      2 up to and with `n`, one per line, and at the end how many there are:
+
+      ```text
+      n: 20
+      2
+      3
+      5
+      7
+      11
+      13
+      17
+      19
+      8 primes
+      ```
+    starter: |
+      # Write the whole program yourself.
+    solution: |
+      n = int(input("n: "))
+      count = 0
+      for number in range(2, n + 1):
+          is_prime = True
+          divisor = 2
+          while divisor * divisor <= number:
+              if number % divisor == 0:
+                  is_prime = False
+              divisor = divisor + 1
+          if is_prime:
+              print(number)
+              count = count + 1
+      print(f"{count} primes")
+    after: >-
+      A loop in a loop: the outer one takes each number, the inner one tries
+      the divisors. Testing up to the square root (`divisor * divisor <=
+      number`) is enough, and much faster.
+    cases:
+      - {}
+      - label: "n is 20"
+        stdin: ["20"]
+      - label: "n is 2"
+        stdin: ["2"]
+      - label: "n is 1"
+        stdin: ["1"]
+      - label: "n is 100"
+        stdin: ["100"]
+    checks:
+      - expr: "len(inputs) == 1 and err is None"
+        pass: "It asks once and runs without an error"
+        hint: "`n = int(input(\"n: \"))`."
+      - expr: "[l for l in lines if l.isdigit()] == [str(p) for p in range(2, int(inputs[0]) + 1) if all(p % d for d in range(2, p))]"
+        pass: "It prints exactly the primes up to n"
+        hint: "For each number from 2 to n, try the divisors from 2 up."
+        misconceptions:
+          - when: "'1' in lines"
+            say: "1 is not a prime: start at 2."
+          - when: "'4' in lines or '9' in lines"
+            say: "A number with any divisor (other than 1 and itself) is not a prime. Check all divisors before you print."
+      - expr: "lines[-1:] == [f'{len([p for p in range(2, int(inputs[0]) + 1) if all(p % d for d in range(2, p))])} primes']"
+        pass: "The last line counts the primes"
+        hint: "A counter that goes up for each prime, printed after the loop."
+      - expr: "syntax('For') + syntax('While') >= 2"
+        pass: "A loop inside a loop"
+        hint: "The outer loop takes each number, the inner one tries divisors."
+    hints:
+      - "The outer loop: `for number in range(2, n + 1):`."
+      - "Inside: start with `is_prime = True`, and set it False when a divisor is found."
+      - "Try divisors from 2 while `divisor * divisor <= number`."
