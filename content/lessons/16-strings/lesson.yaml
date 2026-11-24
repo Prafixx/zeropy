@@ -645,6 +645,44 @@ review:
       - text: "`\"{} + {}\"`"
         why: "`.format` replaces each `{}` with a value."
 
+  - kind: predict
+    id: r-chr-ord
+    objective: O2
+    code: |
+      print(ord("A"), chr(66), chr(ord("a") + 2))
+    explain: "`ord` gives the number of a character (its code point), `chr` the character of a number. a is 97, so 97 + 2 is c."
+  - kind: predict
+    id: r-is-methods
+    objective: O2
+    code: |
+      print("abc123".isalnum(), "abc".islower(), "  ".isspace(), "Abc".isupper())
+    explain: "`isalnum`: only letters and digits. `islower`: all letters small. `isspace`: only spaces, tabs and newlines. `Abc` is not all capitals."
+  - kind: predict
+    id: r-numeric
+    objective: O2
+    code: |
+      print("42".isdecimal(), "²".isdecimal(), "²".isdigit(), "½".isnumeric())
+    explain: "`isdecimal` is the strictest: only 0 to 9 (and the same digits of other scripts). `²` is a digit but not decimal. `½` is numeric, but not a digit."
+  - kind: predict
+    id: r-find-rfind
+    objective: O2
+    code: |
+      path = "docs/2026/report.final.txt"
+      print(path.find("/"), path.rfind("/"), path.find("x", 20), path.find("zip"))
+    explain: "`find` gives the first place, `rfind` the last. A second argument starts the search there. Not found: `-1`."
+  - kind: mcq
+    id: r-index-vs-find
+    objective: O2
+    prompt: "What is the difference between `text.index(\"x\")` and `text.find(\"x\")` when there is no x?"
+    options:
+      - text: "`index` raises a `ValueError`, `find` gives `-1`"
+        correct: true
+        why: "The same pair exists from the right: `rindex` and `rfind`."
+      - text: "Both give `-1`"
+        why: "Only `find` and `rfind` give `-1`."
+      - text: "Both raise a `ValueError`"
+        why: "`find` never raises for a missing text."
+
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:
   - id: x-email
@@ -734,3 +772,112 @@ extra:
       - "`join` is a method of the text that goes between: `\", \".join(...)`."
       - "The total: `sum(prices)`."
       - "Two decimals: `f\"Total: {sum(prices):.2f}\"`."
+  - id: x-char-kinds
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Count the kinds of characters
+    prompt: |
+      **Write `kinds(text)`**: it gives back a dictionary with how many
+      characters of the text are capital letters, small letters, digits,
+      spaces and others. Use the `is...()` methods of texts.
+
+      ```text
+      {'upper': 2, 'lower': 8, 'digit': 4, 'space': 2, 'other': 2}
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(kinds("Hello World 2026!?"))
+    solution: |
+      def kinds(text):
+          counts = {"upper": 0, "lower": 0, "digit": 0, "space": 0, "other": 0}
+          for char in text:
+              if char.isupper():
+                  counts["upper"] += 1
+              elif char.islower():
+                  counts["lower"] += 1
+              elif char.isdigit():
+                  counts["digit"] += 1
+              elif char.isspace():
+                  counts["space"] += 1
+              else:
+                  counts["other"] += 1
+          return counts
+
+
+      print(kinds("Hello World 2026!?"))
+    after: >-
+      The `is...()` methods work for every alphabet: `"É".isupper()` and
+      `"٣".isdigit()` are True too. Checking ranges like `"A" <= c <= "Z"`
+      would miss them.
+    checks:
+      - expr: "callable(ns.get('kinds')) and kinds('Hello World 2026!?') == {'upper': 2, 'lower': 8, 'digit': 4, 'space': 2, 'other': 2}"
+        pass: "It counts each kind of character"
+        hint: "Loop over the text and test `isupper`, `islower`, `isdigit`, `isspace` in turn."
+      - expr: "callable(ns.get('kinds')) and kinds('') == {'upper': 0, 'lower': 0, 'digit': 0, 'space': 0, 'other': 0} and kinds('Ünï\t-') == {'upper': 1, 'lower': 2, 'digit': 0, 'space': 1, 'other': 1}"
+        pass: "It works for an empty text, letters of other languages and tabs"
+        hint: "Start every count at 0, and use the methods, not ranges of letters."
+      - expr: "sum(src.count(m) for m in ('isupper', 'islower', 'isdigit', 'isspace')) >= 4"
+        pass: "It uses the `is...()` methods"
+        hint: "`char.isupper()`, `char.islower()`, `char.isdigit()`, `char.isspace()`."
+    hints:
+      - "Start with a dictionary of five counts, all 0."
+      - "`if char.isupper(): ... elif char.islower(): ...` and so on."
+      - "Everything else goes to `\"other\"` in the `else`."
+  - id: x-positions
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Every place of a word
+    prompt: |
+      **Replace the two `___`**: `positions(text, word)` gives every index
+      where `word` starts. `find` with a second argument starts the search
+      there, so the loop goes on after each match.
+
+      ```text
+      [0, 7, 14]
+      []
+      ```
+    starter: |
+      def positions(text, word):
+          found = []
+          start = text.find(word)
+          while start != ___:
+              found.append(start)
+              start = text.find(word, ___)
+          return found
+
+
+      print(positions("tea is tea is tea", "tea"))
+      print(positions("coffee", "tea"))
+    solution: |
+      def positions(text, word):
+          found = []
+          start = text.find(word)
+          while start != -1:
+              found.append(start)
+              start = text.find(word, start + 1)
+          return found
+
+
+      print(positions("tea is tea is tea", "tea"))
+      print(positions("coffee", "tea"))
+    after: >-
+      `find` gives `-1` when nothing is found, which ends the loop. With
+      `index` you would need `try`, because it raises a `ValueError`.
+    checks:
+      - expr: "callable(ns.get('positions')) and positions('tea is tea is tea', 'tea') == [0, 7, 14] and positions('coffee', 'tea') == []"
+        pass: "It finds every place, or none"
+        hint: "The loop stops at `-1`; search again from `start + 1`."
+      - expr: "callable(ns.get('positions')) and positions('aaaa', 'aa') == [0, 1, 2]"
+        pass: "Matches that overlap are found too"
+        hint: "Start the next search one place after the last match: `start + 1`."
+      - expr: "lines == ['[0, 7, 14]', '[]']"
+        pass: "It prints both lists"
+        hint: "Keep the two prints."
+    hints:
+      - "What does `find` give when there is no match?"
+      - "`-1`."
+      - "The next search starts at `start + 1`."

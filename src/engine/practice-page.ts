@@ -273,7 +273,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
       h(
         'p',
         { class: 'muted', 'data-enter': true },
-        'Bigger tasks, from a short description only, like real work: no starter code, and the checks stay hidden until you are stuck. Two at the end of each module.',
+        'Bigger tasks, from a short description only, like real work: no starter code, and the checks stay hidden until you are stuck. Three at the end of each module.',
       ),
       h('ol', { class: 'practice-list', 'data-enter': true }, ...rows),
     ];

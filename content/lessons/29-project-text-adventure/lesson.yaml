@@ -812,3 +812,87 @@ extra:
       - "For `to_roman`: a list of (value, letters) pairs from big to small, with the pairs like 900 CM too."
       - "While `n >= value`: add the letters, and take the value away."
       - "For `from_roman`: add each letter's value, but subtract it when the next letter is bigger."
+
+# Challenges of the module: spec only, hidden checks.
+  - id: c-rle
+    type: exercise
+    fade: challenge
+    objective: O2
+    title: "Challenge: pack and unpack"
+    prompt: |
+      Run-length coding writes each run of the same character as its
+      length and the character: `aaabccdddd` becomes `3a1b2c4d`.
+
+      **Write two functions:**
+
+      - `encode(text)`: the code of a text. A run can be longer than 9:
+        twelve `a` are `12a`. A text with digits raises a `ValueError`
+        (its code could not be read back).
+      - `decode(code)`: the text again, also with numbers of more than one
+        digit.
+
+      ```text
+      3a1b2c4d
+      aaabccdddd
+      ```
+    starter: |
+      # Your two functions here.
+
+
+      print(encode("aaabccdddd"))
+      print(decode("3a1b2c4d"))
+    solution: |
+      def encode(text):
+          if any(char.isdigit() for char in text):
+              raise ValueError("a text with digits cannot be encoded")
+          result = ""
+          i = 0
+          while i < len(text):
+              j = i
+              while j < len(text) and text[j] == text[i]:
+                  j = j + 1
+              result = result + f"{j - i}{text[i]}"
+              i = j
+          return result
+
+
+      def decode(code):
+          result = ""
+          number = ""
+          for char in code:
+              if char.isdigit():
+                  number = number + char
+              else:
+                  result = result + char * int(number)
+                  number = ""
+          return result
+
+
+      print(encode("aaabccdddd"))
+      print(decode("3a1b2c4d"))
+    after: >-
+      Each function undoes the other, which gives a strong test for free:
+      `decode(encode(text)) == text` for any text without digits.
+    checks:
+      - expr: "callable(ns.get('encode')) and encode('aaabccdddd') == '3a1b2c4d' and encode('') == '' and encode('x') == '1x' and encode('  !!') == '2 2!'"
+        pass: "`encode` gives the length and the character of each run"
+        hint: "Find where a run ends, write its length and character, and go on from there."
+      - expr: "callable(ns.get('encode')) and encode('a' * 12 + 'b') == '12a1b' and raises(encode, 'room 101') == 'ValueError'"
+        pass: "Long runs work, and digits are refused"
+        hint: "`f\"{length}{char}\"` writes 12 as two digits; check for digits first."
+      - expr: "callable(ns.get('decode')) and decode('3a1b2c4d') == 'aaabccdddd' and decode('12a1b') == 'a' * 12 + 'b' and decode('') == ''"
+        pass: "`decode` reads numbers of any length"
+        hint: "Collect the digits in a text until a character comes, then repeat it."
+        misconceptions:
+          - when: "callable(ns.get('decode')) and decode('12a') in ('aab', 'a' * 2)"
+            say: "Only one digit is read. Collect all digits before the character: `12` means twelve."
+      - expr: "callable(ns.get('encode')) and callable(ns.get('decode')) and all(decode(encode(t)) == t for t in ['hello', 'zzzzzzzzzzzzzzz', 'a b  c', 'Mississippi'])"
+        pass: "`decode(encode(text))` gives the text back"
+        hint: "If one direction is right and the other is not, compare their output on a short example."
+      - expr: "err is None and lines == ['3a1b2c4d', 'aaabccdddd']"
+        pass: "It prints the two lines"
+        hint: "Keep the prints."
+    hints:
+      - "`encode`: an index `i` at the start of a run, and `j` that walks to its end."
+      - "`decode`: a text `number` collects digits; a letter uses `int(number)` and starts again."
+      - "Check for digits first in `encode`: `any(char.isdigit() for char in text)`."

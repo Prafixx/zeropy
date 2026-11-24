@@ -706,3 +706,83 @@ extra:
       - "The outer loop: `for number in range(2, n + 1):`."
       - "Inside: start with `is_prime = True`, and set it False when a divisor is found."
       - "Try divisors from 2 while `divisor * divisor <= number`."
+
+# Challenges of the module: spec only, hidden checks.
+  - id: c-collatz
+    type: exercise
+    fade: challenge
+    objective: O2
+    title: "Challenge: the 3n + 1 path"
+    prompt: |
+      Take a whole number. If it is even, halve it; if it is odd, take
+      3 × n + 1. Repeat until you reach 1. Nobody has found a number that
+      does not reach 1.
+
+      **Write a program** that asks `input("Start: ")` until the answer is
+      a whole number above 0 (else it prints `Type a whole number above 0.`
+      and asks again). Then it prints the path, the number of steps and the
+      highest number on the path.
+
+      ```text
+      Start: 6
+      6 → 3 → 10 → 5 → 16 → 8 → 4 → 2 → 1
+      Steps: 8
+      Highest: 16
+      ```
+    starter: |
+      # Write the whole program yourself.
+    solution: |
+      text = input("Start: ")
+      while not text.isdigit() or int(text) < 1:
+          print("Type a whole number above 0.")
+          text = input("Start: ")
+      n = int(text)
+      path = str(n)
+      steps = 0
+      highest = n
+      while n != 1:
+          if n % 2 == 0:
+              n = n // 2
+          else:
+              n = 3 * n + 1
+          path = path + " → " + str(n)
+          steps = steps + 1
+          if n > highest:
+              highest = n
+      print(path)
+      print(f"Steps: {steps}")
+      print(f"Highest: {highest}")
+    after: >-
+      Two loops: one that repeats a question until the answer is good, and
+      one that repeats a rule until a goal. Start with 27: 111 steps, and
+      the path climbs to 9232.
+    cases:
+      - stdin: ["6"]
+      - label: "the input is 1"
+        stdin: ["1"]
+      - label: "the inputs are `abc`, `0` and `7`"
+        stdin: ["abc", "0", "7"]
+      - label: "the input is 27"
+        stdin: ["27"]
+    checks:
+      - expr: "err is None and len(lines) >= 3 and lines[-3] == ' → '.join(str(x) for x in (lambda f, n: f(f, n, []))(lambda f, n, acc: acc + [n] if n == 1 else f(f, n // 2 if n % 2 == 0 else 3 * n + 1, acc + [n]), int(inputs[-1])))"
+        pass: "The path, with the arrows"
+        hint: "Start the text with the first number; add `\" → \" + str(n)` after each step."
+      - expr: "lines[-2:] == [f'Steps: {len((lambda f, n: f(f, n, []))(lambda f, n, acc: acc + [n] if n == 1 else f(f, n // 2 if n % 2 == 0 else 3 * n + 1, acc + [n]), int(inputs[-1]))) - 1}', f'Highest: {max((lambda f, n: f(f, n, []))(lambda f, n, acc: acc + [n] if n == 1 else f(f, n // 2 if n % 2 == 0 else 3 * n + 1, acc + [n]), int(inputs[-1])))}']"
+        pass: "The number of steps and the highest number"
+        hint: "Count each step; keep the highest number in its own variable."
+      - expr: "asked == len(inputs) and lines.count('Type a whole number above 0.') == len(inputs) - 1"
+        pass: "A wrong answer gets the message, and the question again"
+        hint: "`while not text.isdigit() or int(text) < 1:` print the message and ask again."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "`int(\"abc\")` fails. Check `text.isdigit()` before you turn it into a number."
+          - when: "err == 'Timeout'"
+            say: "A loop never ends. The path loop must stop at 1, and change n in every round."
+      - expr: "inputs != ['1'] or lines[-3:] == ['1', 'Steps: 0', 'Highest: 1']"
+        pass: "Starting at 1 gives a path of one number"
+        hint: "With `while n != 1:`, the loop does not run for 1."
+    hints:
+      - "The first loop asks until `text.isdigit()` and `int(text) >= 1`."
+      - "The second loop: `while n != 1:` with an `if` for even and odd."
+      - "Keep three things while you go: the path text, the steps and the highest number."

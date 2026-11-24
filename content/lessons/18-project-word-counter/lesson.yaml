@@ -642,3 +642,77 @@ extra:
       - "The signature of a word: `\"\".join(sorted(word))`."
       - "`groups[key].append(word)`, after making an empty list for a new key."
       - "Keep groups with 2 or more words; sort the words, then sort the lines."
+
+# Challenges of the module: spec only, hidden checks.
+  - id: c-caesar
+    type: exercise
+    fade: challenge
+    objective: O2
+    title: "Challenge: a secret code"
+    prompt: |
+      The Caesar code moves each letter a number of places in the
+      alphabet: with 3, `a` becomes `d`, and `z` becomes `c` (it goes round).
+
+      **Write a program** that asks `input("Text: ")` and `input("Shift: ")`,
+      and prints the text in code:
+
+      - capitals stay capitals, small letters stay small,
+      - anything that is not a letter from a to z stays as it is,
+      - the shift can be negative (back) or bigger than 26.
+
+      ```text
+      Text: Hello, World!
+      Shift: 3
+      Khoor, Zruog!
+      ```
+    starter: |
+      LETTERS = "abcdefghijklmnopqrstuvwxyz"
+
+      # Write the rest of the program yourself.
+    solution: |
+      LETTERS = "abcdefghijklmnopqrstuvwxyz"
+
+      text = input("Text: ")
+      k = int(input("Shift: "))
+      result = ""
+      for char in text:
+          small = char.lower()
+          if small in LETTERS:
+              new = LETTERS[(LETTERS.find(small) + k) % 26]
+              if char.isupper():
+                  new = new.upper()
+              result = result + new
+          else:
+              result = result + char
+      print(result)
+    after: >-
+      `% 26` makes the alphabet a circle: it works for 3, for -1 and for
+      29. Decoding is the same program with the opposite shift.
+    cases:
+      - stdin: ["Hello, World!", "3"]
+      - label: "the text is `xyz ABC` and the shift is 4"
+        stdin: ["xyz ABC", "4"]
+      - label: "the text is `Zebra` and the shift is -1"
+        stdin: ["Zebra", "-1"]
+      - label: "the text is `Ünï code 123` and the shift is 27"
+        stdin: ["Ünï code 123", "27"]
+    checks:
+      - expr: "err is None and lines[-1:] == [''.join((lambda c, L, k: (lambda n: n.upper() if c.isupper() else n)(L[(L.index(c.lower()) + k) % 26]) if c.lower() in L else c)(c, 'abcdefghijklmnopqrstuvwxyz', int(inputs[1])) for c in inputs[0])]"
+        pass: "The text in code"
+        hint: "For each letter: its place with `LETTERS.find(...)`, plus the shift, `% 26`."
+        misconceptions:
+          - when: "err == 'IndexError'"
+            say: "A place goes past `z`. Use `% 26` so it goes round to `a`."
+      - expr: "inputs[0] != 'xyz ABC' or lines[-1:] == ['bcd EFG']"
+        pass: "Letters at the end of the alphabet go round"
+        hint: "`(place + k) % 26`."
+      - expr: "inputs[0] != 'Zebra' or lines[-1:] == ['Ydaqz']"
+        pass: "A negative shift goes back, and capitals stay capitals"
+        hint: "`%` with 26 also works for negative numbers in Python: `-1 % 26` is 25."
+      - expr: "inputs[0] != 'Ünï code 123' or lines[-1:] == ['Üoï dpef 123']"
+        pass: "Other characters stay as they are, and a shift of 27 works"
+        hint: "Only change characters that are in `LETTERS` (after `.lower()`)."
+    hints:
+      - "Loop over the text, and build the result one character at a time."
+      - "A letter: `LETTERS[(LETTERS.find(small) + k) % 26]`; a capital gets `.upper()` again."
+      - "Anything else is added as it is."

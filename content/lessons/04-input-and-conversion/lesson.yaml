@@ -711,3 +711,91 @@ extra:
       - "First the days: `total // 86400`, and the rest `total % 86400`."
       - "Then hours from the rest (3600 seconds each), then minutes (60)."
       - "Four prints at the end, one per unit."
+
+# Challenges of the module: spec only, hidden checks.
+  - id: c-coins
+    type: exercise
+    fade: challenge
+    objective: O3
+    title: "Challenge: the change machine"
+    prompt: |
+      A machine gives change in coins. **Write a program** that asks
+      `input("Amount in euros: ")`, for example `3.85`, and prints how many
+      of each coin it gives, from the biggest coin down, always taking as
+      many of the biggest coin as possible. Print every coin, also with 0,
+      and at the end the number of coins.
+
+      ```text
+      Amount in euros: 3.85
+      2 €: 1
+      1 €: 1
+      50 c: 1
+      20 c: 1
+      10 c: 1
+      5 c: 1
+      2 c: 0
+      1 c: 0
+      coins: 6
+      ```
+
+      Work in cents (whole numbers), with `//` and `%`. Careful: `0.29 * 100`
+      is not exactly 29 for a computer.
+    starter: |
+      # Write the whole program yourself.
+    solution: |
+      cents = round(float(input("Amount in euros: ")) * 100)
+      c200 = cents // 200
+      cents = cents % 200
+      c100 = cents // 100
+      cents = cents % 100
+      c50 = cents // 50
+      cents = cents % 50
+      c20 = cents // 20
+      cents = cents % 20
+      c10 = cents // 10
+      cents = cents % 10
+      c5 = cents // 5
+      cents = cents % 5
+      c2 = cents // 2
+      c1 = cents % 2
+      print("2 €:", c200)
+      print("1 €:", c100)
+      print("50 c:", c50)
+      print("20 c:", c20)
+      print("10 c:", c10)
+      print("5 c:", c5)
+      print("2 c:", c2)
+      print("1 c:", c1)
+      print("coins:", c200 + c100 + c50 + c20 + c10 + c5 + c2 + c1)
+    after: >-
+      Money in programs is kept in whole cents, never in euros with
+      decimals: whole numbers are exact. `//` gives how many coins, `%` what
+      is left for the next one.
+    cases:
+      - stdin: ["3.85"]
+      - label: "the input is 0.29"
+        stdin: ["0.29"]
+      - label: "the input is 7.99"
+        stdin: ["7.99"]
+      - label: "the input is 0"
+        stdin: ["0"]
+    checks:
+      - expr: "err is None and lines[-9:-1] == [f'{n}: {k}' for n, k in zip(['2 €', '1 €', '50 c', '20 c', '10 c', '5 c', '2 c', '1 c'], __import__('functools').reduce(lambda acc, v: (acc[0] % v, acc[1] + [acc[0] // v]), [200, 100, 50, 20, 10, 5, 2, 1], (round(float(inputs[0]) * 100), []))[1])]"
+        pass: "Each coin with its number, biggest first"
+        hint: "Work in cents: `cents // 200`, then `cents % 200` for the rest, and so on."
+        misconceptions:
+          - when: "inputs == ['0.29'] and lines[-3:-1] == ['2 c: 1', '1 c: 0']"
+            say: "`0.29 * 100` is 28.999999... for a computer, and `int` cuts it to 28. Use `round(... * 100)`."
+      - expr: "lines[-1:] == [f'coins: {sum(__import__('functools').reduce(lambda acc, v: (acc[0] % v, acc[1] + [acc[0] // v]), [200, 100, 50, 20, 10, 5, 2, 1], (round(float(inputs[0]) * 100), []))[1])}']"
+        pass: "The number of coins at the end"
+        hint: "Add up the eight counts."
+      - expr: "asked == 1 and 'Amount in euros: ' in out"
+        pass: "It asks once, with the right question"
+        hint: "`input(\"Amount in euros: \")`."
+      - expr: "src.count('//') >= 4 and src.count('%') >= 4"
+        pass: "It uses `//` and `%`"
+        hint: "`//` for the number of coins, `%` for what is left."
+    hints:
+      - "First turn the euros into cents: `round(float(text) * 100)`."
+      - "For each coin: `count = cents // value`, then `cents = cents % value`."
+      - "Print the eight counts, then their sum."

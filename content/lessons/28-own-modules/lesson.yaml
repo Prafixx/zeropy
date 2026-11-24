@@ -581,6 +581,43 @@ review:
       - text: "`import line from shop.labels`"
         why: "The order is `from ... import ...`."
 
+  - kind: mcq
+    id: r-import-as
+    objective: O1
+    prompt: "After `from statistics import mean as average`, which name can you use?"
+    options:
+      - text: "`average`; the name `mean` is not defined here"
+        correct: true
+        why: "`as` gives the imported object another name in your file."
+      - text: "`mean` and `average`"
+        why: "Only the new name is put into your namespace."
+      - text: "`statistics.mean`"
+        why: "The module itself was not imported, only one name from it."
+  - kind: mcq
+    id: r-sys-path-insert
+    objective: O2
+    prompt: "A program must import a module from the folder `tools`, which is not on the search path. What works for this one program?"
+    options:
+      - text: "`sys.path.insert(0, \"tools\")` before the import"
+        correct: true
+        why: "It changes the search path only while this program runs. A package or a venv is better for anything that lasts."
+      - text: "Rename the folder to `sys.path`"
+        why: "`sys.path` is a list in Python, not a folder name."
+      - text: "`import tools/module`"
+        why: "An import takes module names with dots, not paths."
+  - kind: mcq
+    id: r-circular
+    objective: O2
+    prompt: "`a.py` imports `b`, and `b.py` imports `a` at the top. What can happen?"
+    options:
+      - text: "A circular import: one module is only half loaded, and a name is missing (ImportError or AttributeError)"
+        correct: true
+        why: "Fix it by moving the shared part into a third module that both import."
+      - text: "Python loads both files forever"
+        why: "Python loads each module once, which is why one of them is unfinished."
+      - text: "Nothing: Python sorts it out"
+        why: "It often fails, and the error names a module that seems fine."
+
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:
   - id: x-shapes
@@ -675,3 +712,50 @@ extra:
       - "When is `__name__` equal to `\"__main__\"`?"
       - "Only when the file itself is run, not when it is imported."
       - "`if __name__ == \"__main__\":`, and indent the two prints under it."
+  - id: x-alias
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Short names with as
+    prompt: |
+      `helpers.py` (see the files) has a function with a long name.
+      **Replace the `___`**: import it under the short name `fmt`, and
+      import the module `statistics` as `st`.
+
+      ```text
+      4.50 €
+      3
+      ```
+    files:
+      helpers.py: |
+        def format_price_in_euros(amount):
+            return f"{amount:.2f} €"
+    starter: |
+      from helpers import format_price_in_euros as ___
+      import statistics ___
+
+      print(fmt(4.5))
+      print(st.median([1, 3, 7]))
+    solution: |
+      from helpers import format_price_in_euros as fmt
+      import statistics as st
+
+      print(fmt(4.5))
+      print(st.median([1, 3, 7]))
+    after: >-
+      `as` changes only the name in your file. Use it for long names and
+      for names that would clash, like two modules that both have `load`.
+    checks:
+      - expr: "err is None and lines == ['4.50 €', '3']"
+        pass: "It prints the price and the median"
+        hint: "`... as fmt` and `import statistics as st`."
+        misconceptions:
+          - when: "err == 'NameError'"
+            say: "A name is not defined. After `as`, write the short name: `fmt` and `st`."
+      - expr: "'fmt' in ns and 'format_price_in_euros' not in ns and 'st' in ns and 'statistics' not in ns"
+        pass: "Only the short names are in the program"
+        hint: "With `as`, the long name is not defined in your file."
+    hints:
+      - "After `as` comes the new name."
+      - "`from helpers import format_price_in_euros as fmt`."
+      - "`import statistics as st`."

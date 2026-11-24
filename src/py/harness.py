@@ -74,6 +74,36 @@ class _Out(io.StringIO):
         return super().write(text)
 
 
+class _Stdin(io.TextIOBase):
+    """sys.stdin of a run: readline() takes the next answer, like input()
+    without a prompt. Reading all (read, readlines, a for loop) takes the
+    answers that are left and then ends, like the end of a pipe."""
+
+    def __init__(self, ask, left):
+        self._ask = ask
+        self._left = left
+
+    def readable(self):
+        return True
+
+    def readline(self, size=-1):
+        return self._ask("") + "\n"
+
+    def read(self, size=-1):
+        text = "".join(answer + "\n" for answer in self._left)
+        self._left.clear()
+        return text
+
+    def readlines(self, hint=-1):
+        return self.read().splitlines(True)
+
+    def __iter__(self):
+        return iter(self.readlines())
+
+    def isatty(self):
+        return False
+
+
 class _NeedInput(EOFError):
     """input() was called and no answer is left. The page then asks the learner."""
 
@@ -1211,8 +1241,11 @@ class Listbox(_Widget):
     def delete(self, first, last=None):
         start = self._index(first)
         end = start + 1 if last is None else self._index(last) + (0 if last in ("end", END) else 1)
+        before = len(self.items)
         del self.items[start:end]
-        self.selected = {i for i in self.selected if i < len(self.items)}
+        gone = before - len(self.items)
+        # As in tkinter: deleted lines lose their selection, later ones move up.
+        self.selected = {i if i < start else i - gone for i in self.selected if not start <= i < start + gone}
 
     def get(self, first, last=None):
         if last is None:
@@ -1494,6 +1527,9 @@ def _execute(src, case, trace, index=0, pytest=False):
     _reset_logging()
     real_input = builtins.input
     builtins.input = fake_input
+    # sys.stdin reads the same answers as input(), without a prompt.
+    real_stdin = sys.stdin
+    sys.stdin = _Stdin(fake_input, inputs)
     # Each case runs in its own folder. Relative paths like "notes.txt" are
     # inside it. The folder stays until the checks of the run are done.
     home = _folder(index, case.get("files"))
@@ -1556,6 +1592,7 @@ def _execute(src, case, trace, index=0, pytest=False):
                     error = _describe(exc)
     finally:
         builtins.input = real_input
+        sys.stdin = real_stdin
         sys.argv = real_argv
         _flush_logging()
         ext = {hook.name: hook.finish() for hook in _RUN_HOOKS}

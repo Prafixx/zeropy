@@ -62,6 +62,7 @@ modules:
       - { id: files, title: Files and paths }
       - { id: json, title: JSON }
       - { id: bytes-and-binary, title: Bytes and binary files }
+      - { id: files-in-depth, title: Files in depth }
       - { id: exceptions, title: Exceptions }
       - { id: csv-and-comprehensions, title: CSV and comprehensions }
       - { id: generators, title: Iterators and generators }
@@ -76,6 +77,7 @@ modules:
       - { id: venv-and-pip, title: Packages with venv and pip }
       - { id: command-line-tools, title: Command-line tools }
       - { id: git, title: Git }
+      - { id: working-with-others, title: Working with others }
       - { id: web-apis, title: Web APIs }
       - { id: project-weather-tool, title: "Project: weather tool", kind: project }
 
