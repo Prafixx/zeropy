@@ -13,6 +13,7 @@ import {
   PlaneGeometry,
   SRGBColorSpace,
 } from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { FONT_MONO, PALETTE, shortRepr, valueColor } from './palette';
 
 export const CRATE = { width: 1.5, height: 0.85, depth: 1.0, wall: 0.07 };
@@ -53,6 +54,49 @@ export function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: n
   } while (ctx.measureText(text).width > maxWidth && size > 16);
 }
 
+/** A block with slightly rounded edges. The face groups of a box stay, so
+ * the front can carry its own texture (+x, -x, +y, -y, +z front, -z). */
+export function roundedBlock(w: number, h: number, d: number, radius = 0.05): BoxGeometry {
+  return new RoundedBoxGeometry(w, h, d, 3, Math.min(radius, d / 2.2, w / 4, h / 4));
+}
+
+const shadowTextures = new Map<string, CanvasTexture>();
+/** A soft, round shadow on the floor: dark in the middle, gone at the edge. */
+export function softShadow(width: number, depth: number): Mesh {
+  const key = `${PALETTE.shadow}`;
+  let texture = shadowTextures.get(key);
+  if (!texture) {
+    texture = canvasTexture(128, 128, (ctx) => {
+      const gradient = ctx.createRadialGradient(64, 64, 8, 64, 64, 64);
+      gradient.addColorStop(0, PALETTE.shadow);
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 128, 128);
+    });
+    shadowTextures.set(key, texture);
+  }
+  const mesh = new Mesh(
+    new PlaneGeometry(width, depth),
+    new MeshBasicMaterial({ map: texture, transparent: true, opacity: PALETTE.shadowOpacity * 2.2, depthWrite: false }),
+  );
+  mesh.rotation.x = -Math.PI / 2;
+  return mesh;
+}
+
+/** A paper tag: rounded corners, a light border, the text in ink. */
+function drawTag(ctx: CanvasRenderingContext2D, width: number, height: number, inset = 6): void {
+  const radius = Math.min(height * 0.22, 28);
+  ctx.beginPath();
+  ctx.roundRect(inset, inset, width - inset * 2, height - inset * 2, radius);
+  ctx.fillStyle = PALETTE.paper2;
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = PALETTE.line;
+  ctx.globalAlpha = 0.35;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
 export function outline(geometry: BoxGeometry): LineSegments {
   return new LineSegments(new EdgesGeometry(geometry), lineMaterial());
 }
@@ -83,12 +127,9 @@ export function makeCrate(name: string): Group {
   const label = new Mesh(
     new PlaneGeometry(1.2, 0.44),
     new MeshBasicMaterial({
+      transparent: true,
       map: canvasTexture(480, 176, (ctx) => {
-        ctx.fillStyle = PALETTE.paper2;
-        ctx.fillRect(0, 0, 480, 176);
-        ctx.lineWidth = 6;
-        ctx.strokeStyle = PALETTE.line;
-        ctx.strokeRect(6, 6, 468, 164);
+        drawTag(ctx, 480, 176);
         ctx.fillStyle = PALETTE.ink;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -100,12 +141,8 @@ export function makeCrate(name: string): Group {
   label.position.set(0, h * 0.5, d / 2 + 0.008);
   group.add(label);
 
-  const shadow = new Mesh(
-    new PlaneGeometry(w + 0.1, d + 0.1),
-    new MeshBasicMaterial({ color: PALETTE.shadow, transparent: true, opacity: PALETTE.shadowOpacity, depthWrite: false }),
-  );
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.set(0.16, 0.004, 0.12);
+  const shadow = softShadow(w * 1.5, d * 1.6);
+  shadow.position.set(0.1, 0.004, 0.08);
   group.add(shadow);
   return group;
 }
@@ -131,11 +168,11 @@ export function makeCard(repr: string, type: string): Group {
       ctx.fillText(type, 184, 222);
     }),
   });
-  const geometry = new BoxGeometry(w, h, d);
+  const geometry = roundedBlock(w, h, d, 0.06);
   // Box faces: +x, -x, +y, -y, +z (front), -z.
   const mesh = new Mesh(geometry, [side, side, side, side, face, side]);
   const group = new Group();
-  group.add(mesh, outline(geometry));
+  group.add(mesh);
   return group;
 }
 
@@ -156,9 +193,9 @@ export function makeChip(repr: string, type: string): Group {
       ctx.fillText(text, 64, 68);
     }),
   });
-  const geometry = new BoxGeometry(size, size, 0.08);
+  const geometry = roundedBlock(size, size, 0.08, 0.035);
   const group = new Group();
-  group.add(new Mesh(geometry, [side, side, side, side, face, side]), outline(geometry));
+  group.add(new Mesh(geometry, [side, side, side, side, face, side]));
   return group;
 }
 
@@ -191,9 +228,9 @@ export function makeCell(repr: string, type: string, max = 8): Group {
       ctx.fillText(text, 160, 108);
     }),
   });
-  const geometry = new BoxGeometry(w, h, d);
+  const geometry = roundedBlock(w, h, d, 0.035);
   const group = new Group();
-  group.add(new Mesh(geometry, [side, side, side, side, face, side]), outline(geometry));
+  group.add(new Mesh(geometry, [side, side, side, side, face, side]));
   return group;
 }
 
@@ -204,15 +241,9 @@ export function makePlaque(text: string, width: number, height: number, kind: 'n
   const mesh = new Mesh(
     new PlaneGeometry(width, height),
     new MeshBasicMaterial({
-      transparent: kind !== 'name',
+      transparent: true,
       map: canvasTexture(cw, ch, (ctx) => {
-        if (kind === 'name') {
-          ctx.fillStyle = PALETTE.paper2;
-          ctx.fillRect(0, 0, cw, ch);
-          ctx.lineWidth = 6;
-          ctx.strokeStyle = PALETTE.line;
-          ctx.strokeRect(6, 6, cw - 12, ch - 12);
-        }
+        if (kind === 'name') drawTag(ctx, cw, ch);
         ctx.fillStyle = PALETTE.ink;
         ctx.globalAlpha = kind === 'index' ? 0.82 : 1;
         ctx.textAlign = 'center';
@@ -235,14 +266,9 @@ export function makeTray(color: string = PALETTE.kraft): Group {
   geometry.translate(0.5, h / 2, 0);
   const group = new Group();
   group.add(new Mesh(geometry, new MeshLambertMaterial({ color })), outline(geometry));
-  const shadowGeometry = new PlaneGeometry(1, d + 0.1);
-  shadowGeometry.translate(0.5, 0, 0);
-  const shadow = new Mesh(
-    shadowGeometry,
-    new MeshBasicMaterial({ color: PALETTE.shadow, transparent: true, opacity: PALETTE.shadowOpacity, depthWrite: false }),
-  );
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.set(0.04, 0.004, 0.12);
+  const shadow = softShadow(1.25, d * 1.7);
+  shadow.geometry.translate(0.5, 0, 0);
+  shadow.position.set(0.02, 0.004, 0.08);
   group.add(shadow);
   return group;
 }

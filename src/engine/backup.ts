@@ -1,6 +1,7 @@
 // Save progress to a file and load it back (on another PC, or after a reinstall).
 // The file holds the same data the app keeps on the device: lessons,
 // review cards, the learner's code and the settings.
+import { alertDialog, confirmDialog } from './dialog';
 
 const KEYS = { progress: 'zeropy:v1', settings: 'zeropy:settings' } as const;
 
@@ -77,17 +78,23 @@ export function pickProgressFile(): void {
   input.addEventListener('change', () => {
     const file = input.files?.[0];
     if (!file) return;
-    void file.text().then((text) => {
+    void file.text().then(async (text) => {
       const problem = checkBackup(text);
       if (problem) {
-        window.alert(problem);
+        await alertDialog('This file cannot be loaded', problem);
         return;
       }
-      if (!window.confirm('Replace the progress on this device with the progress in this file?')) return;
+      const ok = await confirmDialog({
+        title: 'Load this progress?',
+        body: 'The progress on this device is replaced by the progress in the file. Save a copy first if you want to keep it.',
+        confirm: 'Replace my progress',
+        danger: true,
+      });
+      if (!ok) return;
       try {
         importProgress(text);
       } catch {
-        window.alert('The progress could not be saved on this device.');
+        await alertDialog('The progress could not be saved', 'This device did not accept the file. Try again, or use another browser.');
         return;
       }
       window.location.hash = '#/';

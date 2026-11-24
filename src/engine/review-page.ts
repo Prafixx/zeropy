@@ -1,9 +1,8 @@
 // Spaced review outside a lesson: all due cards, mixed across lessons.
 import { place } from '@/kit/motion';
 import { allCards } from './registry';
-import { brand, settingsButton } from './settings-menu';
 import { describeWait, dueCards, nextDue, seenCardCount } from './store';
-import { button, h, panel, shuffle } from './ui';
+import { button, emptyState, h, shuffle } from './ui';
 import type { StepContext } from './steps/context';
 import { renderCards } from './steps/simple';
 
@@ -13,15 +12,13 @@ export function mountReview(root: HTMLElement): () => void {
   const body = h('div', { class: 'step-body' });
   const note = h('div', { class: 'dock-note' });
   const primary = button('Continue', { kind: 'primary', icon: 'right', onClick: () => primaryAction() });
-  const home = h('a', { class: 'btn btn-ghost', href: '#/' }, h('span', { class: 'btn-label' }, 'Back to the course'));
 
   root.replaceChildren(
     h(
       'div',
       { class: 'player' },
-      h('header', { class: 'bar' }, brand(), h('div', { class: 'bar-title' }, h('span', { class: 'bar-kicker' }, 'Review'), h('span', null, 'Spaced practice')), h('div', { class: 'bar-spacer' }), settingsButton()),
-      h('main', { class: 'player-main', tabindex: '0' }, h('h1', { class: 'sr-only' }, 'Review'), body),
-      h('footer', { class: 'dock' }, home, note, primary),
+      h('main', { class: 'player-main is-page', tabindex: '0' }, h('h1', { class: 'sr-only' }, 'Review'), body),
+      h('footer', { class: 'dock' }, note, primary),
     ),
   );
 
@@ -29,7 +26,16 @@ export function mountReview(root: HTMLElement): () => void {
     dispose?.();
     const due = nextDue();
     body.replaceChildren(
-      h('div', { class: 'single' }, panel('good', 'Review done.', h('p', null, due ? `Your next review is ${describeWait(due)}.` : 'Come back after your next lesson.'))),
+      h(
+        'div',
+        { class: 'single' },
+        h('h1', { class: 'display' }, 'Review'),
+        emptyState(
+          'check',
+          'Review done',
+          due ? `Your next review is ${describeWait(due)}. Short tests after a pause make memory last.` : 'Come back after your next lesson.',
+        ),
+      ),
     );
     place(body.children);
     primary.hidden = true;
@@ -67,12 +73,13 @@ export function mountReview(root: HTMLElement): () => void {
       h(
         'div',
         { class: 'single' },
-        panel(
-          'info',
-          'Nothing is due now.',
-          h('p', null, seenCardCount() === 0 ? 'Finish a lesson first. Its questions will come back here.' : `Your next review is ${describeWait(due ?? 0)}.`),
+        h('h1', { class: 'display' }, 'Review'),
+        emptyState(
+          'loop',
+          'Nothing is due now',
+          seenCardCount() === 0 ? 'Finish a lesson first. Its questions will come back here, just before you would forget them.' : `Your next review is ${describeWait(due ?? 0)}.`,
+          allCards().length > 0 ? button('Practice anyway', { kind: 'plain', onClick: () => start(true) }) : null,
         ),
-        allCards().length > 0 ? button('Practice anyway', { kind: 'plain', onClick: () => start(true) }) : null,
       ),
     );
     place(body.children);

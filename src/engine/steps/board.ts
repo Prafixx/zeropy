@@ -285,7 +285,7 @@ export function createBoard(options: BoardOptions): BoardPlayer {
         h('span', { class: 'pi-part-name' }, 'Knob', h('small', null, `MCP3008 channel ${channel}`)),
         `Turn the knob on channel ${channel}`,
         (v) => ({ channel, analog: v }),
-        (v) => `${v.toFixed(2)} · ${(v * 3.3).toFixed(2)} V`,
+        (v) => `${v.toFixed(2)} (${(v * 3.3).toFixed(2)} V)`,
       );
     }
     if (d.kind === 'Motor') {

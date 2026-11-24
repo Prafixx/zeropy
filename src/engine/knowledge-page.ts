@@ -4,7 +4,6 @@
 import { place } from '@/kit/motion';
 import { effective, LEVEL_NAME, levelOf } from './knowledge';
 import type { Level } from './knowledge';
-import { pageBar } from './playground';
 import { course, getLesson, lessonLabel } from './registry';
 import { includeLesson, isSkipped, knowledgeOf, lessonState, skipLesson } from './store';
 import type { Lesson } from './types';
@@ -53,14 +52,11 @@ function practiceLink(topic: Topic, label = 'Practice'): HTMLElement {
 
 export function mountKnowledge(root: HTMLElement): () => void {
   const body = h('div', { class: 'step-body' });
-  const home = h('a', { class: 'btn btn-ghost', href: '#/' }, h('span', { class: 'btn-label' }, 'Back to the course'));
   root.replaceChildren(
     h(
       'div',
       { class: 'player' },
-      pageBar('My knowledge', 'What you know, topic by topic'),
-      h('main', { class: 'player-main', tabindex: '0' }, body),
-      h('footer', { class: 'dock' }, home, h('div', { class: 'dock-note' })),
+      h('main', { class: 'player-main is-page', tabindex: '0' }, body),
     ),
   );
 
@@ -87,7 +83,8 @@ export function mountKnowledge(root: HTMLElement): () => void {
       h(
         'summary',
         null,
-        h('span', { class: 'know-num' }, lessonLabel(lesson).replace(/^Lesson /, '')),
+        // Only the number: "Lesson 13" is 13, "Computer 2" is 2 (the path is in the heading).
+        h('span', { class: 'know-num' }, lessonLabel(lesson).replace(/^\D+/, '')),
         h(
           'span',
           { class: 'know-title' },
@@ -115,8 +112,8 @@ export function mountKnowledge(root: HTMLElement): () => void {
   function render(keepOpen?: string): void {
     // The Python modules, then the modules of each path ("Linux: The terminal").
     const groups = [
-      ...course.modules.map((m, i) => ({ num: String(i + 1).padStart(2, '0'), title: m.title, lessons: m.lessons })),
-      ...(course.paths ?? []).flatMap((p) => p.modules.map((m) => ({ num: p.short, title: m.title, lessons: m.lessons }))),
+      ...course.modules.map((m, i) => ({ num: String(i + 1), path: '', title: m.title, lessons: m.lessons })),
+      ...(course.paths ?? []).flatMap((p) => p.modules.map((m) => ({ num: '', path: p.title, title: m.title, lessons: m.lessons }))),
     ];
     const lessons = groups.flatMap((g) => g.lessons.map((e) => getLesson(e.id))).filter((l): l is Lesson => Boolean(l));
     const counted = lessons.filter((l) => !isSkipped(l.id)).flatMap(topicsOf);
@@ -138,8 +135,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
         h(
           'div',
           { class: 'know-module-head' },
-          h('span', { class: 'module-num' }, m.num),
-          h('h2', null, m.title),
+          h('div', null, h('span', { class: 'kicker' }, m.path || `Module ${m.num}`), h('h2', null, m.title)),
           bar(own.filter((l) => !isSkipped(l.id)).flatMap(topicsOf)),
         ),
         ...own.map(lessonRow),
@@ -166,7 +162,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
                 h(
                   'li',
                   null,
-                  h('span', { class: 'mistake-where' }, `${lessonLabel(t.lesson)} · ${t.lesson.title}`),
+                  h('span', { class: 'mistake-where' }, `From ${t.lesson.title}`),
                   h('strong', null, t.text),
                   badge(t.level),
                   practiceLink(t),

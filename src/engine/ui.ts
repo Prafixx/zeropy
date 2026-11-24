@@ -1,5 +1,6 @@
 // Small DOM helpers shared by all views.
 import { marked } from 'marked';
+import { MASCOT_SVG, PIXEL_ICONS } from '@/kit/pixel-art';
 
 type Child = Node | string | null | undefined | false;
 type Attrs = Record<string, unknown> | null;
@@ -26,36 +27,27 @@ export function h<K extends keyof HTMLElementTagNameMap>(
   return el;
 }
 
-const ICONS: Record<string, string> = {
-  check: '<path d="M4 12.5l5 5L20 6.5"/>',
-  cross: '<path d="M6 6l12 12M18 6L6 18"/>',
-  right: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-  left: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
-  play: '<path d="M7 5l12 7-12 7z" fill="currentColor"/>',
-  gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/>',
-  bulb: '<path d="M9 18h6M10 21h4M8.5 14.5a6 6 0 117 0c-.7.6-1 1.2-1 2H9.5c0-.8-.3-1.4-1-2z"/>',
-  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
-  file: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>',
-  lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
-  loop: '<path d="M4 12a8 8 0 0113.7-5.7L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 01-13.7 5.7L4 15.5M4 20v-4.5h4.5"/>',
-  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
-  up: '<path d="M12 19V5M6 11l6-6 6 6"/>',
-  down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
-  grip: '<circle cx="9" cy="6" r="1.3" fill="currentColor"/><circle cx="15" cy="6" r="1.3" fill="currentColor"/><circle cx="9" cy="12" r="1.3" fill="currentColor"/><circle cx="15" cy="12" r="1.3" fill="currentColor"/><circle cx="9" cy="18" r="1.3" fill="currentColor"/><circle cx="15" cy="18" r="1.3" fill="currentColor"/>',
-  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
-  book: '<path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5z"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5z"/>',
-  code: '<path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/>',
-  skip: '<path d="M5 6l8 6-8 6zM17 6v12"/>',
-  bars: '<path d="M5 20V11M12 20V5M19 20v-6"/>',
-  mix: '<path d="M3 7h4.5c2 0 3 1 4.5 3.5l1 1.5c1.5 2.5 2.5 3.5 4.5 3.5H21M3 17h4.5c1.3 0 2.2-.4 3-1.3M13.5 8.3c.8-.9 1.7-1.3 3-1.3H21M18 4l3 3-3 3M18 14l3 3-3 3"/>',
-  moon: '<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/>',
-};
-
-export function icon(name: keyof typeof ICONS | string, size = 20): HTMLElement {
+/**
+ * A pixel icon (src/kit/pixel-art.ts, 12x12). The size snaps to whole
+ * pixels of the drawing (12, 24 or 36 px), so every pixel stays sharp.
+ */
+export function icon(name: string, size = 20): HTMLElement {
   const span = document.createElement('span');
   span.className = 'icon';
   span.setAttribute('aria-hidden', 'true');
-  span.innerHTML = `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] ?? ''}</svg>`;
+  const px = size <= 18 ? 12 : size <= 28 ? 24 : 36;
+  span.innerHTML = `<svg viewBox="0 0 12 12" width="${px}" height="${px}" fill="currentColor" shape-rendering="crispEdges">${PIXEL_ICONS[name] ?? ''}</svg>`;
+  return span;
+}
+
+/** The crate mascot, `size` px square. */
+export function mascot(size: number, className = ''): HTMLElement {
+  const span = document.createElement('span');
+  span.className = `mascot ${className}`.trim();
+  span.setAttribute('aria-hidden', 'true');
+  span.style.width = `${size}px`;
+  span.style.height = `${size}px`;
+  span.innerHTML = MASCOT_SVG.replace('<svg ', `<svg width="${size}" height="${size}" `);
   return span;
 }
 
@@ -141,7 +133,12 @@ function wrapLongCode(el: HTMLElement): HTMLElement {
       return;
     }
     const words = text.split(' ');
-    code.replaceChildren(...words.flatMap((word, i) => [...(i > 0 ? [' '] : []), h('span', { class: 'nowrap' }, word)]));
+    // A very long word (like ValueError(f"{book.title}) may also break after a dot.
+    const piece = (word: string): Node[] =>
+      word.length > 18 && word.includes('.')
+        ? word.split(/(?<=\.)/).flatMap((part, i) => [...(i > 0 ? [h('wbr')] : []), h('span', { class: 'nowrap' }, part)])
+        : [h('span', { class: 'nowrap' }, word)];
+    code.replaceChildren(...words.flatMap((word, i) => [...(i > 0 ? [' '] : []), ...piece(word)]));
   });
   return el;
 }
@@ -156,6 +153,21 @@ export function panel(kind: PanelKind, title: string, ...body: Child[]): HTMLEle
     { class: `panel panel-${kind}`, role: 'status' },
     h('div', { class: 'panel-icon' }, icon(iconName, 18)),
     h('div', { class: 'panel-body' }, h('strong', { class: 'panel-title' }, title), ...body),
+  );
+}
+
+/**
+ * An empty page or a finished set: a quiet icon, a title, one sentence and
+ * at most two actions, in the middle of the page.
+ */
+export function emptyState(_iconName: string, title: string, text: string, ...actions: (HTMLElement | null)[]): HTMLElement {
+  return h(
+    'div',
+    { class: 'empty-state', role: 'status' },
+    mascot(64, 'empty-icon'),
+    h('h2', { class: 'empty-title' }, title),
+    h('p', { class: 'empty-text' }, text),
+    actions.some(Boolean) ? h('div', { class: 'empty-actions' }, ...actions) : null,
   );
 }
 

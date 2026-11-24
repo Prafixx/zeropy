@@ -1,8 +1,10 @@
-import '@fontsource-variable/bricolage-grotesque';
+// Pixelify Sans (titles, buttons, numbers), Silkscreen (tiny labels, and the
+// Z of the titles), Figtree (text), JetBrains Mono (code).
+import '@fontsource-variable/pixelify-sans';
+import '@fontsource/silkscreen/400.css';
+import '@fontsource-variable/figtree';
+import '@fontsource-variable/figtree/wght-italic.css';
 import '@fontsource-variable/jetbrains-mono';
-import '@fontsource/atkinson-hyperlegible/400.css';
-import '@fontsource/atkinson-hyperlegible/400-italic.css';
-import '@fontsource/atkinson-hyperlegible/700.css';
 import './styles/tokens.css';
 import './styles/app.css';
 import './kit/settings';
@@ -15,33 +17,51 @@ import { mountMistakes } from './engine/mistakes-page';
 import { mountNext } from './engine/next-page';
 import { mountPractice } from './engine/practice-page';
 import { mountKnowledge } from './engine/knowledge-page';
+import { createShell, type Place, type Shell } from './engine/shell';
 
 const root = document.getElementById('app')!;
 let unmount: (() => void) | null = null;
+let shell: Shell | null = null;
 
 function route(): void {
   const parts = window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   // The player updates the step number with replaceState, which fires no
   // hashchange. So every event here is a real navigation.
   unmount?.();
+  // A lesson opens in focus mode: full screen, without the sidebar.
   if (parts[0] === 'lesson' && parts[1]) {
+    shell?.remove();
+    shell = null;
     unmount = mountLesson(root, parts[1], parts[2] ? Number(parts[2]) : undefined);
-  } else if (parts[0] === 'review') {
-    unmount = mountReview(root);
+    return;
+  }
+  shell ??= createShell(root);
+  const page = shell.page;
+  const at = (place: Place): void => shell!.show(place);
+  if (parts[0] === 'review') {
+    unmount = mountReview(page);
+    at('review');
   } else if (parts[0] === 'playground') {
-    unmount = mountPlayground(root);
+    unmount = mountPlayground(page);
+    at('playground');
   } else if (parts[0] === 'next') {
-    unmount = mountNext(root);
+    unmount = mountNext(page);
+    at('next');
   } else if (parts[0] === 'mistakes') {
-    unmount = mountMistakes(root);
+    unmount = mountMistakes(page);
+    at('mistakes');
   } else if (parts[0] === 'practice') {
-    unmount = mountPractice(root, parts[1], parts.slice(2));
+    unmount = mountPractice(page, parts[1], parts.slice(2));
+    at('practice');
   } else if (parts[0] === 'knowledge') {
-    unmount = mountKnowledge(root);
+    unmount = mountKnowledge(page);
+    at('knowledge');
   } else if (parts[0] === 'cheatsheet') {
-    unmount = mountCheatSheet(root);
+    unmount = mountCheatSheet(page);
+    at('cheatsheet');
   } else {
-    unmount = mountHome(root);
+    unmount = mountHome(page);
+    at('course');
   }
 }
 

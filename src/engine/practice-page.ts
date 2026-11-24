@@ -5,7 +5,6 @@
 // docs/analysis-2026-11.md).
 import { place } from '@/kit/motion';
 import { warmPython } from '@/py/runner';
-import { pageBar } from './playground';
 import { course, getLesson, itemsOf, lessonLabel } from './registry';
 import type { StepContext, StepView } from './steps/context';
 import { renderExercise } from './steps/exercise';
@@ -148,12 +147,12 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
   const primary = button('Next task', { kind: 'primary', icon: 'right', onClick: () => primaryAction() });
   primary.hidden = true;
   const back = h('a', { class: 'btn btn-ghost', href: '#/practice' }, h('span', { class: 'btn-label' }, 'All practice'));
-  const main = h('main', { class: 'player-main', tabindex: '0' }, body);
+  back.hidden = !which;
+  const main = h('main', { class: 'player-main is-page', tabindex: '0' }, body);
   root.replaceChildren(
     h(
       'div',
       { class: 'player' },
-      which === 'lesson' ? pageBar('Practice more', 'Extra exercises of one lesson') : pageBar('Mixed practice', 'Tasks from many lessons'),
       main,
       h('footer', { class: 'dock' }, back, note, primary),
     ),
@@ -198,7 +197,6 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
       return h(
         'li',
         { class: 'practice-row' },
-        h('span', { class: 'module-num' }, String(i + 1).padStart(2, '0')),
         h('span', { class: 'practice-name' }, h('strong', null, m.title), h('small', null, `${done} of ${all} lessons done`)),
         start,
       );
@@ -232,7 +230,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
 
   /** The challenges of all modules: open when their lesson is done. */
   function challengeList(): HTMLElement[] {
-    const rows = course.modules.flatMap((m, i) =>
+    const rows = course.modules.flatMap((m) =>
       m.lessons.flatMap((entry) => {
         const lesson = getLesson(entry.id);
         if (!lesson) return [];
@@ -255,12 +253,11 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
             return h(
               'li',
               { class: 'practice-row' },
-              h('span', { class: 'module-num' }, String(i + 1).padStart(2, '0')),
               h(
                 'span',
                 { class: 'practice-name' },
                 h('strong', null, step.title),
-                h('small', null, done ? `Done · after ${lesson.title}` : open ? `After ${lesson.title}` : `Opens after the lesson ${lesson.title}`),
+                h('small', null, done ? 'Done' : open ? `After ${lesson.title}` : `Opens after the lesson ${lesson.title}`),
               ),
               start,
             );

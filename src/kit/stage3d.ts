@@ -1,6 +1,6 @@
 // Three.js stage. Renders on demand: a frame is drawn only when something
 // changed, so an idle scene costs no GPU time.
-import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
+import { AmbientLight, DirectionalLight, HemisphereLight, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
 import type { Material, Object3D, Texture } from 'three';
 import { gsap, isReduced } from './motion';
 
@@ -37,9 +37,12 @@ export class Stage3D {
     this.el.setAttribute('aria-hidden', 'true');
     container.append(this.el);
 
-    this.scene.add(new AmbientLight(0xffffff, 2.1));
-    const sun = new DirectionalLight(0xffffff, 1.9);
-    sun.position.set(3, 6, 5);
+    // Matte light: a warm sky above, the paper below, and a soft sun from the
+    // upper left, so the sides of a crate are a little darker than its front.
+    this.scene.add(new HemisphereLight(0xfff6e8, 0xd8ccb8, 1.6));
+    this.scene.add(new AmbientLight(0xffffff, 0.9));
+    const sun = new DirectionalLight(0xfff4e2, 1.5);
+    sun.position.set(-3, 6, 5);
     this.scene.add(sun);
 
     this.resizer = new ResizeObserver(() => this.resize());

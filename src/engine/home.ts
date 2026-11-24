@@ -4,14 +4,12 @@
 import { Boxes2D } from '@/kit/actors/variable-boxes-2d';
 import type { BoxVar } from '@/kit/actors/variable-boxes';
 import { finished, isReduced, place, sleep } from '@/kit/motion';
-import { course, getLesson, lessonLabel, lessons } from './registry';
-import { brand, settingsButton } from './settings-menu';
+import { course, getLesson, lessons } from './registry';
 import { lessonAvailable, pathStatus, paths } from './paths';
 import { dueCards, isSkipped, lessonState, mistakes, openPath } from './store';
 import type { CourseModule } from './types';
-import { codeBlock, h, icon } from './ui';
-
-const LOOP = ['See it', 'Learn', 'Predict', 'Try', 'Practice', 'Review'];
+import { codeBlock, h, icon, mascot } from './ui';
+import { APP_VERSION } from './updates';
 
 const HERO_CODE = 'price = 4\nquantity = 3\ntotal = price * quantity\nquantity = 10';
 const HERO_STATES: { vars: BoxVar[]; from?: Record<string, string> }[] = [
@@ -116,8 +114,7 @@ export function mountHome(root: HTMLElement): () => void {
       h(
         'div',
         { class: 'module-head' },
-        h('span', { class: 'module-num' }, String(m + 1).padStart(2, '0')),
-        h('div', null, h('h3', null, module.title), h('p', null, module.goal)),
+        h('div', null, h('span', { class: 'kicker' }, `Module ${m + 1}`), h('h3', null, module.title), h('p', null, module.goal)),
         h(
           'div',
           { class: 'module-meta' },
@@ -191,11 +188,14 @@ export function mountHome(root: HTMLElement): () => void {
   const anyProgress = available.some((l) => lessonState(l.id).reached > 0 || lessonState(l.id).done);
   const doneCount = doneIn(pythonIds);
 
-  /** A returning learner: what to do now, in three cards. */
+  /** One number of today: big, with what it counts under it. */
+  const stat = (href: string, value: string, label: string, hot: boolean, extra?: HTMLElement): HTMLElement =>
+    h('a', { class: `today-stat${hot ? ' is-hot' : ''}`, href }, h('b', null, value), h('span', null, label), extra ?? null);
+
+  /** A returning learner: what to do now. */
   function today(): HTMLElement[] {
     const steps = current ? current.steps.length : 0;
     const at = current ? Math.min(lessonState(current.id).reached + 1, steps) : 0;
-    const moduleAt = current ? course.modules.findIndex((m) => m.lessons.some((l) => l.id === current.id)) : -1;
     return [
       h(
         'section',
@@ -204,14 +204,15 @@ export function mountHome(root: HTMLElement): () => void {
           ? h(
               'div',
               { class: 'today-card today-continue', 'data-enter': true },
-              h('span', { class: 'kicker' }, moduleAt >= 0 ? `${lessonLabel(current)} · ${course.modules[moduleAt].title}` : lessonLabel(current)),
+              mascot(128, 'today-mascot'),
+              h('span', { class: 'kicker' }, started ? 'Continue where you stopped' : 'Your next lesson'),
               h('h1', { class: 'today-title' }, current.title),
               h('p', { class: 'muted' }, current.summary),
               h(
                 'div',
                 { class: 'today-progress' },
                 progressBar(started ? at - 1 : 0, steps),
-                h('span', { class: 'muted small' }, started ? `Step ${at} of ${steps}` : `${steps} steps · ${current.minutes} min`),
+                h('span', { class: 'muted small' }, started ? `Step ${at} of ${steps}` : `About ${current.minutes} minutes`),
               ),
               h(
                 'a',
@@ -223,25 +224,10 @@ export function mountHome(root: HTMLElement): () => void {
           : null,
         h(
           'div',
-          { class: 'today-side' },
-          h(
-            'a',
-            { class: `today-card today-link${due > 0 ? ' is-due' : ''}`, href: '#/review', 'data-enter': true },
-            icon('loop', 20),
-            h('span', null, h('b', null, due > 0 ? `${due} card${due === 1 ? '' : 's'} to review` : 'No reviews due'), h('small', null, due > 0 ? 'Short tests make memory last.' : 'Cards come back when they are due.')),
-          ),
-          h(
-            'a',
-            { class: 'today-card today-link', href: '#/mistakes', 'data-enter': true },
-            icon('target', 20),
-            h('span', null, h('b', null, missed > 0 ? `${missed} task${missed === 1 ? '' : 's'} to try again` : 'No open mistakes'), h('small', null, 'Tasks that were hard come back here.')),
-          ),
-          h(
-            'a',
-            { class: 'today-card today-link', href: '#/knowledge', 'data-enter': true },
-            icon('bars', 20),
-            h('span', null, h('b', null, `${doneCount} of ${pythonIds.length} lessons done`), progressBar(doneCount, pythonIds.length)),
-          ),
+          { class: 'today-stats', 'data-enter': true },
+          stat('#/review', String(due), due === 1 ? 'card to review' : 'cards to review', due > 0),
+          stat('#/mistakes', String(missed), missed === 1 ? 'mistake to practice' : 'mistakes to practice', false),
+          stat('#/knowledge', `${doneCount}/${pythonIds.length}`, 'lessons done', false, progressBar(doneCount, pythonIds.length)),
         ),
       ),
     ];
@@ -256,17 +242,11 @@ export function mountHome(root: HTMLElement): () => void {
         h(
           'div',
           { class: 'hero-text' },
-          h('p', { class: 'kicker', 'data-enter': true }, 'Python course · from zero · free'),
           h('h1', { class: 'display display-xl hero-title', 'data-enter': true }, 'Learn Python, then build ', h('em', null, 'without help.')),
           h(
             'p',
             { class: 'lead', 'data-enter': true },
             `Short lessons with code on every screen, checked at once. About ${Math.round(totalMinutes / 60)} hours from your first line to your own desktop app.`,
-          ),
-          h(
-            'ol',
-            { class: 'loop', 'data-enter': true, 'aria-label': 'Every lesson' },
-            ...LOOP.map((name, i) => h('li', null, h('span', null, String(i + 1)), name)),
           ),
           h(
             'div',
@@ -331,37 +311,22 @@ export function mountHome(root: HTMLElement): () => void {
   const page = h(
     'div',
     { class: 'home' },
-    h(
-      'header',
-      { class: 'bar bar-home' },
-      brand(),
-      h('div', { class: 'bar-spacer' }),
-      h(
-        'nav',
-        { class: 'bar-nav', 'aria-label': 'Tools' },
-        h('a', { class: 'bar-link', href: '#/knowledge', 'aria-label': 'My knowledge' }, icon('bars', 18), h('span', null, 'Knowledge')),
-        h('a', { class: 'bar-link', href: '#/practice', 'aria-label': 'Mixed practice' }, icon('mix', 18), h('span', null, 'Practice')),
-        h('a', { class: 'bar-link', href: '#/playground', 'aria-label': 'Playground' }, icon('code', 18), h('span', null, 'Playground')),
-        h('a', { class: 'bar-link', href: '#/cheatsheet', 'aria-label': 'Cheat sheet' }, icon('book', 18), h('span', null, 'Cheat sheet')),
-      ),
-      settingsButton(),
-    ),
     h('main', { class: 'home-main' }, ...(anyProgress ? today() : welcome()), courseMap()),
     h(
       'footer',
       { class: 'foot' },
-      brand(),
       h(
-        'span',
-        null,
-        'Made by Prafix, with AI assistance. Free to use. ',
+        'div',
+        { class: 'foot-inner' },
+        h('span', null, `ZeroPy ${APP_VERSION}`),
+        h('span', null, 'Made by Prafix, with AI assistance'),
+        h('span', null, 'Your progress stays on this device'),
         h('a', { href: 'THIRD-PARTY-NOTICES.txt', target: '_blank', rel: 'noopener' }, 'Licenses'),
       ),
     ),
   );
 
   root.replaceChildren(page);
-  window.scrollTo({ top: 0 });
   place(page.querySelectorAll('[data-enter]'));
   void loop();
 

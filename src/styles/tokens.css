@@ -1,5 +1,19 @@
-/* Design tokens: refined warm paper. See .local/docs/design.md.
-   One scale for each thing: color steps, type, space, radii, elevation,
+/* Design tokens: pixel workshop, warm paper by day and flat night by dark.
+   See .local/docs/design.md. */
+
+/* Two capitals of the pixel title face are hard to read (its Z looks like a
+   2, its C closes into an O on dark), so titles take only Z and C from
+   Silkscreen Bold; every other letter stays Pixelify Sans. */
+@font-face {
+  font-family: 'ZeroPy Z';
+  src: url('../../node_modules/@fontsource/silkscreen/files/silkscreen-latin-700-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0043, U+005A;
+  size-adjust: 95%; /* the same cap height as Pixelify */
+}
+
+/* One scale for each thing: color steps, type, space, radii, elevation,
    motion. Components use these names only. The old names at the end are
    kept as aliases while the components move over. */
 
@@ -12,8 +26,10 @@
   --paper-2: #fdfbf7; /* raised surface: cards, panels, the dock */
   --paper-3: #f0ebe1; /* subtle fill: chips, hover, inline code */
   --paper-4: #e6dfd2; /* pressed, selected background */
-  --border: #ddd5c7; /* 1px lines between things */
-  --border-strong: #8f8471; /* controls that must be seen (inputs, buttons): 3.1:1 or more */
+  --border: #d8cfbd; /* lines between things */
+  --border-strong: #2a2735; /* controls that must be seen (inputs, buttons): ink */
+  --ledge: #2a2735; /* the solid edge under a button */
+  --accent-ledge: #a86c00; /* the edge under an amber button */
 
   /* Ink: the text. Every step is at least 4.5:1 on paper 1 to 3 (measured). */
   --ink: #1d1c26; /* 15.2:1 */
@@ -78,9 +94,14 @@
   --code-num: #f7cd66;
   --code-fn: #aebfff;
 
-  /* Type: three families, one scale, two weights (700 only for display). */
-  --font-display: 'Bricolage Grotesque Variable', 'Arial Narrow', sans-serif;
-  --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
+  /* Type: pixel for the voice, clean faces for the work. Titles, buttons
+     and numbers in Pixelify Sans (with the Z of Silkscreen); tiny labels in
+     Silkscreen caps, like game menus; text in Figtree, open and readable
+     for non-native readers; code in JetBrains Mono (clear 0/O and l/1). */
+  --font-display: 'ZeroPy Z', 'Pixelify Sans Variable', ui-monospace, monospace;
+  --display-weight: 500; /* above 500 the pixel c closes into an o */
+  --font-tiny: 'Silkscreen', ui-monospace, monospace;
+  --font-body: 'Figtree Variable', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, Consolas, monospace;
   --text-xs: 12px; /* only for uppercase labels */
   --text-s: 13px;
@@ -133,16 +154,19 @@
 
 /* ---------- Dark: the same roles, built from dark steps ---------- */
 :root[data-theme='dark'] {
-  --paper-1: #16161d;
-  --paper-2: #1e1e27;
-  --paper-3: #272732;
-  --paper-4: #31313d;
-  --border: #33333f;
-  --border-strong: #77778a;
+  /* Flat night: a deep blue-black, no gradients, no moving backgrounds. */
+  --paper-1: #0d0e19;
+  --paper-2: #151729;
+  --paper-3: #1e2139;
+  --paper-4: #282c4a;
+  --border: #2a2e50;
+  --border-strong: #4b5285;
+  --ledge: #070810;
+  --accent-ledge: #a86c00;
 
-  --ink: #ece8df; /* 14.7:1 */
-  --ink-2: #bcb8c6; /* 9.3:1 */
-  --ink-3: #908c9f; /* 5.5:1 */
+  --ink: #f3f0e8; /* 17:1 */
+  --ink-2: #c4c3d8; /* 11:1 */
+  --ink-3: #9192b0; /* 6.4:1 */
 
   --accent: #f2b01e;
   --accent-hover: #f7c04a;
@@ -156,9 +180,9 @@
   --danger: #ff8f78;
   --danger-subtle: #3a1f1c;
   --danger-border: #6a3229;
-  --info: #93a6ff;
-  --info-subtle: #1f2440;
-  --info-border: #36407a;
+  --info: #6cb6ff;
+  --info-subtle: #142540;
+  --info-border: #2b4f80;
 
   --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px rgb(0 0 0 / 0.45);
 

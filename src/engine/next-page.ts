@@ -1,7 +1,6 @@
 // "What next": a path after the course, from content/next.yaml.
 import { place } from '@/kit/motion';
 import nextData from '../../content/next.yaml';
-import { pageBar } from './playground';
 import { h, icon } from './ui';
 
 interface Link {
@@ -39,7 +38,6 @@ export function mountNext(root: HTMLElement): () => void {
   const page = h(
     'div',
     { class: 'player' },
-    pageBar('After the course', 'What next'),
     h(
       'main',
       { class: 'player-main', tabindex: '0' },
@@ -48,11 +46,11 @@ export function mountNext(root: HTMLElement): () => void {
         { class: 'single next' },
         h('h1', { class: 'display', 'data-enter': true }, data.title),
         h('p', { class: 'lead', 'data-enter': true }, data.lead),
-        ...data.stages.map((stage, i) =>
+        ...data.stages.map((stage) =>
           h(
             'section',
             { class: 'next-card', 'data-enter': true },
-            h('p', { class: 'next-when' }, `Step ${i + 1} · ${stage.when}`),
+            h('p', { class: 'next-when' }, stage.when),
             h('h2', { class: 'sheet-title' }, stage.title),
             h('p', null, stage.why),
             stage.ideas ? h('ul', { class: 'next-ideas' }, ...stage.ideas.map((idea) => h('li', null, idea))) : null,
@@ -92,7 +90,6 @@ export function mountNext(root: HTMLElement): () => void {
         ),
       ),
     ),
-    h('footer', { class: 'dock' }, h('a', { class: 'btn btn-ghost', href: '#/' }, h('span', { class: 'btn-label' }, 'Back to the course')), h('div', { class: 'dock-note' })),
   );
   root.replaceChildren(page);
   place(page.querySelectorAll('[data-enter]'));

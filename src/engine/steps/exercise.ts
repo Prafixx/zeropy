@@ -2,6 +2,7 @@
 // several cases; feedback names the failed requirement and why.
 import { place, shake } from '@/kit/motion';
 import { runPython, warmPython } from '@/py/runner';
+import { confirmDialog } from '../dialog';
 import { loadCode, noteAnswer, saveCode } from '../store';
 import type { ExerciseStep } from '../types';
 import { button, codeBlock, h, icon, md, mdInline, panel } from '../ui';
@@ -70,9 +71,15 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
   const baseButton = button('Load a working version of the last step', {
     kind: 'ghost',
     small: true,
-    onClick: () => {
-      const all = moduleNames.length ? ' (all files)' : '';
-      if (step.base && window.confirm(`Replace your code${all} with a working version of the last step?`)) {
+    onClick: async () => {
+      if (!step.base) return;
+      const ok = await confirmDialog({
+        title: 'Load a working version?',
+        body: `Your code${moduleNames.length ? ' in all files' : ''} is replaced by a version that passes the last step. Then you go on from there.`,
+        confirm: 'Replace my code',
+        danger: true,
+      });
+      if (ok) {
         bench.setCode(step.base);
         bench.setSources(step.baseModules ?? {});
       }
@@ -188,7 +195,9 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
     bench.setServer(result.server);
     bench.showError(result.error);
     bench.markError(result.error);
-    setChecks(result.checks.map((c) => c.pass));
+    // When Python stopped with an error, the checks that did not pass were
+    // not really reached: they stay neutral, and the error card explains.
+    setChecks(result.checks.map((c) => (c.pass ? true : result.error ? null : false)));
 
     const failedIndex = result.checks.findIndex((c) => !c.pass);
     if (failedIndex === -1) {

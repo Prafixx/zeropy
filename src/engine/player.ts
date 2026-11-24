@@ -4,7 +4,8 @@ import { confetti, gsap, leave, place, stamp } from '@/kit/motion';
 import { getSettings, onSettings } from '@/kit/settings';
 import { warmPython } from '@/py/runner';
 import { course, getLesson, lastCourseLesson, lessonLabel } from './registry';
-import { brand, settingsButton } from './settings-menu';
+import { confirmDialog } from './dialog';
+import { settingsButton } from './settings-menu';
 import { describeWait, finishLesson, includeLesson, isSkipped, lessonState, nextDue, reachStep, skipLesson } from './store';
 import type { Lesson, Step } from './types';
 import { button, h, icon, panel } from './ui';
@@ -74,15 +75,20 @@ function skipButton(lessonId: string): HTMLElement {
     el.title = text;
     el.classList.toggle('is-on', isSkipped(lessonId));
   };
-  el.addEventListener('click', () => {
+  el.addEventListener('click', async () => {
     if (isSkipped(lessonId)) {
       includeLesson(lessonId);
       label();
       return;
     }
-    const ok = window.confirm(
-      'Skip this lesson?\n\nIt leaves your next steps, your reviews and your practice, and it does not count in "My knowledge". Later lessons may use what it teaches.\n\nYou can include it again at any time, here or on the "My knowledge" page.',
-    );
+    const ok = await confirmDialog({
+      title: 'Skip this lesson?',
+      body: [
+        'It leaves your next steps, your reviews and your practice, and it does not count in "My knowledge". Later lessons may use what it teaches.',
+        'You can include it again at any time, here or on the "My knowledge" page.',
+      ],
+      confirm: 'Skip the lesson',
+    });
     if (!ok) return;
     skipLesson(lessonId);
     window.location.hash = '#/';
@@ -126,6 +132,10 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
   });
 
   const phase = h('span', { class: 'phase' });
+  // The label above the title: the task tag of the step (moved up from its
+  // body), or else the kind of step.
+  const kicker = h('div', { class: 'step-kicker' }, phase);
+  const counter = h('span', { class: 'bar-count', 'aria-live': 'polite' });
   const stepTitle = h('h1', { class: 'step-title' });
   const objective = h('p', { class: 'objective' });
   const body = h('div', { class: 'step-body' });
@@ -140,13 +150,14 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     h(
       'header',
       { class: 'bar' },
-      brand(),
-      h('div', { class: 'bar-title' }, h('span', { class: 'bar-kicker' }, lessonLabel(lesson)), h('span', null, lesson.title)),
+      h('a', { class: 'icon-btn focus-close', href: '#/', 'aria-label': 'Close the lesson', title: 'Back to the course' }, icon('close', 20)),
+      h('div', { class: 'bar-title', title: lessonLabel(lesson) }, lesson.title),
       rail,
+      counter,
       skipButton(lesson.id),
       settingsButton(),
     ),
-    h('main', { class: 'player-main', tabindex: '0' }, h('div', { class: 'step-head' }, phase, stepTitle, objective), body),
+    h('main', { class: 'player-main', tabindex: '0' }, h('div', { class: 'step-head' }, kicker, stepTitle, objective), body),
     h('footer', { class: 'dock' }, back, note, primary),
   );
   root.replaceChildren(shell);
@@ -183,10 +194,11 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     const step = steps[index];
     const showGoal = (id: string): void => {
       const goal = lesson.objectives.find((o) => o.id === id);
-      objective.replaceChildren(icon('target', 16), h('span', null, h('b', null, 'Goal: '), goal?.text ?? ''));
+      objective.textContent = goal?.text ?? '';
     };
     phase.textContent = PHASE[step.type];
     phase.dataset.type = step.type;
+    counter.textContent = `${index + 1} of ${steps.length}`;
     stepTitle.textContent = step.title;
     showGoal(step.objective);
     back.disabled = index === 0;
@@ -205,6 +217,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     };
     view = renderStep(step, ctx);
     body.replaceChildren(view.el);
+    kicker.replaceChildren(view.el.querySelector<HTMLElement>('.tag') ?? phase);
     gsap.set(body, { x: 0, opacity: 1 });
     updateRail();
     shell.querySelector('.player-main')!.scrollTo({ top: 0 });
@@ -230,6 +243,8 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     const mark = h('div', { class: 'stamp stamp-hero' }, 'Lesson complete');
     phase.textContent = 'Done';
     phase.dataset.type = 'done';
+    counter.textContent = `${steps.length} of ${steps.length}`;
+    kicker.replaceChildren(phase);
     stepTitle.textContent = lesson.title;
     objective.replaceChildren();
     const el = h(

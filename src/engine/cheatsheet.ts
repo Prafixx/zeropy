@@ -1,7 +1,6 @@
 // Cheat sheet: every key card of the theory steps on one page, by module,
 // with a search. Built from the lesson files, so it grows with the course.
 import { place } from '@/kit/motion';
-import { pageBar } from './playground';
 import { course, getLesson, lessonLabel } from './registry';
 import { lessonState } from './store';
 import { h, icon, mdInline } from './ui';
@@ -33,9 +32,9 @@ export function mountCheatSheet(root: HTMLElement): () => void {
             h('span', { class: 'keycard-means' }, mdInline(key.means)),
             h(
               'a',
-              { class: `sheet-from${done ? ' is-done' : ''}`, href: `#/lesson/${lesson.id}` },
+              { class: `sheet-from${done ? ' is-done' : ''}`, href: `#/lesson/${lesson.id}`, title: lessonLabel(lesson) },
               done ? icon('check', 14) : null,
-              `${lessonLabel(lesson)} · ${lesson.title}`,
+              lesson.title,
             ),
           );
           entries.push({ code: key.code, means: key.means, find: `${key.code} ${key.means} ${lesson.title}`.toLowerCase(), el });
@@ -46,7 +45,7 @@ export function mountCheatSheet(root: HTMLElement): () => void {
     const section = h(
       'section',
       { class: 'sheet-module' },
-      h('h2', { class: 'sheet-title' }, h('span', { class: 'sheet-num' }, String(m + 1)), mod.title),
+      h('h2', { class: 'sheet-title' }, h('span', { class: 'sheet-num' }, `Module ${m + 1}`), mod.title),
       h('div', { class: 'sheet-grid' }, ...entries.map((e) => e.el)),
     );
     groups.push({ section, entries });
@@ -83,7 +82,6 @@ export function mountCheatSheet(root: HTMLElement): () => void {
   const page = h(
     'div',
     { class: 'player' },
-    pageBar('Cheat sheet', 'Every key fact'),
     h(
       'main',
       { class: 'player-main', tabindex: '0' },
@@ -98,7 +96,6 @@ export function mountCheatSheet(root: HTMLElement): () => void {
         ...groups.map((g) => g.section),
       ),
     ),
-    h('footer', { class: 'dock' }, h('a', { class: 'btn btn-ghost', href: '#/' }, h('span', { class: 'btn-label' }, 'Back to the course')), h('div', { class: 'dock-note' })),
   );
   root.replaceChildren(page);
   place(page.querySelectorAll('[data-enter]'));

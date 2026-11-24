@@ -154,7 +154,7 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
 
   /** The name of the file, or a tab for each file of the program. */
   function fileTabs(): HTMLElement {
-    if (tabNames.length === 1) return h('span', { class: 'bench-file' }, MAIN);
+    if (tabNames.length === 1) return h('span', { class: 'bench-file' }, icon('file', 14), MAIN);
     const tabs = tabNames.map((name) => {
       const tab = h('button', { type: 'button', class: 'bench-tab', role: 'tab', 'aria-selected': String(name === current) }, name);
       tab.addEventListener('click', () => showTab(name));
@@ -418,7 +418,7 @@ export function createWorkbench(options: WorkbenchOptions): Workbench {
     getSources,
     getArgv: () => (argField ? splitArgs((argField as HTMLInputElement).value) : undefined),
     setExitCode(code) {
-      outLabel.textContent = code ? `Output · exit code ${code}` : 'Output';
+      outLabel.textContent = code ? `Output (exit code ${code})` : 'Output';
     },
     markLine: (line, kind) => editor?.markLine(line, kind),
     markError(error) {

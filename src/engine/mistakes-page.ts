@@ -2,13 +2,12 @@
 // hard, in one place. Practicing exactly these is the fastest way to close
 // a gap; a question leaves the list when it is right on the first try.
 import { place } from '@/kit/motion';
-import { pageBar } from './playground';
-import { findRef, lessonLabel } from './registry';
+import { findRef } from './registry';
 import type { StepContext } from './steps/context';
 import { renderPractice } from './steps/simple';
 import { mistakes } from './store';
 import type { Item } from './types';
-import { button, h, icon, panel, shuffle } from './ui';
+import { button, emptyState, h, icon, shuffle } from './ui';
 
 export function mountMistakes(root: HTMLElement): () => void {
   let dispose: (() => void) | undefined;
@@ -17,15 +16,13 @@ export function mountMistakes(root: HTMLElement): () => void {
   const note = h('div', { class: 'dock-note', 'aria-live': 'polite' });
   const primary = button('Continue', { kind: 'primary', icon: 'right', onClick: () => primaryAction() });
   primary.hidden = true;
-  const home = h('a', { class: 'btn btn-ghost', href: '#/' }, h('span', { class: 'btn-label' }, 'Back to the course'));
 
   root.replaceChildren(
     h(
       'div',
       { class: 'player' },
-      pageBar('My mistakes', 'Practice what was hard'),
-      h('main', { class: 'player-main', tabindex: '0' }, body),
-      h('footer', { class: 'dock' }, home, note, primary),
+      h('main', { class: 'player-main is-page', tabindex: '0' }, body),
+      h('footer', { class: 'dock' }, note, primary),
     ),
   );
 
@@ -41,7 +38,7 @@ export function mountMistakes(root: HTMLElement): () => void {
           h(
             'li',
             { class: 'mistake-row' },
-            h('span', { class: 'mistake-where' }, `${lessonLabel(found.lesson)} · ${found.lesson.title}`),
+            h('span', { class: 'mistake-where' }, `From ${found.lesson.title}`),
             h('strong', null, found.step.title),
             h(
               'a',
@@ -71,10 +68,10 @@ export function mountMistakes(root: HTMLElement): () => void {
           'div',
           { class: 'single mistakes' },
           h('h1', { class: 'display' }, 'My mistakes'),
-          panel(
-            'good',
-            'Your list is empty.',
-            h('p', null, 'When you answer a question wrong, or need the solution of an exercise, it comes here. Then you can practice exactly that.'),
+          emptyState(
+            'target',
+            'No mistakes to practice',
+            'When you answer a question wrong, or need the solution of an exercise, it comes here. Then you can practice exactly that.',
           ),
         ),
       );

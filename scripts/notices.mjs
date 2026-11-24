@@ -20,8 +20,9 @@ const SHIPPED = [
   '@lezer/highlight',
   'marked',
   'three',
-  '@fontsource/atkinson-hyperlegible',
-  '@fontsource-variable/bricolage-grotesque',
+  '@fontsource-variable/pixelify-sans',
+  '@fontsource/silkscreen',
+  '@fontsource-variable/figtree',
   '@fontsource-variable/jetbrains-mono',
   'electron-updater',
 ];
