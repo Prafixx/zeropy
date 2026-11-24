@@ -1,23 +1,23 @@
-// The one motion language of the product: place, press, stamp, shake, drop.
-// Every animation in the app goes through these helpers or these constants.
+// The one motion language of the product. Motion is short and explains a
+// change; nothing bounces, tilts or celebrates on every answer. The values
+// match the motion tokens in tokens.css (70 to 400 ms, no overshoot).
 import gsap from 'gsap';
 import { Flip } from 'gsap/Flip';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { SplitText } from 'gsap/SplitText';
 import { TextPlugin } from 'gsap/TextPlugin';
 
-// Flip: layout changes glide. TextPlugin: text is typed. SplitText: headline lines.
-gsap.registerPlugin(ScrollTrigger, Flip, TextPlugin, SplitText);
+// Flip: layout changes glide. TextPlugin: text is typed.
+gsap.registerPlugin(Flip, TextPlugin);
 
 export const EASE = {
-  place: 'power3.out',
+  place: 'power2.out',
   leave: 'power2.in',
   drop: 'power2.in',
-  settle: 'elastic.out(1, 0.5)',
-  pop: 'back.out(1.7)',
+  // The scenes used an elastic and a "back" ease; both are calm now.
+  settle: 'power2.out',
+  pop: 'power2.out',
 } as const;
 
-export const DUR = { fast: 0.2, base: 0.45, slow: 0.7 } as const;
+export const DUR = { fast: 0.15, base: 0.24, slow: 0.4 } as const;
 
 let reduced = false;
 
@@ -26,7 +26,11 @@ if (import.meta.env.DEV) {
   (window as unknown as { __zpSpeed?: (n: number) => void }).__zpSpeed = (n) => gsap.globalTimeline.timeScale(n);
 }
 
-/** In reduced mode every GSAP animation jumps to its end state. */
+/**
+ * Reduced motion: the interface helpers below skip to their end state at
+ * once (no frames in between). Scene timelines still run in order, as fast
+ * as possible (time scale 200), because their order is content.
+ */
 export function setReducedMotion(on: boolean): void {
   reduced = on;
   gsap.globalTimeline.timeScale(on ? 200 : 1);
@@ -49,18 +53,23 @@ export function finished(tl: gsap.core.Animation): Promise<void> {
   });
 }
 
-/** Place: elements arrive like paper put on a desk. */
+/** A finished tween: the end state, set at once. */
+function done(target: gsap.TweenTarget, vars: gsap.TweenVars): gsap.core.Tween {
+  return gsap.set(target, vars);
+}
+
+/** Place: an element arrives with a short fade and rise. */
 export function place(targets: gsap.TweenTarget, delay = 0): gsap.core.Tween {
+  if (reduced) return done(targets, { clearProps: 'transform,opacity' });
   return gsap.fromTo(
     targets,
-    { y: 16, opacity: 0, rotate: -0.5 },
+    { y: 6, opacity: 0 },
     {
       y: 0,
       opacity: 1,
-      rotate: 0,
       duration: DUR.base,
       ease: EASE.place,
-      stagger: 0.05,
+      stagger: 0.03,
       delay,
       clearProps: 'transform,opacity',
     },
@@ -68,30 +77,29 @@ export function place(targets: gsap.TweenTarget, delay = 0): gsap.core.Tween {
 }
 
 export function leave(target: gsap.TweenTarget): gsap.core.Tween {
-  return gsap.to(target, { x: -28, opacity: 0, duration: DUR.fast, ease: EASE.leave });
+  if (reduced) return done(target, { opacity: 0 });
+  return gsap.to(target, { opacity: 0, duration: 0.11, ease: EASE.leave });
 }
 
-/** Stamp: a result lands like a rubber stamp. */
+/** A result appears: a short fade, no rotation. */
 export function stamp(target: gsap.TweenTarget): gsap.core.Tween {
-  return gsap.fromTo(
-    target,
-    { scale: 1.7, rotate: -14, opacity: 0 },
-    { scale: 1, rotate: -6, opacity: 1, duration: 0.35, ease: 'power4.in' },
-  );
+  if (reduced) return done(target, { opacity: 1 });
+  return gsap.fromTo(target, { opacity: 0 }, { opacity: 1, duration: DUR.fast, ease: EASE.place });
 }
 
-/** Shake: a short "no" that never blocks the learner. */
+/** Shake: a short "no" that never blocks the learner. Reduced: no move (the panel says it). */
 export function shake(target: gsap.TweenTarget): gsap.core.Tween {
+  if (reduced) return done(target, { clearProps: 'transform' });
   return gsap.fromTo(
     target,
     { x: 0 },
-    { keyframes: { x: [0, -7, 6, -4, 3, 0] }, duration: 0.36, ease: 'power1.out', clearProps: 'transform' },
+    { keyframes: { x: [0, -4, 3, -2, 0] }, duration: 0.24, ease: 'power1.out', clearProps: 'transform' },
   );
 }
 
-const CONFETTI = ['#F6B92B', '#2B50D6', '#1E9E6A', '#E4472B', '#1A1B2E'];
+const CONFETTI = ['#F2B01E', '#2B4FC9', '#1E9E6A', '#E4472B', '#1D1C26'];
 
-/** Paper confetti from the center of an element. Decorative, skipped when reduced. */
+/** A few paper bits: only for the end of a lesson. Skipped when reduced. */
 export function confetti(origin: Element, count = 16): void {
   if (reduced) return;
   const rect = origin.getBoundingClientRect();
@@ -119,45 +127,17 @@ export function confetti(origin: Element, count = 16): void {
   }
 }
 
-/** Scroll-driven reveal for every [data-reveal] inside root. Returns a cleanup. */
-export function revealOnScroll(root: HTMLElement): () => void {
-  const items = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'));
-  if (reduced || items.length === 0) return () => undefined;
-  gsap.set(items, { y: 28, opacity: 0 });
-  const triggers = ScrollTrigger.batch(items, {
-    start: 'top 88%',
-    once: true,
-    onEnter: (batch) =>
-      gsap.to(batch, { y: 0, opacity: 1, duration: DUR.slow, ease: EASE.place, stagger: 0.07, overwrite: true }),
-  });
-  return () => triggers.forEach((t) => t.kill());
-}
-
 /** Glide: cards that change places slide to their new place (a layout change). */
 export function glide(targets: Element[], change: () => void): void {
+  if (reduced) {
+    change();
+    return;
+  }
   const state = Flip.getState(targets);
   change();
   Flip.from(state, { duration: DUR.fast, ease: EASE.place });
 }
 
 export type Timeline = gsap.core.Timeline;
-
-/** Headline reveal: each line rises from behind a mask. Returns a cleanup. */
-export function revealLines(target: HTMLElement): () => void {
-  if (reduced) return () => undefined;
-  const split = SplitText.create(target, { type: 'lines', mask: 'lines' });
-  // Revert when done: the masks would cut letters like "y" in a tight line.
-  const tween = gsap.from(split.lines, {
-    yPercent: 110,
-    duration: 0.8,
-    ease: 'power4.out',
-    stagger: 0.09,
-    onComplete: () => split.revert(),
-  });
-  return () => {
-    tween.kill();
-    split.revert();
-  };
-}
 
 export { Flip, gsap };

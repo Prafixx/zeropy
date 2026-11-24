@@ -4,7 +4,7 @@
 // Code). The panels show the variables of the current call, the call stack
 // and the output so far. Tasks ask for values at a stop, or for a stop
 // inside a call; they are checked against the same trace.
-import { confetti, place, shake } from '@/kit/motion';
+import { place, shake } from '@/kit/motion';
 import { runPython, warmPython } from '@/py/runner';
 import { nextPause, pauseAt, pausesOf, sameValue, valueAt } from '../debug-session';
 import type { Move, Pause } from '../debug-session';
@@ -256,7 +256,6 @@ export function renderDebugger(step: DebuggerStep, ctx: StepContext): StepView {
     checkButton.hidden = true;
     feedback.replaceChildren(panel('good', 'All tasks done.', step.after ? md(step.after, 'prose prose-small') : null));
     place(feedback.children);
-    confetti(box, 16);
   }
 
   function showHint(): void {

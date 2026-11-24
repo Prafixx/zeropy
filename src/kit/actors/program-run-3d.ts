@@ -58,7 +58,7 @@ export class Run3D implements ProgramRun {
 
   constructor(private stage: Stage3D) {
     // The screen: an ink frame with a paper face, on a small stand.
-    const frame = new Mesh(new BoxGeometry(SCREEN.width, SCREEN.height, 0.06), new MeshLambertMaterial({ color: PALETTE.ink }));
+    const frame = new Mesh(new BoxGeometry(SCREEN.width, SCREEN.height, 0.06), new MeshLambertMaterial({ color: PALETTE.frame }));
     frame.position.set(SCREEN.x, SCREEN.y, 0);
     const face = new Mesh(
       new PlaneGeometry(SCREEN.width - 0.2, SCREEN.height - 0.2),
@@ -153,7 +153,7 @@ export class Run3D implements ProgramRun {
     this.gap = Math.min(STRIP.maxGap, STRIP.room / Math.max(code.length, 1));
     const height = this.gap * 0.84;
     const pixels = Math.round((1024 * height) / STRIP.width);
-    const side = new MeshLambertMaterial({ color: PALETTE.ink });
+    const side = new MeshLambertMaterial({ color: PALETTE.frame });
     this.strips = [];
     // stripY needs the final count, so reserve the slots first.
     this.strips.length = code.length;
@@ -204,8 +204,8 @@ export class Run3D implements ProgramRun {
         map: canvasTexture(250, 100, (ctx) => {
           ctx.fillStyle = verdict ? PALETTE.leaf : PALETTE.tomato;
           ctx.fillRect(0, 0, 250, 100);
-          ctx.lineWidth = 10;
-          ctx.strokeStyle = PALETTE.ink;
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = PALETTE.line;
           ctx.strokeRect(5, 5, 240, 90);
           ctx.fillStyle = '#ffffff';
           ctx.textAlign = 'center';

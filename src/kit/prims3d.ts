@@ -1,4 +1,5 @@
-// Shared 3D primitives of the paper workshop: crates, labels, value cards.
+// Shared 3D primitives: crates, labels, value cards. Matte materials in the
+// colors of the theme (see palette.ts); thin outlines; nothing tilted.
 import {
   BoxGeometry,
   CanvasTexture,
@@ -19,7 +20,16 @@ export const CARD = { width: 1.15, height: 1.6, depth: 0.12 };
 /** Height of a card's center when it stands in a crate. */
 export const CARD_REST_Y = CRATE.wall + CARD.height / 2;
 
-const inkLine = new LineBasicMaterial({ color: PALETTE.ink });
+// One outline material for each line color (light or dark theme).
+const lineMaterials = new Map<string, LineBasicMaterial>();
+function lineMaterial(): LineBasicMaterial {
+  let material = lineMaterials.get(PALETTE.line);
+  if (!material) {
+    material = new LineBasicMaterial({ color: PALETTE.line });
+    lineMaterials.set(PALETTE.line, material);
+  }
+  return material;
+}
 
 export function canvasTexture(width: number, height: number, draw: (ctx: CanvasRenderingContext2D) => void): CanvasTexture {
   const canvas = document.createElement('canvas');
@@ -44,7 +54,7 @@ export function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: n
 }
 
 export function outline(geometry: BoxGeometry): LineSegments {
-  return new LineSegments(new EdgesGeometry(geometry), inkLine);
+  return new LineSegments(new EdgesGeometry(geometry), lineMaterial());
 }
 
 /** An open cardboard crate with a paper name label on the front. */
@@ -76,8 +86,8 @@ export function makeCrate(name: string): Group {
       map: canvasTexture(480, 176, (ctx) => {
         ctx.fillStyle = PALETTE.paper2;
         ctx.fillRect(0, 0, 480, 176);
-        ctx.lineWidth = 12;
-        ctx.strokeStyle = PALETTE.ink;
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = PALETTE.line;
         ctx.strokeRect(6, 6, 468, 164);
         ctx.fillStyle = PALETTE.ink;
         ctx.textAlign = 'center';
@@ -87,15 +97,12 @@ export function makeCrate(name: string): Group {
       }),
     }),
   );
-  // A small fixed tilt per name: labels look placed by hand.
-  const tilt = ((name.length * 37 + name.charCodeAt(0)) % 7) - 3;
-  label.rotation.z = tilt * 0.012;
   label.position.set(0, h * 0.5, d / 2 + 0.008);
   group.add(label);
 
   const shadow = new Mesh(
     new PlaneGeometry(w + 0.1, d + 0.1),
-    new MeshBasicMaterial({ color: PALETTE.ink, transparent: true, opacity: 0.13, depthWrite: false }),
+    new MeshBasicMaterial({ color: PALETTE.shadow, transparent: true, opacity: PALETTE.shadowOpacity, depthWrite: false }),
   );
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.set(0.16, 0.004, 0.12);
@@ -202,8 +209,8 @@ export function makePlaque(text: string, width: number, height: number, kind: 'n
         if (kind === 'name') {
           ctx.fillStyle = PALETTE.paper2;
           ctx.fillRect(0, 0, cw, ch);
-          ctx.lineWidth = 12;
-          ctx.strokeStyle = PALETTE.ink;
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = PALETTE.line;
           ctx.strokeRect(6, 6, cw - 12, ch - 12);
         }
         ctx.fillStyle = PALETTE.ink;
@@ -232,7 +239,7 @@ export function makeTray(color: string = PALETTE.kraft): Group {
   shadowGeometry.translate(0.5, 0, 0);
   const shadow = new Mesh(
     shadowGeometry,
-    new MeshBasicMaterial({ color: PALETTE.ink, transparent: true, opacity: 0.13, depthWrite: false }),
+    new MeshBasicMaterial({ color: PALETTE.shadow, transparent: true, opacity: PALETTE.shadowOpacity, depthWrite: false }),
   );
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.set(0.04, 0.004, 0.12);
@@ -247,8 +254,8 @@ export function makeLock(): Mesh {
     new MeshBasicMaterial({
       transparent: true,
       map: canvasTexture(100, 120, (ctx) => {
-        ctx.lineWidth = 10;
-        ctx.strokeStyle = PALETTE.ink;
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = PALETTE.line;
         ctx.fillStyle = PALETTE.sun;
         ctx.beginPath();
         ctx.arc(50, 48, 24, Math.PI, 0);
@@ -294,8 +301,8 @@ export function makeSign(text: string, width: number): Mesh {
       map: canvasTexture(cw, ch, (ctx) => {
         ctx.fillStyle = PALETTE.sun;
         ctx.fillRect(0, 0, cw, ch);
-        ctx.lineWidth = 12;
-        ctx.strokeStyle = PALETTE.ink;
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = PALETTE.line;
         ctx.strokeRect(6, 6, cw - 12, ch - 12);
         ctx.fillStyle = PALETTE.ink;
         ctx.textAlign = 'center';

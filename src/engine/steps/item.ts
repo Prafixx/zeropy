@@ -1,7 +1,7 @@
 // One retrieval item: multiple choice, predict the output, find the error,
 // order the lines, trace table or click the line. Used by the predict step,
 // worked examples, quizzes, drills, investigate steps and spaced review.
-import { confetti, glide, place, shake, stamp } from '@/kit/motion';
+import { glide, place, shake, stamp } from '@/kit/motion';
 import { onPyStatus, runPython } from '@/py/runner';
 import { samePrint, sameValue, traceRows } from '../trace-table';
 import type { TraceRow } from '../trace-table';
@@ -47,7 +47,6 @@ function renderMcq(item: McqItem, onDone: OnDone): ItemView {
         feedback.replaceChildren(panel('good', 'Correct.', mdInline(option.why)));
         el.append(mark);
         stamp(mark);
-        if (wrongTries === 0) confetti(el, 10);
         onDone(wrongTries === 0);
       } else {
         wrongTries += 1;
@@ -115,7 +114,6 @@ function renderPredict(item: PredictItem, onDone: OnDone): ItemView {
     if (correct) {
       input.classList.add('is-right');
       feedback.replaceChildren(panel('good', 'Correct. Python prints:', real, md(item.explain, 'prose prose-small')));
-      confetti(input, 10);
     } else {
       input.classList.add('is-wrong');
       const known = item.misconceptions?.find((m) => normalize(m.answer) === guess);
@@ -292,7 +290,6 @@ function renderDiagnose(item: DiagnoseItem, onDone: OnDone): ItemView {
     const facts = `Python stops on line ${real.line} with a ${real.type}.`;
     if (lineOk && typeOk) {
       say('good', 'Correct.', facts);
-      confetti(trace, 10);
     } else {
       const title = lineOk
         ? 'The line is right, the kind of error is not.'
@@ -557,7 +554,6 @@ function renderOrder(item: OrderItem, onDone: OnDone): ItemView {
     try {
       if (mine === source) {
         say('good', 'Correct.', md(item.explain, 'prose prose-small'));
-        confetti(list, wrongTries === 0 ? 12 : 6);
         finish(wrongTries === 0);
         return;
       }
@@ -569,7 +565,6 @@ function renderOrder(item: OrderItem, onDone: OnDone): ItemView {
       );
       if (same) {
         say('good', 'Correct. Your order is different from ours, but Python gives the same result.', md(item.explain, 'prose prose-small'));
-        confetti(list, wrongTries === 0 ? 12 : 6);
         finish(wrongTries === 0);
         return;
       }
@@ -679,7 +674,6 @@ function renderTrace(item: TraceItem, onDone: OnDone): ItemView {
     });
     if (wrong.length === 0) {
       say('good', wrongTries === 0 ? 'Correct. You ran the program in your head.' : 'Correct. Now the table is right.', md(item.explain, 'prose prose-small'));
-      confetti(tableSlot, wrongTries === 0 ? 12 : 6);
       finish(wrongTries === 0);
       return;
     }
@@ -807,7 +801,6 @@ function renderSpot(item: SpotItem, onDone: OnDone): ItemView {
       row.classList.add('is-right');
       code.el.classList.remove('is-pickable');
       feedback.replaceChildren(panel('good', `Correct: line ${line}.`, md(item.explain, 'prose prose-small')));
-      if (wrongTries === 0) confetti(row, 10);
       onDone(wrongTries === 0);
     } else {
       wrongTries += 1;
@@ -951,7 +944,6 @@ function renderBlanks(item: BlanksItem, onDone: OnDone): ItemView {
     }
     if (values.every((v, i) => v === answers[i].trim())) {
       say('good', 'Correct.', md(item.explain, 'prose prose-small'));
-      confetti(code, wrongTries === 0 ? 12 : 6);
       finish(wrongTries === 0);
       return;
     }
@@ -967,7 +959,6 @@ function renderBlanks(item: BlanksItem, onDone: OnDone): ItemView {
       const same = yours.every((run, n) => !run.error && run.out === expected![n].out && run.values === expected![n].values);
       if (same) {
         say('good', 'Correct. Your answer is different from ours, but Python gives the same result.', md(item.explain, 'prose prose-small'));
-        confetti(code, wrongTries === 0 ? 12 : 6);
         finish(wrongTries === 0);
         return;
       }

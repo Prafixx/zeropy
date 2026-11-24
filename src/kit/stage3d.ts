@@ -49,8 +49,6 @@ export class Stage3D {
       if (this.onscreen) this.invalidate();
     });
     this.watcher.observe(container);
-    container.addEventListener('pointermove', this.onPointer);
-    container.addEventListener('pointerleave', this.onLeave);
     this.resize();
     gsap.ticker.add(this.tick);
     if (import.meta.env.DEV) (window as unknown as { __zpStage?: Stage3D }).__zpStage = this;
@@ -94,8 +92,8 @@ export class Stage3D {
     gsap.to(this.view, {
       width,
       height,
-      duration: 0.6,
-      ease: 'power3.out',
+      duration: 0.4,
+      ease: 'power2.out',
       overwrite: 'auto',
       onUpdate: () => this.applyCamera(),
     });
@@ -106,8 +104,6 @@ export class Stage3D {
     gsap.killTweensOf(this.view);
     this.resizer.disconnect();
     this.watcher.disconnect();
-    this.container.removeEventListener('pointermove', this.onPointer);
-    this.container.removeEventListener('pointerleave', this.onLeave);
     disposeObject(this.scene);
     this.renderer.dispose();
     this.renderer.forceContextLoss();
@@ -135,33 +131,6 @@ export class Stage3D {
     this.camera.updateProjectionMatrix();
     this.applyCamera();
   }
-
-  // A small camera move that follows the pointer: makes depth readable.
-  private onPointer = (event: PointerEvent): void => {
-    if (isReduced()) return;
-    const rect = this.container.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width - 0.5;
-    const y = (event.clientY - rect.top) / rect.height - 0.5;
-    gsap.to(this.view, {
-      yaw: x * 0.28,
-      tilt: y * 0.1,
-      duration: 0.8,
-      ease: 'power2.out',
-      overwrite: 'auto',
-      onUpdate: () => this.applyCamera(),
-    });
-  };
-
-  private onLeave = (): void => {
-    gsap.to(this.view, {
-      yaw: 0,
-      tilt: 0,
-      duration: 1,
-      ease: 'power2.out',
-      overwrite: 'auto',
-      onUpdate: () => this.applyCamera(),
-    });
-  };
 
   private tick = (): void => {
     if (!this.dirty || !this.onscreen) return;

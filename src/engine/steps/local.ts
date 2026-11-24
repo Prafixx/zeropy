@@ -2,7 +2,7 @@
 // the learner runs public/check.py there and pastes the sealed block it
 // prints. The block is read here, its seal is tested in Python, and the
 // lesson's checks run over the facts in it.
-import { confetti, place, shake } from '@/kit/motion';
+import { place, shake } from '@/kit/motion';
 import { runPython, warmPython } from '@/py/runner';
 import { parseReport, reportSetup } from '../local-report';
 import { noteEvidence } from '../store';
@@ -155,7 +155,6 @@ export function renderLocal(step: LocalStep, ctx: StepContext): StepView {
         }
         feedback.replaceChildren(panel('good', 'Your computer is ready for this step.', step.after ? md(step.after, 'prose prose-small') : null));
         place(feedback.children);
-        confetti(checkButton, 16);
         return;
       }
       say('bad', 'Not yet.', own[failed].note ?? step.checks[failed].hint);

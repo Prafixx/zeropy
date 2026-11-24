@@ -155,9 +155,6 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     primary.querySelector('.btn-label')!.textContent = label;
     primary.disabled = !enabled;
     primaryAction = onClick ?? (() => void go(index + 1));
-    if (enabled && label !== 'Next' && label !== 'Next line') {
-      gsap.fromTo(primary, { scale: 0.94 }, { scale: 1, duration: 0.5, ease: 'elastic.out(1, 0.45)', clearProps: 'transform' });
-    }
   }
 
   function updateRail(): void {
@@ -299,7 +296,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     if (last) setPrimary('What comes next', true, () => (window.location.hash = '#/next'));
     else setPrimary('Back to the course', true, () => (window.location.hash = '#/'));
     place(el.querySelectorAll('[data-enter]'), 0.25);
-    stamp(mark).eventCallback('onComplete', () => confetti(mark, 26));
+    stamp(mark).eventCallback('onComplete', () => confetti(mark, 14));
   }
 
   const stopSettings = onSettings((settings) => {

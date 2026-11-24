@@ -158,11 +158,6 @@ function cellX(slot: RackSlot, index: number): number {
   return slot.labelArea + RACK.pitch * (index + 0.5);
 }
 
-/** A small fixed tilt per name: labels look placed by hand. */
-function tilt(name: string): number {
-  return (((name.length * 37 + name.charCodeAt(0)) % 7) - 3) * 0.012;
-}
-
 export class Boxes3D implements VariableBoxes {
   private root = new Group();
   private feedGroup = new Group();
@@ -578,7 +573,7 @@ export class Boxes3D implements VariableBoxes {
         return;
       }
       const fresh = makePlaque(name, plaqueWidth(name), 0.32, 'name');
-      fresh.rotation.z = tilt(name);
+      fresh.rotation.z = 0;
       fresh.position.set(x, LABEL_Y, LABEL_Z);
       slot.group.add(fresh);
       slot.labels.set(id, fresh);

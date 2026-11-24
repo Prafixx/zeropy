@@ -1,6 +1,6 @@
 // Exercise: write code, get instant validation. Checks test behavior on
 // several cases; feedback names the failed requirement and why.
-import { confetti, place, shake, stamp } from '@/kit/motion';
+import { place, shake } from '@/kit/motion';
 import { runPython, warmPython } from '@/py/runner';
 import { loadCode, noteAnswer, saveCode } from '../store';
 import type { ExerciseStep } from '../types';
@@ -203,14 +203,9 @@ export function renderExercise(step: ExerciseStep, ctx: StepContext): StepView {
         noteAnswer(lessonId, `${step.isExtra ? 'extra' : 'step'}:${step.id}`, helped || attempts > 2);
         ctx.done();
       }
-      const mark = h('span', { class: 'stamp stamp-big' }, 'Correct');
       feedback.replaceChildren(
         panel('good', 'All checks pass.', step.after ? md(step.after, 'prose prose-small') : null),
       );
-      bench.frame.append(mark);
-      stamp(mark);
-      confetti(mark, 18);
-      window.setTimeout(() => mark.remove(), 2200);
       hintButton.hidden = true;
       solutionButton.hidden = false;
       solutionButton.querySelector('.btn-label')!.textContent = 'Compare with a model solution';

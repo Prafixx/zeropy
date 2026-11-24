@@ -2,7 +2,7 @@
 // types commands; the folder picture next to it changes with each one. The
 // checks look at the result (the files, the folders, the commands that
 // ran), never at one exact command. Nothing here touches the real computer.
-import { confetti, place, shake, stamp } from '@/kit/motion';
+import { place, shake } from '@/kit/motion';
 import { runShell, warmPython } from '@/py/runner';
 import { noteAnswer } from '../store';
 import type { ShellResult, ShellState, TerminalStep } from '../types';
@@ -320,12 +320,7 @@ export function renderTerminal(step: TerminalStep, ctx: StepContext): StepView {
       // Needed the commands shown: it goes on the "My mistakes" list.
       noteAnswer(ctx.lesson.id, `step:${step.id}`, helped);
       ctx.done();
-      const mark = h('span', { class: 'stamp stamp-big' }, 'Done');
       feedback.replaceChildren(panel('good', 'Everything is done.', step.after ? md(step.after, 'prose prose-small') : null));
-      termSlot.append(mark);
-      stamp(mark);
-      confetti(mark, 18);
-      window.setTimeout(() => mark.remove(), 2200);
       hintButton.hidden = true;
       solutionButton.hidden = false;
       solutionButton.querySelector('.btn-label')!.textContent = 'Compare with model commands';

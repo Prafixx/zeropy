@@ -2,7 +2,7 @@
 // Scene modules and step renderers never choose; the graphics setting does.
 import type { Timeline } from './motion';
 import { effectiveGraphics, reducedBySystem, setSettings } from './settings';
-import { FONT_MONO } from './palette';
+import { FONT_MONO, refreshPalette } from './palette';
 import type { Stage3D } from './stage3d';
 
 export interface Stage2D {
@@ -51,6 +51,7 @@ function create2D(container: HTMLElement): Stage2D {
 }
 
 export async function createStage(container: HTMLElement): Promise<Stage> {
+  refreshPalette();
   const graphics = effectiveGraphics();
   container.dataset.stage = graphics === '2d' ? '2d' : '3d';
   if (graphics === '2d') return create2D(container);

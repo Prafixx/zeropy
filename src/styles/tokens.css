@@ -1,85 +1,185 @@
-/* Design tokens of the paper workshop. See docs/design.md. */
+/* Design tokens: refined warm paper. See .local/docs/design.md.
+   One scale for each thing: color steps, type, space, radii, elevation,
+   motion. Components use these names only. The old names at the end are
+   kept as aliases while the components move over. */
 
-/* The light paper. Scenes (the 3D/2D pictures, the hero card and the
-   pretend tkinter windows) always use it: their colors are part of the
-   meaning (number, text, True/False) and they are drawn for paper. */
+/* ---------- Light (also the pretend tkinter windows in the dark theme:
+   they show a real window of the operating system) ---------- */
 :root,
-:root[data-theme='dark'] :is(.stage-frame, .hero-card, .gw) {
-  --paper: #f3ede2;
-  --paper-2: #fbf7ef;
-  --paper-3: #e7ddcb;
-  --ink: #1a1b2e;
-  --ink-2: #4a4b63;
-  --ink-3: #6f6c80;
-  --blue: #2b50d6;
-  --edge: var(--ink);
-  --shade: var(--ink);
+:root[data-theme='dark'] .gw {
+  /* Paper: the backgrounds, from the page to a pressed control. */
+  --paper-1: #f7f3ec; /* page */
+  --paper-2: #fdfbf7; /* raised surface: cards, panels, the dock */
+  --paper-3: #f0ebe1; /* subtle fill: chips, hover, inline code */
+  --paper-4: #e6dfd2; /* pressed, selected background */
+  --border: #ddd5c7; /* 1px lines between things */
+  --border-strong: #8f8471; /* controls that must be seen (inputs, buttons): 3.1:1 or more */
 
-  --tint-good: #dcf2e6;
-  --tint-bad: #fbe3dc;
-  --tint-info: #fdf0cc;
+  /* Ink: the text. Every step is at least 4.5:1 on paper 1 to 3 (measured). */
+  --ink: #1d1c26; /* 15.2:1 */
+  --ink-2: #4a4857; /* 8.1:1: secondary text */
+  --ink-3: #6a6676; /* 5.0:1: hints, labels */
 
-  /* Derived tokens are declared here too, so a scene gets its own values. */
-  --line: 2px solid var(--edge);
-  --shadow: 4px 4px 0 var(--shade);
-  --shadow-s: 3px 3px 0 var(--shade);
-  --shadow-l: 8px 8px 0 var(--shade);
+  /* One accent: the primary action and "where you are". */
+  --accent: #f2b01e;
+  --accent-hover: #e3a312;
+  --accent-ink: #1d1c26; /* text on the accent */
+  --accent-text: #8a5a00; /* the accent as text: 5.4:1 */
+  --accent-subtle: #fcefc9;
+
+  /* Semantic colors: text, subtle background, border. */
+  --success: #17754d; /* 5.1:1 */
+  --success-subtle: #e4f3ea;
+  --success-border: #a9d7bd;
+  --danger: #b2331d; /* 5.6:1 */
+  --danger-subtle: #fbe9e4;
+  --danger-border: #edb5a8;
+  --info: #2b4fc9; /* 6.2:1: links and information */
+  --info-subtle: #e8edfc;
+  --info-border: #b9c6f2;
+
+  /* Elevation: flat by default; one soft shadow for things that float. */
+  --shadow-float: 0 1px 2px rgb(29 28 38 / 0.06), 0 8px 24px rgb(29 28 38 / 0.1);
+
+  /* Scenes: the dot grid of the stage, the cardboard of the crates. */
+  --dot: rgb(29 28 38 / 0.1);
+  --kraft: #c99b63;
+  --kraft-dark: #a97c47;
+
+  /* Old names (aliases). */
+  --paper: var(--paper-1);
+  --blue: var(--info);
+  --edge: var(--border-strong);
+  --shade: rgb(29 28 38 / 0.12);
+  --tint-good: var(--success-subtle);
+  --tint-bad: var(--danger-subtle);
+  --tint-info: var(--accent-subtle);
+  --line: 1px solid var(--border);
+  --shadow: none;
+  --shadow-s: none;
+  --shadow-l: var(--shadow-float);
   color: var(--ink);
 }
 
 :root {
-  --sun: #f6b92b;
+  /* Fixed colors of meaning (types in the scenes, the board). */
+  --sun: var(--accent);
   --leaf: #1e9e6a;
   --tomato: #e4472b;
-  --kraft: #c99b63;
-  --kraft-dark: #a97c47;
 
-  /* Code on the ink slab: dark in both themes */
-  --slab: #1a1b2e;
-  /* Text on sun, kraft and other light accents: dark in both themes */
-  --on-accent: #1a1b2e;
-  --code-text: #f6f1e7;
-  --code-dim: #8f8ca3;
-  --code-kw: #ff8f73;
-  --code-str: #8fddb0;
-  --code-num: #f9cb5e;
-  --code-fn: #a9bcff;
+  /* Code: a dark slab in both themes. */
+  --slab: #1c1b26;
+  --slab-2: #262532; /* bars and gutters on the slab */
+  --on-accent: var(--accent-ink);
+  --code-text: #f3efe6;
+  --code-dim: #9a96ab;
+  --code-kw: #ff9a80;
+  --code-str: #93dcb3;
+  --code-num: #f7cd66;
+  --code-fn: #aebfff;
 
+  /* Type: three families, one scale, two weights (700 only for display). */
   --font-display: 'Bricolage Grotesque Variable', 'Arial Narrow', sans-serif;
   --font-body: 'Atkinson Hyperlegible', Verdana, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, Consolas, monospace;
+  --text-xs: 12px; /* only for uppercase labels */
+  --text-s: 13px;
+  --text-m: 14px;
+  --text-base: 16px;
+  --text-l: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+  --text-hero: 40px;
+  --weight: 400;
+  --weight-strong: 600;
 
-  --radius: 14px;
-  --radius-s: 9px;
+  /* Space: a 4px base. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
 
-  --bar-h: 64px;
-  --dock-h: 76px;
+  /* Radii: controls, cards and panels, dialogs and the stage. */
+  --r-s: 6px;
+  --r-m: 10px;
+  --r-l: 14px;
+  --radius: var(--r-m);
+  --radius-s: var(--r-s);
+
+  /* Motion: short and purposeful (Carbon productive curves). */
+  --dur-1: 70ms;
+  --dur-2: 110ms;
+  --dur-3: 150ms;
+  --dur-4: 240ms;
+  --dur-5: 400ms;
+  --ease: cubic-bezier(0.2, 0, 0.38, 0.9);
+  --ease-in: cubic-bezier(0, 0, 0.38, 0.9);
+  --ease-out: cubic-bezier(0.2, 0, 1, 0.9);
+
+  --focus: 0 0 0 2px var(--paper-2), 0 0 0 4px var(--info);
+
+  --bar-h: 60px;
+  --dock-h: 72px;
   --wrap: 1180px;
   color-scheme: light;
 }
 
-/* The workshop at night: dark paper, light ink, black shadows. */
+/* ---------- Dark: the same roles, built from dark steps ---------- */
 :root[data-theme='dark'] {
-  --paper: #1b1c27;
-  --paper-2: #252634;
-  --paper-3: #323343;
-  --ink: #ede7db;
-  --ink-2: #bdb8c8;
-  --ink-3: #928da2;
-  --blue: #7f97ff;
-  --edge: #a7a2b5;
-  --shade: #06060b;
+  --paper-1: #16161d;
+  --paper-2: #1e1e27;
+  --paper-3: #272732;
+  --paper-4: #31313d;
+  --border: #33333f;
+  --border-strong: #77778a;
 
-  --tint-good: #173a2c;
-  --tint-bad: #44231f;
-  --tint-info: #3b331b;
+  --ink: #ece8df; /* 14.7:1 */
+  --ink-2: #bcb8c6; /* 9.3:1 */
+  --ink-3: #908c9f; /* 5.5:1 */
 
-  --slab: #101119;
-  --code-dim: #8a87a0;
+  --accent: #f2b01e;
+  --accent-hover: #f7c04a;
+  --accent-ink: #1d1c26;
+  --accent-text: #f5c652; /* 11.2:1 */
+  --accent-subtle: #332a14;
 
-  --line: 2px solid var(--edge);
-  --shadow: 4px 4px 0 var(--shade);
-  --shadow-s: 3px 3px 0 var(--shade);
-  --shadow-l: 8px 8px 0 var(--shade);
+  --success: #63d3a1;
+  --success-subtle: #14302a;
+  --success-border: #245443;
+  --danger: #ff8f78;
+  --danger-subtle: #3a1f1c;
+  --danger-border: #6a3229;
+  --info: #93a6ff;
+  --info-subtle: #1f2440;
+  --info-border: #36407a;
+
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px rgb(0 0 0 / 0.45);
+
+  --dot: rgb(236 232 223 / 0.07);
+  --kraft: #b48a57;
+  --kraft-dark: #8e6b3f;
+
+  --paper: var(--paper-1);
+  --blue: var(--info);
+  --edge: var(--border-strong);
+  --shade: rgb(0 0 0 / 0.4);
+  --tint-good: var(--success-subtle);
+  --tint-bad: var(--danger-subtle);
+  --tint-info: var(--accent-subtle);
+  --line: 1px solid var(--border);
+  --shadow: none;
+  --shadow-s: none;
+  --shadow-l: var(--shadow-float);
+
+  --slab: #101017;
+  --slab-2: #1a1a23;
+  --code-dim: #8f8ba2;
   color-scheme: dark;
 }
