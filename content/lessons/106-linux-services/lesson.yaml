@@ -268,6 +268,8 @@ steps:
       Description=Weather logger
 
       [Service]
+      User=pi
+      WorkingDirectory=/home/pi
       ExecStart=/usr/bin/python3 -u /home/pi/logger.py
       Restart=always
 
@@ -275,8 +277,13 @@ steps:
       WantedBy=multi-user.target
       ```
 
-      - `ExecStart` is the command. Write **full paths**: a service does
-        not start in your home directory.
+      - `User=pi` runs the program as you. **Without it, systemd runs it as
+        root**, with every right on the computer: a bug could then delete
+        or change anything.
+      - `WorkingDirectory=` is the folder the program starts in, so a file
+        it opens by name, like `temps.csv`, is found there.
+      - `ExecStart` is the command. Write **full paths**: systemd does not
+        look in your home directory for the program.
       - `-u` makes Python write each `print` at once. Without it, the prints
         of a program that runs for a long time stay in a buffer and do not
         reach the journal.
@@ -286,9 +293,17 @@ steps:
 
       After you change a service file, run `sudo systemctl daemon-reload`,
       so systemd reads it again.
+
+      Here the user is `pi`. On your own Pi, write the user name you chose
+      in Raspberry Pi Imager (see "Set up a real Pi" in the Raspberry Pi
+      path), and its home folder: `User=ana`, `/home/ana/logger.py`.
     keys:
       - code: "/etc/systemd/system/"
         means: "The place of service files. Write them with `sudo nano`."
+      - code: "User=pi"
+        means: "Run the program as this user. Without it: as root."
+      - code: "WorkingDirectory="
+        means: "The folder the program starts in."
       - code: "ExecStart="
         means: "The command, with full paths: `/usr/bin/python3 -u /home/pi/app.py`."
       - code: "systemctl daemon-reload"
@@ -304,7 +319,7 @@ steps:
       should run on this Pi all the time, also after a power cut.
 
       1. Write the service file `/etc/systemd/system/logger.service`, like
-         the one before, with `sudo nano`.
+         the one before, with `sudo nano`. It runs as the user `pi`.
       2. Start it now and at every boot.
       3. Read its log: the temperatures must be there.
       4. Restart the Pi with `sudo reboot`, and check that it runs again.
@@ -320,6 +335,9 @@ steps:
       - expr: "'/home/pi/logger.py' in (read('/etc/systemd/system/logger.service') or '')"
         pass: "`logger.service` runs `/home/pi/logger.py`"
         hint: "`sudo nano /etc/systemd/system/logger.service`. `ExecStart=` needs the full path of the program."
+      - expr: "'User=pi' in (read('/etc/systemd/system/logger.service') or '').replace(' ', '')"
+        pass: "The logger runs as `pi`, not as root"
+        hint: "Add `User=pi` and `WorkingDirectory=/home/pi` under `[Service]`."
       - expr: "service('logger')['active'] and service('logger')['enabled']"
         pass: "`logger` runs, and starts at every boot"
         hint: "`sudo systemctl enable --now logger`."
@@ -330,11 +348,11 @@ steps:
         pass: "After a restart of the Pi, it runs again"
         hint: "`sudo reboot`, then `systemctl status logger`."
     hints:
-      - "The file has three parts: `[Unit]` with `Description=`, `[Service]` with `ExecStart=`, `[Install]` with `WantedBy=multi-user.target`."
-      - "`ExecStart=/usr/bin/python3 -u /home/pi/logger.py`. Save with the button; nano must run with `sudo`."
+      - "The file has three parts: `[Unit]` with `Description=`, `[Service]` with `User=`, `WorkingDirectory=` and `ExecStart=`, `[Install]` with `WantedBy=multi-user.target`."
+      - "`User=pi`, `WorkingDirectory=/home/pi`, `ExecStart=/usr/bin/python3 -u /home/pi/logger.py`. Save with the button; nano must run with `sudo`."
       - "`sudo systemctl enable --now logger`, `journalctl -u logger`, `sudo reboot`, `systemctl status logger`."
     solution:
-      - "printf '[Unit]\\nDescription=Weather logger\\n\\n[Service]\\nExecStart=/usr/bin/python3 -u /home/pi/logger.py\\nRestart=always\\n\\n[Install]\\nWantedBy=multi-user.target\\n' | sudo tee /etc/systemd/system/logger.service"
+      - "printf '[Unit]\\nDescription=Weather logger\\n\\n[Service]\\nUser=pi\\nWorkingDirectory=/home/pi\\nExecStart=/usr/bin/python3 -u /home/pi/logger.py\\nRestart=always\\n\\n[Install]\\nWantedBy=multi-user.target\\n' | sudo tee /etc/systemd/system/logger.service"
       - "sudo systemctl enable --now logger"
       - "journalctl -u logger"
       - "sudo reboot"
@@ -354,7 +372,8 @@ steps:
 
       **Find out why** with `systemctl status blink` and
       `journalctl -u blink`. Fix the service file, tell systemd to read it
-      again, and restart the service.
+      again, and restart the service. While you fix it, make it run as the
+      user `pi`: now it would run as root.
     start:
       files:
         blink.py: |
@@ -381,16 +400,19 @@ steps:
       - expr: "'/home/pi/blink.py' in (read('/etc/systemd/system/blink.service') or '')"
         pass: "The service file has the full path of `blink.py`"
         hint: "The log says `can't open file '/blink.py'`: a service starts in `/`, not in your home directory."
+      - expr: "'User=pi' in (read('/etc/systemd/system/blink.service') or '').replace(' ', '')"
+        pass: "`blink` runs as `pi`, not as root"
+        hint: "Add `User=pi` under `[Service]`."
       - expr: "service('blink')['active']"
         pass: "`blink` runs"
         hint: "After the fix: `sudo systemctl daemon-reload`, then `sudo systemctl restart blink`."
     hints:
       - "`systemctl status blink` shows `failed`, and the log line `can't open file '/blink.py'`."
-      - "`sudo nano /etc/systemd/system/blink.service`, and change the line to `ExecStart=/usr/bin/python3 /home/pi/blink.py`."
+      - "`sudo nano /etc/systemd/system/blink.service`: change the line to `ExecStart=/usr/bin/python3 /home/pi/blink.py`, and add `User=pi` above it."
       - "`sudo systemctl daemon-reload`, then `sudo systemctl restart blink`, then `systemctl status blink`."
     solution:
       - "systemctl status blink"
-      - "printf '[Unit]\\nDescription=Blink the LED\\n\\n[Service]\\nExecStart=/usr/bin/python3 /home/pi/blink.py\\n\\n[Install]\\nWantedBy=multi-user.target\\n' | sudo tee /etc/systemd/system/blink.service"
+      - "printf '[Unit]\\nDescription=Blink the LED\\n\\n[Service]\\nUser=pi\\nWorkingDirectory=/home/pi\\nExecStart=/usr/bin/python3 /home/pi/blink.py\\n\\n[Install]\\nWantedBy=multi-user.target\\n' | sudo tee /etc/systemd/system/blink.service"
       - "sudo systemctl daemon-reload"
       - "sudo systemctl restart blink"
       - "systemctl status blink"
@@ -534,6 +556,18 @@ review:
         why: "The length does not matter. The prints wait in a buffer."
       - text: "`sudo journalctl`"
         why: "The journal is fine. The prints never reached it."
+  - kind: mcq
+    id: r-user
+    objective: O4
+    prompt: "A service file has `ExecStart=` but no `User=`. As which user does the program run?"
+    options:
+      - text: "As root, with every right on the computer"
+        correct: true
+        why: "systemd runs services as root unless `User=` says otherwise. Add `User=` with your own user name, like `User=pi`."
+      - text: "As the user who wrote the service file"
+        why: "systemd does not know who wrote the file. Without `User=`, it uses root."
+      - text: "As the user who typed `systemctl start`"
+        why: "`sudo systemctl start` asks systemd to start it, and systemd uses root unless `User=` is set."
 
 # "Practice more": extra tasks, not shown in the lesson (practice page).
 extra:
