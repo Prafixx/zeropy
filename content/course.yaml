@@ -81,6 +81,7 @@ modules:
       - { id: git, title: Git }
       - { id: working-with-others, title: Working with others }
       - { id: web-apis, title: Web APIs }
+      - { id: many-at-once, title: Many things at once }
       - { id: project-weather-tool, title: "Project: weather tool", kind: project }
 
   - title: Classes and tests

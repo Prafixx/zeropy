@@ -1,0 +1,913 @@
+id: pytest-2
+order: 58
+title: "Better tests: parametrize and fixtures"
+summary: Test many cases with one test, share fresh test data with fixtures, and test files and input safely with tmp_path and monkeypatch.
+minutes: 40
+outcomes: [A9]
+
+objectives:
+  - id: O1
+    text: Test many cases with one test function and @pytest.mark.parametrize
+  - id: O2
+    text: Give each test fresh data with a fixture, so tests cannot change each other
+  - id: O3
+    text: Test code that uses files or input() with tmp_path and monkeypatch
+  - id: O4
+    text: Choose test cases at the borders, where bugs live
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: one-test-many-cases
+    type: theory
+    objective: O1
+    title: One test, many cases
+    body: |
+      Five tests that differ only in their values are five copies of the
+      same code. `@pytest.mark.parametrize` writes the test once, with a
+      **table** of values:
+
+      ```python
+      import pytest
+
+
+      @pytest.mark.parametrize("text, expected", [
+          ("12", 12),
+          (" 7 ", 7),
+          ("-3", -3),
+      ])
+      def test_to_int(text, expected):
+          assert int(text) == expected
+      ```
+
+      The first argument names the parameters, in one text with commas.
+      Each row of the list becomes **one test**, and pytest gives it a name
+      with its values: `test_to_int[12-12]`, `test_to_int[ 7 -7]`... When a
+      row fails, the name tells you which one.
+
+      A new case is now one new line, so you add more of them, and more of
+      the hard ones: **borders** (0, the last allowed value, one more),
+      empty texts and lists, and wrong input.
+    keys:
+      - code: "@pytest.mark.parametrize(\"a, b\", [...])"
+        means: "One test for each row of the list."
+      - code: "def test_x(a, b):"
+        means: "The parameters have the names of the first argument."
+      - code: "test_x[1-2]"
+        means: "The name of the row in the report."
+
+  # 2. DEMO ------------------------------------------------------------------
+  - id: leap-demo
+    type: demo
+    visual: none
+    pytest: true
+    objective: O1
+    title: A table of leap years
+    intro: |
+      One test checks four years. One row of the table is wrong. Press
+      **Run**, read which row failed, fix the row, then add a row of your
+      own.
+    code: |
+      import pytest
+
+
+      def is_leap(year):
+          return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+
+      @pytest.mark.parametrize("year, expected", [
+          (2024, True),
+          (2023, False),
+          (1900, True),
+          (2000, True),
+      ])
+      def test_is_leap(year, expected):
+          assert is_leap(year) == expected
+    experiments:
+      - text: "Run it. Which row fails?"
+        expr: "any(r['name'] == 'test_is_leap[1900-True]' and r['outcome'] != 'passed' for r in test_results)"
+      - text: "1900 is not a leap year (it can be divided by 100, but not by 400). Fix the row."
+        expr: "len(test_results) >= 4 and all(r['outcome'] == 'passed' for r in test_results)"
+      - text: "Add a row for the year 2100, and run again."
+        expr: "any(r['name'].startswith('test_is_leap[2100') for r in test_results) and all(r['outcome'] == 'passed' for r in test_results)"
+    investigate:
+      - kind: mcq
+        id: i-count
+        prompt: "How many tests does pytest count for this file, with the four rows?"
+        options:
+          - text: "4: one for each row"
+            correct: true
+            why: "Each row of the table is its own test, with its own name and result."
+          - text: "1: there is one function"
+            why: "pytest makes one test for each row of `parametrize`."
+          - text: "2: one for each parameter"
+            why: "The parameters are the columns; the rows make the tests."
+      - kind: mcq
+        id: i-why-name
+        prompt: "Why does pytest put the values in the name of the test, like `[1900-True]`?"
+        options:
+          - text: "So the report tells you which row failed"
+            correct: true
+            why: "Without it, you would only know that one of the years is wrong."
+          - text: "To make the names unique for Python"
+            why: "The names are for you, in the report."
+          - text: "Because the values are saved in a file"
+            why: "Nothing is saved; it is only a name."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-initials
+    type: exercise
+    fade: completion
+    pytest: true
+    objective: O1
+    title: A table for initials
+    prompt: |
+      **Replace the two `___`**: the names of the two parameters, and a
+      fourth row for an empty name, which gives `""`.
+
+      The check puts three bugs into `initials`, one at a time. Your four
+      rows must catch each of them.
+    starter: |
+      import pytest
+
+
+      def initials(name):
+          return "".join(part[0].upper() for part in name.split())
+
+
+      @pytest.mark.parametrize(___, [
+          ("Ada Lovelace", "AL"),
+          ("grace brewster hopper", "GBH"),
+          ("  Alan   Turing ", "AT"),
+          ___,
+      ])
+      def test_initials(name, expected):
+          assert initials(name) == expected
+    solution: |
+      import pytest
+
+
+      def initials(name):
+          return "".join(part[0].upper() for part in name.split())
+
+
+      @pytest.mark.parametrize("name, expected", [
+          ("Ada Lovelace", "AL"),
+          ("grace brewster hopper", "GBH"),
+          ("  Alan   Turing ", "AT"),
+          ("", ""),
+      ])
+      def test_initials(name, expected):
+          assert initials(name) == expected
+    after: >-
+      Each row catches a different bug: small letters, extra spaces, and the
+      empty name. Four lines of data test what four functions would.
+    checks:
+      - expr: "len([r for r in test_results if r['name'].startswith('test_initials[')]) >= 4 and tests_pass()"
+        pass: "Four rows, and all pass"
+        hint: "The first argument is the text `\"name, expected\"`; the new row is `(\"\", \"\")`."
+        misconceptions:
+          - when: "err == 'NameError'"
+            say: "A `___` is still in the code. Replace both."
+          - when: "err == 'TypeError'"
+            say: "The names of the parameters go in one text, with a comma: `\"name, expected\"`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def initials(name):
+              return "".join(part[0] for part in name.split())
+          ''')
+        pass: "Your rows catch initials in small letters"
+        hint: "Keep the row with `grace brewster hopper`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def initials(name):
+              return "".join(part[0].upper() for part in name.split(" "))
+          ''')
+        pass: "Your rows catch extra spaces"
+        hint: "Keep the row with `\"  Alan   Turing \"`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def initials(name):
+              words = name.split()
+              return words[0][0].upper() + "".join(w[0].upper() for w in words[1:])
+          ''')
+        pass: "Your rows catch a crash on an empty name"
+        hint: "Add the row `(\"\", \"\")`."
+    hints:
+      - "The first `___` is one text with both names: `\"name, expected\"`."
+      - "Each row is a tuple: `(name, expected)`."
+      - "The empty name: `(\"\", \"\")`."
+
+  # 4. EXERCISE: independent -------------------------------------------------
+  - id: ex-grades
+    type: exercise
+    fade: independent
+    pytest: true
+    objective: O4
+    title: Tests at the borders
+    prompt: |
+      `grade(points)` gives `"A"` for 90 to 100, `"B"` for 70 to 89, `"C"`
+      for 50 to 69 and `"F"` for 0 to 49. Points below 0 or above 100 raise
+      a `ValueError`.
+
+      **Write two parametrized tests**: one with a table of points and
+      grades, one with a table of points that must raise. The check puts
+      five bugs into `grade`; each one hides at a **border**.
+    starter: |
+      import pytest
+
+
+      def grade(points):
+          if not 0 <= points <= 100:
+              raise ValueError(f"points must be 0 to 100, not {points}")
+          if points >= 90:
+              return "A"
+          if points >= 70:
+              return "B"
+          if points >= 50:
+              return "C"
+          return "F"
+
+
+      # Your tests here.
+    solution: |
+      import pytest
+
+
+      def grade(points):
+          if not 0 <= points <= 100:
+              raise ValueError(f"points must be 0 to 100, not {points}")
+          if points >= 90:
+              return "A"
+          if points >= 70:
+              return "B"
+          if points >= 50:
+              return "C"
+          return "F"
+
+
+      @pytest.mark.parametrize("points, expected", [
+          (0, "F"),
+          (49, "F"),
+          (50, "C"),
+          (69, "C"),
+          (70, "B"),
+          (89, "B"),
+          (90, "A"),
+          (100, "A"),
+      ])
+      def test_grade(points, expected):
+          assert grade(points) == expected
+
+
+      @pytest.mark.parametrize("points", [-1, 101])
+      def test_out_of_range(points):
+          with pytest.raises(ValueError):
+              grade(points)
+    after: >-
+      Bugs like `>` for `>=` change the result of exactly one value: the
+      border. A test with 75 or 95 never sees them; a test with 70 and 90
+      always does.
+    checks:
+      - expr: "len(test_results) >= 8 and tests_pass() and any('[' in r['name'] for r in test_results)"
+        pass: "Parametrized tests, at least eight cases, all passing"
+        hint: "`@pytest.mark.parametrize(\"points, expected\", [...])` above `def test_grade(points, expected):`."
+        misconceptions:
+          - when: "len(test_results) > 0 and not any('[' in r['name'] for r in test_results)"
+            say: "Use `@pytest.mark.parametrize`: one test with a table of values."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def grade(points):
+              if not 0 <= points <= 100:
+                  raise ValueError("bad")
+              if points > 90:
+                  return "A"
+              if points >= 70:
+                  return "B"
+              if points >= 50:
+                  return "C"
+              return "F"
+          ''')
+        pass: "Your tests catch a wrong border at 90"
+        hint: "Test exactly 90."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def grade(points):
+              if not 0 <= points <= 100:
+                  raise ValueError("bad")
+              if points >= 90:
+                  return "A"
+              if points > 70:
+                  return "B"
+              if points >= 50:
+                  return "C"
+              return "F"
+          ''')
+        pass: "Your tests catch a wrong border at 70"
+        hint: "Test exactly 70."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def grade(points):
+              if not 0 <= points <= 100:
+                  raise ValueError("bad")
+              if points >= 90:
+                  return "A"
+              if points >= 70:
+                  return "B"
+              if points >= 51:
+                  return "C"
+              return "F"
+          ''')
+        pass: "Your tests catch a wrong border at 50"
+        hint: "Test exactly 50."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def grade(points):
+              if points < 0:
+                  raise ValueError("bad")
+              if points >= 90:
+                  return "A"
+              if points >= 70:
+                  return "B"
+              if points >= 50:
+                  return "C"
+              return "F"
+          ''')
+        pass: "Your tests catch points above 100 that are accepted"
+        hint: "Test that 101 raises a `ValueError`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def grade(points):
+              if points > 100:
+                  raise ValueError("bad")
+              if points >= 90:
+                  return "A"
+              if points >= 70:
+                  return "B"
+              if points >= 50:
+                  return "C"
+              return "F"
+          ''')
+        pass: "Your tests catch negative points that are accepted"
+        hint: "Test that -1 raises a `ValueError`."
+    hints:
+      - "The borders are 0, 49, 50, 69, 70, 89, 90 and 100, and one step outside: -1 and 101."
+      - "A table `(points, expected)` for the grades: `assert grade(points) == expected`."
+      - "A second test: `@pytest.mark.parametrize(\"points\", [-1, 101])` and `with pytest.raises(ValueError):`."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: fixtures
+    type: theory
+    objective: O2
+    title: Fixtures
+    body: |
+      Many tests need the same data to start: a cart, a list of users, a
+      file. A **fixture** is a function that makes it. A test asks for it
+      **by name**, as a parameter, and pytest calls the fixture again for
+      every test:
+
+      ```python
+      @pytest.fixture
+      def cart():
+          return Cart()
+
+
+      def test_add(cart):          # a new, empty Cart
+          cart.add("tea", 3)
+          assert cart.total() == 3
+      ```
+
+      Each test gets a **fresh** object, so a test cannot change the data of
+      the next one. With `yield` instead of `return`, the code after
+      `yield` runs when the test is done: to close or delete things.
+
+      pytest has fixtures of its own, too:
+
+      - `tmp_path`: a new, empty folder for this test (a `Path`). Write
+        test files there, not in your project.
+      - `monkeypatch`: changes something for one test only, like
+        `monkeypatch.setattr("builtins.input", lambda prompt: "yes")`: now
+        `input()` answers `"yes"`. After the test, all is as before.
+      - `capsys`: `capsys.readouterr().out` is what the test printed.
+    keys:
+      - code: "@pytest.fixture"
+        means: "This function makes data for tests."
+      - code: "def test_x(cart):"
+        means: "pytest calls `cart()` and gives the result."
+      - code: "yield thing"
+        means: "Give it to the test; the rest runs after the test."
+      - code: "tmp_path / \"notes.txt\""
+        means: "A path in a folder only for this test."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-cart
+    type: exercise
+    fade: debug
+    pytest: true
+    objective: O2
+    title: Tests that change each other
+    prompt: |
+      Each test is right when it runs alone. Together, one fails. **Find
+      why, and fix it with a fixture** called `cart` that gives each test
+      a new `Cart`.
+    starter: |
+      import pytest
+
+
+      class Cart:
+          def __init__(self):
+              self.items = []
+
+          def add(self, name, price):
+              self.items.append((name, price))
+
+          def total(self):
+              return sum(price for _, price in self.items)
+
+
+      cart = Cart()
+
+
+      def test_starts_empty():
+          assert cart.total() == 0
+
+
+      def test_add_two():
+          cart.add("tea", 3)
+          cart.add("cake", 4)
+          assert cart.total() == 7
+
+
+      def test_add_one():
+          cart.add("tea", 3)
+          assert cart.total() == 3
+    solution: |
+      import pytest
+
+
+      class Cart:
+          def __init__(self):
+              self.items = []
+
+          def add(self, name, price):
+              self.items.append((name, price))
+
+          def total(self):
+              return sum(price for _, price in self.items)
+
+
+      @pytest.fixture
+      def cart():
+          return Cart()
+
+
+      def test_starts_empty(cart):
+          assert cart.total() == 0
+
+
+      def test_add_two(cart):
+          cart.add("tea", 3)
+          cart.add("cake", 4)
+          assert cart.total() == 7
+
+
+      def test_add_one(cart):
+          cart.add("tea", 3)
+          assert cart.total() == 3
+    after: >-
+      The bug was in the tests, not in `Cart`: they shared one object, so
+      the result depended on the order. A test that passes alone but fails
+      with others almost always shares something.
+    checks:
+      - expr: "len(test_results) >= 3 and tests_pass()"
+        pass: "All three tests pass"
+        hint: "`test_add_one` sees the items of `test_add_two`: they share one cart."
+        misconceptions:
+          - when: "isinstance(ns.get('cart'), ns.get('Cart', type(None)))"
+            say: "All tests use the same `cart`, made once. Make a fixture `cart()` that returns a new `Cart()`, and give each test a parameter `cart`."
+      - expr: "getattr(ns.get('cart'), '_zp_fixture', False)"
+        pass: "`cart` is a fixture"
+        hint: "`@pytest.fixture` above `def cart(): return Cart()`."
+      - expr: "all('cart' in fn.__code__.co_varnames[:fn.__code__.co_argcount] for name, fn in ns.items() if name.startswith('test_') and callable(fn))"
+        pass: "Each test asks for `cart` as a parameter"
+        hint: "`def test_add_one(cart):` and the same for the others."
+    hints:
+      - "Run each test in your head, in order: what is in the cart when `test_add_one` starts?"
+      - "Remove `cart = Cart()`, and write `@pytest.fixture` with `def cart(): return Cart()`."
+      - "Each test gets `cart` as a parameter: `def test_starts_empty(cart):`."
+
+  # 7. EXERCISE: independent -------------------------------------------------
+  - id: ex-tmp-monkey
+    type: exercise
+    fade: independent
+    pytest: true
+    objective: O3
+    title: Test files and input safely
+    prompt: |
+      **Write at least four tests** for the three functions:
+
+      - save notes and load them again, in a file in `tmp_path`,
+      - load from a file that does not exist: `[]`,
+      - `ask_yes_no` with the answer `" YES "` gives `True`, with `"n"`
+        gives `False`: make `input` answer with `monkeypatch`.
+
+      The tests must not write files into the folder of the program. The
+      check puts three bugs into `load_notes` and `ask_yes_no`.
+    starter: |
+      from pathlib import Path
+
+      import pytest
+
+
+      def save_notes(path, notes):
+          Path(path).write_text("\n".join(notes))
+
+
+      def load_notes(path):
+          path = Path(path)
+          if not path.exists():
+              return []
+          return path.read_text().splitlines()
+
+
+      def ask_yes_no(question):
+          answer = input(question + " (y/n) ").strip().lower()
+          return answer in ("y", "yes")
+
+
+      # Your tests here.
+    solution: |
+      from pathlib import Path
+
+      import pytest
+
+
+      def save_notes(path, notes):
+          Path(path).write_text("\n".join(notes))
+
+
+      def load_notes(path):
+          path = Path(path)
+          if not path.exists():
+              return []
+          return path.read_text().splitlines()
+
+
+      def ask_yes_no(question):
+          answer = input(question + " (y/n) ").strip().lower()
+          return answer in ("y", "yes")
+
+
+      def test_save_and_load(tmp_path):
+          path = tmp_path / "notes.txt"
+          save_notes(path, ["milk", "bread", "tea"])
+          assert load_notes(path) == ["milk", "bread", "tea"]
+
+
+      def test_load_missing_file(tmp_path):
+          assert load_notes(tmp_path / "nothing.txt") == []
+
+
+      def test_yes_in_capitals_and_spaces(monkeypatch):
+          monkeypatch.setattr("builtins.input", lambda prompt: " YES ")
+          assert ask_yes_no("Save?") is True
+
+
+      def test_no(monkeypatch):
+          monkeypatch.setattr("builtins.input", lambda prompt: "n")
+          assert ask_yes_no("Save?") is False
+    after: >-
+      `tmp_path` and `monkeypatch` keep tests honest: no file of yours is
+      touched, nobody has to type, and every test starts the same.
+    checks:
+      - expr: "len(test_results) >= 4 and tests_pass()"
+        pass: "At least four tests, all passing"
+        hint: "One test for each point of the task."
+        misconceptions:
+          - when: "err == 'EOFError' or any(r.get('error') == 'EOFError' for r in test_results)"
+            say: "A test calls `input()`, and nobody answers. Use `monkeypatch.setattr(\"builtins.input\", lambda prompt: \" YES \")` first."
+      - expr: "not any(name.endswith('.txt') for name in files)"
+        pass: "No test writes into the folder of the program"
+        hint: "Make the paths with `tmp_path / \"notes.txt\"`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def load_notes(path):
+              path = Path(path)
+              if not path.exists():
+                  return []
+              return path.read_text().splitlines()[:-1]
+          ''')
+        pass: "Your tests catch a lost last note"
+        hint: "Save notes, load them, and compare the whole list."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def load_notes(path):
+              return Path(path).read_text().splitlines()
+          ''')
+        pass: "Your tests catch a crash on a missing file"
+        hint: "Load from `tmp_path / \"nothing.txt\"`, which does not exist."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def ask_yes_no(question):
+              answer = input(question + " (y/n) ")
+              return answer in ("y", "yes")
+          ''')
+        pass: "Your tests catch an answer in capitals or with spaces"
+        hint: "Let `input` answer `\" YES \"`."
+    hints:
+      - "`def test_save_and_load(tmp_path):` with `path = tmp_path / \"notes.txt\"`."
+      - "`monkeypatch.setattr(\"builtins.input\", lambda prompt: \" YES \")` before `ask_yes_no(...)`."
+      - "Four tests: save and load, missing file, yes, no."
+
+  # 8. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check what you know
+    items:
+      - kind: mcq
+        id: q-rows
+        objective: O1
+        prompt: "A test has `@pytest.mark.parametrize(\"n\", [1, 2, 3])` and another `@pytest.mark.parametrize(\"x\", [0, 1])` above it. How many tests does pytest run?"
+        options:
+          - text: "6: every n with every x"
+            correct: true
+            why: "Two parametrize lines make all combinations: 3 × 2."
+          - text: "5"
+            why: "The rows are not added; they are combined."
+          - text: "2"
+            why: "There are 3 values of n and 2 of x."
+      - kind: mcq
+        id: q-fresh
+        objective: O2
+        prompt: "Why does a fixture give each test a new object?"
+        options:
+          - text: "So no test can change the data of another test"
+            correct: true
+            why: "Then the result does not depend on the order of the tests."
+          - text: "To make the tests faster"
+            why: "A new object is a little slower; it is about safety."
+          - text: "Because pytest cannot share objects"
+            why: "It can (with other scopes), but a fresh object is the safe default."
+      - kind: mcq
+        id: q-tmp
+        objective: O3
+        prompt: "Why write test files in `tmp_path`, not in the folder of the project?"
+        options:
+          - text: "The test cannot overwrite your real files, and each test starts with an empty folder"
+            correct: true
+            why: "A test that writes `notes.txt` in your project could delete your real notes."
+          - text: "Because tests cannot write in the project"
+            why: "They can, and that is the danger."
+          - text: "To keep the files after the tests"
+            why: "`tmp_path` is a temporary folder."
+      - kind: mcq
+        id: q-border
+        objective: O4
+        prompt: "`discount(total)` gives 10% from 100. Which values test the border best?"
+        options:
+          - text: "99, 100 and 101"
+            correct: true
+            why: "A bug like `>` for `>=` shows only at exactly 100."
+          - text: "50 and 500"
+            why: "Both are far from the border; they cannot see that kind of bug."
+          - text: "Only 100"
+            why: "Good, but 99 and 101 show that each side is right."
+      - kind: mcq
+        id: q-monkey
+        objective: O3
+        prompt: "What does `monkeypatch.setattr(\"builtins.input\", lambda prompt: \"7\")` do?"
+        options:
+          - text: "In this test, `input()` gives `\"7\"` without waiting; after the test, input is normal again"
+            correct: true
+            why: "monkeypatch puts everything back when the test ends."
+          - text: "It types 7 on the keyboard"
+            why: "It replaces the function `input` for a moment."
+          - text: "It changes `input` for the whole program, for ever"
+            why: "Only during this test."
+
+  # 9. REVIEW ----------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 6
+
+review:
+  - kind: mcq
+    id: r-param
+    objective: O1
+    prompt: "What does `@pytest.mark.parametrize(\"a, b\", [(1, 2), (3, 4)])` do?"
+    options:
+      - text: "It runs the test two times: with a=1, b=2, and with a=3, b=4"
+        correct: true
+        why: "One test for each row."
+      - text: "It runs the test with a=1, 3 and b=2, 4 at the same time"
+        why: "Each row is one run."
+      - text: "It checks that a and b are numbers"
+        why: "It only gives values to the parameters."
+  - kind: mcq
+    id: r-report-name
+    objective: O1
+    prompt: "The report says `FAILED test_price[0-0.0]`. What does `[0-0.0]` tell you?"
+    options:
+      - text: "The row of values that failed: 0 and 0.0"
+        correct: true
+        why: "pytest adds the values of the row to the name."
+      - text: "The line number"
+        why: "The line is shown in the details below the name."
+      - text: "That 0 tests passed"
+        why: "It is the name of one test."
+  - kind: mcq
+    id: r-fixture
+    objective: O2
+    prompt: "How does a test get a fixture called `users`?"
+    options:
+      - text: "With a parameter called `users`: `def test_x(users):`"
+        correct: true
+        why: "pytest finds the fixture by the name of the parameter."
+      - text: "By calling `users()` in the test"
+        why: "pytest calls it for you, before the test."
+      - text: "With `import users`"
+        why: "A fixture is a function in the test file, not a module."
+  - kind: mcq
+    id: r-yield
+    objective: O2
+    prompt: "In a fixture, what runs after `yield`?"
+    options:
+      - text: "The code that cleans up, when the test is done"
+        correct: true
+        why: "Even when the test failed."
+      - text: "Nothing: `yield` ends the fixture"
+        why: "The fixture goes on after the test."
+      - text: "The test itself"
+        why: "The test runs at the `yield`; the rest comes after."
+  - kind: mcq
+    id: r-shared
+    objective: O2
+    prompt: "A test passes alone, but fails when all tests run. What is the most likely cause?"
+    options:
+      - text: "Tests share an object or a file that one of them changes"
+        correct: true
+        why: "Give each test fresh data with a fixture."
+      - text: "pytest is too slow"
+        why: "Speed does not change results."
+      - text: "The test has a typo"
+        why: "Then it would also fail alone."
+  - kind: mcq
+    id: r-builtins
+    objective: O3
+    prompt: "Which fixture of pytest gives a test an empty folder of its own?"
+    options:
+      - text: "`tmp_path`"
+        correct: true
+        why: "A `Path` to a new folder, only for this test."
+      - text: "`capsys`"
+        why: "`capsys` catches what the test prints."
+      - text: "`monkeypatch`"
+        why: "`monkeypatch` changes functions or settings for one test."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-capsys
+    type: exercise
+    fade: completion
+    pytest: true
+    objective: O3
+    title: Test what a function prints
+    prompt: |
+      `receipt(items)` prints one line for each item and a total. **Replace
+      the `___`** so the test reads what was printed, with `capsys`.
+    starter: |
+      import pytest
+
+
+      def receipt(items):
+          for name, price in items:
+              print(f"{name}: {price:.2f}")
+          print(f"Total: {sum(p for _, p in items):.2f}")
+
+
+      def test_receipt(___):
+          receipt([("tea", 3), ("cake", 4.5)])
+          printed = capsys.___().out
+          assert printed.splitlines() == ["tea: 3.00", "cake: 4.50", "Total: 7.50"]
+    solution: |
+      import pytest
+
+
+      def receipt(items):
+          for name, price in items:
+              print(f"{name}: {price:.2f}")
+          print(f"Total: {sum(p for _, p in items):.2f}")
+
+
+      def test_receipt(capsys):
+          receipt([("tea", 3), ("cake", 4.5)])
+          printed = capsys.readouterr().out
+          assert printed.splitlines() == ["tea: 3.00", "cake: 4.50", "Total: 7.50"]
+    after: >-
+      `capsys` catches the prints of the test, so the test can compare
+      them. `readouterr()` also starts the catch again, for the next part.
+    checks:
+      - expr: "len(test_results) >= 1 and tests_pass()"
+        pass: "The test passes"
+        hint: "The parameter is `capsys`, and the method is `readouterr()`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def receipt(items):
+              for name, price in items:
+                  print(f"{name}: {price}")
+              print(f"Total: {sum(p for _, p in items)}")
+          ''')
+        pass: "The test catches a receipt without 2 decimals"
+        hint: "Compare the exact lines."
+    hints:
+      - "The fixture that catches prints is `capsys`."
+      - "Its method `readouterr()` gives what was printed."
+      - "`def test_receipt(capsys):` and `capsys.readouterr().out`."
+  - id: x-bad-input
+    type: exercise
+    fade: independent
+    pytest: true
+    objective: O4
+    title: A table of bad input
+    prompt: |
+      `parse_age(text)` turns a text like `" 42 "` into `42`. A text that is
+      not a whole number, or an age below 0 or above 130, raises a
+      `ValueError`.
+
+      **Write two parametrized tests**: good texts with their ages, and bad
+      texts that must raise. The check puts three bugs into `parse_age`.
+    starter: |
+      import pytest
+
+
+      def parse_age(text):
+          age = int(text.strip())
+          if not 0 <= age <= 130:
+              raise ValueError(f"not an age: {age}")
+          return age
+
+
+      # Your tests here.
+    solution: |
+      import pytest
+
+
+      def parse_age(text):
+          age = int(text.strip())
+          if not 0 <= age <= 130:
+              raise ValueError(f"not an age: {age}")
+          return age
+
+
+      @pytest.mark.parametrize("text, age", [("42", 42), (" 7 ", 7), ("0", 0), ("130", 130)])
+      def test_good(text, age):
+          assert parse_age(text) == age
+
+
+      @pytest.mark.parametrize("text", ["-1", "131", "abc", "", "4.5"])
+      def test_bad(text):
+          with pytest.raises(ValueError):
+              parse_age(text)
+    after: >-
+      The bad table is as important as the good one: programs meet wrong
+      input every day, and each kind of wrong input is one more row.
+    checks:
+      - expr: "len(test_results) >= 6 and tests_pass() and any('[' in r['name'] for r in test_results)"
+        pass: "Parametrized tests for good and bad texts, all passing"
+        hint: "Two tests, each with `@pytest.mark.parametrize`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def parse_age(text):
+              age = int(text.strip())
+              if not 0 <= age < 130:
+                  raise ValueError("bad")
+              return age
+          ''')
+        pass: "Your tests catch a wrong border at 130"
+        hint: "Test `\"130\"`: it is allowed."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def parse_age(text):
+              age = int(text.strip())
+              if not 0 < age <= 130:
+                  raise ValueError("bad")
+              return age
+          ''')
+        pass: "Your tests catch a wrong border at 0"
+        hint: "Test `\"0\"`: a baby is 0 years old."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def parse_age(text):
+              age = int(float(text.strip()))
+              if not 0 <= age <= 130:
+                  raise ValueError("bad")
+              return age
+          ''')
+        pass: "Your tests catch a number with a decimal point that is accepted"
+        hint: "Test that `\"4.5\"` raises a `ValueError`."
+    hints:
+      - "Good texts: a normal age, one with spaces, and the borders 0 and 130."
+      - "Bad texts: -1, 131, not a number, empty, a decimal number."
+      - "`with pytest.raises(ValueError): parse_age(text)` in the second test."

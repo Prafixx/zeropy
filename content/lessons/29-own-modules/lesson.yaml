@@ -2,7 +2,7 @@ id: own-modules
 order: 29
 title: Your own modules and packages
 summary: Split a program into files, import them in the right way, read the errors of a failed import, and group modules in a package.
-minutes: 35
+minutes: 45
 outcomes: [A3, A4]
 
 objectives:
@@ -14,6 +14,8 @@ objectives:
     text: Make a module that runs its tests only as a program, with if __name__ == "__main__"
   - id: O4
     text: Group modules in a package - a folder with __init__.py - and import them with dotted names
+  - id: O5
+    text: Describe a package in pyproject.toml - its name, version and dependencies - and read the file with tomllib
 
 steps:
   # 1. THEORY ----------------------------------------------------------------
@@ -432,7 +434,129 @@ steps:
       - "The lines: `for name, price in items.items():` and `print(line(name, price))`."
       - "The last line: `print(line(\"total\", with_tax(total(items.values()))))`."
 
-  # 9. QUIZ -----------------------------------------------------------------
+  # 9. THEORY ----------------------------------------------------------------
+  - id: pyproject
+    type: theory
+    objective: O5
+    title: A package that describes itself
+    body: |
+      A package that other people (or your other projects) install needs a
+      description: its name, its version, and the packages it needs. Today
+      this is one file, **`pyproject.toml`**, next to the package folder:
+
+      ```text
+      shapes-project/
+          pyproject.toml
+          shapes/
+              __init__.py
+              area.py
+      ```
+
+      ```toml
+      [build-system]
+      requires = ["setuptools>=77"]
+      build-backend = "setuptools.build_meta"
+
+      [project]
+      name = "shapes"
+      version = "0.1.0"
+      description = "Areas of simple shapes"
+      requires-python = ">=3.10"
+      dependencies = ["rich>=14"]
+      ```
+
+      - **TOML** is a simple text format: `[sections]`, and `key = value`
+        lines. Texts have quotes; lists have `[ ]`.
+      - `[project]` describes the package. `dependencies` lists what it
+        needs; pip installs those too.
+      - `[build-system]` says which tool turns the folder into an
+        installable package. Copy these three lines as they are.
+
+      In lesson 43 you will use **pip** in a venv. In the folder of
+      `pyproject.toml`, `pip install -e .` then installs your package so
+      that `import shapes` works in any of your programs, and a change in
+      the code counts at once. (`-e` means editable; `.` means this folder.)
+
+      Python reads TOML with the module `tomllib`, which comes with it.
+    keys:
+      - code: "pyproject.toml"
+        means: "The description of a package: name, version, dependencies."
+      - code: "[project]"
+        means: "A TOML section; the lines below it belong to it."
+      - code: "pip install -e ."
+        means: "Install the package of this folder, editable (in a venv)."
+      - code: "tomllib.loads(text)"
+        means: "Read a TOML text into a dictionary."
+
+  # 10. EXERCISE: completion -------------------------------------------------
+  - id: ex-pyproject
+    type: exercise
+    fade: completion
+    objective: O5
+    title: Read pyproject.toml
+    prompt: |
+      A program can read `pyproject.toml` too, for example to show its own
+      version. **Replace the two `___`** so that the program prints the
+      name and the version of the package, and its dependencies:
+
+      ```text
+      shapes 0.1.0
+      needs: rich>=14, colorama>=0.4
+      ```
+    files:
+      pyproject.toml: |
+        [build-system]
+        requires = ["setuptools>=77"]
+        build-backend = "setuptools.build_meta"
+
+        [project]
+        name = "shapes"
+        version = "0.1.0"
+        description = "Areas of simple shapes"
+        dependencies = ["rich>=14", "colorama>=0.4"]
+    starter: |
+      import tomllib
+      from pathlib import Path
+
+      data = tomllib.___(Path("pyproject.toml").read_text())
+      project = data[___]
+      print(project["name"], project["version"])
+      print("needs:", ", ".join(project["dependencies"]))
+    solution: |
+      import tomllib
+      from pathlib import Path
+
+      data = tomllib.loads(Path("pyproject.toml").read_text())
+      project = data["project"]
+      print(project["name"], project["version"])
+      print("needs:", ", ".join(project["dependencies"]))
+    after: >-
+      `tomllib` turns each `[section]` into a dictionary inside the big one.
+      `loads` reads a text, like `json.loads`; `tomllib.load` reads a file
+      opened with `"rb"`.
+    cases:
+      - {}
+      - label: "another package"
+        files:
+          pyproject.toml: "[project]\nname = \"weather\"\nversion = \"2.1.0\"\ndependencies = [\"requests>=2.32\"]\n"
+    checks:
+      - expr: "err is None and lines[0] == ' '.join([__import__('tomllib').loads(start_files['pyproject.toml'])['project'][k] for k in ('name', 'version')])"
+        pass: "It prints the name and the version from the file"
+        hint: "The first `___` is `loads`, like `json.loads`. The second is the name of the section, as a text: `\"project\"`."
+        misconceptions:
+          - when: "err == 'KeyError'"
+            say: "The section is called `project`, without the brackets: `data[\"project\"]`."
+          - when: "err == 'NameError'"
+            say: "The section name is a text: write it with quotes, `\"project\"`."
+      - expr: "err is None and lines[1] == 'needs: ' + ', '.join(__import__('tomllib').loads(start_files['pyproject.toml'])['project']['dependencies'])"
+        pass: "It lists the dependencies"
+        hint: "Keep the last print."
+    hints:
+      - "Reading a text into a dictionary is called `loads`, like in `json`."
+      - "In the file, the lines of the package come after `[project]`."
+      - "`tomllib.loads(...)` and `data[\"project\"]`."
+
+  # 11. QUIZ -----------------------------------------------------------------
   - id: quiz
     type: quiz
     objective: O2
@@ -512,7 +636,7 @@ steps:
           - text: "Delete your `.py` files: the `.pyc` are enough"
             why: "Your `.py` files are the real program."
 
-  # 10. REVIEW --------------------------------------------------------------
+  # 12. REVIEW --------------------------------------------------------------
   - id: review
     type: review
     objective: O1
@@ -617,6 +741,18 @@ review:
         why: "Python loads each module once, which is why one of them is unfinished."
       - text: "Nothing: Python sorts it out"
         why: "It often fails, and the error names a module that seems fine."
+  - kind: mcq
+    id: r-pyproject
+    objective: O5
+    prompt: "Where does a package write its name, its version and the packages it needs?"
+    options:
+      - text: "In `pyproject.toml`, under `[project]`"
+        correct: true
+        why: "One file next to the package folder describes it, for pip and for people."
+      - text: "In `__init__.py`"
+        why: "`__init__.py` makes a folder a package. The description of the package is in `pyproject.toml`."
+      - text: "In `requirements.txt`"
+        why: "That lists what one project needs to run. A package that others install describes itself in `pyproject.toml`."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

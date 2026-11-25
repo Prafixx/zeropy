@@ -5,9 +5,11 @@ import shellCode from './shell.py?raw';
 import gpioCode from './gpio.py?raw';
 import plotCode from './plot.py?raw';
 import serverCode from './server.py?raw';
+import concurrencyCode from './concurrency.py?raw';
 
-// The pretend Linux shell, Raspberry Pi and matplotlib extend the harness.
-const harness = `${harnessCode}\n${shellCode}\n${gpioCode}\n${plotCode}\n${serverCode}`;
+// The pretend Linux shell, Raspberry Pi, matplotlib, Flask server and the
+// pretend threads and asyncio (concurrency.py) extend the harness.
+const harness = `${harnessCode}\n${shellCode}\n${gpioCode}\n${plotCode}\n${serverCode}\n${concurrencyCode}`;
 
 export type PyStatus = 'idle' | 'loading' | 'ready' | 'failed';
 

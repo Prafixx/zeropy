@@ -96,7 +96,9 @@ function getUpdater() {
   if (updater) return updater;
   updater = require('electron-updater').autoUpdater;
   updater.autoDownload = false;
-  updater.autoInstallOnAppQuit = false;
+  // A downloaded update also installs when the app closes, not only after
+  // "Restart now": otherwise it waits forever and the app stays old.
+  updater.autoInstallOnAppQuit = true;
   updater.allowPrerelease = false;
   updater.logger = null;
   const send = (data) => BrowserWindow.getAllWindows().forEach((w) => w.webContents.send('update:event', data));

@@ -1,0 +1,887 @@
+id: many-at-once
+order: 48
+title: Many things at once
+summary: A program that waits for the web can wait for many answers at the same time. Download with threads, collect the results as they come, and do the same with asyncio.
+minutes: 45
+outcomes: [A7]
+
+objectives:
+  - id: O1
+    text: Say why a program that waits is slow, and when doing things at once helps - waiting, not computing
+  - id: O2
+    text: Run many waiting tasks at once with ThreadPoolExecutor and map, and measure the time with perf_counter
+  - id: O3
+    text: Take the results as they finish with submit and as_completed, and handle a task that fails
+  - id: O4
+    text: Write the same with asyncio - async def, await, asyncio.gather and asyncio.run
+  - id: O5
+    text: Avoid the usual mistakes - time.sleep in async code, a missing await, too many tasks at once
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: waiting
+    type: theory
+    objective: O1
+    title: A program that waits
+    body: |
+      A request to a web API takes time, and most of that time your program
+      does nothing. It **waits** for the answer to travel through the
+      network. Three requests of one second each, one after the other, take
+      three seconds:
+
+      ```python
+      import time
+
+      def download(name):
+          time.sleep(1)            # a slow server: one second
+          return f"{name}: ok"
+
+      start = time.perf_counter()
+      for name in ["news", "weather", "sport"]:
+          print(download(name))
+      print(f"{time.perf_counter() - start:.1f} s")    # 3.0 s
+      ```
+
+      The waits do not need each other. If the program sends all three
+      requests and then waits **once**, it is done after one second. That
+      is **concurrency**: several tasks are in progress at the same time.
+
+      ## When it helps
+
+      - **Waiting** (the network, a disk, a slow device): yes, a lot.
+      - **Computing** (sums, sorting, loops over numbers): in normal Python,
+        threads do not make this faster. Fast code (lesson 25) helps there.
+
+      `time.perf_counter()` gives a time in seconds. The difference of two
+      readings is how long the code between them took.
+
+      **In ZeroPy**, the waiting is pretend: `time.sleep()` moves a clock
+      instead of really waiting. The times you see are the times a real
+      computer would show.
+    keys:
+      - code: "time.perf_counter()"
+        means: "A clock in seconds, for measuring how long code takes."
+      - code: "concurrency"
+        means: "Several tasks in progress at the same time, mostly waiting."
+      - code: "waiting, not computing"
+        means: "Concurrency speeds up the waiting. It does not speed up math."
+
+  # 2. PREDICT ---------------------------------------------------------------
+  - id: predict-serial
+    type: predict
+    objective: O1
+    title: How long?
+    item:
+      kind: predict
+      id: p-serial
+      prompt: "Each download waits 1 second, the report 2 seconds. **What does the last line print?**"
+      code: |
+        import time
+
+        def download(name):
+            time.sleep(1)
+            return name
+
+        start = time.perf_counter()
+        for name in ["a", "b", "c", "d"]:
+            download(name)
+        time.sleep(2)
+        print(f"{time.perf_counter() - start:.1f} s")
+      explain: >-
+        One after the other, the waits add up: four downloads of 1 second,
+        then 2 seconds for the report, are 6 seconds. With concurrency, the
+        four downloads could share one second.
+      misconceptions:
+        - answer: "3.0 s"
+          say: "The program waits for each download before it starts the next: 1 + 1 + 1 + 1, then 2 more."
+        - answer: "2.0 s"
+          say: "The downloads wait too. Each `time.sleep(1)` is one second of waiting."
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: threads
+    type: theory
+    objective: O2
+    title: Threads that wait together
+    body: |
+      A **thread** is a line of work inside your program. With several
+      threads, one can wait for an answer while another sends its request.
+      The module `concurrent.futures` comes with Python and makes this
+      short:
+
+      ```python
+      from concurrent.futures import ThreadPoolExecutor
+
+      names = ["news", "weather", "sport"]
+      with ThreadPoolExecutor(max_workers=3) as pool:
+          results = list(pool.map(download, names))
+      print(results)        # ['news: ok', 'weather: ok', 'sport: ok']
+      ```
+
+      - `ThreadPoolExecutor` is a **pool**: a team of threads, here 3
+        **workers**.
+      - `pool.map(download, names)` calls `download` once for each name,
+        spread over the workers. Like the `map` of lesson 22, it gives the
+        results in the order of `names`.
+      - The `with` block ends only when all the tasks are done.
+
+      Three workers, three downloads of one second: about **1 second** in
+      all. With `max_workers=2`, two start at once and the third waits for a
+      free worker: about 2 seconds.
+
+      Give `pool.map` the function itself, `download`, without brackets. The
+      pool calls it.
+    keys:
+      - code: "ThreadPoolExecutor(max_workers=3)"
+        means: "A pool of 3 threads that do tasks for you."
+      - code: "pool.map(download, names)"
+        means: "download(name) for each name, at the same time; results in order."
+      - code: "with ... as pool:"
+        means: "At the end of the block, all the tasks are done."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try-pool
+    type: demo
+    visual: output
+    objective: O2
+    title: One pool, four downloads
+    intro: |
+      Four downloads of one second each, in a pool of 4 workers. Press
+      **Run**, then try the changes and watch the time.
+    code: |
+      import time
+      from concurrent.futures import ThreadPoolExecutor
+
+      def download(name):
+          time.sleep(1)
+          return f"{name}: ok"
+
+      names = ["news", "weather", "sport", "music"]
+      start = time.perf_counter()
+      with ThreadPoolExecutor(max_workers=4) as pool:
+          results = list(pool.map(download, names))
+      print(results)
+      print(f"time: {time.perf_counter() - start:.1f} s")
+    experiments:
+      - text: "Run the code as it is. How long do four downloads take?"
+        expr: "err is None and 'time: 1.0 s' in lines"
+      - text: "Change `max_workers=4` to `max_workers=2`. Why does it take 2 seconds now?"
+        expr: "err is None and 'time: 2.0 s' in lines"
+      - text: "Set `max_workers=1`. Now it is the same as a plain loop."
+        expr: "err is None and 'time: 4.0 s' in lines"
+    investigate:
+      - kind: mcq
+        id: i-order
+        objective: O2
+        prompt: "The downloads run at the same time. In which order does `results` hold their answers?"
+        options:
+          - text: "In the order of `names`, always"
+            correct: true
+            why: "`pool.map` keeps the order of what you give it, whichever task finishes first."
+          - text: "In the order they finish"
+            why: "That is `as_completed`, later in this lesson. `map` keeps the order of `names`."
+          - text: "In a random order"
+            why: "The tasks may finish in any order, but `map` puts the results back in order."
+      - kind: mcq
+        id: i-six
+        objective: O2
+        prompt: "With `max_workers=4`, how long would **6** downloads of 1 second take?"
+        options:
+          - text: "About 2 seconds: 4 in the first second, the last 2 in the next"
+            correct: true
+            why: "Only 4 run at once. The 5th and 6th start when a worker is free."
+          - text: "About 1 second"
+            why: "Only 4 workers: two downloads must wait for a free one."
+          - text: "About 6 seconds"
+            why: "That is one after the other, with a single worker."
+
+  # 5. EXERCISE: completion --------------------------------------------------
+  - id: ex-pool
+    type: exercise
+    fade: completion
+    objective: O2
+    title: The weather of five cities
+    prompt: |
+      `get_weather(city)` waits one second for a slow weather server.
+      **Replace the two `___`** so that the five cities are fetched at the
+      same time, in a pool of 5 workers. It must print the five answers in
+      the order of `cities`, and take about one second.
+    starter: |
+      import time
+      from concurrent.futures import ThreadPoolExecutor
+
+      def get_weather(city):
+          time.sleep(1)                 # the server answers after 1 second
+          return f"{city}: {len(city) * 3} °C"
+
+      cities = ["Oslo", "Rome", "Lima", "Cairo", "Tokyo"]
+      start = time.perf_counter()
+      with ThreadPoolExecutor(max_workers=___) as pool:
+          answers = list(pool.map(___, cities))
+      for answer in answers:
+          print(answer)
+      print(f"{time.perf_counter() - start:.1f} s")
+    solution: |
+      import time
+      from concurrent.futures import ThreadPoolExecutor
+
+      def get_weather(city):
+          time.sleep(1)                 # the server answers after 1 second
+          return f"{city}: {len(city) * 3} °C"
+
+      cities = ["Oslo", "Rome", "Lima", "Cairo", "Tokyo"]
+      start = time.perf_counter()
+      with ThreadPoolExecutor(max_workers=5) as pool:
+          answers = list(pool.map(get_weather, cities))
+      for answer in answers:
+          print(answer)
+      print(f"{time.perf_counter() - start:.1f} s")
+    after: >-
+      Five servers, one second: the waits overlap. The same code with
+      `requests.get` inside `get_weather` works on your own computer, because
+      a thread can wait for a real web answer too.
+    checks:
+      - expr: "err is None and lines[:5] == [f'{c}: {len(c) * 3} °C' for c in ['Oslo', 'Rome', 'Lima', 'Cairo', 'Tokyo']]"
+        pass: "It prints the five answers in the order of the cities"
+        hint: "`pool.map` gets the function itself: `get_weather`, without brackets."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "`pool.map(get_weather(...), ...)` calls the function yourself. Give the pool `get_weather` without brackets."
+      - expr: "err is None and pools_used >= 1 and waited <= 1.05 and most_at_once == 5"
+        pass: "All five wait at the same time: about one second"
+        hint: "Five cities at once need 5 workers: `max_workers=5`."
+        misconceptions:
+          - when: "err is None and waited > 1.05"
+            say: "Some cities wait for a free worker. Give the pool one worker for each city: 5."
+      - expr: "err is None and lines[-1] == '1.0 s'"
+        pass: "It prints the time: 1.0 s"
+        hint: "Keep the last print."
+    hints:
+      - "How many cities must wait at the same time?"
+      - "`pool.map` needs the function that does one task, without brackets."
+      - "`max_workers=5` and `pool.map(get_weather, cities)`."
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: completed
+    type: theory
+    objective: O3
+    title: Results as they come
+    body: |
+      `pool.map` waits for the slowest task before you see the first result.
+      Sometimes you want each result **as soon as it is ready**. Then send
+      the tasks one by one with `submit`, and read them with `as_completed`:
+
+      ```python
+      from concurrent.futures import ThreadPoolExecutor, as_completed
+
+      with ThreadPoolExecutor() as pool:
+          futures = [pool.submit(download, name) for name in names]
+          for future in as_completed(futures):
+              print(future.result())
+      ```
+
+      - `pool.submit(download, name)` starts one task and gives back a
+        **future**: a box for a result that is not there yet.
+      - `as_completed(futures)` gives the futures in the order **they
+        finish**: the fastest first.
+      - `future.result()` gives the result. If the task raised an error,
+        `result()` raises **the same error** here.
+
+      So a task that fails does not stop the others, but your `result()`
+      call raises its error. Catch it there:
+
+      ```python
+      for future in as_completed(futures):
+          try:
+              print(future.result())
+          except ConnectionError as error:
+              print("failed:", error)
+      ```
+    keys:
+      - code: "pool.submit(fn, value)"
+        means: "Start one task now; get a future for its result."
+      - code: "as_completed(futures)"
+        means: "The futures in the order they finish."
+      - code: "future.result()"
+        means: "The result, or the error the task raised."
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-failed
+    type: exercise
+    fade: debug
+    objective: O3
+    title: One server is down
+    prompt: |
+      The program checks four servers at once. One of them is down, and the
+      whole program stops with a `ConnectionError`. **Fix it**: print
+      `failed: ...` for the server that is down, and go on with the others.
+      The answers come in the order they finish:
+
+      ```text
+      fast.example: up
+      ok.example: up
+      failed: down.example does not answer
+      slow.example: up
+      ```
+    starter: |
+      import time
+      from concurrent.futures import ThreadPoolExecutor, as_completed
+
+      SERVERS = {"slow.example": 3, "fast.example": 1, "down.example": 2, "ok.example": 1.5}
+
+      def check(name):
+          time.sleep(SERVERS[name])
+          if name.startswith("down"):
+              raise ConnectionError(f"{name} does not answer")
+          return f"{name}: up"
+
+      with ThreadPoolExecutor() as pool:
+          futures = [pool.submit(check, name) for name in SERVERS]
+          for future in as_completed(futures):
+              print(future.result())
+    solution: |
+      import time
+      from concurrent.futures import ThreadPoolExecutor, as_completed
+
+      SERVERS = {"slow.example": 3, "fast.example": 1, "down.example": 2, "ok.example": 1.5}
+
+      def check(name):
+          time.sleep(SERVERS[name])
+          if name.startswith("down"):
+              raise ConnectionError(f"{name} does not answer")
+          return f"{name}: up"
+
+      with ThreadPoolExecutor() as pool:
+          futures = [pool.submit(check, name) for name in SERVERS]
+          for future in as_completed(futures):
+              try:
+                  print(future.result())
+              except ConnectionError as error:
+                  print("failed:", error)
+    after: >-
+      The error happened inside a thread, but it comes out where you call
+      `result()`. That is the one place to catch it, for every task.
+    checks:
+      - expr: "err is None and lines == ['fast.example: up', 'ok.example: up', 'failed: down.example does not answer', 'slow.example: up']"
+        pass: "It reports the server that is down, and the others too"
+        hint: "Put `print(future.result())` inside `try:`, and catch `ConnectionError`."
+        misconceptions:
+          - when: "err is None and len(lines) == 2"
+            say: "The `try` is around the whole loop, so the loop stops at the first error. Put it inside the loop."
+      - expr: "err is None and pools_used >= 1 and waited <= 3.05"
+        pass: "The servers are still checked at the same time"
+        hint: "Keep the pool and `as_completed`."
+      - expr: "syntax('Try') >= 1"
+        pass: "It catches the error with try"
+        hint: "`try:` and `except ConnectionError as error:`."
+    hints:
+      - "Which line raises the error of the task?"
+      - "`future.result()` raises the error that `check` raised."
+      - "Inside the loop: `try: print(future.result())`, then `except ConnectionError as error: print(\"failed:\", error)`."
+
+  # 8. THEORY ----------------------------------------------------------------
+  - id: asyncio
+    type: theory
+    objective: O4
+    title: asyncio - one thread that takes turns
+    body: |
+      **asyncio** does the same with **one** thread. Each task says where it
+      waits, with `await`, and while it waits, the others go on:
+
+      ```python
+      import asyncio
+
+      async def download(name):
+          await asyncio.sleep(1)       # wait here; let others work
+          return f"{name}: ok"
+
+      async def main():
+          results = await asyncio.gather(
+              download("news"), download("weather"), download("sport")
+          )
+          print(results)
+
+      asyncio.run(main())              # about 1 second
+      ```
+
+      - `async def` makes a **coroutine function**: calling it does not run
+        it yet. It gives a coroutine, a task that can run.
+      - `await` runs a coroutine and waits for its result. While it waits,
+        other tasks run.
+      - `asyncio.gather(...)` runs several at once and gives their results
+        **in the order you gave them**.
+      - `asyncio.run(main())` starts it all, once, at the bottom of the
+        program.
+
+      ## Threads or asyncio?
+
+      - **Threads** work with normal code and libraries like `requests`.
+        Good for a few to a few dozen tasks.
+      - **asyncio** needs libraries made for it (like `httpx` or `aiohttp`),
+        and handles thousands of connections. Web servers and chat programs
+        use it.
+    keys:
+      - code: "async def f():"
+        means: "A coroutine function. f() makes a task; it does not run it."
+      - code: "await x"
+        means: "Run x and wait for it. Other tasks run meanwhile."
+      - code: "asyncio.gather(a, b, c)"
+        means: "Run them at once; results in the order given."
+      - code: "asyncio.run(main())"
+        means: "Start the async program. Once, at the bottom."
+
+  # 9. DRILL -----------------------------------------------------------------
+  - id: drill-async
+    type: drill
+    objective: O5
+    title: The usual mistakes
+    items:
+      - kind: mcq
+        id: d-no-await
+        objective: O5
+        prompt: "In `main`, the line `download(\"news\")` has no `await`. What happens?"
+        options:
+          - text: "Nothing is downloaded: it only makes a coroutine, and Python warns that it was never awaited"
+            correct: true
+            why: "Calling an `async def` function gives a task that has not started. `await` runs it."
+          - text: "It downloads in the background"
+            why: "Without `await` (or `gather`), the coroutine never runs."
+          - text: "It downloads, but faster"
+            why: "It does not run at all."
+      - kind: mcq
+        id: d-time-sleep
+        objective: O5
+        prompt: "Three async tasks each call `time.sleep(1)` instead of `await asyncio.sleep(1)`. How long does `gather` of the three take?"
+        options:
+          - text: "About 3 seconds: time.sleep blocks the only thread, so no task can take a turn"
+            correct: true
+            why: "In asyncio, a wait must be an `await`. A normal blocking call stops every task."
+          - text: "About 1 second, like with asyncio.sleep"
+            why: "Only `await` lets the others run. `time.sleep` holds the thread."
+          - text: "It raises an error"
+            why: "It runs, but one task after the other."
+      - kind: mcq
+        id: d-cpu
+        objective: O1
+        prompt: "A program adds up a billion numbers. Will a pool of 8 threads make it about 8 times faster?"
+        options:
+          - text: "No: the work is computing, not waiting, and in the usual Python only one thread runs Python code at a time"
+            correct: true
+            why: "Concurrency helps when tasks wait. For heavy computing, look for a faster algorithm, numpy, or several processes."
+          - text: "Yes: 8 threads, 8 times the speed"
+            why: "That is true for waiting tasks only."
+          - text: "Yes, but only with asyncio"
+            why: "asyncio is one thread; it does not compute faster."
+
+  # 10. EXERCISE: debug ------------------------------------------------------
+  - id: ex-blocking
+    type: exercise
+    fade: debug
+    objective: O5
+    title: Async, but still slow
+    prompt: |
+      This program uses asyncio, but it still needs 3 seconds for three
+      pages of one second. **Find the bug and fix it**, so that it takes
+      about one second and prints:
+
+      ```text
+      ['home: ok', 'shop: ok', 'blog: ok']
+      1.0 s
+      ```
+    starter: |
+      import asyncio
+      import time
+
+      async def fetch(page):
+          time.sleep(1)
+          return f"{page}: ok"
+
+      async def main():
+          start = time.perf_counter()
+          results = await asyncio.gather(fetch("home"), fetch("shop"), fetch("blog"))
+          print(results)
+          print(f"{time.perf_counter() - start:.1f} s")
+
+      asyncio.run(main())
+    solution: |
+      import asyncio
+      import time
+
+      async def fetch(page):
+          await asyncio.sleep(1)
+          return f"{page}: ok"
+
+      async def main():
+          start = time.perf_counter()
+          results = await asyncio.gather(fetch("home"), fetch("shop"), fetch("blog"))
+          print(results)
+          print(f"{time.perf_counter() - start:.1f} s")
+
+      asyncio.run(main())
+    after: >-
+      This bug is easy to miss, because the program still works. In asyncio,
+      every wait must be an `await`; a normal blocking call holds up all the
+      tasks.
+    checks:
+      - expr: "err is None and lines == [\"['home: ok', 'shop: ok', 'blog: ok']\", '1.0 s']"
+        pass: "The three pages take one second"
+        hint: "`time.sleep` blocks the one thread. Wait with `await asyncio.sleep(1)`."
+        misconceptions:
+          - when: "err is None and len(lines) == 2 and lines[1] == '3.0 s'"
+            say: "Still 3 seconds: a `time.sleep` holds the thread, so the tasks run one after the other."
+          - when: "err is None and len(lines) == 2 and lines[1] == '0.0 s'"
+            say: "The wait is gone, so the program no longer waits like a real download. Keep a one-second wait, with `await`."
+      - expr: "err is None and async_runs >= 1 and 'asyncio.sleep' in src and waited <= 1.05"
+        pass: "It waits with await asyncio.sleep"
+        hint: "`await asyncio.sleep(1)`: the `await` is what lets the other tasks run."
+    hints:
+      - "Which line waits? What kind of wait is it?"
+      - "`time.sleep` does not let the other tasks take a turn."
+      - "`await asyncio.sleep(1)` in `fetch`."
+
+  # 11. EXERCISE: independent ------------------------------------------------
+  - id: ex-gather
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Check all the shops
+    prompt: |
+      `price(shop)` asks a shop for the price of a book. Each shop answers
+      after the seconds in `DELAY`. **Write `async def main()`**: ask all the
+      shops at the same time with `asyncio.gather`, then print each shop
+      with its price, in the order of `DELAY`, and the cheapest shop.
+
+      ```text
+      books.example: 12.5
+      readmore.example: 9.9
+      pages.example: 11.0
+      cheapest: readmore.example
+      ```
+
+      It must take about 2 seconds, the time of the slowest shop.
+    starter: |
+      import asyncio
+
+      DELAY = {"books.example": 1.5, "readmore.example": 2, "pages.example": 0.5}
+      PRICES = {"books.example": 12.5, "readmore.example": 9.9, "pages.example": 11.0}
+
+      async def price(shop):
+          await asyncio.sleep(DELAY[shop])
+          return PRICES[shop]
+
+      # Your main() here.
+
+      asyncio.run(main())
+    solution: |
+      import asyncio
+
+      DELAY = {"books.example": 1.5, "readmore.example": 2, "pages.example": 0.5}
+      PRICES = {"books.example": 12.5, "readmore.example": 9.9, "pages.example": 11.0}
+
+      async def price(shop):
+          await asyncio.sleep(DELAY[shop])
+          return PRICES[shop]
+
+      async def main():
+          shops = list(DELAY)
+          prices = await asyncio.gather(*[price(shop) for shop in shops])
+          for shop, value in zip(shops, prices):
+              print(f"{shop}: {value}")
+          cheapest = shops[prices.index(min(prices))]
+          print("cheapest:", cheapest)
+
+      asyncio.run(main())
+    after: >-
+      `*[...]` unpacks the list, so `gather` gets each coroutine as its own
+      value. However many shops there are, the time is the slowest one.
+    checks:
+      - expr: "err is None and lines == ['books.example: 12.5', 'readmore.example: 9.9', 'pages.example: 11.0', 'cheapest: readmore.example']"
+        pass: "It prints every shop with its price, and the cheapest"
+        hint: "`gather` gives the prices in the order of the shops: `zip` them together."
+      - expr: "err is None and async_runs >= 1 and waited <= 2.05"
+        pass: "All the shops are asked at the same time: about 2 seconds"
+        hint: "One `await asyncio.gather(*[price(shop) for shop in shops])`, not an `await` per shop in a loop."
+        misconceptions:
+          - when: "err is None and waited > 3.9"
+            say: "The shops are asked one after the other: an `await` in a loop waits for each. Use `asyncio.gather`."
+      - expr: "'gather' in src and syntax('AsyncFunctionDef') >= 2"
+        pass: "main is an async function that uses gather"
+        hint: "`async def main():` with `await asyncio.gather(...)`."
+    hints:
+      - "`shops = list(DELAY)` gives the shops in order."
+      - "`await asyncio.gather(*[price(shop) for shop in shops])` gives the prices in the same order."
+      - "`zip(shops, prices)` for the lines; `shops[prices.index(min(prices))]` is the cheapest."
+
+  # 12. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-when
+        objective: O1
+        prompt: "Which program gets faster with threads or asyncio?"
+        options:
+          - text: "One that downloads 50 web pages"
+            correct: true
+            why: "It spends most of its time waiting for servers. The waits can overlap."
+          - text: "One that sorts a list of a million numbers"
+            why: "Sorting is computing, not waiting. A thread pool does not make it faster."
+          - text: "One that adds two numbers"
+            why: "There is nothing to wait for, and nothing to share."
+      - kind: mcq
+        id: q-map-arg
+        objective: O2
+        prompt: "Which line runs `fetch` for every URL in a pool?"
+        options:
+          - text: "`pool.map(fetch, urls)`"
+            correct: true
+            why: "The pool gets the function itself and calls it once for each URL."
+          - text: "`pool.map(fetch(urls))`"
+            why: "This calls `fetch` once, yourself, with the whole list, before the pool sees anything."
+          - text: "`pool.map(urls, fetch)`"
+            why: "The function comes first, then the values."
+      - kind: mcq
+        id: q-workers
+        objective: O2
+        prompt: "10 downloads of 1 second, `max_workers=5`. About how long?"
+        options:
+          - text: "2 seconds"
+            correct: true
+            why: "5 at a time: the first 5 in the first second, the next 5 in the second."
+          - text: "1 second"
+            why: "Only 5 can run at once."
+          - text: "10 seconds"
+            why: "That is one at a time."
+      - kind: mcq
+        id: q-result
+        objective: O3
+        prompt: "A task in the pool raised `ValueError`. Where does your program see it?"
+        options:
+          - text: "When it calls `future.result()` for that task"
+            correct: true
+            why: "The future keeps the error, and `result()` raises it again."
+          - text: "Never: errors in threads are lost"
+            why: "With futures they are not lost: `result()` raises them."
+          - text: "At once, and the whole pool stops"
+            why: "The other tasks go on. The error waits in its future."
+      - kind: predict
+        id: q-gather-order
+        objective: O4
+        code: |
+          import asyncio
+
+          async def wait(name, seconds):
+              await asyncio.sleep(seconds)
+              print("done", name)
+              return name
+
+          async def main():
+              names = await asyncio.gather(wait("a", 2), wait("b", 1))
+              print(names)
+
+          asyncio.run(main())
+        explain: >-
+          `b` waits less, so it is done first and prints first. But `gather`
+          gives the results in the order you gave the tasks: a, then b.
+        misconceptions:
+          - answer: "done a\ndone b\n['a', 'b']"
+            say: "Both wait at the same time, so `b` (1 second) is done before `a` (2 seconds)."
+          - answer: "done b\ndone a\n['b', 'a']"
+            say: "The prints come in the order the tasks finish, but `gather` keeps the order you gave."
+
+  # 13. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-waiting
+    objective: O1
+    prompt: "Concurrency makes a program faster when its tasks are mostly...?"
+    options:
+      - text: "Waiting: for the network, a disk, a device"
+        correct: true
+        why: "The waits overlap, so they take the time of one."
+      - text: "Computing: sums and loops"
+        why: "In normal Python, threads do not speed up computing."
+      - text: "Printing"
+        why: "Printing is fast. It is the waiting that concurrency hides."
+  - kind: mcq
+    id: r-with
+    objective: O2
+    prompt: "When does `with ThreadPoolExecutor() as pool:` end?"
+    options:
+      - text: "When every task in the pool is done"
+        correct: true
+        why: "The end of the `with` block waits for all of them."
+      - text: "At once, and the tasks go on alone"
+        why: "The block waits. After it, all the results are there."
+      - text: "After the first task"
+        why: "It waits for all the tasks."
+  - kind: mcq
+    id: r-as-completed
+    objective: O3
+    prompt: "`as_completed(futures)` gives the futures in which order?"
+    options:
+      - text: "The order they finish: fastest first"
+        correct: true
+        why: "That is what it is for: each result as soon as it is ready."
+      - text: "The order they were submitted"
+        why: "That is the order of the list, and of `pool.map`."
+      - text: "Sorted by their result"
+        why: "It knows only which task finished first."
+  - kind: predict
+    id: r-coroutine
+    objective: O5
+    code: |
+      import asyncio
+
+      async def hello():
+          return "hi"
+
+      task = hello()
+      print(type(task).__name__)
+      print(asyncio.run(task))
+    explain: >-
+      Calling an `async def` function does not run it: it gives a coroutine.
+      `asyncio.run` runs it and gives its result.
+    misconceptions:
+      - answer: "str\nhi"
+        say: "`hello()` has not run yet. It is a coroutine until something awaits or runs it."
+  - kind: mcq
+    id: r-block
+    objective: O5
+    prompt: "In an `async def` function, how should it wait 2 seconds?"
+    options:
+      - text: "`await asyncio.sleep(2)`"
+        correct: true
+        why: "The `await` lets the other tasks run during the wait."
+      - text: "`time.sleep(2)`"
+        why: "That blocks the one thread: every task stops for 2 seconds."
+      - text: "`asyncio.sleep(2)` without await"
+        why: "Without `await`, nothing waits at all; Python only warns."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-limit
+    type: exercise
+    fade: completion
+    objective: O5
+    title: Not too many at once
+    prompt: |
+      A server allows only **3** requests from you at the same time.
+      **Replace `___`** so that the pool never sends more than 3 at once.
+      Six downloads of one second then take 2 seconds.
+    starter: |
+      import time
+      from concurrent.futures import ThreadPoolExecutor
+
+      def download(page):
+          time.sleep(1)
+          return page.upper()
+
+      pages = ["a", "b", "c", "d", "e", "f"]
+      start = time.perf_counter()
+      with ThreadPoolExecutor(max_workers=___) as pool:
+          print(list(pool.map(download, pages)))
+      print(f"{time.perf_counter() - start:.1f} s")
+    solution: |
+      import time
+      from concurrent.futures import ThreadPoolExecutor
+
+      def download(page):
+          time.sleep(1)
+          return page.upper()
+
+      pages = ["a", "b", "c", "d", "e", "f"]
+      start = time.perf_counter()
+      with ThreadPoolExecutor(max_workers=3) as pool:
+          print(list(pool.map(download, pages)))
+      print(f"{time.perf_counter() - start:.1f} s")
+    after: >-
+      Many servers block a program that sends too many requests at once.
+      `max_workers` is also how you stay polite.
+    checks:
+      - expr: "err is None and most_at_once == 3"
+        pass: "Never more than 3 requests at once"
+        hint: "`max_workers` is the number of tasks that run at the same time."
+      - expr: "err is None and lines == [\"['A', 'B', 'C', 'D', 'E', 'F']\", '2.0 s']"
+        pass: "Six pages in 2 seconds, in order"
+        hint: "With 3 workers: three in the first second, three in the next."
+    hints:
+      - "What does `max_workers` set?"
+      - "The server allows 3 at once."
+      - "`max_workers=3`."
+  - id: x-timeout
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Too slow is too slow
+    prompt: |
+      One shop sometimes needs 10 seconds. **Write `async def ask(shop)`**:
+      it waits for `price(shop)` for at most 2 seconds, with
+      `asyncio.wait_for(..., timeout=2)`. If the time runs out, it returns
+      `"too slow"`. Then ask all shops at once, as in `main`.
+
+      ```text
+      ['books.example: 12.5', 'slow.example: too slow', 'pages.example: 11.0']
+      ```
+    starter: |
+      import asyncio
+
+      DELAY = {"books.example": 1, "slow.example": 10, "pages.example": 0.5}
+      PRICES = {"books.example": 12.5, "slow.example": 7.0, "pages.example": 11.0}
+
+      async def price(shop):
+          await asyncio.sleep(DELAY[shop])
+          return PRICES[shop]
+
+      # Your ask(shop) here.
+
+      async def main():
+          answers = await asyncio.gather(*[ask(shop) for shop in DELAY])
+          print([f"{shop}: {a}" for shop, a in zip(DELAY, answers)])
+
+      asyncio.run(main())
+    solution: |
+      import asyncio
+
+      DELAY = {"books.example": 1, "slow.example": 10, "pages.example": 0.5}
+      PRICES = {"books.example": 12.5, "slow.example": 7.0, "pages.example": 11.0}
+
+      async def price(shop):
+          await asyncio.sleep(DELAY[shop])
+          return PRICES[shop]
+
+      async def ask(shop):
+          try:
+              return await asyncio.wait_for(price(shop), timeout=2)
+          except TimeoutError:
+              return "too slow"
+
+      async def main():
+          answers = await asyncio.gather(*[ask(shop) for shop in DELAY])
+          print([f"{shop}: {a}" for shop, a in zip(DELAY, answers)])
+
+      asyncio.run(main())
+    after: >-
+      A timeout is the same idea as `timeout=` in `requests.get`: never let
+      one slow server hold up the whole program.
+    checks:
+      - expr: "err is None and lines == [\"['books.example: 12.5', 'slow.example: too slow', 'pages.example: 11.0']\"]"
+        pass: "The slow shop gives too slow, the others their price"
+        hint: "`try: return await asyncio.wait_for(price(shop), timeout=2)`, `except TimeoutError: return \"too slow\"`."
+      - expr: "err is None and async_runs >= 1 and waited <= 2.05"
+        pass: "The program waits at most 2 seconds"
+        hint: "`timeout=2` in `asyncio.wait_for`."
+        misconceptions:
+          - when: "err is None and waited > 9"
+            say: "It waited for the slow shop. Wrap `price(shop)` in `asyncio.wait_for(..., timeout=2)`."
+    hints:
+      - "`asyncio.wait_for(price(shop), timeout=2)` raises `TimeoutError` after 2 seconds."
+      - "Catch it with `try` / `except TimeoutError:`."
+      - "In the `try`: `return await asyncio.wait_for(price(shop), timeout=2)`; in the `except`: `return \"too slow\"`."

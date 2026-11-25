@@ -390,7 +390,7 @@ steps:
       print(f"{len(expenses)} expenses loaded.")
     after: >-
       A set comprehension finds each category one time, and a dictionary
-      comprehension sums the amounts of each one. Lesson 32 had the same
+      comprehension sums the amounts of each one. Lesson 36 had the same
       idea for a CSV table.
     checks:
       - *c-load
