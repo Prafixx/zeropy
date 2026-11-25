@@ -26,6 +26,11 @@ steps:
       GPIO pin, the other to **GND**. No resistor is needed: the Pi has one
       inside (a *pull-up*), and gpiozero switches it on for you.
 
+      This is safe because the pin is an **input**: it only reads, and the
+      pull-up keeps the current tiny. Rule 2 of "Meet the Raspberry Pi" is about outputs.
+      (GPIO 2 also has a pull-up on the board itself. It works the same
+      way, so the gpiozero docs use it for buttons too.)
+
       ```python
       from gpiozero import Button
       button = Button(2)

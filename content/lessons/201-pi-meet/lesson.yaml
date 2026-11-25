@@ -75,8 +75,11 @@ steps:
       ## Three rules that protect your Pi
 
       1. **GPIO pins work with 3.3 V.** Never connect 5 V to a GPIO pin.
-      2. **Never connect a pin straight to another pin** or to ground: put a
-         part (with a resistor) in between.
+      2. **A pin that the program switches (an output) never goes straight
+         to 3V3, 5V, GND or another pin.** Put a part with a resistor in
+         between, like the LED of the next lesson. A button on a pin that
+         the program reads (an input) may go to GND: "Buttons and events"
+         shows why.
       3. **Switch the Pi off before you change the wires.**
 
       In the picture of the board, the yellow pins are the GPIO pins that

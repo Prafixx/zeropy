@@ -2,7 +2,7 @@ id: pi-motors
 order: 206
 title: Motors and a robot
 summary: Drive a motor at any speed and in both directions, steer a robot with two wheels, and stop it before a wall.
-minutes: 40
+minutes: 45
 outcomes: []
 
 objectives:
@@ -30,11 +30,30 @@ steps:
 
       - A **motor controller** board (an **H-bridge**). The Pi sends it small
         signals; the board switches the big current for the motor, in both
-        directions. Most boards also have diodes against the spikes.
-      - Its **own batteries**, connected to the board: red to `+`, black to
-        `-`. Never power a motor from the pins of the Pi.
+        directions, and absorbs the spikes of the motor. This path uses a
+        small **DRV8833** board: it drives two motors, and its inputs work
+        with 3.3 V.
+      - Its **own batteries**, for example 4 AA batteries (6 V). Never power
+        a motor from the pins of the Pi.
 
-      Put the board on the Pi only when the Pi is **turned off**.
+      ## Wiring the DRV8833 (with the Pi turned off)
+
+      | DRV8833 | Goes to |
+      |---|---|
+      | VIN (on some boards VM) | battery `+` (red) |
+      | GND | battery `-` (black), **and** a GND pin of the Pi |
+      | AIN1 | GPIO 4 |
+      | AIN2 | GPIO 14 |
+      | AOUT1 and AOUT2 | the two wires of the motor |
+
+      AIN1 and AIN2 are the inputs for motor A; AOUT1 and AOUT2 are its
+      outputs, the wires to the motor. Motor B has BIN and BOUT.
+
+      The **shared ground** is important: the board reads the Pi's signals
+      against its GND, so both must have the same GND. Leave the other pins
+      free. If the motor never moves, connect SLP (sleep) to 3V3: some
+      boards do not do this for you. The board takes 2.7 to 10.8 V, and up
+      to about 1.2 A per motor: enough for small hobby motors.
 
       In gpiozero, a motor has two pins on the controller: one for
       **forward**, one for **backward**:
@@ -171,6 +190,9 @@ steps:
       A simple robot has a motor on the left and one on the right, and a
       small free wheel at the front. It steers by turning its wheels at
       different speeds, like a tank.
+
+      The DRV8833 has room for the second motor: BIN1 to GPIO 17, BIN2 to
+      GPIO 18, and BOUT1 and BOUT2 to the right motor.
 
       ```python
       from gpiozero import Robot, Motor
@@ -511,6 +533,18 @@ review:
         why: "Forward is `(1, 1)`."
       - text: "It turns left on the spot"
         why: "Left is `(-1, 1)`."
+  - kind: mcq
+    id: r-ground
+    objective: O1
+    prompt: "The motors have their own batteries. Why does the DRV8833 board also need a wire to a GND pin of the Pi?"
+    options:
+      - text: "It reads the Pi's signals against its own GND, so both need the same GND"
+        correct: true
+        why: "Without the shared ground, the board cannot tell on from off, and the motors act at random."
+      - text: "The batteries take some extra power from the GND pin of the Pi"
+        why: "No power comes from that wire. It is the shared 0 V, the reference for the signals."
+      - text: "It does not: the board only needs the battery wires and the signals"
+        why: "With two power sources, the signals need a shared ground to mean anything."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

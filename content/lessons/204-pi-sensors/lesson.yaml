@@ -2,7 +2,7 @@ id: pi-sensors
 order: 204
 title: "Brightness, sound and distance"
 summary: Dim an LED, beep a buzzer, and measure how far away something is.
-minutes: 35
+minutes: 40
 outcomes: []
 
 objectives:
@@ -34,7 +34,12 @@ steps:
 
       ## A buzzer
 
-      A buzzer beeps while its pin is on. It works like an LED:
+      An **active** buzzer beeps while its pin is on. It works like an LED:
+      its `+` leg (the longer one) to the GPIO pin, the other to GND. Buy a
+      small **active** buzzer for 3.3 V that takes **15 mA or less** (look
+      in its data sheet): a GPIO pin cannot give much more. A bigger buzzer
+      needs a transistor. A **passive** buzzer stays silent here: it needs a
+      tone signal (gpiozero has `TonalBuzzer` for that).
 
       ```python
       from gpiozero import Buzzer
@@ -153,9 +158,15 @@ steps:
       `distance` is in **meters**, from 0 to `max_distance` (1 m by
       default). Multiply by 100 for centimeters.
 
-      **Careful with the wiring:** the echo pin of the HC-SR04 gives 5 V. On
-      a real Pi, it needs two resistors (a voltage divider) to bring it down
-      to 3.3 V. Remember the first rule.
+      **Wiring:** VCC to a **5V** pin, GND to GND, and TRIG to GPIO 23.
+      Careful with ECHO: it gives **5 V**, too much for a GPIO pin (rule 1).
+      Two resistors bring it down, a **voltage divider**:
+
+      - a **330 Ω** resistor from ECHO to GPIO 24,
+      - a **470 Ω** resistor from GPIO 24 to GND.
+
+      The two resistors share the 5 V, and GPIO 24 gets about 2.9 V. (The
+      newer HC-SR04P works with 3.3 V and needs no divider.)
 
       On the board, move the slider: it is the distance to an object.
     keys:
@@ -326,6 +337,18 @@ review:
         why: "In gpiozero they are called echo and trigger."
       - text: "Only one"
         why: "It sends on one pin and listens on another."
+  - kind: mcq
+    id: r-divider
+    objective: O3
+    prompt: "The ECHO pin of an HC-SR04 gives 5 V. How does it reach GPIO 24 safely?"
+    options:
+      - text: "Through a voltage divider: 330 Ω from ECHO to the pin, 470 Ω from the pin to GND"
+        correct: true
+        why: "The two resistors share the 5 V, so the pin gets about 2.9 V."
+      - text: "Through one 330 Ω resistor from ECHO to the pin, and nothing to GND"
+        why: "One resistor alone does not lower the voltage: the pin would still see 5 V."
+      - text: "Straight to the pin, because gpiozero only reads it very briefly"
+        why: "The voltage itself does the damage, however short the reading is."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

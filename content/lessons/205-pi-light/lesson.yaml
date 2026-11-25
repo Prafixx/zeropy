@@ -2,7 +2,7 @@ id: pi-light
 order: 205
 title: "Light, motion and knobs"
 summary: A street light that turns on in the dark, an alarm for movement, and a knob that sets the brightness of an LED.
-minutes: 40
+minutes: 45
 outcomes: []
 
 objectives:
@@ -29,6 +29,11 @@ steps:
 
       Wiring: one leg of the LDR to **3V3**, one leg of the capacitor to
       **GND**, and the other two legs together to one GPIO pin.
+
+      A 1 µF capacitor is often **electrolytic**: then it has a `+` and a
+      `-` leg. The `-` leg is shorter, with a stripe on that side. It goes
+      to **GND**, the `+` leg to the GPIO pin. The wrong way round, it can
+      break.
 
       ```python
       from gpiozero import LightSensor
@@ -285,8 +290,31 @@ steps:
 
       Wiring the knob: the two outer legs to **3V3** and **GND**, the middle
       leg to channel 0 of the MCP3008. Never 5 V: the chip would give the
-      Pi more than it can take. On a real Pi, turn on SPI first:
-      `sudo raspi-config`, then **Interface Options**, then **SPI**.
+      Pi more than it can take.
+
+      Wiring the chip: hold it with the small half circle (the notch) at the
+      top. Leg 1 is then top left; legs 1 to 8 go down the left side, and
+      9 to 16 come up the right side. Put it across the **middle groove**
+      of the breadboard (the gap down its middle), so the two rows of legs
+      are not joined.
+
+      The names in the table are the chip's own labels; copy the table as
+      it is. "GPIO 8" means the GPIO number, not physical pin 8: find it in
+      the pin picture of "Meet the Raspberry Pi".
+
+      | MCP3008 leg | Goes to |
+      |---|---|
+      | 1 to 8: CH0 to CH7 | the inputs (the knob: CH0) |
+      | 9: DGND | GND |
+      | 10: CS/SHDN | GPIO 8 |
+      | 11: DIN | GPIO 10 |
+      | 12: DOUT | GPIO 9 |
+      | 13: CLK | GPIO 11 |
+      | 14: AGND | GND |
+      | 15: VREF and 16: VDD | 3V3 |
+
+      On a real Pi, turn on SPI first: `sudo raspi-config`, then
+      **Interface Options**, then **SPI**.
 
       ```python
       from gpiozero import MCP3008, PWMLED
