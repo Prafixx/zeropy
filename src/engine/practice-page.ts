@@ -8,12 +8,16 @@ import { warmPython } from '@/py/runner';
 import { course, getLesson, itemsOf, lessonLabel } from './registry';
 import type { StepContext, StepView } from './steps/context';
 import { renderExercise } from './steps/exercise';
+import { renderTerminal } from './steps/terminal';
 import { renderItem } from './steps/item';
 import { isSkipped, lastPracticed, lessonState, noteAnswer, notePracticed } from './store';
-import type { ExerciseStep, Item, Lesson } from './types';
+import type { ExerciseStep, Item, Lesson, TerminalStep } from './types';
 import { button, h, icon, panel, shuffle } from './ui';
 
-type Task = { lesson: Lesson; ref: string } & ({ kind: 'exercise'; step: ExerciseStep } | { kind: 'item'; item: Item });
+type Task = { lesson: Lesson; ref: string } & ({ kind: 'exercise'; step: ExerciseStep | TerminalStep } | { kind: 'item'; item: Item });
+
+/** A long task from a short description: it has its own list. */
+const isChallenge = (step: ExerciseStep | TerminalStep): boolean => step.type === 'exercise' && step.fade === 'challenge';
 
 /** Exercises and questions in a set. Exercises take longer, so fewer of them. */
 const SET = { exercises: 4, items: 3 };
@@ -34,7 +38,7 @@ function tasksOf(lesson: Lesson): Task[] {
   }
   // Challenges are long: they have their own list, not a place in a quick mixed set.
   for (const step of lesson.extra) {
-    if (step.fade !== 'challenge') tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
+    if (!isChallenge(step)) tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
   }
   return tasks;
 }
@@ -128,7 +132,7 @@ function topicSet(lessonId: string | undefined, objective: string | undefined): 
     if (item.objective === objective && !tasks.some((t) => t.ref === item.id)) tasks.push({ kind: 'item', lesson, item, ref: item.id });
   }
   for (const step of lesson.extra) {
-    if (step.objective === objective && step.fade !== 'challenge') tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
+    if (step.objective === objective && !isChallenge(step)) tasks.push({ kind: 'exercise', lesson, step, ref: `extra:${step.id}` });
   }
   const exercises = oldestFirst(tasks.filter((t) => t.kind === 'exercise'), 2);
   const items = oldestFirst(tasks.filter((t) => t.kind === 'item'), 5 - exercises.length);
@@ -235,7 +239,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
         const lesson = getLesson(entry.id);
         if (!lesson) return [];
         return lesson.extra
-          .filter((step) => step.fade === 'challenge')
+          .filter((step): step is ExerciseStep => isChallenge(step))
           .map((step) => {
             const open = lessonState(lesson.id).done;
             const done = lastPracticed(lesson.id, `extra:${step.id}`) > 0;
@@ -315,7 +319,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
       note.textContent = '';
       let el: HTMLElement;
       if (task.kind === 'exercise') {
-        const exercise = renderExercise(task.step, ctx);
+        const exercise = task.step.type === 'terminal' ? renderTerminal(task.step, ctx) : renderExercise(task.step, ctx);
         el = h('div', null, count, h('h2', { class: 'practice-title', 'data-enter': true }, task.step.title), exercise.el);
         show(el);
         view = exercise;

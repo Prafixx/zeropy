@@ -549,3 +549,113 @@ review:
         why: "They can: `<name>` gives text."
       - text: "For speed"
         why: "It is about the type of id."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-book-404
+    type: exercise
+    fade: completion
+    objective: O1
+    title: No such book
+    prompt: |
+      **Replace `___`** with the right status code: a book that is not
+      there is "not found".
+    starter: |
+      from flask import Flask
+
+      app = Flask(__name__)
+      BOOKS = {1: {"id": 1, "title": "Dune"}}
+
+
+      @app.get("/api/books/<int:book_id>")
+      def book(book_id):
+          if book_id not in BOOKS:
+              return {"error": "no such book"}, ___
+          return BOOKS[book_id]
+
+
+      app.run()
+    solution: |
+      from flask import Flask
+
+      app = Flask(__name__)
+      BOOKS = {1: {"id": 1, "title": "Dune"}}
+
+
+      @app.get("/api/books/<int:book_id>")
+      def book(book_id):
+          if book_id not in BOOKS:
+              return {"error": "no such book"}, 404
+          return BOOKS[book_id]
+
+
+      app.run()
+    after: >-
+      A program that calls your API reads the status code first. 404 tells
+      it "this one does not exist", and the JSON says the same for people.
+    checks:
+      - expr: "client is not None and client.get('/api/books/7').status_code == 404 and client.get('/api/books/7').get_json() == {'error': 'no such book'}"
+        pass: "A missing book gives 404 and the error"
+        hint: "Not found is 404."
+      - expr: "client is not None and client.get('/api/books/1').status_code == 200 and client.get('/api/books/1').get_json()['title'] == 'Dune'"
+        pass: "A book that is there gives 200 and its JSON"
+        hint: "Keep the last return."
+    hints:
+      - "The codes that start with 4 mean: the client asked for something wrong."
+      - "\"Not found\" is the most famous of them."
+      - "`404`."
+  - id: x-notes-api
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Notes that must have text
+    prompt: |
+      **Make `POST /api/notes`**: it takes JSON like `{"text": "buy milk"}`
+      and answers `{"id": ..., "text": ...}` with status 201. Without a
+      text, or with an empty one, it answers `{"error": "text is needed"}`
+      with status 400 and adds nothing.
+    starter: |
+      from flask import Flask, request
+
+      app = Flask(__name__)
+      notes = []
+
+      # Your route here.
+
+      app.run()
+    solution: |
+      from flask import Flask, request
+
+      app = Flask(__name__)
+      notes = []
+
+
+      @app.post("/api/notes")
+      def add_note():
+          data = request.get_json(silent=True)
+          text = data.get("text", "") if isinstance(data, dict) else ""
+          if not isinstance(text, str) or not text.strip():
+              return {"error": "text is needed"}, 400
+          note = {"id": len(notes) + 1, "text": text.strip()}
+          notes.append(note)
+          return note, 201
+
+
+      app.run()
+    after: >-
+      Check what comes in before you keep it: a program can send anything,
+      also no JSON at all. A clear 400 is better than a crash later.
+    checks:
+      - expr: "client is not None and client.post('/api/notes', json={'text': 'buy milk'}).status_code == 201 and notes[-1]['text'] == 'buy milk'"
+        pass: "A note with text is added, with status 201"
+        hint: "Read it with `request.get_json()`, append it, and `return note, 201`."
+      - expr: "client is not None and client.post('/api/notes', json={'text': '  '}).status_code == 400 and client.post('/api/notes', json={}).status_code == 400 and client.post('/api/notes', data='hello').status_code == 400"
+        pass: "No text, an empty text or no JSON give 400"
+        hint: "`request.get_json(silent=True)` gives None for no JSON. Check the text before you add it."
+      - expr: "client is not None and (lambda n: client.post('/api/notes', json={}) and len(notes) == n)(len(notes))"
+        pass: "A bad request adds nothing"
+        hint: "Return the 400 before the `append`."
+    hints:
+      - "`data = request.get_json(silent=True)` gives `None` when there is no JSON."
+      - "Take `data.get(\"text\", \"\")` only when `data` is a dict, and check `text.strip()`."
+      - "Bad: `return {\"error\": \"text is needed\"}, 400`. Good: append and `return note, 201`."

@@ -478,3 +478,94 @@ review:
         why: "The first digit is worth 16, not 10."
       - text: "An error"
         why: "a is a hex digit."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-place
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Place in the alphabet
+    prompt: |
+      **Replace `___`** so that `place(ch)` gives the place of a small
+      letter in the alphabet: 1 for `a`, 26 for `z`.
+
+      ```text
+      1
+      26
+      ```
+    starter: |
+      def place(ch):
+          return ord(ch) - ___ + 1
+
+
+      print(place("a"))
+      print(place("z"))
+    solution: |
+      def place(ch):
+          return ord(ch) - ord("a") + 1
+
+
+      print(place("a"))
+      print(place("z"))
+    after: >-
+      The small letters have codes one after the other, from 97 to 122. So
+      the distance to `ord("a")` tells the place, without a table of 26.
+    checks:
+      - expr: "callable(ns.get('place')) and [place(c) for c in 'abcdefghijklmnopqrstuvwxyz'] == list(range(1, 27))"
+        pass: "It gives the place of every small letter"
+        hint: "Subtract the code of `a`: `ord(\"a\")`."
+      - expr: "'97' not in src"
+        pass: "It uses ord(\"a\"), not the number 97"
+        hint: "`ord(\"a\")` says what it means. 97 is a magic number."
+      - expr: "lines == ['1', '26']"
+        pass: "It prints 1 and 26"
+        hint: "Keep the prints."
+    hints:
+      - "`ord(\"a\")` is the code of `a`."
+      - "`ord(\"c\") - ord(\"a\")` is 2, so add 1 for the place."
+      - "`return ord(ch) - ord(\"a\") + 1`."
+  - id: x-byte-sizes
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Bytes for each character
+    prompt: |
+      **Write `byte_sizes(text)`**: a list with the number of UTF-8 bytes of
+      each character of `text`.
+
+      ```text
+      [1, 2, 3]
+      [1, 1]
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(byte_sizes("aé€"))
+      print(byte_sizes("hi"))
+    solution: |
+      def byte_sizes(text):
+          return [len(ch.encode("utf-8")) for ch in text]
+
+
+      print(byte_sizes("aé€"))
+      print(byte_sizes("hi"))
+    after: >-
+      English letters need one byte, accents two, the euro sign three, and
+      most emoji four. That is why `len(text)` and the size of a file can
+      differ.
+    checks:
+      - expr: "callable(ns.get('byte_sizes')) and byte_sizes('aé€') == [1, 2, 3] and byte_sizes('') == [] and byte_sizes('ñ1🙂') == [2, 1, 4]"
+        pass: "It gives the bytes of each character"
+        hint: "For each character: `len(ch.encode(\"utf-8\"))`."
+        misconceptions:
+          - when: "callable(ns.get('byte_sizes')) and raises(byte_sizes, 'aé') is None and byte_sizes('aé') == [1, 1]"
+            say: "That is the length of each character as text: always 1. Encode it first, then count the bytes."
+      - expr: "lines == ['[1, 2, 3]', '[1, 1]']"
+        pass: "It prints [1, 2, 3] and [1, 1]"
+        hint: "Keep the prints."
+    hints:
+      - "Loop over the characters of the text."
+      - "`ch.encode(\"utf-8\")` gives the bytes of one character."
+      - "`[len(ch.encode(\"utf-8\")) for ch in text]`."

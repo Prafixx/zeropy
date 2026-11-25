@@ -406,3 +406,116 @@ review:
         why: "Changing an outer name needs `global`."
       - text: "`return count`"
         why: "An event cannot use a returned value: gpiozero ignores it."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-wait
+    type: exercise
+    fade: completion
+    objective: O2
+    board: true
+    title: Wait, then light
+    prompt: |
+      **Replace `___`** so that the program waits for a press of the button
+      on GPIO 2. Then the LED on GPIO 17 is on for 2 seconds, and the
+      program prints `Done`. Press the button on the board to test it.
+    starter: |
+      from gpiozero import Button, LED
+      from time import sleep
+
+      button = Button(2)
+      led = LED(17)
+
+      button.___()
+      led.on()
+      sleep(2)
+      led.off()
+      print("Done")
+    solution: |
+      from gpiozero import Button, LED
+      from time import sleep
+
+      button = Button(2)
+      led = LED(17)
+
+      button.wait_for_press()
+      led.on()
+      sleep(2)
+      led.off()
+      print("Done")
+    after: >-
+      `wait_for_press()` stops the program until the press. That is fine
+      for one press; for many, events are better.
+    cases:
+      - {}
+      - label: "a press after 1 second"
+        gpio: { events: [{ at: 1, pin: 2, press: true }, { at: 1.2, pin: 2, press: false }] }
+    checks:
+      - expr: "err is None and len(flashes(17)) == min(1, len(presses(2))) and all(abs(s - presses(2)[0]) < 0.05 and abs(d - 2) < 0.01 for s, d in flashes(17))"
+        pass: "The LED is on for 2 seconds after the press"
+        hint: "The method that waits for a press is `wait_for_press`."
+      - expr: "err is None and lines == (['Done'] if presses(2) else [])"
+        pass: "Then it prints Done"
+        hint: "Keep the `print` at the end."
+    hints:
+      - "The button has a method that waits."
+      - "Its name says what it waits for: a press."
+      - "`button.wait_for_press()`."
+  - id: x-too-early
+    type: exercise
+    fade: debug
+    objective: O4
+    board: true
+    title: Hello at the wrong time
+    prompt: |
+      The program should print `Hello!` at each press of the button. But it
+      prints it once at the start, and never again. **Find the bug and fix
+      it.**
+    starter: |
+      from gpiozero import Button
+      from signal import pause
+
+      button = Button(2)
+
+
+      def hello():
+          print("Hello!")
+
+
+      button.when_pressed = hello()
+      pause()
+    solution: |
+      from gpiozero import Button
+      from signal import pause
+
+      button = Button(2)
+
+
+      def hello():
+          print("Hello!")
+
+
+      button.when_pressed = hello
+      pause()
+    after: >-
+      `hello()` runs the function now and gives its result, `None`.
+      `hello` without brackets gives the function itself, for the button
+      to call later.
+    cases:
+      - {}
+      - label: "two presses"
+        gpio: { events: [{ at: 1, pin: 2, press: true }, { at: 1.2, pin: 2, press: false }, { at: 3, pin: 2, press: true }, { at: 3.2, pin: 2, press: false }] }
+    checks:
+      - expr: "err is None and lines == ['Hello!'] * len(presses(2))"
+        pass: "It prints Hello! at each press, and not before"
+        hint: "Give the button the function: `button.when_pressed = hello`, without brackets."
+        misconceptions:
+          - when: "err is None and lines == ['Hello!']"
+            say: "`hello()` with brackets runs the function at once. The button needs `hello` itself."
+      - expr: "err is None and ended == 'waiting'"
+        pass: "The program waits for presses"
+        hint: "Keep `pause()` at the end."
+    hints:
+      - "When does `Hello!` appear? Before any press."
+      - "Which line runs `hello` at the start?"
+      - "Remove the brackets: `button.when_pressed = hello`."

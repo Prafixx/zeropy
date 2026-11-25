@@ -363,3 +363,63 @@ review:
         why: "A Python program runs with `python3`. A shell script is commands for the shell."
       - text: "A special kind of directory"
         why: "It is a normal text file."
+
+# "Practice more": extra tasks, not shown in the lesson (practice page).
+extra:
+  - id: x-denied
+    type: terminal
+    objective: O2
+    title: Permission denied
+    prompt: |
+      A friend sent you `backup.sh`. `./backup.sh` says `Permission
+      denied`.
+
+      1. Look at its permissions with `ls -l`.
+      2. Make it runnable.
+      3. Run it.
+    start:
+      files:
+        backup.sh: "echo Backup done\n"
+    checks:
+      - expr: "any(h.startswith('ls -l') for h in history)"
+        pass: "You looked at the permissions"
+        hint: "`ls -l backup.sh`: there is no `x` yet."
+      - expr: "executable('backup.sh')"
+        pass: "backup.sh is runnable"
+        hint: "`chmod +x backup.sh`."
+      - expr: "any(h.strip().startswith('./backup.sh') for h in history) and 'Backup done' in out"
+        pass: "You ran it"
+        hint: "`./backup.sh`."
+    hints:
+      - "`ls -l backup.sh` shows `-rw-r--r--`: read and write, but no `x`."
+      - "`chmod +x` adds the right to run."
+      - "`chmod +x backup.sh`, then `./backup.sh`."
+    solution: ["ls -l backup.sh", "chmod +x backup.sh", "./backup.sh"]
+    after: >-
+      Read a script before you make it runnable, above all one from someone
+      else: `cat backup.sh`. It runs with all your rights.
+  - id: x-private
+    type: terminal
+    objective: O1
+    title: Only for you
+    prompt: |
+      `diary.txt` is `-rw-r--r--`: everyone on the Pi may read it. **Make it
+      readable and writable for you only** (`600`), and check the result
+      with `ls -l`.
+    start:
+      files:
+        diary.txt: "Today the robot drove into the wall.\n"
+    checks:
+      - expr: "mode('diary.txt') == '600'"
+        pass: "Only you may read and write the diary"
+        hint: "`chmod 600 diary.txt`: 6 is read and write for you, 0 is nothing for the group and others."
+      - expr: "mode('diary.txt') == '600' and any(h.startswith('ls -l') for h in history)"
+        pass: "You checked it with ls -l"
+        hint: "`ls -l diary.txt` shows `-rw-------`."
+    hints:
+      - "Each digit is for one: you, your group, the others."
+      - "Read is 4, write is 2. Read and write: 6. Nothing: 0."
+      - "`chmod 600 diary.txt`, then `ls -l diary.txt`."
+    solution: ["chmod 600 diary.txt", "ls -l diary.txt"]
+    after: >-
+      SSH keys must be `600` too: SSH refuses a key that others may read.

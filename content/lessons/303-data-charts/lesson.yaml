@@ -476,3 +476,89 @@ review:
         why: "Then small differences look huge."
       - text: "Anywhere: it does not matter"
         why: "It changes how big the differences look."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-temps-chart
+    type: exercise
+    fade: completion
+    objective: O1
+    title: A week of temperatures
+    prompt: |
+      **Replace the two `___`**: draw the temperatures as a **line**, and
+      label the y axis with its unit, `°C`.
+    starter: |
+      import matplotlib.pyplot as plt
+
+      days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+      temps = [14, 16, 15, 19, 21]
+      plt.___(days, temps)
+      plt.title("Temperature this week")
+      plt.xlabel("day")
+      plt.___("°C")
+      plt.show()
+    solution: |
+      import matplotlib.pyplot as plt
+
+      days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+      temps = [14, 16, 15, 19, 21]
+      plt.plot(days, temps)
+      plt.title("Temperature this week")
+      plt.xlabel("day")
+      plt.ylabel("°C")
+      plt.show()
+    after: >-
+      A line fits values that follow each other in time: the eye follows
+      the change from day to day. The unit on the axis says what the
+      numbers mean.
+    checks:
+      - expr: "err is None and chart() is not None and chart()['series'][0]['kind'] == 'line' and chart()['series'][0]['y'] == [14.0, 16.0, 15.0, 19.0, 21.0]"
+        pass: "The temperatures are a line"
+        hint: "`plt.plot` draws a line."
+        misconceptions:
+          - when: "err is None and chart() is not None and chart()['series'][0]['kind'] == 'bar'"
+            say: "That is a bar chart. For values over time, draw a line with `plt.plot`."
+      - expr: "err is None and chart() is not None and chart()['ylabel'] == '°C'"
+        pass: "The y axis says °C"
+        hint: "The label of the y axis: `plt.ylabel(\"°C\")`."
+    hints:
+      - "Which function draws a line chart?"
+      - "The x axis has `plt.xlabel`; the y axis has its own."
+      - "`plt.plot(days, temps)` and `plt.ylabel(\"°C\")`."
+  - id: x-hist
+    type: exercise
+    fade: independent
+    objective: O2
+    title: How the scores spread
+    prompt: |
+      **Draw a histogram** of `scores` with 5 bins, a title, and the label
+      `score` on the x axis. A histogram shows how many values fall in each
+      range.
+    starter: |
+      import matplotlib.pyplot as plt
+
+      scores = [55, 62, 68, 70, 71, 74, 75, 78, 80, 81, 85, 88, 92, 95]
+      # Your chart here.
+    solution: |
+      import matplotlib.pyplot as plt
+
+      scores = [55, 62, 68, 70, 71, 74, 75, 78, 80, 81, 85, 88, 92, 95]
+      plt.hist(scores, bins=5)
+      plt.title("Exam scores")
+      plt.xlabel("score")
+      plt.ylabel("students")
+      plt.show()
+    after: >-
+      The bars show where most scores are, and how wide they spread. A bar
+      chart of 14 names would show each student, not the shape.
+    checks:
+      - expr: "err is None and chart() is not None and chart()['series'][0]['kind'] == 'hist' and len(chart()['series'][0]['y']) == 5 and sum(chart()['series'][0]['y']) == 14"
+        pass: "It is a histogram of the 14 scores, with 5 bins"
+        hint: "`plt.hist(scores, bins=5)`."
+      - expr: "err is None and chart() is not None and bool(chart()['title']) and chart()['xlabel'] == 'score'"
+        pass: "It has a title, and the x axis says score"
+        hint: "Add `plt.title(...)` and `plt.xlabel(\"score\")`."
+    hints:
+      - "The function for a histogram is `plt.hist`."
+      - "`bins=5` makes five ranges."
+      - "Then `plt.title(...)`, `plt.xlabel(\"score\")` and `plt.show()`."

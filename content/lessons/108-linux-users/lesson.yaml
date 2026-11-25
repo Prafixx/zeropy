@@ -432,3 +432,53 @@ review:
         why: "Only root may add users: it needs sudo."
       - text: "`sudo mkdir /home/leo`"
         why: "That only makes a folder, not a user."
+
+# "Practice more": extra tasks, not shown in the lesson (practice page).
+extra:
+  - id: x-my-groups
+    type: terminal
+    objective: O3
+    title: May I use the pins?
+    prompt: |
+      1. Find out if your user `pi` is in the group `gpio`, with `id` or
+         `groups`.
+      2. Save your own line of `/etc/passwd` in `me.txt`: the line that
+         starts with `pi:`.
+    checks:
+      - expr: "ran('id') or ran('groups')"
+        pass: "You looked at your groups"
+        hint: "`id` or `groups`: look for `gpio`."
+      - expr: "len(lines('me.txt')) == 1 and lines('me.txt')[0].startswith('pi:')"
+        pass: "me.txt holds your line of /etc/passwd"
+        hint: "`grep '^pi:' /etc/passwd > me.txt`: `^` means the start of the line."
+    hints:
+      - "`id` lists your groups; `gpio` should be one of them."
+      - "`grep` finds lines; `^pi:` means lines that start with `pi:`."
+      - "`id`, then `grep '^pi:' /etc/passwd > me.txt`."
+    solution: ["id", "grep '^pi:' /etc/passwd > me.txt", "cat me.txt"]
+    after: >-
+      The line shows your user number, your home folder and your shell.
+      The password is not there: it is in `/etc/shadow`, which only root
+      may read.
+  - id: x-address
+    type: terminal
+    objective: O1
+    title: Write down the address
+    prompt: |
+      **Save the address of the Pi in `address.txt`** with `hostname -I`.
+      Then see which ports wait for connections, with `ss -tln`.
+    checks:
+      - expr: "'192.168.1.42' in (read('address.txt') or '').split()"
+        pass: "address.txt holds the address of the Pi"
+        hint: "`hostname -I > address.txt`, with a capital I."
+      - expr: "ran('ss')"
+        pass: "You looked at the open ports"
+        hint: "`ss -tln`."
+    hints:
+      - "`hostname -I` prints the address of the Pi in the network."
+      - "`>` sends it into the file."
+      - "`hostname -I > address.txt`, then `ss -tln`."
+    solution: ["hostname -I > address.txt", "cat address.txt", "ss -tln"]
+    after: >-
+      With SSH off, `ss -tln` shows nothing open: no program waits for
+      connections from the network.

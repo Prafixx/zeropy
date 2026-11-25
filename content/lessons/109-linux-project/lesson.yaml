@@ -276,3 +276,71 @@ review:
         why: "The first one fails with `Permission denied`."
       - text: "`sudo check.sh`"
         why: "The script still needs `x`, and `./` to be found."
+
+# "Practice more": extra tasks, not shown in the lesson (practice page).
+extra:
+  - id: x-find-logs
+    type: terminal
+    objective: O1
+    title: Where are all the logs?
+    prompt: |
+      Logs are spread over many folders. **Find every `.log` file** under
+      your home folder with `find`, and save the list in `all-logs.txt`.
+    start:
+      files:
+        logs/station.log: ""
+        robot/run.log: ""
+        robot/code/main.py: ""
+        old/2025/test.log: ""
+        notes.txt: ""
+    checks:
+      - expr: "sorted(lines('all-logs.txt')) == ['./logs/station.log', './old/2025/test.log', './robot/run.log'] or sorted(lines('all-logs.txt')) == ['logs/station.log', 'old/2025/test.log', 'robot/run.log']"
+        pass: "all-logs.txt lists the three logs"
+        hint: "`find . -name \"*.log\" > all-logs.txt`."
+      - expr: "ran('find')"
+        pass: "You searched with find"
+        hint: "`find` looks into every folder below."
+    hints:
+      - "`find .` searches from here, in all folders below."
+      - "`-name \"*.log\"` keeps only the names that end with `.log`. Keep the quotes."
+      - "`find . -name \"*.log\" > all-logs.txt`, then `cat all-logs.txt`."
+    solution: ["find . -name \"*.log\" > all-logs.txt", "cat all-logs.txt"]
+    after: >-
+      Without quotes, the shell may replace `*.log` before `find` sees it.
+      With quotes, `find` gets the pattern itself.
+  - id: x-error-check
+    type: terminal
+    objective: O3
+    title: A script that says yes or no
+    prompt: |
+      **Write `has-errors.sh`**: it prints `errors found` when
+      `logs/station.log` has a line with `ERROR`, and `all good` when it
+      has none. Use `if`, `[ ]` and `$(grep -c ERROR logs/station.log)`.
+      Make it runnable, and run it.
+    start:
+      files:
+        logs/station.log: |
+          08:00 INFO start
+          08:20 ERROR no network
+          08:45 INFO stop
+    checks:
+      - expr: "executable('has-errors.sh')"
+        pass: "has-errors.sh is runnable"
+        hint: "`chmod +x has-errors.sh`."
+      - expr: "isfile('has-errors.sh') and run('./has-errors.sh') == ('errors found\\n', 0)"
+        pass: "It finds the error"
+        hint: "`if [ $(grep -c ERROR logs/station.log) -gt 0 ]; then echo \"errors found\"; ...`"
+      - expr: "isfile('has-errors.sh') and run('echo \"08:00 INFO all fine\" > logs/station.log; ./has-errors.sh') == ('all good\\n', 0)"
+        pass: "It says all good for a log without errors"
+        hint: "Add `else echo \"all good\"` and end with `fi`."
+      - expr: "any(h.strip().startswith('./has-errors.sh') for h in history)"
+        pass: "You ran it"
+        hint: "`./has-errors.sh`."
+    hints:
+      - "`grep -c ERROR logs/station.log` gives the number of error lines."
+      - "`[ number -gt 0 ]` is true when the number is bigger than 0."
+      - "`printf '#!/bin/bash\\nif [ $(grep -c ERROR logs/station.log) -gt 0 ]; then\\n  echo \"errors found\"\\nelse\\n  echo \"all good\"\\nfi\\n' > has-errors.sh`"
+    solution: ["printf '#!/bin/bash\\nif [ $(grep -c ERROR logs/station.log) -gt 0 ]; then\\n  echo \"errors found\"\\nelse\\n  echo \"all good\"\\nfi\\n' > has-errors.sh", "chmod +x has-errors.sh", "./has-errors.sh"]
+    after: >-
+      A check like this can run every hour with cron, and send you a
+      message only when it says `errors found`.

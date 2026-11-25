@@ -479,3 +479,94 @@ review:
         why: "They only take two bits."
       - text: "Full adders can multiply"
         why: "They add three bits."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-add-write
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Switch on writing
+    prompt: |
+      In a permission, 4 is read, 2 is write and 1 is run. **Replace `___`**
+      so that `add_write(mode)` switches on the write bit and keeps the
+      others as they are.
+
+      ```text
+      7
+      6
+      2
+      ```
+    starter: |
+      def add_write(mode):
+          return mode ___ 2
+
+
+      print(add_write(5))
+      print(add_write(6))
+      print(add_write(0))
+    solution: |
+      def add_write(mode):
+          return mode | 2
+
+
+      print(add_write(5))
+      print(add_write(6))
+      print(add_write(0))
+    after: >-
+      `|` sets a bit and never adds twice: 6 already has the write bit, so
+      it stays 6. With `+`, 6 + 2 would be 8, which is no permission at all.
+    checks:
+      - expr: "callable(ns.get('add_write')) and all(add_write(m) == (m | 2) for m in range(8))"
+        pass: "It switches on the write bit for every mode"
+        hint: "The bit operator for \"switch this bit on\" is `|`."
+        misconceptions:
+          - when: "callable(ns.get('add_write')) and raises(add_write, 6) is None and add_write(6) == 8"
+            say: "6 already has the write bit. `+` adds it a second time; `|` only switches it on."
+      - expr: "lines == ['7', '6', '2']"
+        pass: "It prints 7, 6 and 2"
+        hint: "Keep the prints."
+    hints:
+      - "Which operator gives 1 where one of the two bits is 1?"
+      - "That is OR, written `|` for bits."
+      - "`return mode | 2`."
+  - id: x-xor
+    type: exercise
+    fade: independent
+    objective: O1
+    title: XOR from the other gates
+    prompt: |
+      **Write `xor(a, b)`** for two booleans, using only `and`, `or` and
+      `not`. It is `True` when exactly one of the two is `True`.
+
+      ```text
+      False True True False
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(xor(False, False), xor(False, True), xor(True, False), xor(True, True))
+    solution: |
+      def xor(a, b):
+          return (a or b) and not (a and b)
+
+
+      print(xor(False, False), xor(False, True), xor(True, False), xor(True, True))
+    after: >-
+      "One or the other, but not both": that sentence is the circuit. In
+      hardware, an XOR gate is built from these same parts.
+    checks:
+      - expr: "callable(ns.get('xor')) and [xor(a, b) for a in (False, True) for b in (False, True)] == [False, True, True, False]"
+        pass: "It follows the truth table of XOR"
+        hint: "True when one of them is True, but not when both are."
+      - expr: "'^' not in src and '!=' not in src"
+        pass: "It uses only and, or and not"
+        hint: "No `^` and no `!=`: build it from the three gates."
+      - expr: "lines == ['False True True False']"
+        pass: "It prints the four results"
+        hint: "Keep the print."
+    hints:
+      - "XOR is: one of them, `a or b`, ..."
+      - "... but not both: `not (a and b)`."
+      - "`return (a or b) and not (a and b)`."

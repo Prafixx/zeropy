@@ -534,3 +534,58 @@ review:
         why: "The length does not matter. The prints wait in a buffer."
       - text: "`sudo journalctl`"
         why: "The journal is fine. The prints never reached it."
+
+# "Practice more": extra tasks, not shown in the lesson (practice page).
+extra:
+  - id: x-no-bluetooth
+    type: terminal
+    objective: O3
+    title: Bluetooth off for good
+    prompt: |
+      This Pi never uses Bluetooth. **Stop the service `bluetooth`, and make
+      sure it does not start again at boot.** Look at its status before and
+      after.
+    checks:
+      - expr: "not service('bluetooth')['active']"
+        pass: "Bluetooth is stopped"
+        hint: "`sudo systemctl stop bluetooth`, or `disable --now`."
+      - expr: "not service('bluetooth')['enabled']"
+        pass: "It does not start at boot"
+        hint: "`sudo systemctl disable bluetooth`."
+      - expr: "sum(1 for h in history if 'status' in h and 'bluetooth' in h) >= 2"
+        pass: "You looked at the status before and after"
+        hint: "`systemctl status bluetooth`, before and after."
+    hints:
+      - "`stop` ends it now; `disable` keeps it from starting at boot."
+      - "`--now` does both at once: `sudo systemctl disable --now bluetooth`."
+      - "`systemctl status bluetooth`, `sudo systemctl disable --now bluetooth`, `systemctl status bluetooth`."
+    solution: ["systemctl status bluetooth", "sudo systemctl disable --now bluetooth", "systemctl status bluetooth"]
+    after: >-
+      Each service you do not need is memory you get back, and one way in
+      less for an attacker.
+  - id: x-numbers
+    type: terminal
+    objective: O2
+    title: A report of the resources
+    prompt: |
+      **Write a report into `resources.txt`**: first the memory (`free -h`),
+      then the disk space (`df -h`) below it. Then see how long the Pi has
+      run, with `uptime`.
+    checks:
+      - expr: "'Mem:' in (read('resources.txt') or '') and 'Filesystem' in (read('resources.txt') or '')"
+        pass: "The report has the memory and the disk space"
+        hint: "`free -h > resources.txt`, then `df -h >> resources.txt`."
+      - expr: "(read('resources.txt') or '').find('Mem:') < (read('resources.txt') or '').find('Filesystem')"
+        pass: "The memory comes first"
+        hint: "First `free -h`, then `df -h`."
+      - expr: "ran('uptime')"
+        pass: "You looked at the uptime"
+        hint: "`uptime`."
+    hints:
+      - "`>` writes a new file; `>>` adds to it."
+      - "`free -h > resources.txt`, then `df -h >> resources.txt`."
+      - "Then `uptime`."
+    solution: ["free -h > resources.txt", "df -h >> resources.txt", "uptime"]
+    after: >-
+      Look at the `available` column of `free`, and at `Use%` of `/` in
+      `df`. Those two numbers tell you if the Pi is short of memory or space.

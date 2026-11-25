@@ -452,3 +452,101 @@ review:
         why: "It is about the order of the bytes."
       - text: "The bytes are written from the right"
         why: "The low byte comes at the lower address."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-u32
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Four bytes for a number
+    prompt: |
+      **Replace `___`** so that `read_u32` reads a number from 4 bytes,
+      little-endian: the first byte counts 1, the next 256, then 256 × 256,
+      then 256 × 256 × 256.
+
+      ```text
+      1000
+      ```
+    starter: |
+      def read_u32(memory, address):
+          value = 0
+          for i in range(4):
+              value += memory[address + i] * 256 ** ___
+          return value
+
+
+      memory = bytearray([0, 232, 3, 0, 0, 0])
+      print(read_u32(memory, 1))
+    solution: |
+      def read_u32(memory, address):
+          value = 0
+          for i in range(4):
+              value += memory[address + i] * 256 ** i
+          return value
+
+
+      memory = bytearray([0, 232, 3, 0, 0, 0])
+      print(read_u32(memory, 1))
+    after: >-
+      232 + 3 × 256 = 1000. Each byte is worth 256 times the one before it,
+      just as each digit is worth 10 times the one before it.
+    checks:
+      - expr: "callable(ns.get('read_u32')) and all(read_u32(bytearray(v.to_bytes(4, 'little')), 0) == v for v in [0, 1, 255, 256, 1000, 70000, 4294967295])"
+        pass: "It reads any 4-byte number"
+        hint: "Byte `i` is worth `256 ** i`."
+      - expr: "lines == ['1000']"
+        pass: "It prints 1000"
+        hint: "Keep the print."
+    hints:
+      - "The first byte (i = 0) counts 1, which is `256 ** 0`."
+      - "The second (i = 1) counts 256, which is `256 ** 1`."
+      - "`256 ** i`."
+  - id: x-length
+    type: exercise
+    fade: independent
+    objective: O2
+    title: How long is the text?
+    prompt: |
+      A text in memory ends with the byte 0. **Write `text_length(memory,
+      address)`**: how many bytes the text has, without the 0 at the end.
+
+      ```text
+      2
+      3
+      ```
+    starter: |
+      memory = bytearray(b"\x00Hi\x00Zoe\x00")
+
+      # Your function here.
+
+
+      print(text_length(memory, 1))
+      print(text_length(memory, 4))
+    solution: |
+      memory = bytearray(b"\x00Hi\x00Zoe\x00")
+
+
+      def text_length(memory, address):
+          length = 0
+          while memory[address + length] != 0:
+              length += 1
+          return length
+
+
+      print(text_length(memory, 1))
+      print(text_length(memory, 4))
+    after: >-
+      This is how C programs find the end of a text: they walk until the 0.
+      A text without its 0 makes them read on into other data.
+    checks:
+      - expr: "callable(ns.get('text_length')) and text_length(bytearray([97, 98, 99, 0]), 0) == 3 and text_length(bytearray([0]), 0) == 0 and text_length(bytearray([120, 121, 0, 122, 0]), 3) == 1"
+        pass: "It counts the bytes up to the 0"
+        hint: "Count while the byte at `address + length` is not 0."
+      - expr: "lines == ['2', '3']"
+        pass: "It prints 2 and 3"
+        hint: "Keep the prints."
+    hints:
+      - "Start a counter at 0."
+      - "Look at `memory[address + length]`. While it is not 0, count one more."
+      - "`while memory[address + length] != 0: length += 1`, then return `length`."

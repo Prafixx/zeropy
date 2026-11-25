@@ -461,3 +461,52 @@ review:
         why: "The message is about permission, not about the kernel."
       - text: "`dmesg` is not installed"
         why: "Then it would say `command not found`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-install
+    type: terminal
+    objective: O3
+    title: Install a better top
+    prompt: |
+      `htop` shows the processes like `top`, but with colors and bars.
+      **Install it** the right way: first let apt read the list of new
+      versions, then install the package `htop`.
+    checks:
+      - expr: "lists_updated"
+        pass: "apt read the list of new versions"
+        hint: "`sudo apt update` first."
+      - expr: "'htop' in packages"
+        pass: "htop is installed"
+        hint: "`sudo apt install htop`."
+    hints:
+      - "Programs are installed with `apt`, and `apt` needs `sudo`."
+      - "First `sudo apt update`, so apt knows the newest versions."
+      - "Then `sudo apt install htop`."
+    solution: ["sudo apt update", "sudo apt install htop"]
+    after: >-
+      `apt update` only reads the lists; it installs nothing. Run it before
+      every `install`, so you get the newest version.
+  - id: x-health
+    type: terminal
+    objective: O4
+    title: A health report
+    prompt: |
+      **Write a short health report** of the Pi into `health.txt`: the
+      temperature on the first line, the answer of `get_throttled` on the
+      second. Then show the file.
+    checks:
+      - expr: "len(lines('health.txt')) == 2 and 'temp=' in lines('health.txt')[0] and 'throttled=' in lines('health.txt')[1]"
+        pass: "`health.txt` has the temperature, then the throttled answer"
+        hint: "`>` writes a new file; `>>` adds a line at the end."
+      - expr: "ran('cat') and 'throttled=' in out"
+        pass: "You showed the report"
+        hint: "`cat health.txt`."
+    hints:
+      - "`vcgencmd measure_temp` and `vcgencmd get_throttled` give the two lines."
+      - "`vcgencmd measure_temp > health.txt` writes the first line."
+      - "`vcgencmd get_throttled >> health.txt` adds the second. Then `cat health.txt`."
+    solution: ["vcgencmd measure_temp > health.txt", "vcgencmd get_throttled >> health.txt", "cat health.txt"]
+    after: >-
+      `throttled=0x0` means all is well. Run this report on a Pi that acts
+      strangely, before you look for a bug in your code.

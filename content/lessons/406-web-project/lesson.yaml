@@ -541,3 +541,135 @@ review:
         why: "Both read the list directly."
       - text: "From two copies of the list"
         why: "One list: a change shows in both."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-books-json
+    type: exercise
+    fade: independent
+    objective: O3
+    title: The list for programs
+    prompt: |
+      **Add `GET /api/books`**: it answers the list `books` as JSON, so a
+      program gets the same data that people see on the page.
+    starter: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      books = [
+          {"id": 1, "title": "The Hobbit", "author": "J. R. R. Tolkien", "read": True},
+          {"id": 2, "title": "Dune", "author": "Frank Herbert", "read": False},
+      ]
+      PAGE = "<ul>{% for b in books %}<li>{{ b.title }}</li>{% endfor %}</ul>"
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, books=books)
+
+
+      # Your route here.
+
+      app.run()
+    solution: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      books = [
+          {"id": 1, "title": "The Hobbit", "author": "J. R. R. Tolkien", "read": True},
+          {"id": 2, "title": "Dune", "author": "Frank Herbert", "read": False},
+      ]
+      PAGE = "<ul>{% for b in books %}<li>{{ b.title }}</li>{% endfor %}</ul>"
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, books=books)
+
+
+      @app.get("/api/books")
+      def api_books():
+          return books
+
+
+      app.run()
+    after: >-
+      One list, two ways out: HTML for people, JSON for programs. When a
+      book is added, both show it, because both read the same data.
+    checks:
+      - expr: "client is not None and client.get('/api/books').status_code == 200 and client.get('/api/books').get_json() == books"
+        pass: "GET /api/books answers the books as JSON"
+        hint: "A view that returns the list: Flask turns it into JSON."
+      - expr: "client is not None and (books.append({'id': 3, 'title': 'Emma', 'author': 'Jane Austen', 'read': False}) or True) and client.get('/api/books').get_json()[-1]['title'] == 'Emma'"
+        pass: "It answers the list as it is now"
+        hint: "Return `books` itself, not a copy written by hand."
+    hints:
+      - "Make a route with `@app.get(\"/api/books\")`."
+      - "Flask turns a list or a dict that a view returns into JSON."
+      - "`return books`."
+  - id: x-no-empty-title
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A book needs a title
+    prompt: |
+      **Replace `___`** so that a form with an empty title (or only spaces)
+      adds nothing and answers status 400.
+    starter: |
+      from flask import Flask, redirect, request, url_for
+
+      app = Flask(__name__)
+      books = []
+
+
+      @app.route("/")
+      def home():
+          return f"{len(books)} books"
+
+
+      @app.post("/add")
+      def add():
+          title = request.form.get("title", "")
+          if not title.___():
+              return "Please give a title.", 400
+          books.append({"id": len(books) + 1, "title": title.strip()})
+          return redirect(url_for("home"))
+
+
+      app.run()
+    solution: |
+      from flask import Flask, redirect, request, url_for
+
+      app = Flask(__name__)
+      books = []
+
+
+      @app.route("/")
+      def home():
+          return f"{len(books)} books"
+
+
+      @app.post("/add")
+      def add():
+          title = request.form.get("title", "")
+          if not title.strip():
+              return "Please give a title.", 400
+          books.append({"id": len(books) + 1, "title": title.strip()})
+          return redirect(url_for("home"))
+
+
+      app.run()
+    after: >-
+      `"   ".strip()` is `""`, and an empty text is false. So one check
+      refuses both an empty title and a title of only spaces.
+    checks:
+      - expr: "client is not None and client.post('/add', data={'title': '   '}).status_code == 400 and client.post('/add', data={'title': ''}).status_code == 400 and len(books) == 0"
+        pass: "An empty title adds nothing and gives 400"
+        hint: "Take the spaces away before you test: `title.strip()`."
+      - expr: "client is not None and client.post('/add', data={'title': ' Emma '}).status_code == 302 and books[-1]['title'] == 'Emma'"
+        pass: "A real title is added, without the spaces"
+        hint: "Keep the append and the redirect."
+    hints:
+      - "Which text method takes away the spaces at both ends?"
+      - "An empty text counts as false in an `if`."
+      - "`if not title.strip():`."

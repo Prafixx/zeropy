@@ -357,3 +357,93 @@ review:
         why: "An LED is wired to a pin, with a resistor."
       - text: "`Button(2)`"
         why: "A button is wired to a pin and to ground."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-fahrenheit
+    type: exercise
+    fade: completion
+    objective: O3
+    board: true
+    title: Degrees for a friend in the USA
+    prompt: |
+      **Replace `___`** so that the program prints the CPU temperature in
+      degrees Fahrenheit: multiply by 9, divide by 5, and add 32.
+
+      ```text
+      117.0 °F
+      ```
+    starter: |
+      from gpiozero import CPUTemperature
+
+      cpu = CPUTemperature()
+      f = cpu.temperature * 9 / 5 + ___
+      print(f"{f:.1f} °F")
+    solution: |
+      from gpiozero import CPUTemperature
+
+      cpu = CPUTemperature()
+      f = cpu.temperature * 9 / 5 + 32
+      print(f"{f:.1f} °F")
+    after: >-
+      `cpu.temperature` is a float, so you can compute with it like with
+      any number.
+    cases:
+      - {}
+      - label: "a CPU at 100 °C"
+        gpio: { cpu: 100 }
+      - label: "a CPU at 0 °C"
+        gpio: { cpu: 0 }
+    checks:
+      - expr: "err is None and lines == [f'{cpu * 9 / 5 + 32:.1f} °F']"
+        pass: "It prints the temperature in °F"
+        hint: "Water freezes at 32 °F: the `___` is `32`."
+      - expr: "called('CPUTemperature')"
+        pass: "It reads the temperature from the Pi"
+        hint: "Keep `cpu = CPUTemperature()`."
+    hints:
+      - "The formula is: °C times 9, divided by 5, plus 32."
+      - "Only the last number is missing."
+      - "`+ 32`."
+  - id: x-pin-number
+    type: exercise
+    fade: debug
+    objective: O2
+    board: true
+    title: The wrong number
+    prompt: |
+      The LED is wired to **physical pin 11**. The program should switch it
+      on for 2 seconds, but nothing lights. **Find the bug and fix it.**
+    starter: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(11)   # the LED is on physical pin 11
+      led.on()
+      sleep(2)
+      led.off()
+    solution: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)   # GPIO 17 is physical pin 11
+      led.on()
+      sleep(2)
+      led.off()
+    after: >-
+      This is the most common mistake with a Pi. gpiozero always wants the
+      GPIO number; the physical number is only the place on the header.
+    checks:
+      - expr: "err is None and device(17) == 'LED'"
+        pass: "The LED is on GPIO 17, which is physical pin 11"
+        hint: "gpiozero uses GPIO numbers. Physical pin 11 is GPIO 17."
+        misconceptions:
+          - when: "err is None and device(11) == 'LED'"
+            say: "`LED(11)` means GPIO 11, which is physical pin 23. Physical pin 11 is GPIO 17."
+      - expr: "err is None and flashes(17) == [(0.0, 2.0)]"
+        pass: "It is on for 2 seconds"
+        hint: "Keep `led.on()`, `sleep(2)`, `led.off()`."
+    hints:
+      - "Is `11` a physical number or a GPIO number?"
+      - "gpiozero always uses the GPIO number."
+      - "Physical pin 11 is GPIO 17: `LED(17)`."

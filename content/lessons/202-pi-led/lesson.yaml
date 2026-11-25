@@ -397,3 +397,89 @@ review:
         why: "`on()` takes no time. Use `sleep`."
       - text: "`sleep(3)`, then `led.on()`"
         why: "That waits first, then switches on."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-blink-n
+    type: exercise
+    fade: completion
+    objective: O3
+    board: true
+    title: Four quick blinks
+    prompt: |
+      **Replace `___`** so that the LED on GPIO 17 blinks exactly 4 times
+      (half a second on, half a second off), and then the program prints
+      `done`.
+    starter: |
+      from gpiozero import LED
+
+      led = LED(17)
+      led.blink(on_time=0.5, off_time=0.5, n=___, background=False)
+      print("done")
+    solution: |
+      from gpiozero import LED
+
+      led = LED(17)
+      led.blink(on_time=0.5, off_time=0.5, n=4, background=False)
+      print("done")
+    after: >-
+      `background=False` makes the program wait until the blinking is over.
+      With the default, `True`, it would print `done` at once.
+    checks:
+      - expr: "err is None and len(flashes(17)) == 4 and all(abs(d - 0.5) < 0.01 for _, d in flashes(17))"
+        pass: "The LED blinks 4 times, half a second each"
+        hint: "`n` is the number of blinks: `4`."
+      - expr: "err is None and lines == ['done'] and called('blink')"
+        pass: "Then it prints done"
+        hint: "Keep the `print` after `blink`."
+    hints:
+      - "`n` tells `blink()` how many times."
+      - "The prompt asks for 4 blinks."
+      - "`n=4`."
+  - id: x-heartbeat
+    type: exercise
+    fade: independent
+    objective: O2
+    board: true
+    title: A heartbeat
+    prompt: |
+      **Make the LED on GPIO 17 beat like a heart, 3 times.** One beat is:
+      on 0.1 s, off 0.1 s, on 0.1 s, then off 0.7 s. So each beat takes
+      1 second. Use a loop.
+    starter: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+      # Your loop here.
+    solution: |
+      from gpiozero import LED
+      from time import sleep
+
+      led = LED(17)
+      for beat in range(3):
+          led.on()
+          sleep(0.1)
+          led.off()
+          sleep(0.1)
+          led.on()
+          sleep(0.1)
+          led.off()
+          sleep(0.7)
+    after: >-
+      A pattern of times is a small program of its own. Write it once in a
+      loop, and change one number to change the rhythm.
+    checks:
+      - expr: "err is None and len(flashes(17)) == 6 and all(abs(d - 0.1) < 0.01 for _, d in flashes(17))"
+        pass: "6 short flashes of 0.1 s"
+        hint: "Each beat has two flashes: on, `sleep(0.1)`, off, two times."
+      - expr: "err is None and [round(t, 1) for t in turned_on(17)] == [0.0, 0.2, 1.0, 1.2, 2.0, 2.2]"
+        pass: "The pauses make a beat every second"
+        hint: "Between the two flashes `sleep(0.1)`; after the second one `sleep(0.7)`."
+      - expr: "syntax('For') + syntax('While') >= 1"
+        pass: "A loop repeats the beat"
+        hint: "`for beat in range(3):` around one beat."
+    hints:
+      - "Write one beat first: on, wait, off, wait, on, wait, off, wait."
+      - "The waits are 0.1, 0.1, 0.1 and 0.7 seconds."
+      - "Put the beat in `for beat in range(3):`."

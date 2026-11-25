@@ -402,3 +402,75 @@ review:
         why: "There is no `list` command."
       - text: "`pwd`"
         why: "`pwd` shows the name of the folder, not its files."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-version
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Which Python is this?
+    prompt: |
+      A program can ask which Python runs it. **Replace `___`** so that it
+      prints the version like `Python 3.14`: the major number, a dot, and
+      the minor number.
+    starter: |
+      import sys
+
+      v = sys.version_info
+      print(f"Python {v.major}.{v.___}")
+    solution: |
+      import sys
+
+      v = sys.version_info
+      print(f"Python {v.major}.{v.minor}")
+    after: >-
+      `python --version` in a terminal tells you the same. A program that
+      needs a new feature can check `sys.version_info >= (3, 12)` first.
+    checks:
+      - expr: "err is None and lines == [f'Python {sys.version_info.major}.{sys.version_info.minor}']"
+        pass: "It prints Python and the version"
+        hint: "The second number is `minor`."
+      - expr: "'version_info' in src and '3.' not in src"
+        pass: "Python gives the numbers, they are not typed"
+        hint: "Keep `sys.version_info`; do not write the numbers yourself."
+    hints:
+      - "`sys.version_info` has the parts `major`, `minor` and `micro`."
+      - "In 3.14, 3 is the major number. What is 14?"
+      - "`v.minor`."
+  - id: x-wrong-folder
+    type: terminal
+    objective: O4
+    title: "No such file"
+    prompt: |
+      Your program `hello.py` is somewhere in your home folder.
+
+      1. Try `python3 hello.py` here, and read the message.
+      2. Find the file with `ls`, go into its folder with `cd`, and run it
+         again.
+
+      (This terminal is Linux. On Windows, `ls`, `cd` and `python` work the
+      same way in PowerShell.)
+    start:
+      files:
+        code/hello.py: |
+          print("Hello from my computer")
+        notes.txt: "ideas\n"
+    checks:
+      - expr: "sum(1 for h in history if h.startswith('python3')) >= 2"
+        pass: "You read the message of the first try"
+        hint: "First `python3 hello.py` here: Python says it cannot open the file."
+      - expr: "ran('ls')"
+        pass: "You looked for the file"
+        hint: "`ls` shows a folder `code`."
+      - expr: "cwd == '~/code' and 'Hello from my computer' in out"
+        pass: "The program runs from its folder"
+        hint: "`cd code`, then `python3 hello.py`."
+    hints:
+      - "`can't open file ... No such file or directory`: Python looks only in the working folder."
+      - "`ls` shows what is here. The file is in one of the folders."
+      - "`cd code`, then `python3 hello.py`."
+    solution: ["python3 hello.py", "ls", "cd code", "python3 hello.py"]
+    after: >-
+      The most common start problem is the wrong folder. Look at the prompt:
+      it shows where you are.

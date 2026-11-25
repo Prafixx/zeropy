@@ -511,3 +511,96 @@ review:
         why: "Forward is `(1, 1)`."
       - text: "It turns left on the spot"
         why: "Left is `(-1, 1)`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-ramp
+    type: exercise
+    fade: completion
+    objective: O2
+    board: true
+    title: A soft start
+    prompt: |
+      A motor that starts at full speed pulls hard on the parts. **Replace
+      `___`** so that the motor speeds up in four steps of one second:
+      0.25, 0.5, 0.75 and 1. Then it stops.
+    starter: |
+      from gpiozero import Motor
+      from time import sleep
+
+      motor = Motor(forward=4, backward=14)
+      for speed in [0.25, 0.5, 0.75, 1]:
+          motor.forward(___)
+          sleep(1)
+      motor.stop()
+    solution: |
+      from gpiozero import Motor
+      from time import sleep
+
+      motor = Motor(forward=4, backward=14)
+      for speed in [0.25, 0.5, 0.75, 1]:
+          motor.forward(speed)
+          sleep(1)
+      motor.stop()
+    after: >-
+      `forward()` takes the speed from 0 to 1. Without a value, it is 1:
+      full speed at once.
+    checks:
+      - expr: "err is None and [at(4, t + 0.5) for t in range(4)] == [0.25, 0.5, 0.75, 1]"
+        pass: "The speed goes up in four steps"
+        hint: "Give `forward()` the speed of this round: `speed`."
+      - expr: "err is None and at(4, 4.01) == 0"
+        pass: "Then the motor stops"
+        hint: "Keep `motor.stop()` after the loop."
+    hints:
+      - "The loop variable holds the speed of each round."
+      - "`forward()` takes the speed as its value."
+      - "`motor.forward(speed)`."
+  - id: x-corner
+    type: exercise
+    fade: independent
+    objective: O3
+    board: true
+    title: Around a corner
+    prompt: |
+      **Drive the robot around a corner**: forward for 1 second, right for
+      0.5 seconds, forward for 1 second, then stop. The left motor is on
+      GPIO 4 and 14, the right one on GPIO 17 and 18.
+    starter: |
+      from gpiozero import Motor, Robot
+      from time import sleep
+
+      robot = Robot(left=Motor(4, 14), right=Motor(17, 18))
+      # Your moves here.
+    solution: |
+      from gpiozero import Motor, Robot
+      from time import sleep
+
+      robot = Robot(left=Motor(4, 14), right=Motor(17, 18))
+      robot.forward()
+      sleep(1)
+      robot.right()
+      sleep(0.5)
+      robot.forward()
+      sleep(1)
+      robot.stop()
+    after: >-
+      For `right()`, the left wheel goes forward and the right one backward:
+      the robot turns on the spot.
+    checks:
+      - expr: "err is None and robot_at(0.5) == (1, 1) and robot_at(2) == (1, 1)"
+        pass: "It drives forward before and after the corner"
+        hint: "`robot.forward()` and `sleep(1)`, two times."
+      - expr: "err is None and robot_at(1.25) == (1, -1)"
+        pass: "It turns right for half a second"
+        hint: "`robot.right()`, then `sleep(0.5)`."
+        misconceptions:
+          - when: "err is None and robot_at(1.25) == (-1, 1)"
+            say: "That is a turn to the left. Use `robot.right()`."
+      - expr: "err is None and robot_at(2.6) == (0, 0) and end_time >= 2.5"
+        pass: "Then it stops"
+        hint: "`robot.stop()` at the end."
+    hints:
+      - "Four moves: forward, right, forward, stop."
+      - "After each move, `sleep()` for its time."
+      - "`robot.forward()`, `sleep(1)`, `robot.right()`, `sleep(0.5)`, ..."

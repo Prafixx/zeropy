@@ -331,3 +331,71 @@ review:
         why: "Words are `-w`."
       - text: "The size in bytes"
         why: "Bytes are `-c`."
+
+# "Practice more": extra tasks, not shown in the lesson (practice page).
+extra:
+  - id: x-any-case
+    type: terminal
+    objective: O2
+    title: Errors in any case
+    prompt: |
+      The log writes `Error`, `ERROR` and `error`. **Count all the lines
+      with an error, in any case,** with one `grep`, and save the number in
+      `count.txt`.
+    start:
+      files:
+        logs/app.log: |
+          08:00 INFO start
+          08:05 Error: no network
+          08:10 INFO temperature 12.5
+          08:15 ERROR sensor not found
+          08:20 warning: battery low
+          08:25 error in the settings
+          08:30 INFO stop
+    checks:
+      - expr: "(read('count.txt') or '').strip() == str(sum('error' in l.lower() for l in lines('logs/app.log')))"
+        pass: "count.txt holds the number of error lines"
+        hint: "`grep -i -c error logs/app.log > count.txt`."
+      - expr: "any(h.startswith('grep') and '-i' in h for h in history)"
+        pass: "You used -i"
+        hint: "`-i` ignores the case."
+    hints:
+      - "`-i` ignores capital and small letters; `-c` counts the lines."
+      - "`>` sends the output into a file."
+      - "`grep -i -c error logs/app.log > count.txt`, then `cat count.txt`."
+    solution: ["grep -i -c error logs/app.log > count.txt", "cat count.txt"]
+    after: >-
+      `-i` and `-c` can be joined: `grep -ic error logs/app.log` does the
+      same.
+  - id: x-append
+    type: terminal
+    objective: O4
+    title: Add to a report
+    prompt: |
+      `report.txt` already has a title line. **Add the last 2 lines of
+      `logs/app.log` at its end**, without losing the title. Then show the
+      report.
+    start:
+      files:
+        report.txt: "Report of the station\n"
+        logs/app.log: |
+          08:00 INFO station started
+          08:05 INFO temperature 12.5
+          08:10 WARNING sensor slow
+          08:15 INFO temperature 12.9
+          08:20 INFO station stopped
+    checks:
+      - expr: "lines('report.txt') == ['Report of the station'] + lines('logs/app.log')[-2:]"
+        pass: "The report has its title and the last 2 lines"
+        hint: "`tail -n 2 logs/app.log >> report.txt`: `>>` adds at the end."
+      - expr: "ran('cat') and 'Report of the station' in out"
+        pass: "You showed the report"
+        hint: "`cat report.txt`."
+    hints:
+      - "`tail -n 2` gives the last 2 lines."
+      - "`>` replaces a file; `>>` adds to its end."
+      - "`tail -n 2 logs/app.log >> report.txt`, then `cat report.txt`."
+    solution: ["tail -n 2 logs/app.log >> report.txt", "cat report.txt"]
+    after: >-
+      A wrong `>` can empty a file you wanted to keep. When you add, think
+      twice: two arrows.

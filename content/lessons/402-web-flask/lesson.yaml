@@ -503,3 +503,101 @@ review:
         why: "Numbers are safe. Text from a visitor is not."
       - text: "Text in your own code"
         why: "Your own text is the HTML you want."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-hello-name
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Hello, whoever you are
+    prompt: |
+      **Replace `___`** so that `/hello/Ann` answers `Hello, Ann!`, and the
+      same for any name in the address.
+    starter: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/hello/<___>")
+      def hello(name):
+          return f"Hello, {name}!"
+
+
+      app.run()
+    solution: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/hello/<name>")
+      def hello(name):
+          return f"Hello, {name}!"
+
+
+      app.run()
+    after: >-
+      The part in `< >` matches any text in that place of the path, and
+      Flask gives it to the view under the same name.
+    checks:
+      - expr: "client is not None and client.get('/hello/Ann').get_data(as_text=True) == 'Hello, Ann!' and client.get('/hello/Bo').get_data(as_text=True) == 'Hello, Bo!'"
+        pass: "/hello/<name> greets any name"
+        hint: "The name in `< >` must be the name of the view's parameter: `name`."
+      - expr: "err is None and served"
+        pass: "The server runs"
+        hint: "Keep `app.run()` at the end."
+    hints:
+      - "A variable part of the path is written `<...>`."
+      - "Its name must match the parameter of `hello`."
+      - "`@app.route(\"/hello/<name>\")`."
+  - id: x-add-path
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Add two numbers
+    prompt: |
+      **Make the page `/add/<a>/<b>`** for two whole numbers: `/add/2/3`
+      answers `2 + 3 = 5`. A text that is not a number, like `/add/x/1`,
+      must give a 404.
+    starter: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+      # Your route here.
+
+      app.run()
+    solution: |
+      from flask import Flask
+
+      app = Flask(__name__)
+
+
+      @app.route("/add/<int:a>/<int:b>")
+      def add(a, b):
+          return f"{a} + {b} = {a + b}"
+
+
+      app.run()
+    after: >-
+      `<int:a>` does two jobs: it turns the text into a number, and it lets
+      only numbers in. Flask answers 404 for the rest, without your code.
+    checks:
+      - expr: "client is not None and client.get('/add/2/3').get_data(as_text=True) == '2 + 3 = 5' and client.get('/add/40/2').get_data(as_text=True) == '40 + 2 = 42'"
+        pass: "/add/a/b adds the two numbers"
+        hint: "Two variable parts with `int:`, and the view returns `f\"{a} + {b} = {a + b}\"`."
+        misconceptions:
+          - when: "client is not None and client.get('/add/2/3').get_data(as_text=True) == '2 + 3 = 23'"
+            say: "The parts came in as text, so `+` joined them. Write `<int:a>` and `<int:b>`."
+      - expr: "client is not None and client.get('/add/x/1').status_code == 404"
+        pass: "A part that is not a number gives a 404"
+        hint: "With `<int:...>`, Flask lets only whole numbers in."
+      - expr: "err is None and served"
+        pass: "The server runs"
+        hint: "Keep `app.run()` at the end."
+    hints:
+      - "The path has two variable parts: `/add/<...>/<...>`."
+      - "`int:` before a name makes it a whole number."
+      - "`@app.route(\"/add/<int:a>/<int:b>\")` and a view `add(a, b)`."

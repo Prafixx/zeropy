@@ -492,3 +492,101 @@ review:
         why: "That is the other problem: it misses the rule."
       - text: "The data has too many rows"
         why: "More data usually helps."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-distance
+    type: exercise
+    fade: completion
+    objective: O2
+    title: How far apart?
+    prompt: |
+      **Replace `___`** so that `distance(a, b)` is the straight distance
+      between two points: the square root of the sum of the squared
+      differences.
+
+      ```text
+      5.0
+      ```
+    starter: |
+      import numpy as np
+
+
+      def distance(a, b):
+          return np.sqrt(((a - b) ___).sum())
+
+
+      print(float(distance(np.array([0.0, 0.0]), np.array([3.0, 4.0]))))
+    solution: |
+      import numpy as np
+
+
+      def distance(a, b):
+          return np.sqrt(((a - b) ** 2).sum())
+
+
+      print(float(distance(np.array([0.0, 0.0]), np.array([3.0, 4.0]))))
+    after: >-
+      3² + 4² = 25, and the root of 25 is 5: the old theorem of Pythagoras.
+      The same line works for points with 2, 3 or 100 features.
+    checks:
+      - expr: "callable(ns.get('distance')) and float(distance(np.array([1.0, 1.0, 1.0]), np.array([1.0, 3.0, 1.0]))) == 2.0 and float(distance(np.array([2.0]), np.array([-1.0]))) == 3.0"
+        pass: "It gives the distance for any number of features"
+        hint: "Square each difference: `** 2`."
+      - expr: "lines == ['5.0']"
+        pass: "It prints 5.0"
+        hint: "Keep the print."
+    hints:
+      - "Each difference must be squared before the sum."
+      - "The power operator is `**`."
+      - "`(a - b) ** 2`."
+  - id: x-accuracy
+    type: exercise
+    fade: independent
+    objective: O3
+    title: How often is it right?
+    prompt: |
+      **Write `accuracy(predicted, true)`**: the share of predictions that are
+      right, as a number from 0 to 1. Both are numpy arrays of the same
+      length.
+
+      ```text
+      0.75
+      ```
+    starter: |
+      import numpy as np
+
+      # Your function here.
+
+
+      predicted = np.array(["cat", "dog", "dog", "cat"])
+      true = np.array(["cat", "dog", "cat", "cat"])
+      print(float(accuracy(predicted, true)))
+    solution: |
+      import numpy as np
+
+
+      def accuracy(predicted, true):
+          return (predicted == true).mean()
+
+
+      predicted = np.array(["cat", "dog", "dog", "cat"])
+      true = np.array(["cat", "dog", "cat", "cat"])
+      print(float(accuracy(predicted, true)))
+    after: >-
+      `predicted == true` gives True or False for each place, and the mean
+      of booleans is the share of True. Three right out of four: 0.75.
+    checks:
+      - expr: "callable(ns.get('accuracy')) and float(accuracy(np.array([1, 2, 3]), np.array([1, 2, 3]))) == 1.0 and float(accuracy(np.array(['a', 'b']), np.array(['b', 'a']))) == 0.0 and float(accuracy(np.array([1, 1, 2, 2, 3]), np.array([1, 2, 2, 2, 1]))) == 0.6"
+        pass: "It gives the share of right predictions"
+        hint: "Compare the two arrays with `==`, then take the `.mean()`."
+        misconceptions:
+          - when: "callable(ns.get('accuracy')) and raises(accuracy, np.array([1, 2, 3]), np.array([1, 2, 3])) is None and float(accuracy(np.array([1, 2, 3]), np.array([1, 2, 3]))) == 3.0"
+            say: "That is the number of right predictions. Divide by how many there are, or use `.mean()`."
+      - expr: "lines == ['0.75']"
+        pass: "It prints 0.75"
+        hint: "Keep the print."
+    hints:
+      - "`predicted == true` compares every place at once."
+      - "The mean of True and False is the share of True."
+      - "`return (predicted == true).mean()`."

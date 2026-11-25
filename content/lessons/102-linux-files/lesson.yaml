@@ -326,3 +326,66 @@ review:
         why: "This also matches `my-photo.jpg`: `photo` anywhere in the name."
       - text: "`*.jpg`"
         why: "This matches by the end of the name, and misses `photo2.png`."
+
+# "Practice more": extra tasks, not shown in the lesson (practice page).
+extra:
+  - id: x-rename
+    type: terminal
+    objective: O2
+    title: A better name
+    prompt: |
+      The file `report-final-v2-NEW.txt` has a bad name.
+
+      1. **Rename** it to `report.txt`.
+      2. Make a **copy** of it called `draft.txt`, to try changes on.
+    start:
+      files:
+        report-final-v2-NEW.txt: "Sales went up in May.\n"
+    checks:
+      - expr: "isfile('report.txt') and not exists('report-final-v2-NEW.txt') and read('report.txt') == 'Sales went up in May.\\n'"
+        pass: "The file is now called report.txt"
+        hint: "`mv` renames: `mv report-final-v2-NEW.txt report.txt`."
+      - expr: "read('draft.txt') == read('report.txt') and isfile('report.txt')"
+        pass: "draft.txt is a copy of report.txt"
+        hint: "`cp report.txt draft.txt`."
+    hints:
+      - "In Linux, renaming is moving to a new name."
+      - "`mv old new` renames; `cp old new` copies."
+      - "`mv report-final-v2-NEW.txt report.txt`, then `cp report.txt draft.txt`."
+    solution: ["mv report-final-v2-NEW.txt report.txt", "cp report.txt draft.txt"]
+    after: >-
+      Press Tab after the first letters of a long name: the shell writes
+      the rest for you.
+  - id: x-clean-tmp
+    type: terminal
+    objective: O4
+    title: Away with the temporary files
+    prompt: |
+      The folder `work` is full of `.tmp` files. **Remove all of them with
+      one command**, and keep the other files. Look first: list only the
+      `.tmp` files, so you know what `rm` will take.
+    start:
+      files:
+        work/cache1.tmp: ""
+        work/cache2.tmp: ""
+        work/cache3.tmp: ""
+        work/notes.txt: "Keep this.\n"
+        work/plan.txt: "And this.\n"
+    checks:
+      - expr: "isdir('work') and sorted(listdir('work')) == ['notes.txt', 'plan.txt']"
+        pass: "Only the .tmp files are gone"
+        hint: "`rm work/*.tmp`: the `*` stands for any name."
+      - expr: "any(h.startswith('ls') and '*.tmp' in h for h in history)"
+        pass: "You looked before you removed"
+        hint: "`ls work/*.tmp` shows what `rm work/*.tmp` will take."
+      - expr: "any(h.startswith('rm') and '*' in h for h in history)"
+        pass: "You used one command with *"
+        hint: "One `rm` with `*.tmp`, not three."
+    hints:
+      - "`*.tmp` means: every name that ends with `.tmp`."
+      - "First `ls work/*.tmp`, to see the list."
+      - "Then `rm work/*.tmp`."
+    solution: ["ls work/*.tmp", "rm work/*.tmp"]
+    after: >-
+      Always look with `ls` and the same pattern before an `rm` with `*`.
+      There is no recycle bin.

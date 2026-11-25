@@ -444,3 +444,59 @@ review:
         why: "/dev/null keeps nothing."
       - text: "It is printed again"
         why: "Nothing comes back."
+
+# "Practice more": extra tasks, not shown in the lesson (practice page).
+extra:
+  - id: x-zip
+    type: terminal
+    objective: O2
+    title: Photos for a Windows friend
+    prompt: |
+      A friend with Windows wants your photos. **Pack the folder `photos`
+      into `photos.zip`**, then list what is inside with `unzip -l`.
+    start:
+      files:
+        photos/beach.jpg: ""
+        photos/dog.jpg: ""
+    checks:
+      - expr: "archive_kind('photos.zip') == 'zip' and members('photos.zip') == ['photos/', 'photos/beach.jpg', 'photos/dog.jpg']"
+        pass: "photos.zip holds the folder and both photos"
+        hint: "`zip -r photos.zip photos`: `-r` takes the whole folder."
+      - expr: "any(h.startswith('unzip') and '-l' in h for h in history)"
+        pass: "You listed the zip"
+        hint: "`unzip -l photos.zip`."
+    hints:
+      - "Windows opens `.zip` files without extra programs."
+      - "`zip -r` packs a folder with everything in it."
+      - "`zip -r photos.zip photos`, then `unzip -l photos.zip`."
+    solution: ["zip -r photos.zip photos", "unzip -l photos.zip"]
+    after: >-
+      Between Linux computers, use `tar.gz`: it keeps the permissions. For
+      everyone else, `zip`.
+  - id: x-only-code
+    type: terminal
+    objective: O1
+    title: Only the code
+    prompt: |
+      **Pack only the Python files** of `project` into `code.tar.gz`,
+      compressed. Leave the notes out. Then list the archive.
+    start:
+      files:
+        project/main.py: "print('robot')\n"
+        project/motors.py: "SPEED = 3\n"
+        project/notes.txt: "ideas\n"
+    checks:
+      - expr: "archive_kind('code.tar.gz') == 'tar.gz' and members('code.tar.gz') == ['project/main.py', 'project/motors.py']"
+        pass: "code.tar.gz holds the two .py files only"
+        hint: "`tar -czf code.tar.gz project/*.py`."
+      - expr: "any(h.startswith('tar') and len(h.split()) > 1 and 't' in h.split()[1] for h in history)"
+        pass: "You listed the archive"
+        hint: "`tar -tzf code.tar.gz`."
+    hints:
+      - "`tar` takes files as well as folders, and `*` works too."
+      - "`project/*.py` is every Python file in `project`."
+      - "`tar -czf code.tar.gz project/*.py`, then `tar -tzf code.tar.gz`."
+    solution: ["tar -czf code.tar.gz project/*.py", "tar -tzf code.tar.gz"]
+    after: >-
+      `c` makes, `z` compresses, `f` names the file, `t` lists. The letters
+      stay the same for every archive.

@@ -473,3 +473,59 @@ review:
         why: "That needs quotes: `n='ls | wc -l'`."
       - text: "It lists the files on the screen"
         why: "The output goes into `n`, not to the screen."
+
+# "Practice more": extra tasks, not shown in the lesson (practice page).
+extra:
+  - id: x-count-args
+    type: terminal
+    objective: O2
+    title: How many values?
+    prompt: |
+      **Write a script `count.sh`** that says how many values it got:
+      `./count.sh a b c` prints `You gave 3 values`. Make it runnable, and
+      try it.
+    checks:
+      - expr: "'$#' in (read('count.sh') or '')"
+        pass: "The script uses $#"
+        hint: "`$#` is the number of values."
+      - expr: "executable('count.sh')"
+        pass: "count.sh is runnable"
+        hint: "`chmod +x count.sh`."
+      - expr: "isfile('count.sh') and run('./count.sh a b c') == ('You gave 3 values\\n', 0) and run('./count.sh') == ('You gave 0 values\\n', 0) and any(h.startswith('./count.sh') for h in history)"
+        pass: "It counts any number of values"
+        hint: "`echo \"You gave $# values\"` in the script, with double quotes."
+    hints:
+      - "`$1` is the first value; `$#` is how many there are."
+      - "Write the script with `nano count.sh`, or with `printf`."
+      - "`printf '#!/bin/bash\\necho \"You gave $# values\"\\n' > count.sh`, then `chmod +x count.sh`."
+    solution: ["printf '#!/bin/bash\\necho \"You gave $# values\"\\n' > count.sh", "chmod +x count.sh", "./count.sh a b c"]
+    after: >-
+      A script can check `$#` at the start, and stop with a clear message
+      when a value is missing.
+  - id: x-substitute
+    type: terminal
+    objective: O4
+    title: A number in a sentence
+    prompt: |
+      **Write `There are 3 logs` into `count.txt`**, but let the shell find
+      the number: put `ls logs | wc -l` inside `$( )`.
+    start:
+      files:
+        logs/app.log: ""
+        logs/sensor.log: ""
+        logs/wifi.log: ""
+    checks:
+      - expr: "read('count.txt') == 'There are 3 logs\\n'"
+        pass: "count.txt says There are 3 logs"
+        hint: "`echo \"There are $(ls logs | wc -l) logs\" > count.txt`."
+      - expr: "any('$(' in h for h in history)"
+        pass: "The shell found the number with $( )"
+        hint: "Do not type `3`: let `$(ls logs | wc -l)` count."
+    hints:
+      - "`$(command)` is replaced by the output of the command."
+      - "`ls logs | wc -l` counts the files in `logs`."
+      - "`echo \"There are $(ls logs | wc -l) logs\" > count.txt`."
+    solution: ["echo \"There are $(ls logs | wc -l) logs\" > count.txt", "cat count.txt"]
+    after: >-
+      With `$( )`, the sentence stays right when a fourth log comes: the
+      shell counts again each time.

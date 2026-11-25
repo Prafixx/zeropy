@@ -535,3 +535,110 @@ review:
         why: "Browsers run any script in a page."
       - text: "Twice, to be sure"
         why: "Twice shows `&amp;lt;` to the visitor."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-search
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Search with a default
+    prompt: |
+      **Replace `___`** so that `/search?q=tea` answers `Results for tea`,
+      and `/search` with no `q` answers `Results for everything`.
+    starter: |
+      from flask import Flask, request
+      from markupsafe import escape
+
+      app = Flask(__name__)
+
+
+      @app.route("/search")
+      def search():
+          q = request.args.get("q", ___)
+          return f"Results for {escape(q)}"
+
+
+      app.run()
+    solution: |
+      from flask import Flask, request
+      from markupsafe import escape
+
+      app = Flask(__name__)
+
+
+      @app.route("/search")
+      def search():
+          q = request.args.get("q", "everything")
+          return f"Results for {escape(q)}"
+
+
+      app.run()
+    after: >-
+      `request.args.get` with a second value never fails: a visitor who
+      opens the page without a query still gets an answer.
+    checks:
+      - expr: "client is not None and client.get('/search?q=tea').get_data(as_text=True) == 'Results for tea' and client.get('/search').get_data(as_text=True) == 'Results for everything'"
+        pass: "It searches for q, or for everything"
+        hint: "The second value of `.get` is used when `q` is missing: `\"everything\"`."
+      - expr: "client is not None and '<b>' not in client.get('/search?q=%3Cb%3Ehi').get_data(as_text=True)"
+        pass: "What the visitor wrote is escaped"
+        hint: "Keep `escape(q)`."
+    hints:
+      - "`.get(name, default)` gives the default when the name is not there."
+      - "The default here is a text."
+      - "`request.args.get(\"q\", \"everything\")`."
+  - id: x-vote
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Tea or coffee?
+    prompt: |
+      **Make a vote page**: `/` shows a form with the field `choice`, sent
+      with POST, and the counts as `tea: 0` and `coffee: 0`. A POST adds one
+      vote for its choice and **redirects** to `/`.
+    starter: |
+      from flask import Flask, redirect, request, url_for
+
+      app = Flask(__name__)
+      votes = {"tea": 0, "coffee": 0}
+
+      # Your route here.
+
+      app.run()
+    solution: |
+      from flask import Flask, redirect, request, url_for
+
+      app = Flask(__name__)
+      votes = {"tea": 0, "coffee": 0}
+
+
+      @app.route("/", methods=["GET", "POST"])
+      def home():
+          if request.method == "POST":
+              choice = request.form.get("choice", "")
+              if choice in votes:
+                  votes[choice] += 1
+              return redirect(url_for("home"))
+          counts = " ".join(f"{name}: {n}" for name, n in votes.items())
+          return f"<form method='post'><input name='choice'> <button>Vote</button></form><p>{counts}</p>"
+
+
+      app.run()
+    after: >-
+      The redirect after the POST matters: without it, pressing reload in
+      the browser would send the vote again.
+    checks:
+      - expr: "client is not None and 'tea: 0' in client.get('/').get_data(as_text=True) and 'method' in client.get('/').get_data(as_text=True).lower()"
+        pass: "The page shows a form and the counts"
+        hint: "A GET of `/` returns a form with `method='post'` and the counts."
+      - expr: "client is not None and client.post('/', data={'choice': 'tea'}).status_code == 302 and client.post('/', data={'choice': 'tea'}).status_code == 302 and 'tea: 2' in client.get('/').get_data(as_text=True)"
+        pass: "A POST adds a vote and redirects"
+        hint: "`votes[choice] += 1`, then `return redirect(url_for(\"home\"))`."
+      - expr: "client is not None and client.post('/', data={'choice': 'juice'}).status_code == 302 and 'juice' not in client.get('/').get_data(as_text=True)"
+        pass: "An unknown choice is not counted"
+        hint: "Count only when `choice in votes`."
+    hints:
+      - "One route for both: `methods=[\"GET\", \"POST\"]`."
+      - "On POST: read `request.form.get(\"choice\")`, count it if it is in `votes`, and redirect."
+      - "On GET: return the form and the counts, like `tea: 1 coffee: 0`."

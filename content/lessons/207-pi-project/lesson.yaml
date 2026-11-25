@@ -331,3 +331,104 @@ review:
         why: "Your eyes miss short states and timing errors."
       - text: "Run it without any press"
         why: "That tests only the start."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-night
+    type: exercise
+    fade: completion
+    objective: O2
+    board: true
+    title: Night mode
+    prompt: |
+      At night, many traffic lights only blink amber. **Replace `___`** so
+      that only the amber light blinks 6 times (0.5 s on, 0.5 s off), then
+      the program prints `Day mode`.
+    starter: |
+      from gpiozero import TrafficLights
+
+      lights = TrafficLights(9, 10, 11)
+      lights.off()
+      lights.___.blink(on_time=0.5, off_time=0.5, n=6, background=False)
+      print("Day mode")
+    solution: |
+      from gpiozero import TrafficLights
+
+      lights = TrafficLights(9, 10, 11)
+      lights.off()
+      lights.amber.blink(on_time=0.5, off_time=0.5, n=6, background=False)
+      print("Day mode")
+    after: >-
+      `lights.red`, `lights.amber` and `lights.green` are three `LED`
+      objects. Everything an LED can do, each light can do.
+    checks:
+      - expr: "err is None and len(flashes(10)) == 6 and all(abs(d - 0.5) < 0.01 for _, d in flashes(10))"
+        pass: "The amber light blinks 6 times"
+        hint: "The amber light is `lights.amber`."
+      - expr: "err is None and not flashes(9) and not flashes(11)"
+        pass: "Red and green stay off"
+        hint: "Blink only `lights.amber`."
+      - expr: "err is None and lines == ['Day mode']"
+        pass: "Then it prints Day mode"
+        hint: "Keep the `print`."
+    hints:
+      - "Each light is an attribute of `lights`."
+      - "The middle light is amber."
+      - "`lights.amber.blink(...)`."
+  - id: x-plan
+    type: exercise
+    fade: independent
+    objective: O1
+    board: true
+    title: Lights from a plan
+    prompt: |
+      **Write `show(color)`**: it switches all lights off, then only the
+      light of that color on. Then run the plan `PLAN` **two times**: show
+      each color for its number of seconds.
+    starter: |
+      from gpiozero import TrafficLights
+      from time import sleep
+
+      lights = TrafficLights(9, 10, 11)
+      PLAN = [("green", 3), ("amber", 1), ("red", 3), ("amber", 1)]
+
+      # Your function and loops here.
+    solution: |
+      from gpiozero import TrafficLights
+      from time import sleep
+
+      lights = TrafficLights(9, 10, 11)
+      PLAN = [("green", 3), ("amber", 1), ("red", 3), ("amber", 1)]
+
+
+      def show(color):
+          lights.off()
+          if color == "red":
+              lights.red.on()
+          elif color == "amber":
+              lights.amber.on()
+          else:
+              lights.green.on()
+
+
+      for round_number in range(2):
+          for color, seconds in PLAN:
+              show(color)
+              sleep(seconds)
+    after: >-
+      The plan is data, the loop is the machine. To change the times, you
+      change the list, not the code.
+    checks:
+      - expr: "err is None and [(at(9, t), at(10, t), at(11, t)) for t in (1, 3.5, 5, 7.5, 9, 11.5, 13, 15.5)] == [(0, 0, 1), (0, 1, 0), (1, 0, 0), (0, 1, 0)] * 2"
+        pass: "It follows the plan two times"
+        hint: "Two loops: `for round_number in range(2):`, and in it `for color, seconds in PLAN:`."
+      - expr: "err is None and all(at(9, t / 4) + at(10, t / 4) + at(11, t / 4) == 1 for t in range(1, 63))"
+        pass: "Only one light is on at a time"
+        hint: "In `show`, call `lights.off()` first."
+      - expr: "syntax('FunctionDef') >= 1 and called('show')"
+        pass: "It uses your function show"
+        hint: "`def show(color):`, and call it for each step of the plan."
+    hints:
+      - "In `show`: `lights.off()`, then `if color == \"red\": lights.red.on()`, and so on."
+      - "`for color, seconds in PLAN:` takes each pair apart."
+      - "Put that loop inside `for round_number in range(2):`."

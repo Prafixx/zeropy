@@ -407,6 +407,8 @@ export interface TerminalStep extends StepBase {
   /** Commands that solve it: shown on request, and run by check-content. */
   solution: string[];
   after?: string;
+  /** Set by the registry for "Practice more" tasks (lesson.extra). */
+  isExtra?: boolean;
 }
 
 export interface ReviewStep extends StepBase {
@@ -440,8 +442,8 @@ export interface Lesson {
   steps: Step[];
   /** Cards that enter spaced review when the lesson is finished. */
   review: Item[];
-  /** "Practice more": extra exercises, not shown in the lesson itself. */
-  extra: ExerciseStep[];
+  /** "Practice more": extra exercises (or terminal tasks in a terminal lesson), not shown in the lesson itself. */
+  extra: (ExerciseStep | TerminalStep)[];
 }
 
 export interface CourseLesson {

@@ -580,3 +580,96 @@ review:
         why: "3xx is not an error."
       - text: "It shows an empty page"
         why: "It follows the Location."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-page
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Which page?
+    prompt: |
+      **Replace `___`** so that `page_of(url)` reads the number after
+      `page=` in the query. Without it, the page is 1.
+
+      ```text
+      3
+      1
+      ```
+    starter: |
+      from urllib.parse import parse_qs, urlsplit
+
+
+      def page_of(url):
+          query = parse_qs(urlsplit(url).___)
+          return int(query.get("page", ["1"])[0])
+
+
+      print(page_of("https://shop.example/news?page=3"))
+      print(page_of("https://shop.example/news"))
+    solution: |
+      from urllib.parse import parse_qs, urlsplit
+
+
+      def page_of(url):
+          query = parse_qs(urlsplit(url).query)
+          return int(query.get("page", ["1"])[0])
+
+
+      print(page_of("https://shop.example/news?page=3"))
+      print(page_of("https://shop.example/news"))
+    after: >-
+      `parse_qs` gives a list for each name, because a query may repeat a
+      name: `?tag=a&tag=b`. That is why the value is `[0]` of the list.
+    checks:
+      - expr: "callable(ns.get('page_of')) and page_of('http://a.org/x?page=12&sort=new') == 12 and page_of('http://a.org/x?sort=new') == 1"
+        pass: "It reads the page from the query, or gives 1"
+        hint: "The part after `?` is the `query` of the split URL."
+      - expr: "lines == ['3', '1']"
+        pass: "It prints 3 and 1"
+        hint: "Keep the prints."
+    hints:
+      - "`urlsplit(url)` has the parts scheme, netloc, path, query and fragment."
+      - "The text after `?` is the query."
+      - "`urlsplit(url).query`."
+  - id: x-request
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Write a request by hand
+    prompt: |
+      **Write `make_request(host, path)`**: the text of an HTTP GET request,
+      as a browser sends it. The first line is `GET <path> HTTP/1.1`, then a
+      `Host` header, then an empty line. HTTP ends every line with `\r\n`.
+
+      ```text
+      'GET /news HTTP/1.1\r\nHost: example.com\r\n\r\n'
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(repr(make_request("example.com", "/news")))
+    solution: |
+      def make_request(host, path):
+          return f"GET {path} HTTP/1.1\r\nHost: {host}\r\n\r\n"
+
+
+      print(repr(make_request("example.com", "/news")))
+    after: >-
+      This is all a browser must send for a simple page. The empty line at
+      the end tells the server that the headers are over.
+    checks:
+      - expr: "callable(ns.get('make_request')) and make_request('a.org', '/') == 'GET / HTTP/1.1\\r\\nHost: a.org\\r\\n\\r\\n' and make_request('b.net', '/x?y=1') == 'GET /x?y=1 HTTP/1.1\\r\\nHost: b.net\\r\\n\\r\\n'"
+        pass: "It writes the request line, the Host header and the empty line"
+        hint: "Three parts: the request line, `Host: ...`, and an empty line, each ended with `\\r\\n`."
+        misconceptions:
+          - when: "callable(ns.get('make_request')) and raises(make_request, 'a.org', '/') is None and make_request('a.org', '/') == 'GET / HTTP/1.1\\nHost: a.org\\n\\n'"
+            say: "HTTP ends lines with `\\r\\n`, not only `\\n`."
+      - expr: "len(lines) == 1"
+        pass: "It prints the request as one line, with repr"
+        hint: "Keep the print with `repr`."
+    hints:
+      - "The first line: `f\"GET {path} HTTP/1.1\"`."
+      - "Each line ends with `\\r\\n`, and the headers end with one more `\\r\\n`."
+      - "`f\"GET {path} HTTP/1.1\\r\\nHost: {host}\\r\\n\\r\\n\"`."

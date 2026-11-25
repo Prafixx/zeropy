@@ -194,22 +194,7 @@ export function validateLesson(data: unknown): string[] {
       if (!isRec(step.example)) out.push(`${where}: local needs an example report`);
       if (!Array.isArray(step.hints) || step.hints.length < 2) out.push(`${where}: local needs at least 2 hints`);
     }
-    if (type === 'terminal') {
-      if (!text(step.prompt)) out.push(`${where}: terminal needs a prompt`);
-      const checks = Array.isArray(step.checks) ? step.checks : [];
-      if (checks.length === 0) out.push(`${where}: terminal needs checks`);
-      checks.forEach((c, j) => {
-        if (!isRec(c) || !text(c.expr) || !text(c.pass) || !text(c.hint)) {
-          out.push(`${where}: check ${j + 1} needs "expr", "pass" and "hint"`);
-        }
-      });
-      // A line may be empty: the answer Enter to a question (like adduser's details). The first may not.
-      if (!Array.isArray(step.solution) || step.solution.length === 0 || !text(step.solution[0]) || !step.solution.every((l) => typeof l === 'string')) {
-        out.push(`${where}: terminal needs a solution: a list of commands`);
-      }
-      if (step.start !== undefined && !isRec(step.start)) out.push(`${where}: terminal start must be a mapping`);
-      if (!Array.isArray(step.hints) || step.hints.length < 2) out.push(`${where}: terminal needs at least 2 hints`);
-    }
+    if (type === 'terminal') checkTerminal(step, where, out);
     if (type === 'debugger') {
       if (!text(step.prompt)) out.push(`${where}: debugger needs a prompt`);
       if (!text(step.code)) out.push(`${where}: debugger needs code`);
@@ -255,7 +240,17 @@ export function validateLesson(data: unknown): string[] {
       out.push(`${where}: must be a mapping`);
       return;
     }
-    if (step.type !== 'exercise') out.push(`${where}: an extra must be an exercise (type: exercise)`);
+    // A terminal lesson practises in the terminal: its extras may be terminal tasks.
+    if (step.type === 'terminal') {
+      if (!text(step.id)) out.push(`${where}: missing id`);
+      else if (ids.has(step.id)) out.push(`${where}: duplicate id "${step.id}"`);
+      else ids.add(step.id);
+      if (!text(step.title)) out.push(`${where}: missing title`);
+      if (!text(step.objective) || !objectives.has(step.objective)) out.push(`${where}: must name one of the lesson objectives`);
+      checkTerminal(step, where, out);
+      return;
+    }
+    if (step.type !== 'exercise') out.push(`${where}: an extra must be an exercise or a terminal task`);
     if (!text(step.id)) out.push(`${where}: missing id`);
     else if (ids.has(step.id)) out.push(`${where}: duplicate id "${step.id}"`);
     else ids.add(step.id);
@@ -275,6 +270,23 @@ export function validateLesson(data: unknown): string[] {
     checkExercise(step, where, out);
   });
   return out;
+}
+
+function checkTerminal(step: Record<string, unknown>, where: string, out: string[]): void {
+  if (!text(step.prompt)) out.push(`${where}: terminal needs a prompt`);
+  const checks = Array.isArray(step.checks) ? step.checks : [];
+  if (checks.length === 0) out.push(`${where}: terminal needs checks`);
+  checks.forEach((c, j) => {
+    if (!isRec(c) || !text(c.expr) || !text(c.pass) || !text(c.hint)) {
+      out.push(`${where}: check ${j + 1} needs "expr", "pass" and "hint"`);
+    }
+  });
+  // A line may be empty: the answer Enter to a question (like adduser's details). The first may not.
+  if (!Array.isArray(step.solution) || step.solution.length === 0 || !text(step.solution[0]) || !step.solution.every((l) => typeof l === 'string')) {
+    out.push(`${where}: terminal needs a solution: a list of commands`);
+  }
+  if (step.start !== undefined && !isRec(step.start)) out.push(`${where}: terminal start must be a mapping`);
+  if (!Array.isArray(step.hints) || step.hints.length < 2) out.push(`${where}: terminal needs at least 2 hints`);
 }
 
 function checkExercise(step: Record<string, unknown>, where: string, out: string[]): void {

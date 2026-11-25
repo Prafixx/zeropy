@@ -699,3 +699,131 @@ review:
         why: "Commits are local. They do not need GitHub."
       - text: "A `.gitignore`"
         why: "`.gitignore` is not needed for a commit."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-status
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Read git status
+    prompt: |
+      `git status --short` gives one line per file: two letters, a space,
+      then the name. `??` means a new file that git does not track yet.
+      **Replace `___`**, so that the name is everything after the first 3
+      characters.
+
+      ```text
+      changed: ['main.py', 'tests.py', 'app.py']
+      new: ['notes.txt']
+      ```
+    starter: |
+      STATUS = [" M main.py", "?? notes.txt", "A  tests.py", " M app.py"]
+
+
+      def read_status(lines):
+          changed, new = [], []
+          for line in lines:
+              code, name = line[:2], line[___:]
+              if code == "??":
+                  new.append(name)
+              else:
+                  changed.append(name)
+          return changed, new
+
+
+      changed, new = read_status(STATUS)
+      print("changed:", changed)
+      print("new:", new)
+    solution: |
+      STATUS = [" M main.py", "?? notes.txt", "A  tests.py", " M app.py"]
+
+
+      def read_status(lines):
+          changed, new = [], []
+          for line in lines:
+              code, name = line[:2], line[3:]
+              if code == "??":
+                  new.append(name)
+              else:
+                  changed.append(name)
+          return changed, new
+
+
+      changed, new = read_status(STATUS)
+      print("changed:", changed)
+      print("new:", new)
+    after: >-
+      The two letters are two places: the first is what is staged (ready for
+      the commit), the second what changed since. ` M` is changed, not
+      staged; `A ` is new and staged.
+    checks:
+      - expr: "callable(ns.get('read_status')) and read_status(['?? a.txt', ' M b.py', 'D  old.py']) == (['b.py', 'old.py'], ['a.txt'])"
+        pass: "It splits any status into changed and new files"
+        hint: "Two letters and one space are 3 characters: `line[3:]`."
+        misconceptions:
+          - when: "callable(ns.get('read_status')) and read_status(['?? a.txt'])[1] == [' a.txt']"
+            say: "The name starts with a space. Skip the space too: start at 3."
+      - expr: "err is None and lines == [\"changed: ['main.py', 'tests.py', 'app.py']\", \"new: ['notes.txt']\"]"
+        pass: "It prints both lists"
+        hint: "Keep the two prints."
+    hints:
+      - "The line is: 2 letters, 1 space, then the name."
+      - "Slicing from position n: `line[n:]`."
+      - "`line[3:]`."
+  - id: x-message
+    type: exercise
+    fade: independent
+    objective: O2
+    title: A good commit message
+    prompt: |
+      **Write `check_message(text)`**: it gives a list of the problems of
+      the first line of a commit message.
+
+      - `"empty"` when the first line is empty or only spaces,
+      - `"too long"` when it is longer than 50 characters,
+      - `"ends with a period"` when it ends with `.`.
+
+      A good message gives `[]`.
+    starter: |
+      # Your function here.
+
+
+      print(check_message("Add the save button"))
+      print(check_message("Fixed stuff."))
+    solution: |
+      def check_message(text):
+          lines = text.splitlines()
+          first = lines[0].strip() if lines else ""
+          problems = []
+          if not first:
+              problems.append("empty")
+          if len(first) > 50:
+              problems.append("too long")
+          if first.endswith("."):
+              problems.append("ends with a period")
+          return problems
+
+
+      print(check_message("Add the save button"))
+      print(check_message("Fixed stuff."))
+    after: >-
+      `git log --oneline` shows only first lines. Short ones that say what
+      the commit does make the history easy to read, years later.
+    checks:
+      - expr: "callable(ns.get('check_message')) and check_message('Add the save button') == [] and check_message('Fix the date in the report.') == ['ends with a period']"
+        pass: "It finds a period at the end, and passes a good line"
+        hint: "`first.endswith(\".\")`."
+      - expr: "callable(ns.get('check_message')) and check_message('A' * 51) == ['too long'] and check_message('A' * 50) == [] and check_message('Add tests\\n\\nThe body may be long. ' + 'x' * 80) == []"
+        pass: "Only a first line longer than 50 characters is too long"
+        hint: "Measure the first line only: `text.splitlines()[0]`."
+      - expr: "callable(ns.get('check_message')) and raises(check_message, '') is None and check_message('') == ['empty'] and check_message('   ') == ['empty']"
+        pass: "An empty line is empty, without a crash"
+        hint: "`''.splitlines()` is `[]`: check that there is a line before you take `[0]`."
+        misconceptions:
+          - when: "callable(ns.get('check_message')) and raises(check_message, '') == 'IndexError'"
+            say: "`''.splitlines()` is an empty list, so `[0]` fails. Use `\"\"` when there is no line."
+    hints:
+      - "Take the first line: `text.splitlines()`, and `[0]` if there is one."
+      - "Make a list, and `append` each problem you find."
+      - "Three `if`s: `not first`, `len(first) > 50`, `first.endswith(\".\")`."

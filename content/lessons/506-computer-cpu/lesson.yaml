@@ -557,3 +557,237 @@ review:
         why: "300 does not fit in 8 bits."
       - text: "255"
         why: "It wraps around, it does not stop at 255."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-countdown
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A countdown program
+    prompt: |
+      Here is your finished CPU. **Write `countdown(n)`**: a program that
+      shows n, n - 1, ... down to 1, then stops. Use a loop with `JNZ`: the
+      program must have the same length for every n.
+
+      ```text
+      [3, 2, 1]
+      ```
+    starter: |
+      def run(program):
+          registers = {"A": 0, "B": 0, "C": 0, "D": 0}
+          pc = 0
+          outputs = []
+          while True:
+              instruction = program[pc]        # fetch
+              pc += 1
+              op = instruction[0]              # decode
+              if op == "HALT":                 # execute
+                  return outputs
+              elif op == "SET":
+                  registers[instruction[1]] = instruction[2] % 256
+              elif op == "OUT":
+                  outputs.append(registers[instruction[1]])
+              elif op == "ADD":
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] + registers[instruction[2]]
+                  ) % 256
+              elif op == "SUB":
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] - registers[instruction[2]]
+                  ) % 256
+              elif op == "JMP":
+                  pc = instruction[1]
+              elif op == "JNZ":
+                  if registers[instruction[1]] != 0:
+                      pc = instruction[2]
+              else:
+                  raise ValueError(f"unknown instruction: {op}")
+
+
+      # Your countdown(n) here.
+
+
+      print(run(countdown(3)))
+    solution: |
+      def run(program):
+          registers = {"A": 0, "B": 0, "C": 0, "D": 0}
+          pc = 0
+          outputs = []
+          while True:
+              instruction = program[pc]        # fetch
+              pc += 1
+              op = instruction[0]              # decode
+              if op == "HALT":                 # execute
+                  return outputs
+              elif op == "SET":
+                  registers[instruction[1]] = instruction[2] % 256
+              elif op == "OUT":
+                  outputs.append(registers[instruction[1]])
+              elif op == "ADD":
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] + registers[instruction[2]]
+                  ) % 256
+              elif op == "SUB":
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] - registers[instruction[2]]
+                  ) % 256
+              elif op == "JMP":
+                  pc = instruction[1]
+              elif op == "JNZ":
+                  if registers[instruction[1]] != 0:
+                      pc = instruction[2]
+              else:
+                  raise ValueError(f"unknown instruction: {op}")
+
+
+      def countdown(n):
+          return [
+              ("SET", "A", n),     # 0  the counter
+              ("SET", "B", 1),     # 1
+              ("OUT", "A"),        # 2  <- the loop
+              ("SUB", "A", "B"),   # 3
+              ("JNZ", "A", 2),     # 4
+              ("HALT",),           # 5
+          ]
+
+
+      print(run(countdown(3)))
+    after: >-
+      Six instructions show any count from 1 to 255. A loop makes the
+      program short, whatever the size of the job.
+    checks:
+      - expr: "callable(ns.get('countdown')) and all(run(countdown(n)) == list(range(n, 0, -1)) for n in [1, 2, 3, 10, 255])"
+        pass: "It counts down from any n to 1"
+        hint: "Show A, take 1 off, and jump back while A is not 0."
+      - expr: "callable(ns.get('countdown')) and len(countdown(3)) == len(countdown(200)) and all(op[0] in ('SET', 'ADD', 'SUB', 'OUT', 'JMP', 'JNZ', 'HALT') for op in countdown(5))"
+        pass: "It is a loop: the same length for every n"
+        hint: "Do not write one OUT per number. Jump back with `JNZ`."
+      - expr: "lines == ['[3, 2, 1]']"
+        pass: "It prints [3, 2, 1]"
+        hint: "Keep the print."
+    hints:
+      - "Set A to n, and B to 1 (the step)."
+      - "The loop: `OUT A`, `SUB A B`, then `JNZ A` back to the OUT."
+      - "Count the places: the OUT is at place 2, so `(\"JNZ\", \"A\", 2)`."
+  - id: x-sum-to
+    type: exercise
+    fade: debug
+    objective: O3
+    title: The total that stays small
+    prompt: |
+      `sum_to(n)` should show 1 + 2 + ... + n, but it shows only 1.
+
+      **Follow the program by hand for n = 3, find the wrong number, and
+      fix it.**
+
+      ```text
+      [10]
+      ```
+    starter: |
+      def run(program):
+          registers = {"A": 0, "B": 0, "C": 0, "D": 0}
+          pc = 0
+          outputs = []
+          while True:
+              instruction = program[pc]        # fetch
+              pc += 1
+              op = instruction[0]              # decode
+              if op == "HALT":                 # execute
+                  return outputs
+              elif op == "SET":
+                  registers[instruction[1]] = instruction[2] % 256
+              elif op == "OUT":
+                  outputs.append(registers[instruction[1]])
+              elif op == "ADD":
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] + registers[instruction[2]]
+                  ) % 256
+              elif op == "SUB":
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] - registers[instruction[2]]
+                  ) % 256
+              elif op == "JMP":
+                  pc = instruction[1]
+              elif op == "JNZ":
+                  if registers[instruction[1]] != 0:
+                      pc = instruction[2]
+              else:
+                  raise ValueError(f"unknown instruction: {op}")
+
+
+      def sum_to(n):
+          return [
+              ("SET", "A", n),     # 0  the counter
+              ("SET", "B", 1),     # 1
+              ("SET", "C", 0),     # 2  the total
+              ("ADD", "C", "A"),   # 3  <- the loop
+              ("SUB", "A", "B"),   # 4
+              ("JNZ", "A", 2),     # 5
+              ("OUT", "C"),        # 6
+              ("HALT",),           # 7
+          ]
+
+
+      print(run(sum_to(4)))
+    solution: |
+      def run(program):
+          registers = {"A": 0, "B": 0, "C": 0, "D": 0}
+          pc = 0
+          outputs = []
+          while True:
+              instruction = program[pc]        # fetch
+              pc += 1
+              op = instruction[0]              # decode
+              if op == "HALT":                 # execute
+                  return outputs
+              elif op == "SET":
+                  registers[instruction[1]] = instruction[2] % 256
+              elif op == "OUT":
+                  outputs.append(registers[instruction[1]])
+              elif op == "ADD":
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] + registers[instruction[2]]
+                  ) % 256
+              elif op == "SUB":
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] - registers[instruction[2]]
+                  ) % 256
+              elif op == "JMP":
+                  pc = instruction[1]
+              elif op == "JNZ":
+                  if registers[instruction[1]] != 0:
+                      pc = instruction[2]
+              else:
+                  raise ValueError(f"unknown instruction: {op}")
+
+
+      def sum_to(n):
+          return [
+              ("SET", "A", n),     # 0  the counter
+              ("SET", "B", 1),     # 1
+              ("SET", "C", 0),     # 2  the total
+              ("ADD", "C", "A"),   # 3  <- the loop
+              ("SUB", "A", "B"),   # 4
+              ("JNZ", "A", 3),     # 5
+              ("OUT", "C"),        # 6
+              ("HALT",),           # 7
+          ]
+
+
+      print(run(sum_to(4)))
+    after: >-
+      The jump went back to place 2, which sets the total to 0 again in
+      every round. A loop must jump back to its first instruction, after
+      the setup.
+    checks:
+      - expr: "callable(ns.get('sum_to')) and all(run(sum_to(n)) == [n * (n + 1) // 2 % 256] for n in [1, 2, 3, 4, 10, 22])"
+        pass: "It shows the total of 1 to n"
+        hint: "Which instruction does the jump repeat? The total must not be reset."
+      - expr: "lines == ['[10]']"
+        pass: "It prints [10]"
+        hint: "Keep the print."
+    hints:
+      - "Follow it for n = 3: after the first round, where does `JNZ` jump to?"
+      - "Place 2 sets C to 0 again in every round."
+      - "Jump to place 3, the ADD: `(\"JNZ\", \"A\", 3)`."

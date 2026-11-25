@@ -489,3 +489,104 @@ review:
         why: "That is one mean per test (column)."
       - text: "`t.mean()`"
         why: "That is one mean of everything."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-hot-days
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Only the hot days
+    prompt: |
+      **Replace `___`** so that `hot` holds only the temperatures above 25,
+      and the program prints how many there are.
+
+      ```text
+      [27.5 31.  26.2]
+      3
+      ```
+    starter: |
+      import numpy as np
+
+      temps = np.array([22.0, 27.5, 19.8, 31.0, 25.0, 26.2])
+      hot = temps[temps ___ 25]
+      print(hot)
+      print(hot.size)
+    solution: |
+      import numpy as np
+
+      temps = np.array([22.0, 27.5, 19.8, 31.0, 25.0, 26.2])
+      hot = temps[temps > 25]
+      print(hot)
+      print(hot.size)
+    after: >-
+      `temps > 25` makes an array of True and False, one for each day. Put
+      inside the brackets, it keeps the values where it is True.
+    checks:
+      - expr: "err is None and hasattr(ns.get('hot'), 'tolist') and hot.tolist() == [27.5, 31.0, 26.2]"
+        pass: "hot holds the temperatures above 25"
+        hint: "The condition is `temps > 25`. 25 itself is not above 25."
+        misconceptions:
+          - when: "err is None and hasattr(ns.get('hot'), 'tolist') and hot.tolist() == [27.5, 31.0, 25.0, 26.2]"
+            say: "25.0 is in it: that is `>=`. Above 25 means `>`."
+      - expr: "lines[-1:] == ['3']"
+        pass: "It prints the count, 3"
+        hint: "Keep `print(hot.size)`."
+    hints:
+      - "A condition on the whole array gives True or False for each value."
+      - "Above 25: `temps > 25`."
+      - "`hot = temps[temps > 25]`."
+  - id: x-shops
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Three shops, four weeks
+    prompt: |
+      Each row of `sales` is a shop, each column a week. **Print the total of
+      each shop** (one number per row), then **the number of the best week**
+      (the column with the biggest total), counting from 0.
+
+      ```text
+      [100  86 135]
+      2
+      ```
+    starter: |
+      import numpy as np
+
+      sales = np.array([
+          [20, 25, 30, 25],
+          [18, 22, 26, 20],
+          [30, 35, 40, 30],
+      ])
+      # Your code here.
+    solution: |
+      import numpy as np
+
+      sales = np.array([
+          [20, 25, 30, 25],
+          [18, 22, 26, 20],
+          [30, 35, 40, 30],
+      ])
+      print(sales.sum(axis=1))
+      print(sales.sum(axis=0).argmax())
+    after: >-
+      `axis=1` adds along each row: one total per shop. `axis=0` adds down
+      each column: one total per week. `argmax` gives the place of the
+      biggest value, not the value itself.
+    checks:
+      - expr: "err is None and len(lines) == 2 and lines[0] == str(sales.sum(axis=1))"
+        pass: "It prints the total of each shop"
+        hint: "One total per row: `sales.sum(axis=1)`."
+        misconceptions:
+          - when: "err is None and len(lines) >= 1 and lines[0] == str(sales.sum(axis=0))"
+            say: "Those are the totals of the weeks (the columns). For each shop, add along the rows: `axis=1`."
+      - expr: "err is None and len(lines) == 2 and lines[1] == str(sales.sum(axis=0).argmax())"
+        pass: "It prints the number of the best week"
+        hint: "Add down the columns with `axis=0`, then `.argmax()` gives the place of the biggest."
+      - expr: "'axis=1' in src.replace(' ', '') and 'axis=0' in src.replace(' ', '')"
+        pass: "numpy does the adding, with axis"
+        hint: "Let `sum(axis=...)` add for you."
+    hints:
+      - "A shop is a row. Adding along a row is `axis=1`."
+      - "A week is a column: `sales.sum(axis=0)` gives one total per week."
+      - "`print(sales.sum(axis=1))` and `print(sales.sum(axis=0).argmax())`."

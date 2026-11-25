@@ -276,7 +276,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
             h(
               'span',
               null,
-              lesson.extra.every((x) => x.fade === 'challenge')
+              lesson.extra.every((x) => x.type === 'exercise' && x.fade === 'challenge')
                 ? `${lesson.extra.length} challenges are waiting: bigger tasks from a short description.`
                 : `Want more practice of this lesson? ${lesson.extra.length} extra exercises are waiting:`,
             ),

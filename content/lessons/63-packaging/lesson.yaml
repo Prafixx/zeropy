@@ -672,3 +672,116 @@ review:
         why: "That is a folder named `home` in the working folder."
       - text: "`Path(\"~/todo-tasks.json\")`"
         why: "`Path` does not change `~` by itself. Use `Path.home()`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-data-folder
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A folder for the data
+    prompt: |
+      Apps often keep their data in a folder of their own, in the home
+      folder. **Replace `___`** so that `mkdir` makes the folder the first
+      time, and gives no error when it is already there.
+    starter: |
+      from pathlib import Path
+
+
+      def data_file():
+          folder = Path.home() / ".todo-app"
+          folder.mkdir(exist_ok=___)
+          return folder / "tasks.json"
+
+
+      print(data_file().name)
+      print(data_file().parent.name)
+    solution: |
+      from pathlib import Path
+
+
+      def data_file():
+          folder = Path.home() / ".todo-app"
+          folder.mkdir(exist_ok=True)
+          return folder / "tasks.json"
+
+
+      print(data_file().name)
+      print(data_file().parent.name)
+    after: >-
+      The program calls `data_file()` at each start. Without `exist_ok=True`,
+      the second start would stop with `FileExistsError`.
+    checks:
+      - expr: "err is None and callable(ns.get('data_file')) and data_file() == Path.home() / '.todo-app' / 'tasks.json' and (Path.home() / '.todo-app').is_dir()"
+        pass: "It makes the folder, and gives the path of the file in it"
+        hint: "`exist_ok=True`."
+        misconceptions:
+          - when: "err == 'FileExistsError'"
+            say: "The second call fails: the folder is already there. `exist_ok=True` allows that."
+      - expr: "err is None and lines == ['tasks.json', '.todo-app']"
+        pass: "It works when called more than once"
+        hint: "Keep the two prints: they call `data_file()` two times."
+    hints:
+      - "The value is `True` or `False`."
+      - "Should it be OK that the folder exists?"
+      - "`exist_ok=True`."
+  - id: x-error-log
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Keep the error
+    prompt: |
+      A program built with `--windowed` has no terminal: when it crashes,
+      the error is lost. **Call `main()` so that an error is written into
+      `LOG_FILE`**, with its traceback (`traceback.format_exc()`), and the
+      program then prints `Error saved in todo-error.log`.
+    starter: |
+      import traceback
+      from pathlib import Path
+
+      LOG_FILE = Path.home() / "todo-error.log"
+
+
+      def main():
+          settings = {"theme": "dark"}
+          print("Theme:", settings["colour"])
+
+
+      main()
+    solution: |
+      import traceback
+      from pathlib import Path
+
+      LOG_FILE = Path.home() / "todo-error.log"
+
+
+      def main():
+          settings = {"theme": "dark"}
+          print("Theme:", settings["colour"])
+
+
+      try:
+          main()
+      except Exception:
+          LOG_FILE.write_text(traceback.format_exc())
+          print("Error saved in", LOG_FILE.name)
+    after: >-
+      Now a user can send you the file. The traceback in it shows the line
+      and the error, as you would see it in the terminal.
+    checks:
+      - expr: "err is None and LOG_FILE.exists() and 'Traceback' in LOG_FILE.read_text() and 'colour' in LOG_FILE.read_text()"
+        pass: "The traceback is in the log file"
+        hint: "`try: main()` and `except Exception: LOG_FILE.write_text(traceback.format_exc())`."
+        misconceptions:
+          - when: "err is None and LOG_FILE.exists() and 'Traceback' not in LOG_FILE.read_text()"
+            say: "Only the message is in the file. `traceback.format_exc()` gives the whole traceback, with the line."
+      - expr: "err is None and lines == ['Error saved in todo-error.log']"
+        pass: "It says where the error is"
+        hint: "`print(\"Error saved in\", LOG_FILE.name)` in the `except`."
+      - expr: "syntax('Try') >= 1"
+        pass: "It catches the error with try"
+        hint: "Put `main()` inside `try:`."
+    hints:
+      - "Put the call `main()` inside `try:`."
+      - "In `except Exception:`, write `traceback.format_exc()` into `LOG_FILE`."
+      - "Then `print(\"Error saved in\", LOG_FILE.name)`."

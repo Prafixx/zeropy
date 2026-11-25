@@ -326,3 +326,96 @@ review:
         why: "In gpiozero they are called echo and trigger."
       - text: "Only one"
         why: "It sends on one pin and listens on another."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-steps
+    type: exercise
+    fade: completion
+    objective: O1
+    board: true
+    title: Five steps of light
+    prompt: |
+      **Replace `___`** so that the LED on GPIO 18 goes up in 5 steps, one
+      per second: 0, 0.25, 0.5, 0.75 and 1.
+    starter: |
+      from gpiozero import PWMLED
+      from time import sleep
+
+      led = PWMLED(18)
+      for i in range(5):
+          led.value = i / ___
+          sleep(1)
+    solution: |
+      from gpiozero import PWMLED
+      from time import sleep
+
+      led = PWMLED(18)
+      for i in range(5):
+          led.value = i / 4
+          sleep(1)
+    after: >-
+      `i` goes 0, 1, 2, 3, 4. Divided by 4, that is 0 to 1, the range of a
+      `PWMLED`.
+    checks:
+      - expr: "err is None and [at(18, t + 0.5) for t in range(5)] == [0, 0.25, 0.5, 0.75, 1]"
+        pass: "The brightness goes 0, 0.25, 0.5, 0.75, 1"
+        hint: "The last `i` is 4, and it must give 1: divide by 4."
+        misconceptions:
+          - when: "err is not None and err == 'ValueError'"
+            say: "A `PWMLED` takes values from 0 to 1 only. Divide by the largest `i`, 4."
+      - expr: "err is None and device(18) == 'PWMLED'"
+        pass: "It uses a PWMLED on GPIO 18"
+        hint: "Keep `led = PWMLED(18)`."
+    hints:
+      - "Which `i` must give the full brightness, 1?"
+      - "`range(5)` ends with 4."
+      - "`i / 4`."
+  - id: x-measure
+    type: exercise
+    fade: independent
+    objective: O3
+    board: true
+    title: Measure in centimeters
+    prompt: |
+      **Print the distance 5 times**, once every second, in whole
+      centimeters, like `Distance: 50 cm`. The sensor has `echo=24` and
+      `trigger=23`. Move the slider while the program runs.
+    starter: |
+      from gpiozero import DistanceSensor
+      from time import sleep
+
+      sensor = DistanceSensor(echo=24, trigger=23)
+      # Your loop here.
+    solution: |
+      from gpiozero import DistanceSensor
+      from time import sleep
+
+      sensor = DistanceSensor(echo=24, trigger=23)
+      for i in range(5):
+          cm = round(sensor.distance * 100)
+          print(f"Distance: {cm} cm")
+          sleep(1)
+    after: >-
+      The sensor gives meters, as a float. Times 100 and `round()` make a
+      number that people read more easily.
+    cases:
+      - {}
+      - label: "something comes closer"
+        gpio: { events: [{ at: 0.5, echo: 24, distance: 0.8 }, { at: 1.5, echo: 24, distance: 0.42 }, { at: 2.5, echo: 24, distance: 0.157 }, { at: 3.5, echo: 24, distance: 0.06 }] }
+    checks:
+      - expr: "err is None and len(lines) == 5 and all(l.startswith('Distance: ') and l.endswith(' cm') for l in lines)"
+        pass: "It prints 5 lines like Distance: 50 cm"
+        hint: "A loop of 5 rounds, with `print(f\"Distance: {cm} cm\")`."
+      - expr: "err is None and len(lines) == 5 and lines == [f'Distance: {round(at(24, t + 0.05) * 100)} cm' for t in range(5)]"
+        pass: "Each line is the distance at that moment, in whole centimeters"
+        hint: "`round(sensor.distance * 100)`, read again in each round, and `sleep(1)` at the end of the round."
+        misconceptions:
+          - when: "err is None and len(lines) == 5 and any('.' in l for l in lines)"
+            say: "Make it a whole number with `round(...)`."
+          - when: "err is None and len(lines) == 5 and len(set(lines)) == 1 and len(set(round(at(24, t + 0.05) * 100) for t in range(5))) > 1"
+            say: "Every line is the same. Read `sensor.distance` inside the loop, not once before it."
+    hints:
+      - "`for i in range(5):` with `sleep(1)` at the end."
+      - "The distance in meters is `sensor.distance`. Times 100 gives centimeters."
+      - "`cm = round(sensor.distance * 100)`, then `print(f\"Distance: {cm} cm\")`."

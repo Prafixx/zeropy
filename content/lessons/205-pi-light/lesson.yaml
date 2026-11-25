@@ -559,3 +559,106 @@ review:
         why: "SSH is for logging in from another computer."
       - text: "VNC"
         why: "VNC shows the desktop on another computer. The chip needs SPI."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-knob
+    type: exercise
+    fade: completion
+    objective: O3
+    board: true
+    title: A knob for the light
+    prompt: |
+      **Replace `___`** so that the knob on channel 0 of the MCP3008 sets
+      the brightness of the LED on GPIO 18, all the time.
+    starter: |
+      from gpiozero import MCP3008, PWMLED
+      from signal import pause
+
+      knob = MCP3008(0)
+      led = PWMLED(18)
+      led.source = ___
+      pause()
+    solution: |
+      from gpiozero import MCP3008, PWMLED
+      from signal import pause
+
+      knob = MCP3008(0)
+      led = PWMLED(18)
+      led.source = knob
+      pause()
+    after: >-
+      `source` joins two parts: gpiozero reads the knob again and again,
+      and gives each value to the LED. No loop in your code.
+    cases:
+      - {}
+      - label: "the knob turns"
+        gpio: { events: [{ at: 1, channel: 0, analog: 0.2 }, { at: 2, channel: 0, analog: 0.7 }, { at: 3, channel: 0, analog: 1.0 }] }
+    checks:
+      - expr: "err is None and device(18) == 'PWMLED' and all(abs(at(18, t + 0.2) - v) < 0.01 for t, v in history(8) if t + 0.2 < end_time)"
+        pass: "The LED follows the knob"
+        hint: "The LED's `source` is the knob: `led.source = knob`."
+      - expr: "err is None and len(history(18)) >= 1 and ended in ('cap', 'waiting')"
+        pass: "It keeps running"
+        hint: "Keep `pause()` at the end."
+    hints:
+      - "Which part gives the values?"
+      - "The knob is the `MCP3008`."
+      - "`led.source = knob`."
+  - id: x-count-motion
+    type: exercise
+    fade: independent
+    objective: O2
+    board: true
+    title: Count the visitors
+    prompt: |
+      **Count the movements** in front of the PIR sensor on GPIO 4. At each
+      movement, print `Visitor 1`, `Visitor 2`, ... Use an event and
+      `pause()`.
+    starter: |
+      from gpiozero import MotionSensor
+      from signal import pause
+
+      pir = MotionSensor(4)
+      count = 0
+
+      # Your function and event here.
+
+      pause()
+    solution: |
+      from gpiozero import MotionSensor
+      from signal import pause
+
+      pir = MotionSensor(4)
+      count = 0
+
+
+      def moved():
+          global count
+          count = count + 1
+          print("Visitor", count)
+
+
+      pir.when_motion = moved
+      pause()
+    after: >-
+      A PIR sensor reports a new movement only after it was still for a
+      moment. So one person who walks past counts once.
+    cases:
+      - {}
+      - label: "three visitors"
+        gpio: { events: [{ at: 1, pin: 4, motion: true }, { at: 2, pin: 4, motion: false }, { at: 4, pin: 4, motion: true }, { at: 5, pin: 4, motion: false }, { at: 7, pin: 4, motion: true }, { at: 8, pin: 4, motion: false }] }
+    checks:
+      - expr: "err is None and lines == [f'Visitor {i}' for i in range(1, sum(1 for e in gpio['inputs'] if e.get('motion')) + 1)]"
+        pass: "Each movement prints the next number"
+        hint: "In the function: `count = count + 1`, then `print(\"Visitor\", count)`."
+        misconceptions:
+          - when: "err == 'UnboundLocalError'"
+            say: "The function changes `count`, which lives outside it. Start the function with `global count`."
+      - expr: "err is None and ended == 'waiting' and 'when_motion' in src"
+        pass: "The sensor calls your function, and the program waits"
+        hint: "`pir.when_motion = moved`, without brackets, then `pause()`."
+    hints:
+      - "Write a function that adds 1 to `count` and prints."
+      - "It changes `count` from outside: `global count` as its first line."
+      - "`pir.when_motion = moved`."

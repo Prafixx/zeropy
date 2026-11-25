@@ -473,3 +473,100 @@ review:
         why: "Then the test examples were seen in training."
       - text: "Measure first, then fit"
         why: "There is nothing to measure before the model learns."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-reshape
+    type: exercise
+    fade: completion
+    objective: O2
+    title: One feature, as a table
+    prompt: |
+      A model wants X as a table: one row per example, one column per
+      feature. **Replace `___`** so that the single feature `heights`
+      becomes a table with 5 rows and 1 column.
+
+      ```text
+      (5, 1)
+      ```
+    starter: |
+      import numpy as np
+
+      heights = np.array([150.0, 162.0, 171.0, 180.0, 188.0])
+      X = heights.reshape(___)
+      print(X.shape)
+    solution: |
+      import numpy as np
+
+      heights = np.array([150.0, 162.0, 171.0, 180.0, 188.0])
+      X = heights.reshape(-1, 1)
+      print(X.shape)
+    after: >-
+      `-1` means "as many rows as needed", and `1` is one column. This is
+      what scikit-learn asks for when it says "Expected 2D array".
+    checks:
+      - expr: "err is None and hasattr(ns.get('X'), 'shape') and X.shape == (5, 1) and X[:, 0].tolist() == heights.tolist()"
+        pass: "X is a table with 5 rows and 1 column"
+        hint: "`reshape(-1, 1)`: rows as needed, 1 column."
+        misconceptions:
+          - when: "err is None and hasattr(ns.get('X'), 'shape') and X.shape == (1, 5)"
+            say: "That is one row with 5 columns: one example with 5 features. Swap them: `(-1, 1)`."
+      - expr: "lines == ['(5, 1)']"
+        pass: "It prints (5, 1)"
+        hint: "Keep the print."
+    hints:
+      - "The shape you want is (rows, columns) = (5, 1)."
+      - "`-1` lets numpy count the rows for you."
+      - "`heights.reshape(-1, 1)`."
+  - id: x-split-last
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Keep the last rows for the test
+    prompt: |
+      For data in time order, the test set must be the **newest** rows.
+      **Write `split_last(X, y, n_test)`**: it gives back `X_train, X_test,
+      y_train, y_test`, with the last `n_test` rows as the test set.
+
+      ```text
+      [[1], [2], [3]] [[4], [5]]
+      [10, 20, 30] [40, 50]
+      ```
+    starter: |
+      import numpy as np
+
+      # Your function here.
+
+
+      X = np.array([[1], [2], [3], [4], [5]])
+      y = np.array([10, 20, 30, 40, 50])
+      X_train, X_test, y_train, y_test = split_last(X, y, 2)
+      print(X_train.tolist(), X_test.tolist())
+      print(y_train.tolist(), y_test.tolist())
+    solution: |
+      import numpy as np
+
+
+      def split_last(X, y, n_test):
+          return X[:-n_test], X[-n_test:], y[:-n_test], y[-n_test:]
+
+
+      X = np.array([[1], [2], [3], [4], [5]])
+      y = np.array([10, 20, 30, 40, 50])
+      X_train, X_test, y_train, y_test = split_last(X, y, 2)
+      print(X_train.tolist(), X_test.tolist())
+      print(y_train.tolist(), y_test.tolist())
+    after: >-
+      A shuffled split would let the model peek at the future: a row from
+      Friday in training, and Thursday in the test.
+    checks:
+      - expr: "callable(ns.get('split_last')) and [p.tolist() for p in split_last(np.arange(8).reshape(-1, 1), np.arange(8), 3)] == [[[0], [1], [2], [3], [4]], [[5], [6], [7]], [0, 1, 2, 3, 4], [5, 6, 7]]"
+        pass: "It keeps the last rows for the test, X and y together"
+        hint: "The last n rows are `X[-n_test:]`; the others are `X[:-n_test]`. The same for y."
+      - expr: "lines == ['[[1], [2], [3]] [[4], [5]]', '[10, 20, 30] [40, 50]']"
+        pass: "It prints the two parts of X and of y"
+        hint: "Keep the prints."
+    hints:
+      - "A slice with a negative number counts from the end."
+      - "`X[-2:]` is the last two rows; `X[:-2]` is all the others."
+      - "`return X[:-n_test], X[-n_test:], y[:-n_test], y[-n_test:]`."

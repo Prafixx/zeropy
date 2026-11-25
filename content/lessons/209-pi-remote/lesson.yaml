@@ -436,3 +436,75 @@ review:
         why: "Speed is the same. Keys are about safety."
       - text: "Keys turn SSH off"
         why: "Keys replace the password. SSH stays on."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-by-address
+    type: terminal
+    objective: O1
+    title: Log in by the address
+    prompt: |
+      Some networks do not know names that end in `.local`. Then you need
+      the address of the Pi. The password is `sky-blue-42`.
+
+      1. Find the address of the Pi with `ping raspberrypi.local`.
+      2. Log in with `ssh` and that address instead of the name.
+      3. Run `hostname` on the Pi, then log out.
+    start:
+      at: pc
+      password: sky-blue-42
+      setup: ["systemctl enable --now ssh"]
+    checks:
+      - expr: "pc_ran('ping')"
+        pass: "You found the address with ping"
+        hint: "`ping raspberrypi.local` shows the address in brackets."
+      - expr: "logins >= 1 and any(h.lower().startswith('ssh ') and '192.168.1.42' in h for h in pc_history)"
+        pass: "You logged in with the address"
+        hint: "`ssh pi@192.168.1.42`, then `yes`, then the password."
+      - expr: "ran('hostname') and at == 'pc'"
+        pass: "You ran hostname on the Pi, and you are back on your PC"
+        hint: "`hostname`, then `exit`."
+    hints:
+      - "`ping raspberrypi.local`: the address is the number like `192.168.1.42`."
+      - "`ssh pi@` and the address. The first time, answer `yes`."
+      - "`ssh pi@192.168.1.42`, `yes`, `sky-blue-42`, `hostname`, `exit`."
+    solution: ["ping raspberrypi.local", "ssh pi@192.168.1.42", "yes", "sky-blue-42", "hostname", "exit"]
+    after: >-
+      The address can change when the router restarts; the name stays.
+      Use the name when it works, and the address when it does not.
+  - id: x-run-there
+    type: terminal
+    objective: O3
+    title: Send it and run it
+    prompt: |
+      On your PC you wrote `hello.py`. The password is `sky-blue-42`.
+
+      1. Copy it into the home folder on the Pi.
+      2. Run it on the Pi with one command from your PC:
+         `ssh pi@raspberrypi.local python3 hello.py`.
+    start:
+      at: pc
+      password: sky-blue-42
+      setup: ["systemctl enable --now ssh"]
+      pc:
+        known: [raspberrypi.local]
+        files:
+          hello.py: |
+            import socket
+
+            print("Hello from", socket.gethostname())
+    checks:
+      - expr: "isfile('hello.py') and 'Hello from' in read('hello.py')"
+        pass: "`hello.py` is on the Pi"
+        hint: "`scp hello.py pi@raspberrypi.local:`, with the colon at the end."
+      - expr: "any(h.lower().startswith('ssh ') and 'python3' in h for h in pc_history) and at == 'pc'"
+        pass: "You ran it on the Pi with one ssh command"
+        hint: "`ssh pi@raspberrypi.local python3 hello.py`, then the password."
+    hints:
+      - "Copy first: `scp hello.py pi@raspberrypi.local:`, then the password."
+      - "`ssh` with a command after the address runs only that command on the Pi."
+      - "`ssh pi@raspberrypi.local python3 hello.py`, then `sky-blue-42`."
+    solution: ["scp hello.py pi@raspberrypi.local:", "sky-blue-42", "ssh pi@raspberrypi.local python3 hello.py", "sky-blue-42"]
+    after: >-
+      Copy, then run over SSH: two commands, and your new code runs on the
+      Pi. You stay on your PC the whole time.

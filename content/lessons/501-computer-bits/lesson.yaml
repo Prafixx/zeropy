@@ -438,3 +438,100 @@ review:
         why: "That is a kilobyte."
       - text: "8"
         why: "8 is the bits in one byte."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-byte-text
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Always eight bits
+    prompt: |
+      **Replace `___`** so that `byte_text(n)` shows a number from 0 to 255
+      as exactly 8 bits, with zeros in front.
+
+      ```text
+      00000101
+      11111111
+      ```
+    starter: |
+      def byte_text(n):
+          return format(n, "___")
+
+
+      print(byte_text(5))
+      print(byte_text(255))
+    solution: |
+      def byte_text(n):
+          return format(n, "08b")
+
+
+      print(byte_text(5))
+      print(byte_text(255))
+    after: >-
+      `08b` means: binary (`b`), at least 8 places wide, filled with `0`.
+      The zeros in front do not change the value: `int("00000101", 2)` is 5.
+    checks:
+      - expr: "callable(ns.get('byte_text')) and all(byte_text(n) == format(n, '08b') for n in [0, 1, 5, 128, 200, 255])"
+        pass: "It shows every byte as 8 bits"
+        hint: "The format is `08b`: fill with 0, 8 places, binary."
+        misconceptions:
+          - when: "callable(ns.get('byte_text')) and raises(byte_text, 5) is None and byte_text(5) == '101'"
+            say: "`b` alone gives no zeros in front. Add the width: `08b`."
+      - expr: "lines == ['00000101', '11111111']"
+        pass: "It prints 00000101 and 11111111"
+        hint: "Keep the prints."
+    hints:
+      - "`b` in a format means binary."
+      - "A width in front, like `8`, makes it at least 8 places. A `0` before it fills with zeros."
+      - "`format(n, \"08b\")`."
+  - id: x-ones
+    type: exercise
+    fade: independent
+    objective: O1
+    title: Count the ones
+    prompt: |
+      **Write `ones(n)`**: how many bits of `n` are 1. Work it out with a
+      loop, `% 2` and `// 2`, as in the lesson, not with `bin()`.
+
+      ```text
+      3
+      8
+      0
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(ones(13))
+      print(ones(255))
+      print(ones(0))
+    solution: |
+      def ones(n):
+          count = 0
+          while n > 0:
+              count += n % 2
+              n = n // 2
+          return count
+
+
+      print(ones(13))
+      print(ones(255))
+      print(ones(0))
+    after: >-
+      13 is 1101 in binary: three ones. `n % 2` is the last bit, and `n // 2`
+      drops it, so the loop looks at each bit once.
+    checks:
+      - expr: "callable(ns.get('ones')) and all(ones(n) == bin(n).count('1') for n in [0, 1, 2, 7, 8, 13, 100, 255, 1024])"
+        pass: "It counts the 1 bits of any number"
+        hint: "In a loop: add `n % 2` to a counter, then `n = n // 2`, until `n` is 0."
+      - expr: "'bin(' not in src and 'format(' not in src"
+        pass: "It works the bits out by hand"
+        hint: "Use `% 2` for the last bit and `// 2` to drop it."
+      - expr: "lines == ['3', '8', '0']"
+        pass: "It prints 3, 8 and 0"
+        hint: "Keep the prints."
+    hints:
+      - "`n % 2` is the last bit: 0 or 1."
+      - "`n // 2` drops the last bit. Repeat while `n > 0`."
+      - "`count += n % 2`, then `n = n // 2`, in a `while n > 0:` loop."

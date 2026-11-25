@@ -577,3 +577,97 @@ review:
         why: "`-m` means: run this module as a program."
       - text: "`pip` alone cannot install packages"
         why: "It can, but it may be the pip of another Python."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-in-venv
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Am I in a venv?
+    prompt: |
+      In a venv, `sys.prefix` (the Python that runs now) is not the same as
+      `sys.base_prefix` (the Python it was made from). **Replace `___`**,
+      so that the program says if a venv is active.
+    starter: |
+      import sys
+
+      if sys.prefix != sys.___:
+          print("venv active")
+      else:
+          print("no venv")
+    solution: |
+      import sys
+
+      if sys.prefix != sys.base_prefix:
+          print("venv active")
+      else:
+          print("no venv")
+    after: >-
+      Here it says `no venv`: the Python of the browser has none. Run the
+      same file on your computer, with and without `activate`.
+    checks:
+      - expr: "err is None and lines == ['venv active' if sys.prefix != sys.base_prefix else 'no venv']"
+        pass: "It tells if a venv is active"
+        hint: "The other name is `base_prefix`."
+      - expr: "'base_prefix' in src"
+        pass: "It compares prefix and base_prefix"
+        hint: "`sys.prefix != sys.base_prefix`."
+    hints:
+      - "Two names: `prefix` and the one it was made from."
+      - "\"Base\" means the start."
+      - "`sys.base_prefix`."
+  - id: x-write-reqs
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Write requirements.txt
+    prompt: |
+      **Write `write_requirements(packages, name)`**: it writes each package
+      of the dictionary as `name==version`, one per line, sorted by name
+      without caring for capital letters (like `pip freeze`).
+
+      ```text
+      Pygments==2.19.2
+      requests==2.32.5
+      rich==14.2.0
+      ```
+    starter: |
+      from pathlib import Path
+
+      # Your function here.
+
+
+      installed = {"rich": "14.2.0", "requests": "2.32.5", "Pygments": "2.19.2"}
+      write_requirements(installed, "requirements.txt")
+      print(Path("requirements.txt").read_text(), end="")
+    solution: |
+      from pathlib import Path
+
+
+      def write_requirements(packages, name):
+          names = sorted(packages, key=str.lower)
+          text = "".join(f"{n}=={packages[n]}\n" for n in names)
+          Path(name).write_text(text)
+
+
+      installed = {"rich": "14.2.0", "requests": "2.32.5", "Pygments": "2.19.2"}
+      write_requirements(installed, "requirements.txt")
+      print(Path("requirements.txt").read_text(), end="")
+    after: >-
+      `pip freeze > requirements.txt` does the same with the packages of the
+      venv. With exact versions, the project installs the same everywhere.
+    checks:
+      - expr: "callable(ns.get('write_requirements')) and (write_requirements({'b': '1.0', 'A': '2.0', 'c': '0.1'}, 'r.txt') or True) and open('r.txt').read() == 'A==2.0\\nb==1.0\\nc==0.1\\n'"
+        pass: "It writes name==version lines, sorted without caring for capitals"
+        hint: "`sorted(packages, key=str.lower)`, then one `f\"{n}=={packages[n]}\\n\"` per name."
+        misconceptions:
+          - when: "callable(ns.get('write_requirements')) and raises(write_requirements, {'b': '1.0', 'A': '2.0'}, 'r2.txt') is None and open('r2.txt').read() == 'A==2.0\\nb==1.0'"
+            say: "The last line needs its `\\n` too."
+      - expr: "err is None and lines == ['Pygments==2.19.2', 'requests==2.32.5', 'rich==14.2.0']"
+        pass: "requirements.txt is right for the example"
+        hint: "Keep the call and the print at the end."
+    hints:
+      - "`sorted(packages, key=str.lower)` sorts the names, ignoring capitals."
+      - "Build the text with one line per name: `f\"{n}=={packages[n]}\\n\"`."
+      - "`Path(name).write_text(text)` writes the file."

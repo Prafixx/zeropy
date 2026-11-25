@@ -510,3 +510,108 @@ review:
         why: "It is the frame of all pages."
       - text: "A backup of the templates"
         why: "It is the shared layout."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-filter
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Shout the name
+    prompt: |
+      **Replace `___`** with the Jinja filter that writes the name in
+      capital letters. The page must show `<h1>Hello, ADA!</h1>`.
+    starter: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      PAGE = "<h1>Hello, {{ name|___ }}!</h1>"
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, name="ada")
+
+
+      app.run()
+    solution: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      PAGE = "<h1>Hello, {{ name|upper }}!</h1>"
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, name="ada")
+
+
+      app.run()
+    after: >-
+      A filter changes a value on its way into the page. The value itself,
+      `name` in Python, stays as it was.
+    checks:
+      - expr: "client is not None and client.get('/').get_data(as_text=True) == '<h1>Hello, ADA!</h1>'"
+        pass: "The page shows the name in capitals"
+        hint: "The filter is `upper`, like the method of a text."
+      - expr: "'ADA' not in src"
+        pass: "The template makes the capitals"
+        hint: "Keep `name=\"ada\"`, and let the filter do it."
+    hints:
+      - "A filter comes after `|` in `{{ }}`."
+      - "It has the same name as the text method for capitals."
+      - "`{{ name|upper }}`."
+  - id: x-prices
+    type: exercise
+    fade: independent
+    objective: O1
+    title: A price list
+    prompt: |
+      **Write the template `PAGE`**: one `<li>` for each product, like
+      `<li>tea: 2.5</li>`, and the word `cheap` after the price when it is
+      below 3: `<li>tea: 2.5 cheap</li>`.
+    starter: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      products = [{"name": "tea", "price": 2.5}, {"name": "cake", "price": 4.0}]
+      PAGE = ""   # Your template here.
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, products=products)
+
+
+      app.run()
+    solution: |
+      from flask import Flask, render_template_string
+
+      app = Flask(__name__)
+      products = [{"name": "tea", "price": 2.5}, {"name": "cake", "price": 4.0}]
+      PAGE = """<ul>
+      {% for p in products %}<li>{{ p.name }}: {{ p.price }}{% if p.price < 3 %} cheap{% endif %}</li>
+      {% endfor %}</ul>"""
+
+
+      @app.route("/")
+      def home():
+          return render_template_string(PAGE, products=products)
+
+
+      app.run()
+    after: >-
+      `{% for %}` repeats a piece of the page, and `{% if %}` shows a piece
+      only sometimes. The data stays in Python; the template decides how it
+      looks.
+    checks:
+      - expr: "client is not None and '<li>tea: 2.5 cheap</li>' in client.get('/').get_data(as_text=True) and '<li>cake: 4.0</li>' in client.get('/').get_data(as_text=True)"
+        pass: "Each product is a line, cheap ones are marked"
+        hint: "`{% for p in products %}<li>{{ p.name }}: {{ p.price }}...</li>{% endfor %}`."
+      - expr: "client is not None and (products.append({'name': 'jam', 'price': 1.0}) or True) and '<li>jam: 1.0 cheap</li>' in client.get('/').get_data(as_text=True)"
+        pass: "It works for any list of products"
+        hint: "Loop over `products` in the template; do not write the products by hand."
+    hints:
+      - "Loop with `{% for p in products %} ... {% endfor %}`."
+      - "Read a field with `{{ p.name }}` and `{{ p.price }}`."
+      - "Add `{% if p.price < 3 %} cheap{% endif %}` inside the `<li>`."

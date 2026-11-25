@@ -333,3 +333,65 @@ review:
         why: "This starts at the top, `/`, where there is no `documents`."
       - text: "`cd work`"
         why: "`work` is inside `documents`, not in `~`."
+
+# "Practice more": extra tasks, not shown in the lesson (practice page).
+extra:
+  - id: x-absolute
+    type: terminal
+    objective: O3
+    title: Jump with absolute paths
+    prompt: |
+      You are deep in the folder `music/old`.
+
+      1. Go to `/tmp` with an **absolute path**, and check with `pwd`.
+      2. Go to `documents/work` in your home folder in one step, with `~`.
+    start:
+      cwd: music/old
+      files:
+        music/old/song.mp3: ""
+        documents/work/plan.txt: "Step 1: buy the parts\n"
+    checks:
+      - expr: "any(h.startswith('cd /tmp') for h in history) and ran('pwd')"
+        pass: "You went to /tmp, and checked with pwd"
+        hint: "`cd /tmp`, then `pwd`."
+      - expr: "cwd == '~/documents/work' and any(h.startswith('cd ~') for h in history)"
+        pass: "You jumped to ~/documents/work in one step"
+        hint: "`cd ~/documents/work`: `~` is your home folder, from anywhere."
+    hints:
+      - "An absolute path starts with `/`: `cd /tmp`."
+      - "`~` means your home folder, `/home/pi`."
+      - "`cd /tmp`, `pwd`, then `cd ~/documents/work`."
+    solution: ["cd /tmp", "pwd", "cd ~/documents/work"]
+    after: >-
+      An absolute path works from any folder. A relative path is shorter,
+      but it depends on where you are.
+  - id: x-hidden
+    type: terminal
+    objective: O2
+    title: Files you do not see
+    prompt: |
+      Names that start with a dot are **hidden**: `ls` does not show them.
+
+      1. Look at your home folder with `ls`.
+      2. Show the hidden files too, with the option `-a`.
+      3. Show the details (size, date) with the option `-l`.
+    start:
+      files:
+        notes.txt: "Buy a power supply.\n"
+        .bashrc: "# settings of the shell\n"
+        .config/robot.ini: "speed = 3\n"
+    checks:
+      - expr: "any(h.split()[0] == 'ls' and any(w.startswith('-') and 'a' in w for w in h.split()[1:]) for h in history if h.split())"
+        pass: "You showed the hidden files with ls -a"
+        hint: "`ls -a`."
+      - expr: "any(h.split()[0] == 'ls' and any(w.startswith('-') and 'l' in w for w in h.split()[1:]) for h in history if h.split())"
+        pass: "You showed the details with ls -l"
+        hint: "`ls -l`. You can also join the options: `ls -la`."
+    hints:
+      - "Options come after the command, with a `-`."
+      - "`-a` means all: also the hidden files."
+      - "`ls -a`, then `ls -l` (or `ls -la` for both)."
+    solution: ["ls", "ls -a", "ls -l"]
+    after: >-
+      Programs keep their settings in hidden files and folders, like
+      `.bashrc` and `.config`. They are hidden so they do not fill your view.
