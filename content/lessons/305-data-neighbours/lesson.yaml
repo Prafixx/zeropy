@@ -1,8 +1,8 @@
 id: data-neighbours
 order: 305
 title: "Sort into classes: nearest neighbours"
-summary: A model that puts things into classes, by looking at the most similar examples. Measure it with accuracy, and see how it can fool you.
-minutes: 40
+summary: A model that puts things into classes, by looking at the most similar examples. Measure it with accuracy, choose its settings without fooling yourself, and put the features on the same scale.
+minutes: 55
 outcomes: []
 
 objectives:
@@ -13,7 +13,9 @@ objectives:
   - id: O3
     text: Measure a classifier with accuracy on a test set, and know when accuracy fools you
   - id: O4
-    text: Choose k, and see that k = 1 can learn the noise of the examples
+    text: Choose k on a validation set, keep the test set for one last check, and see that k = 1 can learn the noise
+  - id: O5
+    text: Put the features on the same scale - standardize them with the mean and spread of the training data
 
 steps:
   # 1. THEORY ----------------------------------------------------------------
@@ -238,7 +240,8 @@ steps:
       And **k**: with `k = 1`, one unusual example decides alone. The model
       learns the **noise** of the examples, not the rule: that is
       **overfitting**. A bigger `k` is calmer; a very big `k` ignores the
-      details. Compare a few values of `k` on the test set.
+      details. How to choose `k` without fooling yourself comes after the
+      next exercise.
     keys:
       - code: "(predicted == true).mean()"
         means: "Accuracy: the share that is right."
@@ -308,20 +311,104 @@ steps:
       - "Each training penguin is at distance 0 from itself."
       - "`for p in test` and `(predicted == test_labels).mean()`."
 
-  # 7. EXERCISE: independent -------------------------------------------------
+  # 7. THEORY ----------------------------------------------------------------
+  - id: three-sets
+    type: theory
+    objective: O4
+    title: Three sets, not two
+    body: |
+      Each time you try a `k` and look at the test score, you learn
+      something from the test set. If you choose `k` by its test score,
+      the test set has become part of the training. Its score is then too
+      good to trust.
+
+      So split the examples into **three** sets:
+
+      - **training**: the model learns from it (for this model: the
+        examples it compares with);
+      - **validation**: try the settings, like `k`, and choose the best;
+      - **test**: use it **once**, at the very end. Its score is your
+        honest estimate of how the model does on new data.
+
+      ```python
+      for k in [1, 3, 5]:
+          ...                        # accuracy on val: choose k here
+      ...                            # once, at the end: accuracy on test
+      ```
+
+      With very little data, every set is tiny, and one example moves a
+      score a lot. Then people use **cross-validation**: split the data
+      into, say, 5 parts, use each part once as the validation set, and
+      take the average of the 5 scores.
+    keys:
+      - code: "training set"
+        means: "The model learns from it."
+      - code: "validation set"
+        means: "Compare settings, like k, and choose."
+      - code: "test set"
+        means: "Once, at the end: the honest score."
+
+  # 7b. DRILL ---------------------------------------------------------------
+  - id: drill-sets
+    type: drill
+    objective: O4
+    title: Which set, for what?
+    items:
+      - kind: mcq
+        id: d-learn
+        objective: O4
+        prompt: "The model compares a new penguin with known examples. Which set holds those examples?"
+        options:
+          - text: "The training set"
+            correct: true
+            why: "The model learns from the training set: here, it is the examples it compares with."
+          - text: "The validation set"
+            why: "That set is for choosing settings like k, not for the model to learn from."
+          - text: "The test set"
+            why: "That set waits until the very end, unused."
+      - kind: mcq
+        id: d-try
+        objective: O4
+        prompt: "You want to try k = 1, 3, 5 and 7. Which accuracy do you compare?"
+        options:
+          - text: "On the validation set"
+            correct: true
+            why: "That is its job. The test set stays untouched."
+          - text: "On the test set, as it is new data"
+            why: "Then the test set helps to choose, and its score is too good to trust."
+          - text: "On the training set, as it is the biggest"
+            why: "With k = 1, every training penguin finds itself: always 100%."
+      - kind: mcq
+        id: d-report
+        objective: O4
+        prompt: "You chose k = 3. Which score do you report as the quality of the model?"
+        options:
+          - text: "The test score, measured once"
+            correct: true
+            why: "Nothing was chosen with it, so it is the honest estimate."
+          - text: "The best validation score"
+            why: "You chose k by that score, so it is a little too good."
+          - text: "The mean of all validation scores"
+            why: "That mixes in the k values you did not choose."
+
+  # 8. EXERCISE: independent -------------------------------------------------
   - id: ex-k
     type: exercise
     fade: independent
     objective: O4
     title: Which k is best?
     prompt: |
-      **Print the test accuracy for `k = 1`, `k = 3` and `k = 5`**, one line
-      each, rounded to 3 decimals:
+      **Choose `k` on the validation set.** Print the validation accuracy
+      for `k = 1`, `k = 3` and `k = 5`, rounded to 3 decimals. Then take the
+      best `k` (the first one with the highest accuracy), and print its
+      accuracy on the test set, once:
 
       ```text
       k=1: 0.857
       k=3: 1.0
       k=5: 1.0
+      best k: 3
+      test: 1.0
       ```
     given: |
       import numpy as np
@@ -332,10 +419,14 @@ steps:
                         [48.7, 210], [47.5, 217], [50.0, 220], [45.5, 215],
                         [49.9, 213]])
       labels = np.array(["Adelie"] * 7 + ["Gentoo"] * 6)
-      test = np.array([[37.8, 188], [46.8, 215], [41.1, 198], [48.4, 214],
-                       [45.1, 207], [42.0, 201], [46.3, 210]])
+      val = np.array([[37.8, 188], [46.8, 215], [41.1, 198], [48.4, 214],
+                      [45.1, 207], [42.0, 201], [46.3, 210]])
+      val_labels = np.array(["Adelie", "Gentoo", "Adelie", "Gentoo",
+                             "Gentoo", "Adelie", "Gentoo"])
+      test = np.array([[38.2, 185], [47.2, 214], [40.6, 199], [44.9, 208],
+                       [36.9, 189], [49.1, 219]])
       test_labels = np.array(["Adelie", "Gentoo", "Adelie", "Gentoo",
-                              "Gentoo", "Adelie", "Gentoo"])
+                              "Adelie", "Gentoo"])
 
 
       def classify(new, k):
@@ -343,32 +434,144 @@ steps:
           votes = Counter(labels[np.argsort(d)[:k]])
           return votes.most_common(1)[0][0]
     starter: |
-      # train, labels, test, test_labels and classify exist.
+      # train, labels, val, val_labels, test, test_labels and classify exist.
     solution: |
+      scores = {}
       for k in [1, 3, 5]:
-          predicted = np.array([classify(p, k) for p in test])
-          accuracy = (predicted == test_labels).mean()
-          print(f"k={k}: {round(accuracy, 3)}")
+          predicted = np.array([classify(p, k) for p in val])
+          scores[k] = (predicted == val_labels).mean()
+          print(f"k={k}: {round(scores[k], 3)}")
+      best = max(scores, key=scores.get)
+      print("best k:", best)
+      predicted = np.array([classify(p, best) for p in test])
+      print("test:", round((predicted == test_labels).mean(), 3))
     after: >-
-      Here k = 3 and k = 5 are both right on all 7 test penguins. With so
-      few test examples, one penguin changes the accuracy by 14%: a real
-      test set needs many more examples to trust such numbers.
+      The test score is the one to report, because nothing was chosen with
+      it. Here it is 1.0 on 6 penguins: with so few, that only means
+      "probably good". A real project needs hundreds of examples.
     checks:
-      - expr: "err is None and lines == ['k=1: 0.857', 'k=3: 1.0', 'k=5: 1.0']"
-        pass: "The test accuracy for k = 1, 3 and 5"
-        hint: "A loop over `[1, 3, 5]`, and inside it the accuracy on `test`."
+      - expr: "err is None and lines[:3] == ['k=1: 0.857', 'k=3: 1.0', 'k=5: 1.0']"
+        pass: "The validation accuracy for k = 1, 3 and 5"
+        hint: "A loop over `[1, 3, 5]`, and inside it the accuracy on `val` and `val_labels`."
         misconceptions:
-          - when: "err is None and lines == ['k=1: 1.0', 'k=3: 1.0', 'k=5: 1.0']"
-            say: "Measure on `test` and `test_labels`, not on the training penguins."
-      - expr: "syntax('For') + syntax('ListComp') >= 1"
-        pass: "It uses a loop"
-        hint: "`for k in [1, 3, 5]:`."
+          - when: "err is None and lines[:3] == ['k=1: 0.833', 'k=3: 1.0', 'k=5: 1.0']"
+            say: "These are test scores. Choose `k` on `val`: the test set is only for the very end."
+          - when: "err is None and lines[:3] == ['k=1: 1.0', 'k=3: 1.0', 'k=5: 1.0']"
+            say: "Measure on `val` and `val_labels`, not on the training penguins."
+      - expr: "err is None and lines[3:] == ['best k: 3', 'test: 1.0']"
+        pass: "It chooses k = 3, then measures the test set once"
+        hint: "`best = max(scores, key=scores.get)`, then the accuracy of `best` on `test`."
+      - expr: "src.count('in test') == 1 and 'val_labels' in src"
+        pass: "The test set is used only once"
+        hint: "Classify `test` only one time, with the best `k`, after the loop."
     hints:
-      - "`for k in [1, 3, 5]:`."
-      - "Inside: `predicted = np.array([classify(p, k) for p in test])`."
-      - "Then `accuracy = (predicted == test_labels).mean()` and `print(f\"k={k}: {round(accuracy, 3)}\")`."
+      - "Keep the scores in a dict: `scores[k] = (predicted == val_labels).mean()`."
+      - "`max(scores, key=scores.get)` gives the key with the highest score; on a tie, the first one."
+      - "After the loop: `predicted = np.array([classify(p, best) for p in test])`, then print the test accuracy."
 
-  # 8. QUIZ -----------------------------------------------------------------
+  # 9. THEORY ----------------------------------------------------------------
+  - id: scale
+    type: theory
+    objective: O5
+    title: The same scale for every feature
+    body: |
+      Look at the numbers: bills go from about 37 to 50 mm, flippers from
+      181 to 220 mm. The distance adds up the differences as they are, so
+      10 mm of flipper counts as much as 10 mm of bill. But 10 mm is a big
+      step for a bill and a small one for a flipper. So the flipper decides
+      almost alone.
+
+      **Standardize** each feature: subtract its mean, then divide by its
+      **standard deviation** (`std`: how far the values spread around the
+      mean). After that, every feature has a mean of 0 and a spread of 1:
+
+      ```python
+      mean = train.mean(axis=0)      # one mean per column
+      std = train.std(axis=0)        # one spread per column
+      train_s = (train - mean) / std
+      new_s = (new - mean) / std     # the SAME mean and std
+      ```
+
+      Compute `mean` and `std` on the **training set only**, and use them
+      for every new, validation and test example. Taken from the test set
+      too, they would **leak** it into the model: information from the test
+      set would get into the model, and its score would be too good.
+    keys:
+      - code: "train.mean(axis=0)"
+        means: "The mean of each column (each feature)."
+      - code: "(x - mean) / std"
+        means: "Standardize: mean 0, spread 1."
+      - code: "mean and std of train"
+        means: "Use them for new and test data too."
+
+  # 10. EXERCISE: completion -------------------------------------------------
+  - id: ex-scale
+    type: exercise
+    fade: completion
+    objective: O5
+    title: Neighbours on the same scale
+    prompt: |
+      A new penguin has a bill of 41.5 mm and a flipper of 206 mm. Without
+      scaling, its 3 nearest neighbours vote Gentoo. **Replace the three
+      `___`** to standardize with the training data, and see who the
+      neighbours are then:
+
+      ```text
+      raw: ['Adelie' 'Gentoo' 'Gentoo']
+      scaled: ['Adelie' 'Adelie' 'Gentoo']
+      ```
+    given: |
+      import numpy as np
+
+      train = np.array([[39.1, 181], [38.6, 190], [40.3, 195], [36.7, 193],
+                        [39.3, 190], [38.9, 184], [46.0, 209], [46.1, 211],
+                        [48.7, 210], [47.5, 217], [50.0, 220], [45.5, 215],
+                        [49.9, 213]])
+      labels = np.array(["Adelie"] * 7 + ["Gentoo"] * 6)
+
+
+      def nearest3(X, point):
+          d = np.sqrt(((X - point) ** 2).sum(axis=1))
+          return labels[np.argsort(d)[:3]]
+    starter: |
+      # train, labels and nearest3 exist.
+      new = np.array([41.5, 206])
+      print("raw:", nearest3(train, new))
+
+      mean = train.___(axis=0)
+      std = train.___(axis=0)
+      train_s = (train - mean) / std
+      new_s = (new - ___) / std
+      print("scaled:", nearest3(train_s, new_s))
+    solution: |
+      # train, labels and nearest3 exist.
+      new = np.array([41.5, 206])
+      print("raw:", nearest3(train, new))
+
+      mean = train.mean(axis=0)
+      std = train.std(axis=0)
+      train_s = (train - mean) / std
+      new_s = (new - mean) / std
+      print("scaled:", nearest3(train_s, new_s))
+    after: >-
+      On the same scale, the bill counts again, and 41.5 mm is an Adelie
+      bill. The model did not change; only the units of the distance did.
+    checks:
+      - expr: "err is None and lines == [\"raw: ['Adelie' 'Gentoo' 'Gentoo']\", \"scaled: ['Adelie' 'Adelie' 'Gentoo']\"]"
+        pass: "On the same scale, the neighbours vote Adelie"
+        hint: "`train.mean(axis=0)` and `train.std(axis=0)`, and the new penguin gets the same `mean`."
+        misconceptions:
+          - when: "err == 'NameError'"
+            say: "Each `___` needs a name: `mean`, `std` (the methods of the array), and the variable `mean`."
+      - expr: "'train.mean(axis=0)' in src.replace(' ', '') and 'train.std(axis=0)' in src.replace(' ', '') and '(new-mean)/std' in src.replace(' ', '')"
+        pass: "The mean and std come from the training data, and the new penguin uses them too"
+        hint: "Scale the new penguin with the training `mean` and `std`, never with its own."
+    hints:
+      - "numpy arrays have the methods `.mean()` and `.std()`."
+      - "`axis=0` gives one value per column: one for the bill, one for the flipper."
+      - "`train.mean(axis=0)`, `train.std(axis=0)`, and `(new - mean) / std`."
+
+  # 11. QUIZ ----------------------------------------------------------------
   - id: quiz
     type: quiz
     objective: O3
@@ -412,6 +615,18 @@ steps:
           - answer: "1.0\n[1. 2.]"
             say: "`argmin` and `argsort` give places, not values."
       - kind: mcq
+        id: q-choose
+        objective: O4
+        prompt: "You tried 20 values of k and kept the one with the best **test** score: 96%. What is wrong?"
+        options:
+          - text: "The test set helped to choose, so 96% is too good to trust"
+            correct: true
+            why: "Choose on a validation set, then measure the test set once. That score is honest."
+          - text: "Nothing: the test set was not used for training"
+            why: "Choosing k with it is a kind of training. Its score no longer shows new data."
+          - text: "20 values are too many: only k = 3 is allowed"
+            why: "Any number of tries is fine, on the validation set."
+      - kind: mcq
         id: q-k1
         objective: O4
         prompt: "Why can `k = 1` be a bad choice?"
@@ -424,7 +639,7 @@ steps:
           - text: "It cannot classify at all"
             why: "It can: it takes the class of the one nearest example."
 
-  # 9. REVIEW ---------------------------------------------------------------
+  # 12. REVIEW --------------------------------------------------------------
   - id: review
     type: review
     objective: O3
@@ -492,6 +707,30 @@ review:
         why: "That is the other problem: it misses the rule."
       - text: "The data has too many rows"
         why: "More data usually helps."
+  - kind: mcq
+    id: r-validation
+    objective: O4
+    prompt: "Which set do you use to choose k?"
+    options:
+      - text: "The validation set"
+        correct: true
+        why: "The test set stays unused until the end, so its score stays honest."
+      - text: "The test set"
+        why: "Then the test set helped to choose, and its score is too good."
+      - text: "The training set"
+        why: "With k = 1, every training example finds itself: always 100%."
+  - kind: mcq
+    id: r-scale
+    objective: O5
+    prompt: "Where do the mean and the std for standardizing come from?"
+    options:
+      - text: "From the training set, and they are used for all other data too"
+        correct: true
+        why: "The model may only learn from the training data. New and test data get the same mean and std."
+      - text: "From the test set, because the model is measured there"
+        why: "Then the test set leaks into the model, and its score is too good."
+      - text: "From each set on its own, so every set has mean 0"
+        why: "Then the same penguin gets different numbers in different sets."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

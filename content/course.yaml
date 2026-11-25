@@ -151,9 +151,9 @@ paths:
           - { id: pi-setup, title: Set up a real Pi }
           - { id: pi-remote, title: A Pi without a screen }
   - id: data
-    title: Data and AI basics
+    title: Data and machine learning
     short: Data
-    goal: Describe data, draw charts, and build your first AI models, with numpy.
+    goal: Describe data, draw charts, and build your first machine learning models, with numpy.
     needs: [csv-and-comprehensions]
     modules:
       - title: Data

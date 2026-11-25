@@ -1,4 +1,4 @@
-# A pretend matplotlib for the Data and AI lessons. Loaded after harness.py.
+# A pretend matplotlib for the Data and machine learning lessons. Loaded after harness.py.
 # `import matplotlib.pyplot as plt` gives the common functions with the names,
 # arguments and default colours of the real library (matplotlib.org): plot,
 # scatter, bar, hist, title, xlabel, ylabel, legend, grid, xlim, ylim, axhline,
