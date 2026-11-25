@@ -16,6 +16,8 @@ objectives:
     text: Keep a program alive when the request fails - no connection, no answer in time, an error code
   - id: O5
     text: Use a web API in a program on your own computer
+  - id: O6
+    text: Keep an API key out of the code, in an environment variable
 
 steps:
   # 1. THEORY ----------------------------------------------------------------
@@ -479,6 +481,110 @@ steps:
       - "In `except requests.RequestException:`, print the message and `return None`."
       - "After the `try`: if `response.status_code != 200`, print the code and `return None`. Else `return response.json()`."
 
+
+  # Keys ---------------------------------------------------------------------
+  - id: keys
+    type: theory
+    objective: O6
+    title: Keep the key out of the code
+    body: |
+      Many web APIs need a **key**: a secret text that says who is asking,
+      and who pays. **Never write a key in your code.** Code gets shared,
+      copied, pushed to GitHub and pasted into an AI assistant, and the key
+      goes with it.
+
+      Keep it in an **environment variable** instead: a setting of the
+      terminal that your program reads when it runs.
+
+      ```python
+      import os
+
+      key = os.environ.get("WEATHER_KEY")
+      if not key:
+          raise RuntimeError("Set WEATHER_KEY first.")
+      params = {"q": "Lima", "appid": key}
+      ```
+
+      Set it in the terminal, before you run the program:
+
+      - Windows (PowerShell): `$env:WEATHER_KEY = "your-key"`
+      - macOS and Linux: `export WEATHER_KEY=your-key`
+
+      Many projects keep their keys in a file `.env` that is listed in
+      `.gitignore`, so git never sees it.
+    keys:
+      - code: "os.environ.get(\"NAME\")"
+        means: "The value of the setting, or None when it is not set."
+      - code: "$env:NAME = \"...\""
+        means: "Set it for this PowerShell window."
+      - code: ".env + .gitignore"
+        means: "Keys in a file that git never sees."
+
+  - id: ex-key
+    type: exercise
+    fade: debug
+    objective: O6
+    title: A key in the code
+    prompt: |
+      This program has the secret key of a weather service in its code.
+
+      **Change `api_key()`**: it reads `WEATHER_KEY` from the environment,
+      and raises a `RuntimeError` with a clear message when it is not set.
+      Then delete the key from the code.
+
+      The page sets `WEATHER_KEY` for this run, like your terminal would.
+      It must print:
+
+      ```text
+      key found: True
+      ```
+    starter: |
+      import os
+
+      KEY = "sk_live_51HcX9fQ2"     # the key of the weather service
+
+
+      def api_key():
+          return KEY
+
+
+      print("key found:", len(api_key()) > 0)
+    solution: |
+      import os
+
+
+      def api_key():
+          key = os.environ.get("WEATHER_KEY")
+          if not key:
+              raise RuntimeError("Set the environment variable WEATHER_KEY first.")
+          return key
+
+
+      print("key found:", len(api_key()) > 0)
+    after: >-
+      Now the code can be shared, and each person sets their own key. If a
+      key ever was in code that you pushed, think of it as public: make a
+      new key at the service.
+    cases:
+      - setup: "import os\nos.environ['WEATHER_KEY'] = 'demo-key'"
+    checks:
+      - expr: "callable(ns.get('api_key')) and (__import__('os').environ.__setitem__('WEATHER_KEY', 'k-1') or api_key()) == 'k-1'"
+        pass: "api_key() reads WEATHER_KEY from the environment"
+        hint: "`os.environ.get(\"WEATHER_KEY\")` gives the value of the setting."
+      - expr: "callable(ns.get('api_key')) and (__import__('os').environ.pop('WEATHER_KEY', None) and False or raises(api_key)) == 'RuntimeError'"
+        pass: "Without WEATHER_KEY, it raises a RuntimeError"
+        hint: "`if not key: raise RuntimeError(\"...\")`."
+      - expr: "'sk_live' not in src"
+        pass: "The key is not in the code any more"
+        hint: "Delete the line with `KEY = ...`."
+      - expr: "lines == ['key found: True']"
+        pass: "It prints key found: True"
+        hint: "Keep the print."
+    hints:
+      - "`os` is already imported: `os.environ.get(\"WEATHER_KEY\")`."
+      - "`.get` gives `None` when the setting is missing. Raise the error then."
+      - "`key = os.environ.get(\"WEATHER_KEY\")`, `if not key: raise RuntimeError(...)`, `return key`. Delete `KEY = ...`."
+
   # 8. LOCAL -----------------------------------------------------------------
   - id: check-where
     type: local
@@ -709,6 +815,19 @@ review:
         why: "requests has no timeout of its own."
       - text: "It raises `HTTPError`"
         why: "No answer means no status code."
+
+  - kind: mcq
+    id: r-key
+    objective: O6
+    prompt: "Where does the key of a web API belong?"
+    options:
+      - text: "In an environment variable, read with `os.environ.get`"
+        correct: true
+        why: "The code can be shared, and the key stays on your computer."
+      - text: "In a variable at the top of the code"
+        why: "Then everyone who sees the code sees the key: on GitHub, in a chat, in an AI question."
+      - text: "In a comment, so Python ignores it"
+        why: "A comment is part of the code too, and it is shared with it."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

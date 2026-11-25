@@ -11,7 +11,7 @@ objectives:
   - id: O2
     text: Predict what you see through a second name after a list changes
   - id: O3
-    text: Make a real copy of a list with copy()
+    text: Make a real copy of a list with copy(), and of a list of lists with deepcopy()
   - id: O4
     text: Tell a change in place from a new object, and use is to ask which one it is
 
@@ -371,6 +371,64 @@ steps:
       - "A list has an instruction that makes a new list with the same values."
       - "Write `backup = scores.copy()`."
 
+
+  # A list inside a list -----------------------------------------------------
+  - id: nested
+    type: theory
+    objective: O3
+    title: A list inside a list
+    body: |
+      `copy()` makes a new **outer** list. When that list holds other lists,
+      the copy holds the **same** inner lists:
+
+      ```python
+      grid = [[1, 2], [3, 4]]
+      backup = grid.copy()
+      grid[0].append(99)
+      print(backup)       # [[1, 2, 99], [3, 4]]
+      ```
+
+      This is a **shallow** copy: one level deep. To copy all the way down,
+      use `deepcopy` from the module `copy`:
+
+      ```python
+      import copy
+      backup = copy.deepcopy(grid)
+      ```
+
+      Use `deepcopy` when a list (or a dict) holds lists or dicts that may
+      change. For a list of numbers or texts, `copy()` is enough.
+    keys:
+      - code: "a_list.copy()"
+        means: "A new outer list. The lists inside are shared."
+      - code: "copy.deepcopy(x)"
+        means: "A copy of everything, all the way down."
+
+  - id: predict-deep
+    type: predict
+    objective: O3
+    title: Shallow or deep?
+    item:
+      kind: predict
+      id: p-deep
+      prompt: "This program prints one line. **Type it** before you check."
+      code: |
+        import copy
+        plan = [["tea"], ["bread"]]
+        a = plan.copy()
+        b = copy.deepcopy(plan)
+        plan[0].append("milk")
+        print(a[0], b[0])
+      explain: >-
+        `a` is a new outer list, but `a[0]` is the same inner list as
+        `plan[0]`, so it shows the milk too. `b` got its own inner lists, so
+        `b[0]` is still `['tea']`.
+      misconceptions:
+        - answer: "['tea'] ['tea']"
+          say: "`copy()` copies only the outer list. `a[0]` and `plan[0]` are one and the same inner list."
+        - answer: "['tea', 'milk'] ['tea', 'milk']"
+          say: "`deepcopy` also copied the inner lists, so `b[0]` did not change."
+
   # 9. EXERCISE: debug -------------------------------------------------------
   - id: ex-teams
     type: exercise
@@ -656,6 +714,19 @@ review:
       - text: "It is a syntax error"
         why: "It runs. The problem only shows when you change a value."
 
+  - kind: mcq
+    id: r-deep
+    objective: O3
+    prompt: "`teams` is a list of lists. Which line makes a copy that does not change when an inner list of `teams` changes?"
+    options:
+      - text: "`saved = copy.deepcopy(teams)`"
+        correct: true
+        why: "deepcopy copies the inner lists too."
+      - text: "`saved = teams.copy()`"
+        why: "A shallow copy: a new outer list, but the same inner lists."
+      - text: "`saved = teams`"
+        why: "That is a second name for the same list, not a copy at all."
+
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:
   - id: x-saved
@@ -742,3 +813,50 @@ extra:
       - "A second name: only `=`."
       - "A new list with the same values: `copy()`."
       - "`b = a` and `c = a.copy()`."
+
+  - id: x-deep
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Save the board
+    prompt: |
+      A board is a list of rows. **Replace `___`** so that `start` keeps the
+      board as it was, also after a row changes.
+
+      ```text
+      [['.', '.'], ['.', '.']]
+      [['X', '.'], ['.', '.']]
+      ```
+    starter: |
+      import copy
+
+      board = [[".", "."], [".", "."]]
+      start = ___
+      board[0][0] = "X"
+      print(start)
+      print(board)
+    solution: |
+      import copy
+
+      board = [[".", "."], [".", "."]]
+      start = copy.deepcopy(board)
+      board[0][0] = "X"
+      print(start)
+      print(board)
+    after: >-
+      `board.copy()` would not be enough: the rows are lists, and the copy
+      would share them.
+    checks:
+      - expr: "err is None and start == [['.', '.'], ['.', '.']] and board[0][0] == 'X'"
+        pass: "start keeps the board as it was"
+        hint: "The rows are lists inside a list: copy them too, with `copy.deepcopy(board)`."
+        misconceptions:
+          - when: "err is None and isinstance(ns.get('start'), list) and start[0][0] == 'X'"
+            say: "The copy shares its rows with `board`. A shallow copy is not enough here: use `copy.deepcopy`."
+      - expr: "isinstance(ns.get('start'), list) and ns.get('board') is not None and start[0] is not board[0]"
+        pass: "start has its own rows"
+        hint: "`copy.deepcopy(board)` makes new rows."
+    hints:
+      - "`board.copy()` copies only the outer list."
+      - "The module `copy` is already imported."
+      - "`start = copy.deepcopy(board)`."

@@ -14,6 +14,8 @@ objectives:
     text: Use _name for "inside use" and know what __name (name mangling) does and does not protect
   - id: O4
     text: Follow the method resolution order (MRO) of a class with more than one parent
+  - id: O5
+    text: Give a fixed set of values names with Enum
 
 steps:
   # 1. THEORY ----------------------------------------------------------------
@@ -448,6 +450,113 @@ steps:
       - "`for name, value in obj.__dict__.items():` and `if not name.startswith(\"_\"):`."
       - "Put each kept pair into a new dictionary, and give it back."
 
+
+  # Enum ---------------------------------------------------------------------
+  - id: enum
+    type: theory
+    objective: O5
+    title: A fixed set of values
+    body: |
+      Some values come from a small, fixed set: the sizes of a cup, the days
+      of the week, the colours of a traffic light. An **Enum** gives each
+      one a name:
+
+      ```python
+      from enum import Enum
+
+
+      class Size(Enum):
+          SMALL = 1
+          MEDIUM = 2
+          LARGE = 3
+
+
+      cup = Size.MEDIUM
+      print(cup)                   # Size.MEDIUM
+      print(cup.name, cup.value)   # MEDIUM 2
+      print(Size["LARGE"])         # Size.LARGE: find it by name
+      print(Size(1))               # Size.SMALL: find it by value
+      for size in Size:
+          print(size.name)
+      ```
+
+      - The members are fixed: `Size` has exactly three.
+      - A typo like `Size.MEDUIM` raises an `AttributeError` at once. With
+        texts like `"meduim"`, the same typo would hide until much later.
+      - It works well with `match`: `case Size.SMALL:`.
+    keys:
+      - code: "class Size(Enum):"
+        means: "A fixed set of named values."
+      - code: "member.name, member.value"
+        means: "Its name as a text, and its value."
+      - code: "Size[\"LARGE\"], Size(3)"
+        means: "Find a member by name, or by value."
+
+  - id: ex-enum
+    type: exercise
+    fade: completion
+    objective: O5
+    title: Advice of a traffic light
+    prompt: |
+      **Replace the two `___`**. `advice` finds the member of `Light` by its
+      name, and gives back its name in small letters and its value.
+
+      ```text
+      red: stop
+      green: go
+      ```
+    starter: |
+      from enum import Enum
+
+
+      class Light(Enum):
+          RED = "stop"
+          YELLOW = "wait"
+          GREEN = "go"
+
+
+      def advice(colour):
+          light = Light[___]
+          return f"{light.name.lower()}: {light.___}"
+
+
+      print(advice("RED"))
+      print(advice("GREEN"))
+    solution: |
+      from enum import Enum
+
+
+      class Light(Enum):
+          RED = "stop"
+          YELLOW = "wait"
+          GREEN = "go"
+
+
+      def advice(colour):
+          light = Light[colour]
+          return f"{light.name.lower()}: {light.value}"
+
+
+      print(advice("RED"))
+      print(advice("GREEN"))
+    after: >-
+      `Light["BLUE"]` raises a `KeyError` straight away: a colour that is not
+      in the set cannot slip through.
+    checks:
+      - expr: "callable(ns.get('advice')) and advice('YELLOW') == 'yellow: wait' and advice('RED') == 'red: stop'"
+        pass: "It gives the advice of every light"
+        hint: "`Light[colour]` finds the member by its name; `.value` is its text."
+      - expr: "callable(ns.get('advice')) and raises(advice, 'BLUE') == 'KeyError'"
+        pass: "A colour that is not in the Enum raises a KeyError"
+        hint: "Find the member with `Light[colour]`, not with a dict of your own."
+      - expr: "lines == ['red: stop', 'green: go']"
+        pass: "It prints red: stop and green: go"
+        hint: "Keep the prints."
+    hints:
+      - "`Light[\"RED\"]` is the member `Light.RED`."
+      - "Each member has `.name` and `.value`."
+      - "`Light[colour]` and `light.value`."
+
   # 10. QUIZ ----------------------------------------------------------------
   - id: quiz
     type: quiz
@@ -638,6 +747,19 @@ review:
       a.sound = "grr"
       print(a.sound, b.sound, Dog.sound)
     explain: "`a.sound = ...` makes a new instance attribute on `a`. It hides the class attribute for `a` only; `b` and the class still have `woof`."
+
+  - kind: mcq
+    id: r-enum
+    objective: O5
+    prompt: "`class Size(Enum)` has SMALL, MEDIUM and LARGE. What happens with the typo `Size.MEDUIM`?"
+    options:
+      - text: "An AttributeError, at once"
+        correct: true
+        why: "The set is fixed, so a wrong name fails where it is written. That is the point of an Enum."
+      - text: "Python makes a new member MEDUIM"
+        why: "The members are fixed when the class is made."
+      - text: "It gives None"
+        why: "There is no such member, so Python raises an error."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

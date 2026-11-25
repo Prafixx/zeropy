@@ -9,7 +9,7 @@ objectives:
   - id: O1
     text: Load a module with import or from ... import, and use its names
   - id: O2
-    text: Use random, math and datetime for common jobs
+    text: Use random, math, datetime and collections for common jobs
   - id: O3
     text: Find the module for a job in the library index, and learn it from its page
   - id: O4
@@ -194,6 +194,71 @@ steps:
         means: "The same values in every run: for tests."
       - code: "(later - earlier).days"
         means: "The number of days between two dates."
+
+
+  # Collections --------------------------------------------------------------
+  - id: collections
+    type: theory
+    objective: O2
+    title: Handy containers
+    body: |
+      The module `collections` has containers for jobs that come back all
+      the time:
+
+      ```python
+      from collections import Counter, defaultdict, deque
+
+      votes = ["tea", "milk", "tea", "juice", "tea"]
+      counts = Counter(votes)
+      print(counts["tea"])            # 3
+      print(counts.most_common(1))    # [('tea', 3)]
+
+      by_letter = defaultdict(list)
+      for word in ["apple", "avocado", "banana"]:
+          by_letter[word[0]].append(word)
+      print(dict(by_letter))  # {'a': ['apple', 'avocado'], 'b': ['banana']}
+
+      last = deque(maxlen=3)
+      for n in range(6):
+          last.append(n)
+      print(list(last))               # [3, 4, 5]
+      ```
+
+      - `Counter` counts: a dict of counts, with `most_common(n)`. A missing
+        key counts 0, so no error.
+      - `defaultdict(list)` makes a missing key start as an empty list. With
+        `defaultdict(int)` it starts at 0. No more `if key not in d:`.
+      - `deque` is a list that is fast at both ends: `appendleft`,
+        `popleft`. With `maxlen`, it keeps only the newest values.
+    keys:
+      - code: "Counter(items).most_common(3)"
+        means: "The three most common values, with their counts."
+      - code: "defaultdict(list)"
+        means: "A missing key starts as an empty list."
+      - code: "deque(maxlen=3)"
+        means: "Keeps only the last three values."
+
+  - id: predict-counter
+    type: predict
+    objective: O2
+    title: Count the letters
+    item:
+      kind: predict
+      id: p-counter
+      prompt: "This program prints one line. **Type it** before you check."
+      code: |
+        from collections import Counter
+        letters = Counter("banana")
+        print(letters["a"], letters["z"], letters.most_common(1))
+      explain: >-
+        A text is a row of letters, so `Counter` counts each one: three a,
+        two n, one b. A letter that is not there counts 0 instead of a
+        KeyError. `most_common(1)` is a list with the one top pair.
+      misconceptions:
+        - answer: "3 KeyError [('a', 3)]"
+          say: "A Counter gives 0 for a missing key. It does not raise a KeyError."
+        - answer: "3 0 ('a', 3)"
+          say: "`most_common(1)` gives a list of pairs, even for one pair."
 
   # 5. DRILL -----------------------------------------------------------------
   - id: drill
@@ -666,6 +731,19 @@ review:
       - text: "To start the values at 1"
         why: "1 is the seed; the values can be anything."
 
+  - kind: mcq
+    id: r-defaultdict
+    objective: O2
+    prompt: "`groups = defaultdict(list)`. What does `groups[\"new\"].append(1)` do when `\"new\"` is not a key yet?"
+    options:
+      - text: "It makes the key with an empty list, then appends 1"
+        correct: true
+        why: "That is the job of defaultdict: a missing key starts with list()."
+      - text: "It raises a KeyError"
+        why: "A plain dict would. A defaultdict makes the missing value first."
+      - text: "It does nothing"
+        why: "The key is made, and the list gets the 1."
+
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:
   - id: x-hypot
@@ -752,3 +830,49 @@ extra:
       - "Subtract the two dates."
       - "The result has `.days`."
       - "The weekday name: `event.strftime(\"%A\")`."
+
+  - id: x-group
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Words by length
+    prompt: |
+      **Replace the two `___`** so that `by_length` groups the words by
+      their length, without any `if`.
+
+      ```text
+      {3: ['sun', 'sky'], 4: ['moon', 'star']}
+      ```
+    starter: |
+      from collections import defaultdict
+
+      words = ["sun", "moon", "sky", "star"]
+      by_length = defaultdict(___)
+      for word in words:
+          by_length[___].append(word)
+      print(dict(by_length))
+    solution: |
+      from collections import defaultdict
+
+      words = ["sun", "moon", "sky", "star"]
+      by_length = defaultdict(list)
+      for word in words:
+          by_length[len(word)].append(word)
+      print(dict(by_length))
+    after: >-
+      Without defaultdict, each round would need `if key not in by_length:
+      by_length[key] = []` first.
+    checks:
+      - expr: "err is None and dict(by_length) == {3: ['sun', 'sky'], 4: ['moon', 'star']}"
+        pass: "The words are grouped by their length"
+        hint: "Each value must start as an empty list: `defaultdict(list)`. The key is `len(word)`."
+      - expr: "lines == [\"{3: ['sun', 'sky'], 4: ['moon', 'star']}\"]"
+        pass: "It prints the groups"
+        hint: "Keep the print."
+      - expr: "' if ' not in src"
+        pass: "No if is needed"
+        hint: "defaultdict makes the missing keys for you."
+    hints:
+      - "What should a new key start with? An empty list."
+      - "The key of a word is its length."
+      - "`defaultdict(list)` and `by_length[len(word)]`."
