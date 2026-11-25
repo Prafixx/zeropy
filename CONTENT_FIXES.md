@@ -20,7 +20,22 @@ the audit's in brackets where it differs.
   question does not have exactly one correct option.
 
 Status: CONFIRMED, WRONG, ALREADY FIXED, NEEDS DECISION, NEW (found in
-Phase 0, not in the audit). Nothing below is fixed yet unless it says so.
+Phase 0, not in the audit), and **FIXED (phase N)** once done.
+
+## Decisions (owner, 2026-11-26)
+1. Data path: rename to **"Data and machine learning"** (done, phase 1).
+2. Optional lessons: **do not build them**. Items proposed as "extra"
+   stay in the core (walrus, L17, L24, L25, L33, L37-L39, parts of L54-L55).
+3-8. Left to me, with the best quality for the cost:
+   - Debugger L59: move right after L42 (VS Code is installed there), and
+     remove 24.1's reference to it (phase 3).
+   - Pi 6 motor board: a **DRV8833** board with jumpers: fits
+     `Motor(forward, backward)` with no enable pin (done, phase 1).
+   - References by lesson id, with a build check: yes, small (phase 2).
+   - L46 "Working with others": move after L58, so CI comes after pytest
+     (phase 3).
+   - Pi 8.1: add the Zero 2 W (phase 2, specs from raspberrypi.com).
+   - CSRF: decide in phase 5, after checking Flask-WTF in Pyodide.
 
 ## App facts that matter for the fixes
 
@@ -63,15 +78,15 @@ Phase 0, not in the audit). Nothing below is fixed yet unless it says so.
 
 | # | Item | Status | Evidence |
 |---|---|---|---|
-| 1.1 | Pi 1.2 rule 2 vs Pi 3.1 button to GND | CONFIRMED | Pi 1.2: "Never connect a pin straight to another pin or to ground". Pi 3.1: button between GPIO and GND, "No resistor is needed". |
-| 1.2 | Pi 4.4 HC-SR04 divider | CONFIRMED | "it needs two resistors (a voltage divider)", no values, no VCC. gpiozero docs (api_input.html, DistanceSensor): 330 Ω from ECHO, 470 Ω from sensor GND, joined at a GPIO; VCC to 5V; TRIG to a GPIO; HC-SR04P needs no divider. |
-| 1.3 | Pi 5.6 MCP3008 chip wiring | CONFIRMED | Only "talks over SPI, on GPIO 8, 9, 10 and 11" and the knob legs. Pinout to add (MCP3008 datasheet; Pi SPI0): 16 VDD and 15 VREF to 3V3, 14 AGND and 9 DGND to GND, 13 CLK to GPIO11 (SCLK), 12 DOUT to GPIO9 (MISO), 11 DIN to GPIO10 (MOSI), 10 CS/SHDN to GPIO8 (CE0); pins 1-8 are CH0-CH7; notch = pin 1 side. Datasheet to be re-read when writing. |
-| 1.4 | Pi 6 ground and board | CONFIRMED | Pi 6.1: "Put the board on the Pi" (implies a HAT), no ground, no named board, no motor power wiring. NEEDS DECISION: which board. |
-| 1.5 | Pi 4.1 active buzzer | CONFIRMED | "A buzzer beeps while its pin is on." gpiozero `Buzzer` is on/off only ("not capable of playing a variety of tones (see TonalBuzzer)"), so the part must be an **active** buzzer. |
-| 1.6 | Pi 5.1 capacitor polarity | CONFIRMED | "a small capacitor (1 µF)", legs wired without polarity. 1 µF is usually electrolytic. |
-| 2 | Linux services as root | CONFIRMED | Linux 6.7, 6.8 and also **6.9** have `[Service]` with `ExecStart=` only; no `User=` anywhere (find.py "User=": 0). |
-| 3.1 | Data 5 chooses k on the test set | CONFIRMED | Data 5.5 "Compare a few values of k on the test set"; Data 5.7 prints test accuracy for k = 1, 3, 5. |
-| 3.2 | Data 5 no feature scaling | CONFIRMED | Data 5.7 distance `np.sqrt(((train - new) ** 2).sum(axis=1))` on [bill mm, flipper mm]. |
+| 1.1 | Pi 1.2 rule 2 vs Pi 3.1 button to GND | FIXED (phase 1) | Pi 1.2: "Never connect a pin straight to another pin or to ground". Pi 3.1: button between GPIO and GND, "No resistor is needed". |
+| 1.2 | Pi 4.4 HC-SR04 divider | FIXED (phase 1) | "it needs two resistors (a voltage divider)", no values, no VCC. gpiozero docs (api_input.html, DistanceSensor): 330 Ω from ECHO, 470 Ω from sensor GND, joined at a GPIO; VCC to 5V; TRIG to a GPIO; HC-SR04P needs no divider. |
+| 1.3 | Pi 5.6 MCP3008 chip wiring | FIXED (phase 1) | Only "talks over SPI, on GPIO 8, 9, 10 and 11" and the knob legs. Pinout to add (MCP3008 datasheet; Pi SPI0): 16 VDD and 15 VREF to 3V3, 14 AGND and 9 DGND to GND, 13 CLK to GPIO11 (SCLK), 12 DOUT to GPIO9 (MISO), 11 DIN to GPIO10 (MOSI), 10 CS/SHDN to GPIO8 (CE0); pins 1-8 are CH0-CH7; notch = pin 1 side. Datasheet to be re-read when writing. |
+| 1.4 | Pi 6 ground and board | FIXED (phase 1) | Pi 6.1: "Put the board on the Pi" (implies a HAT), no ground, no named board, no motor power wiring. NEEDS DECISION: which board. |
+| 1.5 | Pi 4.1 active buzzer | FIXED (phase 1) | "A buzzer beeps while its pin is on." gpiozero `Buzzer` is on/off only ("not capable of playing a variety of tones (see TonalBuzzer)"), so the part must be an **active** buzzer. |
+| 1.6 | Pi 5.1 capacitor polarity | FIXED (phase 1) | "a small capacitor (1 µF)", legs wired without polarity. 1 µF is usually electrolytic. |
+| 2 | Linux services as root | FIXED (phase 1) | Linux 6.7, 6.8 and also **6.9** have `[Service]` with `ExecStart=` only; no `User=` anywhere (find.py "User=": 0). |
+| 3.1 | Data 5 chooses k on the test set | FIXED (phase 1) | Data 5.5 "Compare a few values of k on the test set"; Data 5.7 prints test accuracy for k = 1, 3, 5. |
+| 3.2 | Data 5 no feature scaling | FIXED (phase 1) | Data 5.7 distance `np.sqrt(((train - new) ** 2).sum(axis=1))` on [bill mm, flipper mm]. |
 
 ## P2. Quizzes
 
@@ -163,7 +178,7 @@ worked step (firstuse.py), then read by hand.
 ### Data, Web, Computer
 | Item | Status | Evidence |
 |---|---|---|
-| Data scope | NEEDS DECISION | Only linear regression and kNN. |
+| Data scope | FIXED (phase 1): renamed | Only linear regression and kNN. |
 | HTML lesson before Web 2 | CONFIRMED | Web 1 shows HTML in responses but no Learn step on tags. |
 | CSS / static files | CONFIRMED | 0 matches. |
 | Flask + SQLite | CONFIRMED | `sqlite3` only in L40, L41. |
@@ -173,12 +188,77 @@ worked step (firstuse.py), then read by hand.
 | Computer: OS, bytecode | CONFIRMED | "operating system" only in passing (34.5, 34.8); bytecode 0. |
 | Recommended path order | TO DO | `needs:` exists; no shown order. |
 
-## NEEDS HUMAN TEST (later phases)
-- Every wiring change of Pi 1-6, on a real Pi with real parts.
-- The PowerShell key install for Pi 9, on real Windows.
-- The service files with `User=` on a real Pi (Raspberry Pi OS).
-- The updated GitHub Actions workflow of 46.4 on GitHub.
+## Phase 1: what changed
+- **Pi 1.2** rule 2: an output never goes straight to 3V3, 5V, GND or
+  another pin; an input button may go to GND. **Pi 3.1**: why the button
+  is safe (input, pull-up), and that GPIO 2's board pull-up works the same.
+- **Pi 4.1**: an active buzzer, + leg to the pin, 15 mA or less (a bigger
+  one needs a transistor); passive needs `TonalBuzzer`.
+- **Pi 4.4**: VCC 5V, GND, TRIG GPIO 23, ECHO through 330 Ω to GPIO 24 and
+  470 Ω from GPIO 24 to GND (about 2.9 V); HC-SR04P needs none. New card
+  `r-divider`.
+- **Pi 5.1**: electrolytic polarity (- leg, stripe, to GND).
+- **Pi 5.6**: the MCP3008 notch, leg numbers and a full table (datasheet
+  21295d, package drawing; VDD 2.7-5.5 V), the breadboard groove, GPIO vs
+  physical numbers.
+- **Pi 6.1, 6.4**: a DRV8833 board: VIN to battery +, GND to battery - and
+  a Pi GND (shared ground), AIN1/AIN2 GPIO 4/14, BIN1/BIN2 GPIO 17/18,
+  2.7-10.8 V, about 1.2 A per motor (Pololu 2130), SLP to 3V3 if the motor
+  never moves. New card `r-ground`.
+- **Linux 6.7**: `User=pi`, `WorkingDirectory=/home/pi`, why root is a
+  risk, and that the user name is the one chosen in Raspberry Pi Imager.
+  **6.8, 6.9**: prompts, hints, solutions and a new check `User=pi`. New
+  card `r-user`.
+- **Data 5**: goals O4 (validation, test once) and O5 (standardize); new
+  Learn steps "Three sets, not two" and "The same scale for every
+  feature"; a drill; ex-k chooses k on `val` and measures `test` once; a
+  new completion exercise ex-scale (raw neighbours vote Gentoo, scaled
+  Adelie); quiz `q-choose`; cards `r-validation`, `r-scale`. All expected
+  outputs come from real runs (local numpy 2.5.3 and the course's
+  Pyodide). Time 40 → 55 min.
+- **Data path** renamed "Data and machine learning" (course.yaml, README,
+  plot.py comment). Lesson texts that say "data and AI tools" stay: they
+  name the field, not the path.
+- Lesson times: Pi 4 35 → 40, Pi 5 and Pi 6 40 → 45.
+- Verified: check:content (all pass), quiz-bias.mjs (every new question
+  has one correct option), the audit (no long sentences, every goal
+  practised, practice ≥ 60%), the robot on Data 5, Linux 6 and Pi 1, 3-6
+  (no issues, no page errors), the MCP3008 table in the app.
+- Independent review (a separate reviewer, as expert and as beginner): no
+  factual errors; its 5 points were applied (buzzer current, SLP pin,
+  "absorbs the spikes", label and groove explanations, "leak"). Not
+  applied: GPIO 14 is the serial TX pin and could twitch at boot if the
+  serial console is on. It is off by default, and gpiozero's own examples
+  use `Motor(4, 14)`; noted, no change.
+
+## NEEDS HUMAN TEST
+Never marked as tested. Each with steps and the expected result.
+1. **Button (Pi 3)**: button between GPIO 2 and GND, `Button(2)`,
+   `button.wait_for_press(); print("ok")`. Expected: "ok" on the press.
+2. **Active buzzer (Pi 4.1)**: + leg to GPIO 17, - to GND,
+   `Buzzer(17).beep(n=3, background=False)`. Expected: 3 beeps; the Pi
+   stays stable. Measure the buzzer current if possible (≤ 15 mA).
+3. **HC-SR04 (Pi 4.4)**: wiring as in the lesson. Before connecting ECHO,
+   measure GPIO 24's side of the divider with a multimeter while the
+   sensor runs: about 2.9 V, never above 3.3 V. Then
+   `print(DistanceSensor(echo=24, trigger=23).distance)` with a hand at
+   20 cm. Expected: about 0.2.
+4. **LDR (Pi 5.1)**: electrolytic 1 µF, - to GND. `LightSensor(4).value`
+   in light and with the LDR covered. Expected: clearly higher in light.
+5. **MCP3008 (Pi 5.6)**: SPI on in raspi-config, wiring by the table.
+   `MCP3008(0).value` with the knob at both ends. Expected: about 0 and
+   about 1; the chip stays cool.
+6. **DRV8833 (Pi 6)**: 4 AA batteries, wiring by the table, shared GND.
+   `Motor(4, 14).forward(0.5)`, then `backward(0.5)`. Expected: the motor
+   turns both ways. Without the shared GND it should not run reliably.
+7. **Service (Linux 6.7)**: on Raspberry Pi OS, the logger service with
+   `User=<your user>` and `WorkingDirectory=/home/<your user>`.
+   `systemctl status logger` and `ps -o user= -p <PID>`. Expected:
+   active, and the user is yours, not root.
+8. (Later phases) The PowerShell key install for Pi 9, on real Windows;
+   the updated GitHub Actions workflow of 46.4 on GitHub.
 
 ## Progress
 - 2026-11-25 Phase 0 done: all findings checked, this file written. No
   lesson content changed.
+- 2026-11-26 Phase 1 done (P1: Pi wiring, services, Data 5, path name).
