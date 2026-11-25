@@ -50,6 +50,7 @@ modules:
       - { id: functions-as-values, title: Functions as values }
       - { id: decomposition, title: Split a problem }
       - { id: recursion, title: Recursion }
+      - { id: fast-and-slow, title: Fast and slow code }
       - { id: type-hints, title: Type hints }
       - { id: reading-docs, title: Reading the docs }
       - { id: standard-library, title: Modules and the standard library }
@@ -68,6 +69,7 @@ modules:
       - { id: generators, title: Iterators and generators }
       - { id: regex, title: Patterns with regular expressions }
       - { id: decorators, title: Decorators and context managers }
+      - { id: sqlite, title: Databases with SQLite }
       - { id: project-expense-tracker, title: "Project: expense tracker", kind: project }
 
   - title: Your own machine

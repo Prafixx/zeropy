@@ -1,0 +1,750 @@
+id: json
+order: 32
+title: JSON
+summary: Save lists and dictionaries in a file, and load them back the next time the program runs.
+minutes: 35
+outcomes: [A4, A6]
+
+objectives:
+  - id: O1
+    text: Turn Python data into JSON text and back, and know which types JSON has
+  - id: O2
+    text: Save data to a JSON file and load it again
+  - id: O3
+    text: Read nested data, like a list of dictionaries
+  - id: O4
+    text: Keep the state of a program in a file - load it, change it, save it
+
+steps:
+  # 1. DEMO ------------------------------------------------------------------
+  - id: settings
+    type: demo
+    visual: none
+    objective: O2
+    title: Settings that stay
+    intro: |
+      A file of plain text is fine for a list of words. But a program often
+      has a dictionary, or a list of dictionaries. **JSON** is a way to
+      write them as text, so they fit in a file.
+
+      Press **Run**. The program loads `settings.json`, changes one value,
+      and saves it. Look at the file under the output.
+    files:
+      settings.json: |
+        {
+          "name": "Ana",
+          "level": 3,
+          "sound": true
+        }
+    code: |
+      import json
+      from pathlib import Path
+
+      path = Path("settings.json")
+      settings = json.loads(path.read_text())
+      print(settings["name"], settings["level"])
+
+      settings["level"] = settings["level"] + 1
+      path.write_text(json.dumps(settings, indent=2))
+    experiments:
+      - text: "Run the code. In the file, `level` is 4 now."
+        expr: "err is None and '\"level\": 4' in files.get('settings.json', '')"
+      - text: "Before the save, add `settings[\"sound\"] = False`. How does JSON write `False`?"
+        expr: "err is None and 'false' in files.get('settings.json', '')"
+      - text: "Add a list: `settings[\"colors\"] = [\"red\", \"blue\"]`."
+        expr: "err is None and '[' in files.get('settings.json', '') and 'colors' in files.get('settings.json', '')"
+      - text: "Delete `, indent=2` and run again. What changes in the file?"
+        expr: "err is None and 'settings.json' in files and '\\n' not in files['settings.json'].strip()"
+    investigate:
+      - kind: spot
+        id: i-loads
+        prompt: "Which line turns the text of the file into a dictionary?"
+        code: |
+          import json
+          from pathlib import Path
+
+          path = Path("settings.json")
+          settings = json.loads(path.read_text())
+          print(settings["name"], settings["level"])
+
+          settings["level"] = settings["level"] + 1
+          path.write_text(json.dumps(settings, indent=2))
+        line: 5
+        wrong:
+          - line: 9
+            say: "This line goes the other way: `dumps` makes text from the dictionary."
+          - line: 4
+            say: "This line names the file. Nothing is read yet."
+        explain: >-
+          `path.read_text()` gives the text, and `json.loads` turns that text
+          into Python values: here a dictionary.
+      - kind: mcq
+        id: i-no-save
+        prompt: "You remove line 9. What changes?"
+        options:
+          - text: "The file stays as it was: the new level is only in memory"
+            correct: true
+            why: "Changing the dictionary does not change the file. Only writing does."
+          - text: "Nothing: line 8 already saved the level"
+            why: "Line 8 changes the dictionary in memory. The file is not touched."
+          - text: "The file becomes empty"
+            why: "Without line 9, nothing writes to the file."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: format
+    type: theory
+    objective: O1
+    title: Python data as text
+    body: |
+      ## dumps and loads
+
+      ```
+      import json
+
+      text = json.dumps({"pets": ["cat"]})
+      data = json.loads(text)
+      ```
+
+      - `json.dumps(data)` makes a JSON **text** from Python data.
+        `indent=2` puts each value on its own line, so people can read it.
+      - `json.loads(text)` makes Python data from a JSON text.
+
+      ## The types of JSON
+
+      | Python | JSON |
+      | --- | --- |
+      | `dict` | object `{...}` |
+      | `list`, `tuple` | array `[...]` |
+      | `str` | text in **double** quotes |
+      | `int`, `float` | number |
+      | `True`, `False`, `None` | `true`, `false`, `null` |
+
+      Two surprises: a tuple comes back as a list, and the keys of an
+      object are always texts. JSON cannot hold a set, a date or a
+      function.
+    keys:
+      - code: "json.dumps(data, indent=2)"
+        means: "Python data to JSON text, easy to read."
+      - code: "json.loads(text)"
+        means: "JSON text to Python data."
+      - code: "{1: 'a'}  ->  {\"1\": \"a\"}"
+        means: "The keys of JSON are always texts."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-dumps
+    type: predict
+    objective: O1
+    title: Python in, JSON out
+    item:
+      kind: predict
+      id: p-dumps
+      code: |
+        import json
+
+        print(json.dumps({"ok": True, "n": None, "t": (1, 2)}))
+      explain: >-
+        JSON writes `True` as `true` and `None` as `null`, and the tuple
+        becomes an array with square brackets. Texts are always in double
+        quotes.
+      misconceptions:
+        - answer: "{'ok': True, 'n': None, 't': (1, 2)}"
+          say: "That is how Python prints a dictionary. JSON text looks different: double quotes, `true`, `null`, and `[1, 2]`."
+        - answer: "{\"ok\": True, \"n\": None, \"t\": (1, 2)}"
+          say: "JSON has its own words: `true`, `false` and `null` in small letters, and no tuples: `[1, 2]`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: files
+    type: theory
+    objective: O4
+    title: Save, load, and nested data
+    body: |
+      ## A JSON file
+
+      ```
+      path.write_text(json.dumps(data, indent=2))    # save
+      data = json.loads(path.read_text())             # load
+      ```
+
+      You also see `json.dump(data, f)` and `json.load(f)`, without the
+      `s`: they write to and read from an open file directly. Both ways
+      give the same file.
+
+      ## Nested data
+
+      Real data is often a list of dictionaries. Read it step by step:
+
+      ```
+      data = {"users": [{"name": "Ana", "age": 31}, {"name": "Ben", "age": 25}]}
+      data["users"]              # the list
+      data["users"][1]           # the second dictionary
+      data["users"][1]["name"]   # "Ben"
+      ```
+
+      ## The state of a program
+
+      1. **Load** at the start. On the first run there is no file: start
+         with a default, like `[]`.
+      2. **Change** the data while the program runs.
+      3. **Save** at the end, so the next run can continue.
+    keys:
+      - code: 'data["users"][1]["name"]'
+        means: "Read nested data one step at a time, from the outside in."
+      - code: "json.load(f) / json.dump(data, f)"
+        means: "The same, with an open file instead of a text."
+      - code: "load, change, save"
+        means: "How a program keeps its state between runs."
+
+  # 5. DRILL -----------------------------------------------------------------
+  - id: drill
+    type: drill
+    objective: O3
+    title: JSON data
+    items:
+      - kind: predict
+        id: d-nested
+        objective: O3
+        code: |
+          import json
+
+          text = '{"users": [{"name": "Ana", "age": 31}, {"name": "Ben", "age": 25}]}'
+          data = json.loads(text)
+          print(data["users"][1]["name"])
+          print(len(data["users"]))
+          print(data["users"][0]["age"] + 1)
+        explain: "`data[\"users\"]` is a list of two dictionaries. Position 1 is Ben. The ages are numbers, so `31 + 1` is 32."
+      - kind: predict
+        id: d-keys
+        objective: O1
+        prompt: "A dictionary goes to JSON and back. **What does this print?**"
+        code: |
+          import json
+
+          scores = {1: 50, 2: 80}
+          back = json.loads(json.dumps(scores))
+          print(back)
+          print(back["2"])
+        explain: "JSON keys are always texts, so `1` and `2` come back as `\"1\"` and `\"2\"`. `back[2]` would be a `KeyError`."
+        misconceptions:
+          - answer: "{1: 50, 2: 80}\n80"
+            say: "The keys come back as texts: `{'1': 50, '2': 80}`."
+      - kind: diagnose
+        id: d-quotes
+        objective: O1
+        mode: read
+        code: |
+          import json
+
+          data = json.loads("{'name': 'Ana'}")
+          print(data)
+        explain: "This looks like a Python dictionary, but it is not JSON: JSON needs double quotes around texts. The message says where the problem starts: column 2."
+        fix:
+          - text: "Write JSON with double quotes: `'{\"name\": \"Ana\"}'`"
+            correct: true
+            why: "Double quotes inside the JSON text, single quotes around the Python text."
+          - text: "Use `json.dumps` instead of `json.loads`"
+            why: "`dumps` goes the other way: from Python data to text."
+          - text: "Write `True` instead of `'Ana'`"
+            why: "The value is not the problem. The quotes are."
+      - kind: mcq
+        id: d-s
+        objective: O2
+        prompt: "What is the difference between `json.dumps(data)` and `json.dump(data, f)`?"
+        options:
+          - text: "`dumps` gives back a text. `dump` writes into an open file `f`"
+            correct: true
+            why: "The `s` is for string: a text."
+          - text: "`dump` is faster"
+            why: "They make the same JSON. One gives a text, one writes to a file."
+          - text: "`dumps` saves more than one value"
+            why: "Both save one value, for example one dictionary with many keys."
+      - kind: predict
+        id: d-list
+        objective: O1
+        code: |
+          import json
+
+          numbers = json.loads("[3, 1, 2]")
+          print(numbers + [4])
+          print(type(numbers).__name__)
+        explain: "A JSON array becomes a Python list, so all list operations work."
+
+  # 6. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-highscore
+    type: worked
+    objective: O4
+    title: A best score that stays
+    problem: |
+      A game must remember the best score between runs. On the first run
+      there is no file yet.
+    lines:
+      - goal: "Load the state"
+        code: |
+          import json
+          from pathlib import Path
+
+          path = Path("best.json")
+          if path.exists():
+              best = json.loads(path.read_text())
+          else:
+              best = {"name": "", "score": 0}
+        note: "1. Load, or start with a default when the file does not exist yet."
+      - goal: "Change the state"
+        code: |
+          score = 42
+          if score > best["score"]:
+              best = {"name": "Ana", "score": score}
+              print("New best score!")
+        note: "2. Change the state while the program runs."
+      - goal: "Save the state"
+        code: "path.write_text(json.dumps(best, indent=2))"
+        note: "3. Save at the end. The next run loads this file."
+    check:
+      kind: mcq
+      id: w-highscore
+      prompt: "What happens on the second run, if the first run saved a best score of 42?"
+      options:
+        - text: "The program loads 42 from the file. A score of 42 is not a new best"
+          correct: true
+          why: "The file keeps the state from the first run."
+        - text: "It starts again at 0"
+          why: "Only the first run has no file. Later runs load it."
+        - text: "It stops with an error, because the file exists"
+          why: "`exists()` is True, so the program loads the file."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O1
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-json
+        objective: O1
+        code: |
+          import json
+          data = {"name": "Ana", "score": 42}
+          text = json.dumps(data)
+          back = json.loads(text)
+          print(back["score"])
+        explain: >-
+          `dumps` turns the dictionary into JSON text, and `loads` turns the
+          text back into a dictionary. So `back["score"]` is the number 42
+          again.
+
+  # 7. EXERCISE: completion --------------------------------------------------
+  - id: ex-roundtrip
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Save and load
+    prompt: |
+      **Replace the two `___`**, so that `save` writes the data as JSON
+      that people can read (`indent=2`), and `load` reads it back.
+    starter: |
+      import json
+      from pathlib import Path
+
+      def save(data, name):
+          Path(name).write_text(___)
+
+      def load(name):
+          return ___
+
+      save({"city": "Oslo", "days": [3, 5]}, "trip.json")
+      print(load("trip.json"))
+    solution: |
+      import json
+      from pathlib import Path
+
+      def save(data, name):
+          Path(name).write_text(json.dumps(data, indent=2))
+
+      def load(name):
+          return json.loads(Path(name).read_text())
+
+      save({"city": "Oslo", "days": [3, 5]}, "trip.json")
+      print(load("trip.json"))
+    after: >-
+      `load(save(...))` gives the same data again. That is the test of any
+      save and load pair: one round trip, no change.
+    checks:
+      - expr: "callable(ns.get('save')) and callable(ns.get('load')) and (lambda d: (save(d, 'check.json') or True) and load('check.json') == d)({'a': [1, 2], 'b': None, 'c': {'d': True}})"
+        pass: "Data that is saved and loaded again is the same"
+        hint: "`save` needs `json.dumps(data, ...)`, and `load` needs `json.loads(...)` of the text of the file."
+        misconceptions:
+          - when: "callable(ns.get('save')) and (lambda d: (save(d, 'check.json') or True) and open('check.json').read().startswith(\"{'\"))({'a': 1})"
+            say: "The file holds Python text from `str()`, not JSON. Use `json.dumps(data, indent=2)`."
+      - expr: "'\\n' in files.get('trip.json', '').strip() and '  ' in files.get('trip.json', '')"
+        pass: "The file is easy to read: one value on each line"
+        hint: "Give `json.dumps` the value `indent=2`."
+    hints:
+      - "`save`: `json.dumps(data, indent=2)` makes the text."
+      - "`load`: first read the text with `Path(name).read_text()`."
+      - "Then `json.loads(...)` of that text."
+
+  # 8. EXERCISE: debug -------------------------------------------------------
+  - id: ex-str
+    type: exercise
+    fade: debug
+    objective: O1
+    title: Saved, but not as JSON
+    prompt: |
+      This to-do list is saved and loaded again. **Run it.** Read the
+      message, then look at `todo.json` under the output.
+    starter: |
+      import json
+      from pathlib import Path
+
+      def save(todo):
+          Path("todo.json").write_text(str(todo))
+
+      def load():
+          return json.loads(Path("todo.json").read_text())
+
+      save(["buy milk", "call Ana"])
+      print(load())
+    solution: |
+      import json
+      from pathlib import Path
+
+      def save(todo):
+          Path("todo.json").write_text(json.dumps(todo))
+
+      def load():
+          return json.loads(Path("todo.json").read_text())
+
+      save(["buy milk", "call Ana"])
+      print(load())
+    after: >-
+      `str()` gives the text that Python shows, with single quotes. It
+      looks like JSON, but it is not. Only `json.dumps` makes JSON.
+    checks:
+      - expr: "err is None and __import__('json').loads(files.get('todo.json', 'x')) == ['buy milk', 'call Ana']"
+        pass: "`todo.json` holds correct JSON"
+        hint: "The file has single quotes. Which function makes JSON text?"
+        misconceptions:
+          - when: "err == 'JSONDecodeError'"
+            say: "`str(todo)` writes Python text with single quotes. JSON needs `json.dumps(todo)`."
+      - expr: "lines == [\"['buy milk', 'call Ana']\"]"
+        pass: "The list comes back the same"
+        hint: "Keep `load` and the two last lines."
+    hints:
+      - "Look at the file: are the quotes double or single?"
+      - "`str()` makes Python text. JSON text comes from `json.dumps`."
+      - "In `save`: `write_text(json.dumps(todo))`."
+
+  # 9. EXERCISE: independent -------------------------------------------------
+  - id: ex-todo
+    type: exercise
+    fade: independent
+    objective: O4
+    title: A to-do list that remembers
+    prompt: |
+      `todo.json` holds a list of tasks. Each task is a dictionary like
+      `{"task": "Buy milk", "done": false}`.
+
+      **Write a program that:**
+
+      1. loads the tasks (an empty list if there is no `todo.json` yet),
+      2. adds the task `"Water plants"`, not done,
+      3. marks the **first** task of the list as done,
+      4. saves the list to `todo.json`,
+      5. prints how many tasks are still open, like `2 open`.
+
+      Use functions for loading and saving.
+    files:
+      todo.json: |
+        [
+          {"task": "Buy milk", "done": false},
+          {"task": "Call Ana", "done": false}
+        ]
+    starter: |
+      import json
+      from pathlib import Path
+
+    solution: |
+      import json
+      from pathlib import Path
+
+      def load_tasks(name):
+          path = Path(name)
+          if not path.exists():
+              return []
+          return json.loads(path.read_text())
+
+      def save_tasks(tasks, name):
+          Path(name).write_text(json.dumps(tasks, indent=2))
+
+      tasks = load_tasks("todo.json")
+      tasks.append({"task": "Water plants", "done": False})
+      tasks[0]["done"] = True
+      save_tasks(tasks, "todo.json")
+
+      open_tasks = 0
+      for t in tasks:
+          if not t["done"]:
+              open_tasks = open_tasks + 1
+      print(f"{open_tasks} open")
+    after: >-
+      Load, change, save: that is how a real to-do app keeps your tasks.
+      On the first day there is no file, and the program still works.
+    cases:
+      - {}
+      - label: "the list has one task that is already done"
+        files:
+          todo.json: '[{"task": "Pay rent", "done": true}]'
+      - label: "there is no `todo.json` yet"
+        files: {}
+    checks:
+      - expr: "err is None and 'todo.json' in files"
+        pass: "The program runs and saves `todo.json`"
+        hint: "Without a file, start with an empty list. At the end, write the list with `json.dumps`."
+        misconceptions:
+          - when: "err == 'FileNotFoundError'"
+            say: "On the first run there is no `todo.json`. Check `exists()` and start with `[]`."
+          - when: "err == 'IndexError'"
+            say: "The list is empty when there is no file. Add the new task first, then mark the first task as done."
+          - when: "err is None and 'todo.json' not in files"
+            say: "There is no `todo.json` after the run. Save the list at the end with `json.dumps`."
+      - expr: "(lambda j: j.loads(files['todo.json']) == (lambda t: (t.append({'task': 'Water plants', 'done': False}), t[0].update(done=True), t)[2])(j.loads(start_files['todo.json']) if 'todo.json' in start_files else []))(__import__('json'))"
+        pass: "The saved list has the new task, and the first task is done"
+        hint: "Append `{\"task\": \"Water plants\", \"done\": False}`, then set `tasks[0][\"done\"] = True`."
+        misconceptions:
+          - when: "'true' not in files.get('todo.json', '') and 'True' in files.get('todo.json', '')"
+            say: "The file holds Python text. Save with `json.dumps`, so `True` becomes `true`."
+          - when: "'todo.json' in files and files.get('todo.json') == start_files.get('todo.json')"
+            say: "The file did not change. Save the list at the end."
+      - expr: "(lambda j: f\"{sum(1 for t in j.loads(files['todo.json']) if not t['done'])} open\" in lines)(__import__('json'))"
+        pass: "It prints how many tasks are still open"
+        hint: "Count the tasks where `done` is False."
+      - expr: "len([n for n in __import__('ast').walk(__import__('ast').parse(src)) if isinstance(n, __import__('ast').FunctionDef)]) >= 2"
+        pass: "Loading and saving are functions"
+        hint: "Write `def load_tasks(name):` and `def save_tasks(tasks, name):`."
+    hints:
+      - "Loading: if the file does not exist, return `[]`. Else `json.loads(path.read_text())`."
+      - "Change: `tasks.append({\"task\": \"Water plants\", \"done\": False})`, then `tasks[0][\"done\"] = True`."
+      - "Count open tasks with a loop and `if not t[\"done\"]:`."
+
+  # 10. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-none
+        objective: O1
+        prompt: "How does JSON write Python's `None`?"
+        options:
+          - text: "`null`"
+            correct: true
+            why: "JSON has `null` for \"no value\"."
+          - text: "`None`"
+            why: "That is Python. JSON uses `null`."
+          - text: "`\"\"`"
+            why: "That is an empty text, a different value."
+      - kind: predict
+        id: q-tuple
+        objective: O1
+        code: |
+          import json
+
+          point = (3, 4)
+          back = json.loads(json.dumps(point))
+          print(back, back == point)
+        explain: "JSON has no tuples: the tuple becomes an array, and comes back as a list. A list is not equal to a tuple."
+      - kind: diagnose
+        id: q-set
+        objective: O1
+        mode: predict
+        code: |
+          import json
+
+          print(json.dumps({"tags": {"a", "b"}}))
+        explain: "JSON cannot hold a set. Turn it into a list first: `sorted(tags)`."
+      - kind: predict
+        id: q-path
+        objective: O3
+        code: |
+          import json
+
+          data = json.loads('{"shop": {"items": ["tea", "jam"], "open": true}}')
+          print(data["shop"]["items"][-1], data["shop"]["open"])
+        explain: "`data[\"shop\"]` is a dictionary; its `items` are a list, and `-1` is the last one. `true` came back as `True`."
+      - kind: mcq
+        id: q-first
+        objective: O4
+        prompt: "A program loads its state from `state.json` at the start. What must it do on the very first run?"
+        options:
+          - text: "Start with a default value, because the file does not exist yet"
+            correct: true
+            why: "Check `exists()`, or the first run stops with `FileNotFoundError`."
+          - text: "Nothing: Python makes the file"
+            why: "Reading never makes a file. Only writing does."
+          - text: "Ask the user to make the file"
+            why: "The program can make it itself, at the first save."
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-loads
+    objective: O1
+    prompt: "Which function turns a JSON text into Python data?"
+    options:
+      - text: "`json.loads(text)`"
+        correct: true
+        why: "`loads`: load from a string."
+      - text: "`json.dumps(text)`"
+        why: "`dumps` goes the other way: Python data to text."
+      - text: "`str(text)`"
+        why: "`str` does not read JSON."
+  - kind: predict
+    id: r-true
+    objective: O1
+    code: |
+      import json
+
+      print(json.dumps([True, False, None]))
+    explain: "JSON writes `true`, `false` and `null` in small letters."
+  - kind: predict
+    id: r-keys
+    objective: O1
+    code: |
+      import json
+
+      print(json.loads(json.dumps({5: "five"})))
+    explain: "JSON keys are always texts: `5` comes back as `'5'`."
+  - kind: diagnose
+    id: r-str
+    objective: O2
+    mode: predict
+    code: |
+      import json
+
+      text = str({"a": 1})
+      print(json.loads(text))
+    explain: "`str` gives `{'a': 1}` with single quotes. That is not JSON."
+  - kind: mcq
+    id: r-state
+    objective: O4
+    prompt: "In which order does a program keep its state between runs?"
+    options:
+      - text: "Load at the start, change, save at the end"
+        correct: true
+        why: "The next run loads what this run saved."
+      - text: "Save at the start, load at the end"
+        why: "Then the changes of this run are never saved."
+      - text: "Only save"
+        why: "Without loading, every run starts from nothing."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-dumps
+    type: exercise
+    fade: completion
+    objective: O1
+    title: There and back
+    prompt: |
+      **Replace the two `___`** with functions of `json`: turn the data into
+      JSON text, and the text back into data.
+
+      ```text
+      {"name": "Ana", "scores": [7, 9], "member": true}
+      True
+      ```
+    starter: |
+      import json
+
+      data = {"name": "Ana", "scores": [7, 9], "member": True}
+      text = json.___(data)
+      back = json.___(text)
+      print(text)
+      print(back == data)
+    solution: |
+      import json
+
+      data = {"name": "Ana", "scores": [7, 9], "member": True}
+      text = json.dumps(data)
+      back = json.loads(text)
+      print(text)
+      print(back == data)
+    after: >-
+      `dumps` gives a text ("dump to string"), `loads` reads one ("load from
+      string"). Look at the text: JSON writes `true`, not `True`.
+    checks:
+      - expr: "isinstance(ns.get('text'), str) and text == json.dumps(data)"
+        pass: "text is the JSON text of data"
+        hint: "`json.dumps(data)`."
+      - expr: "back == data"
+        pass: "back is the same data again"
+        hint: "`json.loads(text)`."
+      - expr: "lines == ['{\"name\": \"Ana\", \"scores\": [7, 9], \"member\": true}', 'True']"
+        pass: "It prints the JSON text and True"
+        hint: "Keep the prints."
+    hints:
+      - "One function makes a text, the other reads one."
+      - "Both end with `s`: for \"string\"."
+      - "`json.dumps(data)` and `json.loads(text)`."
+  - id: x-volume
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Louder, and remember it
+    prompt: |
+      `settings.json` (see the files) keeps the settings of an app.
+      **Load it, add 10 to `"volume"` (but never more than 100), save it,
+      and print the new volume.**
+
+      ```text
+      60
+      ```
+    files:
+      settings.json: |
+        {"volume": 50, "theme": "dark"}
+    starter: |
+      import json
+      from pathlib import Path
+
+      # Load, change, save, print.
+    solution: |
+      import json
+      from pathlib import Path
+
+      path = Path("settings.json")
+      settings = json.loads(path.read_text())
+      settings["volume"] = min(settings["volume"] + 10, 100)
+      path.write_text(json.dumps(settings))
+      print(settings["volume"])
+    after: >-
+      Load, change, save: the next run starts where this one stopped. The
+      other settings (the theme) stay as they were.
+    cases:
+      - {}
+      - label: "the volume is 95"
+        files:
+          settings.json: '{"volume": 95, "theme": "light"}'
+    checks:
+      - expr: "json.loads(files['settings.json'])['volume'] == min(json.loads(start_files['settings.json'])['volume'] + 10, 100)"
+        pass: "The file has the new volume, at most 100"
+        hint: "`settings[\"volume\"] = min(settings[\"volume\"] + 10, 100)`, then save."
+        misconceptions:
+          - when: "files['settings.json'] == start_files['settings.json']"
+            say: "The file did not change. Write it again: `path.write_text(json.dumps(settings))`."
+          - when: "json.loads(files['settings.json'])['volume'] == 105"
+            say: "105 is too loud: the volume stops at 100. `min(..., 100)` keeps it there."
+      - expr: "json.loads(files['settings.json'])['theme'] == json.loads(start_files['settings.json'])['theme']"
+        pass: "The other settings stay"
+        hint: "Change only the volume, and save the whole dictionary."
+      - expr: "lines[-1:] == [str(json.loads(files['settings.json'])['volume'])]"
+        pass: "It prints the new volume"
+        hint: "`print(settings[\"volume\"])` at the end."
+    hints:
+      - "`settings = json.loads(path.read_text())`."
+      - "The new volume: `min(settings[\"volume\"] + 10, 100)`."
+      - "Save: `path.write_text(json.dumps(settings))`."

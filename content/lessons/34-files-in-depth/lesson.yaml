@@ -1,0 +1,858 @@
+id: files-in-depth
+order: 34
+title: Files in depth
+summary: Read a file line by line in three ways, choose the right mode and handle file errors, work with paths and folders, and use the three standard streams.
+minutes: 45
+outcomes: [A4, A6]
+
+objectives:
+  - id: O1
+    text: Read a file line by line with readline, readlines or a for loop, and choose the right one
+  - id: O2
+    text: Choose a mode - r, w, a, x, with + or b - and handle the errors of files and folders
+  - id: O3
+    text: Work with relative and absolute paths, and list the files of a folder
+  - id: O4
+    text: Use the three standard streams - sys.stdin, sys.stdout and sys.stderr
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: lines
+    type: theory
+    objective: O1
+    title: Three ways to read lines
+    body: |
+      You know `read()`: the whole file as one text. A file object can also
+      give you **lines**:
+
+      ```python
+      with open("log.txt") as f:
+          first = f.readline()     # 'start\n': one line, with its \n
+          rest = f.readlines()     # ['ok\n', 'stop\n']: a list of the others
+      ```
+
+      `readline()` gives `''` (an empty text) at the end of the file. A
+      file remembers where it is, so each read goes on from there.
+
+      The usual way is a `for` loop over the file: it reads **one line at a
+      time**, so it works for a file of any size. `readlines()` puts all
+      lines in memory at once, which is fine for small files.
+
+      ```python
+      with open("log.txt") as f:
+          header = f.readline()    # the first line only
+          for line in f:           # then the lines that are left
+              print(line.rstrip("\n"))
+      ```
+    keys:
+      - code: "f.readline()"
+        means: "The next line, with `\\n`; `''` at the end."
+      - code: "f.readlines()"
+        means: "A list of all lines that are left."
+      - code: "for line in f:"
+        means: "One line at a time: for big files."
+      - code: "line.rstrip(\"\\n\")"
+        means: "The line without its line ending."
+
+  # 2. DEMO ------------------------------------------------------------------
+  - id: lines-demo
+    type: demo
+    visual: none
+    objective: O1
+    title: Where the file is
+    intro: |
+      Press **Run**: `readline` takes the first line, and the loop gets the
+      rest. `repr` shows the hidden `\n` at the end of each line.
+    files:
+      log.txt: |
+        start
+        ok
+        ok
+        stop
+    code: |
+      with open("log.txt") as f:
+          first = f.readline()
+          print("first:", repr(first))
+          for line in f:
+              print("then:", repr(line))
+          print("at the end:", repr(f.readline()))
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and lines[-1:] == [\"at the end: ''\"]"
+      - text: "Replace the `for` loop with `rest = f.readlines()` and `print(rest)`."
+        expr: "err is None and any(\"['ok\\\\n', 'ok\\\\n', 'stop\\\\n']\" in line for line in lines)"
+      - text: "Call `f.readline()` two times before the loop. Which lines are left for the loop?"
+        expr: "err is None and src.count('readline()') >= 3"
+    investigate:
+      - kind: mcq
+        id: i-empty
+        prompt: "How does a program know that `readline()` reached the end of the file?"
+        options:
+          - text: "It gives an empty text `''`"
+            correct: true
+            why: "An empty line in the middle is `'\\n'`, not `''`, so the two never mix."
+          - text: "It raises an `EOFError`"
+            why: "`input()` does that; `readline` gives `''`."
+          - text: "It gives `None`"
+            why: "It always gives a text."
+      - kind: mcq
+        id: i-loop
+        prompt: "Why does the loop not print `start`?"
+        options:
+          - text: "`readline` already read it, and the file goes on from where it is"
+            correct: true
+            why: "A file object remembers its place."
+          - text: "A `for` loop skips the first line"
+            why: "It starts where the file is now."
+          - text: "`start` is not in the file"
+            why: "It is the first line."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-header
+    type: exercise
+    fade: completion
+    objective: O1
+    title: A header, then the rows
+    prompt: |
+      `prices.csv` starts with a line of column names. **Replace the
+      `___`**: read that line alone, then count the rows that are left
+      and add up the prices.
+
+      ```text
+      columns: item, price
+      3 rows, total 11.5
+      ```
+    files:
+      prices.csv: |
+        item,price
+        tea,3
+        cake,4.5
+        milk,4
+    starter: |
+      with open("prices.csv") as f:
+          columns = f.___().strip().split(",")
+          rows = 0
+          total = 0
+          for line in ___:
+              item, price = line.strip().split(",")
+              rows += 1
+              total += float(price)
+
+      print("columns:", ", ".join(columns))
+      print(f"{rows} rows, total {total:g}")
+    solution: |
+      with open("prices.csv") as f:
+          columns = f.readline().strip().split(",")
+          rows = 0
+          total = 0
+          for line in f:
+              item, price = line.strip().split(",")
+              rows += 1
+              total += float(price)
+
+      print("columns:", ", ".join(columns))
+      print(f"{rows} rows, total {total:g}")
+    after: >-
+      The header is read once, and the loop goes on from the second line.
+      No list of all lines is ever made, so a file of a million rows works
+      the same way.
+    cases:
+      - {}
+      - label: "the file has only the header"
+        files:
+          prices.csv: "item,price\n"
+    checks:
+      - expr: "err is None and lines[:1] == ['columns: item, price']"
+        pass: "It reads the header alone"
+        hint: "`f.readline()` gives the first line."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "The header `item,price` is read as a row, and `float(\"price\")` fails. Read the first line with `f.readline()` before the loop."
+      - expr: "lines[1:] == [(lambda rows: f'{len(rows)} rows, total {sum(float(r.split(chr(44))[1]) for r in rows):g}')(files['prices.csv'].splitlines()[1:])]"
+        pass: "It counts the rows and adds up the prices"
+        hint: "Loop over `f`: the lines after the header."
+    hints:
+      - "The method that reads one line is `readline`."
+      - "The loop goes over the file object itself."
+      - "`f.readline()` and `for line in f:`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: modes
+    type: theory
+    objective: O2
+    title: Modes and file errors
+    body: |
+      The second argument of `open` is the **mode**:
+
+      | Mode | Means | If the file exists | If not |
+      | --- | --- | --- | --- |
+      | `"r"` | read (the default) | read it | `FileNotFoundError` |
+      | `"w"` | write | **empty it** first | make it |
+      | `"a"` | append | write at the end | make it |
+      | `"x"` | make a new file | `FileExistsError` | make it |
+
+      Add `"b"` for bytes (`"rb"`) or `"t"` for text (the default). A `"+"`
+      means read **and** write: `"r+"` opens a file that must exist, and the
+      program can read it, move back with `f.seek(0)`, and write.
+
+      `"x"` is the safe way to make a file: it never overwrites one.
+
+      The errors of files are all kinds of `OSError`:
+
+      - `FileNotFoundError`: no file with that name.
+      - `FileExistsError`: the file is already there (`"x"`).
+      - `IsADirectoryError`: the name is a folder, not a file.
+      - `PermissionError`: you may not read or write it.
+    keys:
+      - code: "open(name, \"x\")"
+        means: "Only a new file; never overwrites."
+      - code: "open(name, \"r+\")"
+        means: "Read and write a file that exists."
+      - code: "f.seek(0)"
+        means: "Go back to the start of the file."
+      - code: "except OSError:"
+        means: "Any of the file errors."
+
+  # 5. EXERCISE: independent -------------------------------------------------
+  - id: ex-safe-save
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Save without overwriting
+    prompt: |
+      **Write `save(name, text)`**. It must never destroy data:
+
+      - a new name: write the file and give back `"saved"`,
+      - a file that is already there: give back `"exists"`, and do not
+        change the file,
+      - the name of a folder: give back `"is a folder"`.
+
+      Use the mode `"x"`, and catch the errors. The code above makes a file
+      and a folder to try.
+
+      ```text
+      saved
+      exists
+      is a folder
+      Do not lose me.
+      ```
+    given: |
+      from pathlib import Path
+
+      Path("notes.txt").write_text("Do not lose me.")
+      Path("docs").mkdir()
+    starter: |
+      from pathlib import Path
+
+      # Your function here.
+
+
+      print(save("new.txt", "Hello"))
+      print(save("notes.txt", "Oops"))
+      print(save("docs", "Oops"))
+      print(Path("notes.txt").read_text())
+    solution: |
+      from pathlib import Path
+
+
+      def save(name, text):
+          if Path(name).is_dir():
+              return "is a folder"
+          try:
+              with open(name, "x") as f:
+                  f.write(text)
+          except FileExistsError:
+              return "exists"
+          except IsADirectoryError:
+              return "is a folder"
+          return "saved"
+
+
+      print(save("new.txt", "Hello"))
+      print(save("notes.txt", "Oops"))
+      print(save("docs", "Oops"))
+      print(Path("notes.txt").read_text())
+    after: >-
+      `"x"` asks the operating system to make the file only if it is new,
+      in one step. Checking `exists()` first and then writing with `"w"`
+      leaves a moment in which another program could make the file.
+    checks:
+      - expr: "callable(ns.get('save')) and (lambda r: (r, open('fresh.txt').read()))(save('fresh.txt', 'abc')) == ('saved', 'abc')"
+        pass: "A new file is saved"
+        hint: "`with open(name, \"x\") as f: f.write(text)`, then `return \"saved\"`."
+      - expr: "callable(ns.get('save')) and save('notes.txt', 'Oops') == 'exists' and open('notes.txt').read() == 'Do not lose me.'"
+        pass: "A file that exists is not changed"
+        hint: "Mode `\"x\"` raises `FileExistsError`; catch it and `return \"exists\"`."
+        misconceptions:
+          - when: "callable(ns.get('save')) and (save('notes.txt', 'Oops'), open('notes.txt').read())[1] != 'Do not lose me.'"
+            say: "The file was overwritten. Mode `\"w\"` empties a file first; use `\"x\"`."
+      - expr: "callable(ns.get('save')) and save('docs', 'Oops') == 'is a folder'"
+        pass: "The name of a folder gives `\"is a folder\"`"
+        hint: "Check `Path(name).is_dir()` first."
+      - expr: "err is None and lines == ['saved', 'exists', 'is a folder', 'Do not lose me.']"
+        pass: "It prints the four lines"
+        hint: "Keep the prints at the end."
+    hints:
+      - "First: `if Path(name).is_dir(): return \"is a folder\"`."
+      - "Then `try:` with `open(name, \"x\")`."
+      - "`except FileExistsError: return \"exists\"`, and `return \"saved\"` after the `try`."
+
+  # 6. EXERCISE: completion --------------------------------------------------
+  - id: ex-counter
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Read and write one file
+    prompt: |
+      `visits.txt` holds a number. **Replace the `___`**: open it to read
+      and write, read the number, go back to the start, and write the
+      number plus 1.
+
+      ```text
+      42
+      43
+      ```
+    files:
+      visits.txt: "42"
+    starter: |
+      with open("visits.txt", ___) as f:
+          count = int(f.read())
+          print(count)
+          f.___(0)
+          f.write(str(count + 1))
+          f.truncate()
+
+      print(open("visits.txt").read())
+    solution: |
+      with open("visits.txt", "r+") as f:
+          count = int(f.read())
+          print(count)
+          f.seek(0)
+          f.write(str(count + 1))
+          f.truncate()
+
+      print(open("visits.txt").read())
+    after: >-
+      `"r+"` keeps the file (`"w+"` would empty it first). After `read`,
+      the file is at its end, so `seek(0)` goes back before writing.
+      `truncate()` cuts what is left, for the day 100 becomes 99.
+    cases:
+      - {}
+      - label: "the file holds 99"
+        files:
+          visits.txt: "99"
+    checks:
+      - expr: "err is None and files.get('visits.txt') == str(int(start_files['visits.txt']) + 1)"
+        pass: "The file holds the number plus 1"
+        hint: "Mode `\"r+\"`, then `f.seek(0)` before `write`."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "With `\"w+\"` the file is emptied first, so there is no number to read. Use `\"r+\"`."
+          - when: "err is None and files.get('visits.txt', '').startswith(start_files['visits.txt'])"
+            say: "The new number is written after the old one. Go back with `f.seek(0)` first."
+      - expr: "lines[:1] == [start_files['visits.txt']]"
+        pass: "It prints the old number first"
+        hint: "Keep `print(count)`."
+    hints:
+      - "Read and write a file that exists: `\"r+\"`."
+      - "The method that moves in the file is `seek`."
+      - "`open(\"visits.txt\", \"r+\")` and `f.seek(0)`."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: paths
+    type: theory
+    objective: O3
+    title: Paths and folders
+    body: |
+      A **relative** path like `notes.txt` or `data/prices.csv` starts at
+      the **working folder**: the folder the program was started in. An
+      **absolute** path starts at the top of the disk: `C:\Users\ana\notes.txt`
+      on Windows, `/home/ana/notes.txt` on Linux and macOS.
+
+      ```python
+      from pathlib import Path
+
+      Path.cwd()                         # the working folder (absolute)
+      p = Path("data") / "prices.csv"    # join with /
+      p.is_absolute()                    # False
+      p.resolve()                        # the absolute path of it
+      p.name, p.stem, p.suffix           # 'prices.csv', 'prices', '.csv'
+      ```
+
+      A `Path` of a folder lists what is in it:
+
+      ```python
+      for entry in Path("data").iterdir():     # files and folders, any order
+          print(entry.name, entry.is_file(), entry.is_dir())
+
+      sorted(Path("data").glob("*.csv"))       # only the CSV files
+      entry.stat().st_size                     # the size of a file in bytes
+      ```
+
+      A program that uses relative paths works only when it is started in
+      the right folder. `Path(__file__).parent / "prices.csv"` is the file
+      next to the program, wherever it was started.
+    keys:
+      - code: "Path.cwd()"
+        means: "The working folder."
+      - code: "p.resolve()"
+        means: "The absolute path."
+      - code: "Path(\"data\").iterdir()"
+        means: "Each file and folder in `data`."
+      - code: "p.stat().st_size"
+        means: "The size in bytes."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-folder-report
+    type: exercise
+    fade: independent
+    objective: O3
+    title: What is in this folder?
+    prompt: |
+      **Write `report(folder)`**: it prints each entry of the folder,
+      sorted by name, with `iterdir()`:
+
+      - a folder as `name/`,
+      - a file as `name  N bytes`,
+      - names that start with `.` are hidden: leave them out.
+
+      At the end it prints the number of files and their total size. The
+      code above makes the folder `project`.
+
+      ```text
+      README.md  20 bytes
+      data/
+      main.py  18 bytes
+      2 files, 38 bytes
+      ```
+    given: |
+      from pathlib import Path
+
+      Path("project/data").mkdir(parents=True)
+      Path("project/main.py").write_text("print('hi there')\n")
+      Path("project/README.md").write_text("# My little project\n")
+      Path("project/.secret").write_text("do not show")
+      Path("project/data/prices.csv").write_text("item,price\n")
+    starter: |
+      from pathlib import Path
+
+      # Your function here.
+
+
+      report("project")
+    solution: |
+      from pathlib import Path
+
+
+      def report(folder):
+          files = 0
+          size = 0
+          for entry in sorted(Path(folder).iterdir()):
+              if entry.name.startswith("."):
+                  continue
+              if entry.is_dir():
+                  print(f"{entry.name}/")
+              else:
+                  bytes_ = entry.stat().st_size
+                  print(f"{entry.name}  {bytes_} bytes")
+                  files += 1
+                  size += bytes_
+          print(f"{files} files, {size} bytes")
+
+
+      report("project")
+    after: >-
+      `iterdir()` gives the entries in no fixed order, so `sorted` makes
+      the report the same on every computer. The sizes come from the
+      operating system: the file is not read.
+    cases:
+      - {}
+      - label: "the folder has other files"
+        setup: |
+          from pathlib import Path
+
+          Path("project").mkdir()
+          Path("project/a.txt").write_text("x" * 100)
+          Path("project/.hidden").write_text("x")
+          Path("project/b").mkdir()
+    checks:
+      - expr: |-
+          err is None and lines == (lambda es: [e.name + '/' if e.is_dir() else f'{e.name}  {e.stat().st_size} bytes' for e in es] + [f"{sum(1 for e in es if e.is_file())} files, {sum(e.stat().st_size for e in es if e.is_file())} bytes"])(sorted(e for e in __import__('pathlib').Path('project').iterdir() if not e.name.startswith('.')))
+        pass: "It lists the folder sorted, with sizes and the total"
+        hint: "`for entry in sorted(Path(folder).iterdir()):`, then `entry.is_dir()` or `entry.stat().st_size`."
+        misconceptions:
+          - when: "any(line.startswith('.') for line in lines)"
+            say: "A hidden file is shown. Skip names that start with `.`: `if entry.name.startswith(\".\"): continue`."
+          - when: "err == 'IsADirectoryError'"
+            say: "A folder is read as a file. Check `entry.is_dir()` before you use its size or text."
+      - expr: "'iterdir' in src"
+        pass: "It uses `iterdir()`"
+        hint: "`Path(folder).iterdir()` gives the entries."
+    hints:
+      - "`for entry in sorted(Path(folder).iterdir()):`."
+      - "`continue` for hidden names; `entry.is_dir()` for folders."
+      - "For a file: `entry.stat().st_size`; add it to a total."
+
+  # 9. THEORY ----------------------------------------------------------------
+  - id: streams
+    type: theory
+    objective: O4
+    title: The three standard streams
+    body: |
+      Every program gets three **streams**, open from the start:
+
+      | Stream | In Python | Normally |
+      | --- | --- | --- |
+      | standard input | `sys.stdin` | the keyboard |
+      | standard output | `sys.stdout` | the screen |
+      | standard error | `sys.stderr` | the screen too |
+
+      `input()` reads from `sys.stdin`, and `print` writes to `sys.stdout`.
+      You can use them directly:
+
+      ```python
+      import sys
+
+      line = sys.stdin.readline()          # one line, with \n
+      sys.stdout.write("Result: 42\n")     # no \n by itself
+      print("skipped a bad line", file=sys.stderr)
+      ```
+
+      The terminal can connect them to files: `python main.py < in.txt >
+      out.txt 2> errors.txt`. Then `sys.stdin` reads `in.txt`, the results
+      go to `out.txt`, and the messages to `errors.txt`. Keeping results on
+      stdout and messages on stderr makes this work.
+
+      In this course, an answer that you type is a line of `sys.stdin`,
+      and stdout and stderr both show under **Output**.
+    keys:
+      - code: "sys.stdin.readline()"
+        means: "Like `input()`, without a prompt, with `\\n`."
+      - code: "sys.stdout.write(text)"
+        means: "Like `print`, but adds no `\\n`."
+      - code: "print(..., file=sys.stderr)"
+        means: "A message, apart from the results."
+      - code: "python main.py < in.txt"
+        means: "stdin reads the file."
+
+  # 10. EXERCISE: completion -------------------------------------------------
+  - id: ex-streams
+    type: exercise
+    fade: completion
+    objective: O4
+    title: Results to stdout, messages to stderr
+    prompt: |
+      The program reads numbers from `sys.stdin`, one on each line, until
+      an empty line. **Replace the three `___`**: a line that is not a
+      number goes to `sys.stderr` as a message, and the total goes to
+      `sys.stdout`.
+
+      ```text
+      3
+      x
+      skipped: x
+      4.5
+
+      Total: 7.5
+      ```
+    starter: |
+      import sys
+
+      total = 0
+      while True:
+          line = sys.stdin.___().strip()
+          if not line:
+              break
+          try:
+              total += float(line)
+          except ValueError:
+              print(f"skipped: {line}", file=___)
+      sys.stdout.___(f"Total: {total:g}\n")
+    solution: |
+      import sys
+
+      total = 0
+      while True:
+          line = sys.stdin.readline().strip()
+          if not line:
+              break
+          try:
+              total += float(line)
+          except ValueError:
+              print(f"skipped: {line}", file=sys.stderr)
+      sys.stdout.write(f"Total: {total:g}\n")
+    after: >-
+      With `python main.py < numbers.txt > total.txt`, the file gets only
+      the total, and the skipped lines still show on the screen: the two
+      streams keep results and messages apart.
+    cases:
+      - stdin: ["3", "x", "4.5", ""]
+      - label: "the lines are `10`, `-2.5` and an empty line"
+        stdin: ["10", "-2.5", ""]
+      - label: "the lines are `abc` and an empty line"
+        stdin: ["abc", ""]
+    checks:
+      - expr: "err is None and lines[-1:] == [f'Total: {sum(float(x) for x in inputs if x.replace(chr(46), chr(48), 1).lstrip(chr(45)).isdigit()):g}']"
+        pass: "It writes the total to stdout"
+        hint: "`sys.stdout.write(...)`: the text already ends with `\\n`."
+        misconceptions:
+          - when: "err == 'NameError'"
+            say: "A `___` is still in the code. Replace all three."
+          - when: "err == 'EOFError'"
+            say: "The program reads after the empty line. Stop with `break` when the line is empty."
+      - expr: "[line for line in lines if line.startswith('skipped: ')] == [f'skipped: {x}' for x in inputs if x and not x.replace(chr(46), chr(48), 1).lstrip(chr(45)).isdigit()]"
+        pass: "Each line that is not a number gives a message"
+        hint: "`print(..., file=sys.stderr)`."
+      - expr: "'sys.stdin.readline' in src and 'sys.stderr' in src and 'sys.stdout.write' in src"
+        pass: "It uses the three streams"
+        hint: "`sys.stdin.readline()`, `file=sys.stderr`, `sys.stdout.write(...)`."
+    hints:
+      - "The method that reads one line is `readline`."
+      - "Messages go to `sys.stderr`."
+      - "`sys.stdout.write(...)` writes the total."
+
+  # 11. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check what you know
+    items:
+      - kind: predict
+        id: q-readline
+        objective: O1
+        code: |
+          import io
+
+          f = io.StringIO("a\nb\n")
+          print(repr(f.readline()), repr(f.readline()), repr(f.readline()))
+        explain: "`io.StringIO` acts like a text file. Each line comes with its `\\n`, and at the end `readline` gives `''`."
+      - kind: mcq
+        id: q-big-file
+        objective: O1
+        prompt: "A log file has 50 million lines. How should a program count the lines with ERROR?"
+        options:
+          - text: "`for line in f:`: one line at a time"
+            correct: true
+            why: "Only one line is in memory at a time."
+          - text: "`f.readlines()`, then loop over the list"
+            why: "That puts all 50 million lines in memory at once."
+          - text: "`f.read().split(\"\\n\")`"
+            why: "Also the whole file in memory, twice."
+      - kind: mcq
+        id: q-mode-x
+        objective: O2
+        prompt: "Which mode makes a new file, and refuses to touch a file that is already there?"
+        options:
+          - text: "`\"x\"`"
+            correct: true
+            why: "It raises `FileExistsError` instead."
+          - text: "`\"w\"`"
+            why: "`\"w\"` empties a file that is there."
+          - text: "`\"a\"`"
+            why: "`\"a\"` writes at the end of a file that is there."
+      - kind: mcq
+        id: q-relative
+        objective: O3
+        prompt: "`open(\"prices.csv\")` works in the terminal of the project, but fails from another folder. Why?"
+        options:
+          - text: "The path is relative to the working folder, which changed"
+            correct: true
+            why: "`Path(__file__).parent / \"prices.csv\"` finds the file next to the program."
+          - text: "The file was deleted"
+            why: "It is still there; Python looks in another folder."
+          - text: "`open` needs the mode `\"r\"`"
+            why: "`\"r\"` is the default."
+      - kind: mcq
+        id: q-stderr
+        objective: O4
+        prompt: "`python main.py > out.txt`. Where do `print(\"x\")` and `print(\"y\", file=sys.stderr)` go?"
+        options:
+          - text: "`x` into the file, `y` on the screen"
+            correct: true
+            why: "`>` sends only stdout to the file."
+          - text: "Both into the file"
+            why: "stderr needs `2>` to go to a file."
+          - text: "Both on the screen"
+            why: "stdout goes to `out.txt` now."
+
+  # 12. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 6
+
+review:
+  - kind: mcq
+    id: r-readlines
+    objective: O1
+    prompt: "What does `f.readlines()` give?"
+    options:
+      - text: "A list of the lines that are left, each with its `\\n`"
+        correct: true
+        why: "Use `line.rstrip(\"\\n\")` to take the ending away."
+      - text: "The next line"
+        why: "That is `readline()`."
+      - text: "The number of lines"
+        why: "`len(f.readlines())` would give that."
+  - kind: predict
+    id: r-place
+    objective: O1
+    code: |
+      import io
+
+      f = io.StringIO("one\ntwo\nthree\n")
+      f.readline()
+      print(len(f.readlines()))
+    explain: "The first `readline` takes `one`, so two lines are left."
+  - kind: mcq
+    id: r-w-plus
+    objective: O2
+    prompt: "What is the difference between `\"r+\"` and `\"w+\"`?"
+    options:
+      - text: "Both read and write; `\"w+\"` empties the file first, `\"r+\"` keeps it (and needs it to exist)"
+        correct: true
+        why: "To change a file that you also read, use `\"r+\"`."
+      - text: "`\"r+\"` only reads"
+        why: "The `+` adds writing."
+      - text: "None: they are the same"
+        why: "`w` always empties the file."
+  - kind: mcq
+    id: r-oserror
+    objective: O2
+    prompt: "Which one `except` catches `FileNotFoundError`, `FileExistsError` and `PermissionError`?"
+    options:
+      - text: "`except OSError:`"
+        correct: true
+        why: "They are all kinds of `OSError`."
+      - text: "`except FileError:`"
+        why: "Python has no `FileError`."
+      - text: "`except ValueError:`"
+        why: "File errors are not `ValueError`s."
+  - kind: predict
+    id: r-path-parts
+    objective: O3
+    code: |
+      from pathlib import Path
+
+      p = Path("data") / "report.final.csv"
+      print(p.name, p.stem, p.suffix, p.is_absolute())
+    explain: "`stem` is the name without the last suffix; a relative path is not absolute."
+  - kind: mcq
+    id: r-write
+    objective: O4
+    prompt: "What does `sys.stdout.write(\"Done\")` do that `print(\"Done\")` does not?"
+    options:
+      - text: "It adds no line ending: the next output goes on in the same line"
+        correct: true
+        why: "`print` adds `\\n` for you; `write` writes exactly the text."
+      - text: "It writes to a file"
+        why: "It writes to standard output, like `print`."
+      - text: "It is faster for numbers"
+        why: "`write` takes only texts."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-bytearray
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Change one byte in place
+    prompt: |
+      `bytes` cannot change, but a `bytearray` can: it is a buffer of bytes
+      that you can edit. **Replace the `___`**: read the file into a
+      `bytearray`, change its first byte from `B` to `P`, and write it back.
+
+      ```text
+      bytearray(b'BMP')
+      PMP
+      ```
+    given: |
+      from pathlib import Path
+
+      Path("icon.bin").write_bytes(b"BMP")
+    starter: |
+      from pathlib import Path
+
+      data = ___(Path("icon.bin").read_bytes())
+      print(data)
+      data[0] = ord(___)
+      Path("icon.bin").write_bytes(data)
+      print(Path("icon.bin").read_text())
+    solution: |
+      from pathlib import Path
+
+      data = bytearray(Path("icon.bin").read_bytes())
+      print(data)
+      data[0] = ord("P")
+      Path("icon.bin").write_bytes(data)
+      print(Path("icon.bin").read_text())
+    after: >-
+      A byte is a number, so the new value is `ord("P")`, 80. With `bytes`,
+      `data[0] = 80` raises a `TypeError`: bytes cannot change.
+    checks:
+      - expr: "err is None and lines == [\"bytearray(b'BMP')\", 'PMP']"
+        pass: "It changes the first byte and saves the file"
+        hint: "`bytearray(...)` and `ord(\"P\")`."
+        misconceptions:
+          - when: "err == 'TypeError'"
+            say: "A `bytes` object cannot change, and a byte is a number. Use `bytearray(...)`, and `ord(\"P\")` for the value."
+      - expr: "open('icon.bin', 'rb').read() == b'PMP'"
+        pass: "The file holds the new bytes"
+        hint: "`write_bytes(data)` takes a `bytearray` too."
+    hints:
+      - "The type of bytes that can change is `bytearray`."
+      - "A byte is a number: the number of a letter is `ord(...)`."
+      - "`bytearray(...)` and `ord(\"P\")`."
+  - id: x-tail
+    type: exercise
+    fade: independent
+    objective: O1
+    title: The last lines of a file
+    prompt: |
+      **Write `tail(name, n)`**: it gives back the last `n` lines of a text
+      file, without their `\n`, like the tool `tail` does. Read the file
+      with a `for` loop and keep only the last `n` lines while you read,
+      so a big file works too.
+
+      ```text
+      ['line 8', 'line 9', 'line 10']
+      ```
+    given: |
+      from pathlib import Path
+
+      Path("log.txt").write_text("".join(f"line {i}\n" for i in range(1, 11)))
+    starter: |
+      # Your function here.
+
+
+      print(tail("log.txt", 3))
+    solution: |
+      def tail(name, n):
+          last = []
+          with open(name) as f:
+              for line in f:
+                  last.append(line.rstrip("\n"))
+                  if len(last) > n:
+                      last.pop(0)
+          return last
+
+
+      print(tail("log.txt", 3))
+    after: >-
+      The list never has more than `n` lines. `collections.deque(f, maxlen=n)`
+      does the same in one line, and faster.
+    checks:
+      - expr: "callable(ns.get('tail')) and tail('log.txt', 3) == ['line 8', 'line 9', 'line 10'] and tail('log.txt', 1) == ['line 10']"
+        pass: "It gives the last lines"
+        hint: "Add each line, and take the oldest away when there are more than `n`."
+      - expr: "callable(ns.get('tail')) and tail('log.txt', 50) == [f'line {i}' for i in range(1, 11)] and (lambda p: (p.write_text(''), tail('empty.txt', 2))[1])(__import__('pathlib').Path('empty.txt')) == []"
+        pass: "It works for a short file and an empty one"
+        hint: "With fewer than `n` lines, all of them come back."
+      - expr: "'readlines' not in src and '.read()' not in src and syntax('For') >= 1"
+        pass: "It reads line by line, not the whole file at once"
+        hint: "`for line in f:` instead of `read()` or `readlines()`."
+    hints:
+      - "Keep a list `last = []`."
+      - "`last.append(line.rstrip(\"\\n\"))` for each line."
+      - "`if len(last) > n: last.pop(0)`."

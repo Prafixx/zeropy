@@ -1,0 +1,804 @@
+id: bytes-and-binary
+order: 33
+title: Bytes and binary files
+summary: Text is stored as bytes. Turn text into bytes and back, read pictures and other binary files, find a file's type by its first bytes, and check a download with SHA-256.
+minutes: 40
+outcomes: [A4, A6]
+
+objectives:
+  - id: O1
+    text: Tell text (str) from bytes, and turn one into the other with encode and decode
+  - id: O2
+    text: Read and write binary files with "rb" and "wb", and know why text mode breaks them
+  - id: O3
+    text: Find the type of a file by its first bytes, and read a big file in parts
+  - id: O4
+    text: Read a text file whose encoding is not UTF-8, without a crash
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: text-and-bytes
+    type: theory
+    objective: O1
+    title: Text and bytes
+    body: |
+      A file on a disk, or a message on the internet, is only **bytes**:
+      numbers from 0 to 255. Python has a type for them, `bytes`, next to
+      `str` for text:
+
+      ```python
+      text = "café"              # str: 4 characters
+      data = text.encode()       # bytes: b'caf\xc3\xa9'
+      len(text)                  # 4
+      len(data)                  # 5: é needs 2 bytes in UTF-8
+      data[0]                    # 99: one byte is a number
+      data.decode()              # 'café' again
+      ```
+
+      `encode` turns text into bytes, `decode` turns bytes into text. Both
+      use an **encoding**, the rules for each character. Without a name,
+      Python uses **UTF-8**, which can store every character of every
+      language.
+
+      A `bytes` value is written `b'...'`. Bytes that are not plain ASCII
+      letters show as `\xNN`, two hexadecimal digits: `\xc3` is 195.
+    keys:
+      - code: "\"é\".encode()"
+        means: "`b'\\xc3\\xa9'`: text to bytes, with UTF-8."
+      - code: "b\"Hi\".decode()"
+        means: "`'Hi'`: bytes to text."
+      - code: "data[0]"
+        means: "An `int` from 0 to 255, not a letter."
+      - code: "bytes([72, 105])"
+        means: "`b'Hi'`: bytes from a list of numbers."
+
+  # 2. DEMO ------------------------------------------------------------------
+  - id: bytes-demo
+    type: demo
+    visual: none
+    objective: O1
+    title: Look inside the bytes
+    intro: |
+      Press **Run**: the program shows the bytes of a text, as numbers and
+      in hexadecimal (`hex`). Then change the text: try an emoji, or a
+      word in another alphabet.
+    code: |
+      text = "café"
+      data = text.encode("utf-8")
+
+      print(len(text), "characters")
+      print(len(data), "bytes")
+      print(list(data))
+      print(data.hex(" "))
+      print(data.decode("utf-8"))
+    experiments:
+      - text: "Run it as it is."
+        expr: "err is None and lines[:2] == ['4 characters', '5 bytes']"
+      - text: "Put an emoji in the text, like `\"hi 🙂\"`. How many bytes is the emoji?"
+        expr: "err is None and len(lines) > 1 and lines[1] != '5 bytes' and any(ord(c) > 0xFFFF for c in src)"
+      - text: "Change the last line to `data.decode(\"ascii\")`. What does Python say?"
+        expr: "err == 'UnicodeDecodeError'"
+    investigate:
+      - kind: mcq
+        id: i-index
+        prompt: "What is `data[0]` when `data` is `\"café\".encode()`?"
+        options:
+          - text: "`99`: one byte is a number"
+            correct: true
+            why: "The letter c is the byte 99. Indexing `bytes` gives an `int`."
+          - text: "`'c'`"
+            why: "That is indexing a `str`."
+          - text: "`b'c'`"
+            why: "`data[0:1]`, a slice, gives `b'c'`. One index gives the number."
+      - kind: mcq
+        id: i-ascii
+        prompt: "Why can `ascii` not decode these bytes?"
+        options:
+          - text: "ASCII has only 128 characters, 0 to 127; the bytes of é are bigger"
+            correct: true
+            why: "195 and 169 are not ASCII, so Python raises a `UnicodeDecodeError`."
+          - text: "ASCII cannot read the letter c"
+            why: "c is 99, which is ASCII."
+          - text: "decode needs no name"
+            why: "It takes a name; without one it uses UTF-8."
+
+  # 3. EXERCISE: completion --------------------------------------------------
+  - id: ex-size
+    type: exercise
+    fade: completion
+    objective: O1
+    title: How many bytes?
+    prompt: |
+      A chat app allows messages of at most **20 bytes**, not 20
+      characters. **Replace the `___`**: `byte_size(text)` gives the number
+      of bytes of the text in UTF-8, and `fits(text)` tells if it is 20 or
+      less.
+
+      ```text
+      hello 5 True
+      Grüße aus Köln! 18 True
+      日本語のメッセージです 33 False
+      ```
+    starter: |
+      def byte_size(text):
+          return ___
+
+
+      def fits(text):
+          return ___
+
+
+      for message in ["hello", "Grüße aus Köln!", "日本語のメッセージです"]:
+          print(message, byte_size(message), fits(message))
+    solution: |
+      def byte_size(text):
+          return len(text.encode("utf-8"))
+
+
+      def fits(text):
+          return byte_size(text) <= 20
+
+
+      for message in ["hello", "Grüße aus Köln!", "日本語のメッセージです"]:
+          print(message, byte_size(message), fits(message))
+    after: >-
+      `len(text)` counts characters, the encoded bytes count storage. Limits
+      of databases, files and networks are often in bytes, so a message in
+      Japanese fills them three times faster than one in English.
+    checks:
+      - expr: "callable(ns.get('byte_size')) and [byte_size(t) for t in ['', 'abc', 'é', '€', '🙂']] == [0, 3, 2, 3, 4]"
+        pass: "`byte_size` counts the bytes in UTF-8"
+        hint: "`len(text.encode(\"utf-8\"))`."
+        misconceptions:
+          - when: "callable(ns.get('byte_size')) and byte_size('é') == 1"
+            say: "That counts characters. Encode first, then count: `len(text.encode(\"utf-8\"))`."
+      - expr: "callable(ns.get('fits')) and fits('a' * 20) is True and fits('a' * 21) is False and fits('é' * 10) is True and fits('é' * 11) is False"
+        pass: "`fits` allows 20 bytes and not one more"
+        hint: "`return byte_size(text) <= 20`."
+      - expr: "err is None and lines == ['hello 5 True', 'Grüße aus Köln! 18 True', '日本語のメッセージです 33 False']"
+        pass: "It prints the three lines"
+        hint: "Keep the loop at the end."
+    hints:
+      - "`text.encode(\"utf-8\")` gives the bytes."
+      - "`len(...)` of the bytes is the size."
+      - "`fits`: `return byte_size(text) <= 20`."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: binary-files
+    type: theory
+    objective: O2
+    title: Binary files
+    body: |
+      A picture, a PDF or a ZIP file is not text: it is bytes with a
+      meaning only for its program. Open such a file in **binary mode**,
+      with a `b` in the mode:
+
+      ```python
+      with open("photo.png", "rb") as f:     # read bytes
+          start = f.read(8)                  # the first 8 bytes
+      with open("copy.png", "wb") as f:      # write bytes
+          f.write(start)
+
+      data = Path("photo.png").read_bytes()  # the whole file
+      ```
+
+      In text mode (`"r"`), Python decodes every byte as UTF-8 and changes
+      line endings. That breaks a picture: most of its bytes are not text,
+      so you get a `UnicodeDecodeError`, or a broken copy.
+
+      Most file types start with the same few bytes, a **signature**.
+      Programs use it to know what a file really is, whatever its name:
+
+      | Type | First bytes |
+      | --- | --- |
+      | PNG | `b"\x89PNG\r\n\x1a\n"` |
+      | PDF | `b"%PDF"` |
+      | ZIP (also .docx, .xlsx) | `b"PK\x03\x04"` |
+      | JPEG | `b"\xff\xd8\xff"` |
+    keys:
+      - code: "open(name, \"rb\")"
+        means: "Read bytes: `read()` gives `bytes`."
+      - code: "open(name, \"wb\")"
+        means: "Write bytes: `write()` takes `bytes`."
+      - code: "f.read(8)"
+        means: "Only the next 8 bytes."
+      - code: "data.startswith(b\"%PDF\")"
+        means: "Bytes have `startswith`, like texts."
+
+  # 5. EXERCISE: independent -------------------------------------------------
+  - id: ex-kind
+    type: exercise
+    fade: independent
+    objective: O3
+    title: What is this file?
+    prompt: |
+      **Write `kind(name)`**: it reads only the first 8 bytes of the file
+      and gives back `"png"`, `"pdf"`, `"zip"` or `"jpeg"` when the file
+      starts with that signature (see `SIGNATURES`), else `"unknown"`.
+
+      The files are made by the code above. Look at `notes.txt` and
+      `tiny.bin`: a name or a word is not enough.
+
+      ```text
+      photo.png png
+      report.pdf pdf
+      backup.zip zip
+      cat.jpg jpeg
+      notes.txt unknown
+      tiny.bin unknown
+      ```
+    given: |
+      from pathlib import Path
+
+      Path("photo.png").write_bytes(b"\x89PNG\r\n\x1a\n" + bytes(24))
+      Path("report.pdf").write_bytes(b"%PDF-1.7\n" + bytes(30))
+      Path("backup.zip").write_bytes(b"PK\x03\x04" + bytes(30))
+      Path("cat.jpg").write_bytes(b"\xff\xd8\xff\xe0" + bytes(30))
+      Path("notes.txt").write_text("PNG is a picture format.")
+      Path("tiny.bin").write_bytes(b"PK")
+    starter: |
+      SIGNATURES = {
+          b"\x89PNG\r\n\x1a\n": "png",
+          b"%PDF": "pdf",
+          b"PK\x03\x04": "zip",
+          b"\xff\xd8\xff": "jpeg",
+      }
+
+      # Your function here.
+
+
+      for name in ["photo.png", "report.pdf", "backup.zip", "cat.jpg", "notes.txt", "tiny.bin"]:
+          print(name, kind(name))
+    solution: |
+      SIGNATURES = {
+          b"\x89PNG\r\n\x1a\n": "png",
+          b"%PDF": "pdf",
+          b"PK\x03\x04": "zip",
+          b"\xff\xd8\xff": "jpeg",
+      }
+
+
+      def kind(name):
+          with open(name, "rb") as f:
+              start = f.read(8)
+          for signature, label in SIGNATURES.items():
+              if start.startswith(signature):
+                  return label
+          return "unknown"
+
+
+      for name in ["photo.png", "report.pdf", "backup.zip", "cat.jpg", "notes.txt", "tiny.bin"]:
+          print(name, kind(name))
+    after: >-
+      This is how your computer knows that a renamed `.docx` is really a
+      ZIP. Reading 8 bytes is fast even for a file of many gigabytes, because
+      the rest is never read.
+    checks:
+      - expr: "callable(ns.get('kind')) and [kind(n) for n in ['photo.png', 'report.pdf', 'backup.zip', 'cat.jpg']] == ['png', 'pdf', 'zip', 'jpeg']"
+        pass: "It finds the type of each file by its first bytes"
+        hint: "Open with `\"rb\"`, read 8 bytes, and test `start.startswith(signature)` for each signature."
+        misconceptions:
+          - when: "err == 'UnicodeDecodeError' or (callable(ns.get('kind')) and raises(kind, 'cat.jpg') == 'UnicodeDecodeError')"
+            say: "The file is opened as text, and its bytes are not UTF-8. Open it in binary mode: `open(name, \"rb\")`."
+          - when: "err == 'TypeError'"
+            say: "A `str` and `bytes` are mixed. With `\"rb\"`, `read` gives bytes, and the signatures are bytes too."
+      - expr: "callable(ns.get('kind')) and kind('notes.txt') == 'unknown' and kind('tiny.bin') == 'unknown'"
+        pass: "A text and a file that is too short are `\"unknown\"`"
+        hint: "Return `\"unknown\"` after the loop, when no signature matched."
+      - expr: "__import__('re').search(r'\\.read\\(\\s*[^)\\s]', src) is not None"
+        pass: "It reads only the first bytes, not the whole file"
+        hint: "`f.read(8)`: a number in `read` reads only that many bytes."
+      - expr: "err is None and lines == ['photo.png png', 'report.pdf pdf', 'backup.zip zip', 'cat.jpg jpeg', 'notes.txt unknown', 'tiny.bin unknown']"
+        pass: "It prints each file with its type"
+        hint: "Keep the loop at the end."
+    hints:
+      - "`with open(name, \"rb\") as f:` and `start = f.read(8)`."
+      - "`for signature, label in SIGNATURES.items():` and `if start.startswith(signature): return label`."
+      - "After the loop: `return \"unknown\"`."
+
+  # 6. EXERCISE: debug -------------------------------------------------------
+  - id: ex-copy
+    type: exercise
+    fade: debug
+    objective: O2
+    title: A copy that breaks pictures
+    prompt: |
+      `copy(source, target)` should make an exact copy of any file. With
+      the photo it stops with an error. **Find the bug and fix it.** The
+      copy must have exactly the same bytes.
+
+      ```text
+      1028 bytes copied
+      True
+      ```
+    given: |
+      from pathlib import Path
+
+      Path("photo.jpg").write_bytes(b"\xff\xd8\xff\xe0" + bytes(range(256)) * 4)
+    starter: |
+      from pathlib import Path
+
+
+      def copy(source, target):
+          with open(source) as f:
+              data = f.read()
+          with open(target, "w") as f:
+              f.write(data)
+          return len(data)
+
+
+      print(copy("photo.jpg", "copy.jpg"), "bytes copied")
+      print(Path("photo.jpg").read_bytes() == Path("copy.jpg").read_bytes())
+    solution: |
+      from pathlib import Path
+
+
+      def copy(source, target):
+          with open(source, "rb") as f:
+              data = f.read()
+          with open(target, "wb") as f:
+              f.write(data)
+          return len(data)
+
+
+      print(copy("photo.jpg", "copy.jpg"), "bytes copied")
+      print(Path("photo.jpg").read_bytes() == Path("copy.jpg").read_bytes())
+    after: >-
+      Two letters fix it: `rb` and `wb`. In binary mode, Python moves the
+      bytes as they are: no decoding, and no changed line endings.
+    checks:
+      - expr: "err is None and 'copy.jpg' in __import__('os').listdir('.') and open('photo.jpg', 'rb').read() == open('copy.jpg', 'rb').read()"
+        pass: "The copy has exactly the same bytes"
+        hint: "Read with `\"rb\"` and write with `\"wb\"`."
+        misconceptions:
+          - when: "err == 'UnicodeDecodeError'"
+            say: "Python reads the photo as text and cannot decode its bytes. Open it in binary mode: `open(source, \"rb\")`."
+          - when: "err == 'TypeError'"
+            say: "Now `data` is bytes, but the target is open for text. Write with `open(target, \"wb\")`."
+      - expr: "callable(ns.get('copy')) and (lambda p: (p.write_bytes(bytes([0, 13, 10, 255, 10])), copy('crlf.bin', 'crlf2.bin'), open('crlf2.bin', 'rb').read())[2])(__import__('pathlib').Path('crlf.bin')) == bytes([0, 13, 10, 255, 10])"
+        pass: "Any bytes come through unchanged, also line endings"
+        hint: "Binary mode for both files: no decoding and no changed line endings."
+      - expr: "lines == ['1028 bytes copied', 'True']"
+        pass: "It prints the size and True"
+        hint: "`len(data)` of the bytes is 1028."
+    hints:
+      - "Which mode opens a file for bytes?"
+      - "Text mode is `\"r\"` and `\"w\"`; binary mode adds a `b`."
+      - "`open(source, \"rb\")` and `open(target, \"wb\")`."
+
+  # 7. THEORY ----------------------------------------------------------------
+  - id: big-and-old
+    type: theory
+    objective: O3
+    title: Big files and old files
+    body: |
+      ## A big file in parts
+
+      `read()` puts the whole file in memory. For a video of 4 GB that is
+      too much. Read it in **parts** (chunks) instead:
+
+      ```python
+      with open("video.mp4", "rb") as f:
+          while True:
+              chunk = f.read(4096)    # at most 4096 bytes
+              if not chunk:           # b"": the end of the file
+                  break
+              ...                     # use the chunk
+      ```
+
+      A use you have seen: a **checksum**. `hashlib.sha256` makes a code of
+      64 hex digits from any bytes. One changed byte gives a very different
+      code. The download page of this app shows the SHA-256 of each
+      installer: if your file gives the same code, the download is complete
+      and not changed. `digest.update(chunk)` adds the bytes part by part.
+
+      ## An old file in another encoding
+
+      Old Windows programs often save text in **cp1252**, not in UTF-8.
+      Decoding it as UTF-8 raises a `UnicodeDecodeError`. Try UTF-8 first,
+      and catch the error:
+
+      ```python
+      data = Path("old.txt").read_bytes()
+      try:
+          text = data.decode("utf-8")
+      except UnicodeDecodeError:
+          text = data.decode("cp1252")
+      ```
+
+      `open(name, encoding="cp1252")` reads such a file directly.
+      `errors="replace"` puts `�` for bytes that do not fit, instead of an
+      error: good to look at a file, bad when you need every letter.
+    keys:
+      - code: "f.read(4096)"
+        means: "At most 4096 bytes; `b\"\"` at the end."
+      - code: "hashlib.sha256()"
+        means: "`update(bytes)` part by part, then `hexdigest()`."
+      - code: "UnicodeDecodeError"
+        means: "The bytes do not follow the rules of that encoding."
+      - code: "encoding=\"cp1252\""
+        means: "Read an old Windows text file."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-checksum
+    type: exercise
+    fade: independent
+    objective: O3
+    title: Check a download
+    prompt: |
+      **Write `sha256_of(name)`**: it reads the file in parts of 4096
+      bytes, adds each part to a `hashlib.sha256()`, and gives back the
+      `hexdigest()`. It must work for an empty file too.
+
+      Then print the checksum of `installer.bin` (76 800 bytes).
+    given: |
+      from pathlib import Path
+
+      Path("installer.bin").write_bytes(bytes(range(256)) * 300)
+    starter: |
+      import hashlib
+
+      # Your function here.
+
+
+      print(sha256_of("installer.bin"))
+    solution: |
+      import hashlib
+
+
+      def sha256_of(name):
+          digest = hashlib.sha256()
+          with open(name, "rb") as f:
+              while True:
+                  chunk = f.read(4096)
+                  if not chunk:
+                      break
+                  digest.update(chunk)
+          return digest.hexdigest()
+
+
+      print(sha256_of("installer.bin"))
+    after: >-
+      The memory needed is 4096 bytes, for a file of any size. Your
+      function gives the same code as `Get-FileHash` on Windows or
+      `sha256sum` on Linux, so you can check any download with it.
+    checks:
+      - expr: "callable(ns.get('sha256_of')) and sha256_of('installer.bin') == __import__('hashlib').sha256(open('installer.bin', 'rb').read()).hexdigest()"
+        pass: "It gives the SHA-256 of the file"
+        hint: "`digest = hashlib.sha256()`, `digest.update(chunk)` for each part, `return digest.hexdigest()`."
+        misconceptions:
+          - when: "err == 'TypeError' and 'Strings must be encoded' in out"
+            say: "`update` needs bytes. Open the file with `\"rb\"`."
+      - expr: "callable(ns.get('sha256_of')) and (lambda p: (p.write_bytes(b''), sha256_of('empty.bin'))[1])(__import__('pathlib').Path('empty.bin')) == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' and (lambda p: (p.write_bytes(b'abc'), sha256_of('abc.bin'))[1])(__import__('pathlib').Path('abc.bin')) == 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
+        pass: "It works for an empty file and a tiny one"
+        hint: "Stop the loop when `read` gives `b\"\"`; an empty file stops at once."
+      - expr: "__import__('re').search(r'\\.read\\(\\s*[^)\\s]', src) is not None and (syntax('While') >= 1 or 'iter(' in src)"
+        pass: "It reads the file in parts, not all at once"
+        hint: "`while True:` with `chunk = f.read(4096)`, and `break` when the chunk is empty."
+      - expr: "err is None and lines[-1:] == [__import__('hashlib').sha256(bytes(range(256)) * 300).hexdigest()]"
+        pass: "It prints the checksum of installer.bin"
+        hint: "`print(sha256_of(\"installer.bin\"))`."
+    hints:
+      - "`digest = hashlib.sha256()` before the loop."
+      - "`while True:` → `chunk = f.read(4096)` → `if not chunk: break` → `digest.update(chunk)`."
+      - "At the end: `return digest.hexdigest()`."
+
+  # 9. EXERCISE: completion --------------------------------------------------
+  - id: ex-old-file
+    type: exercise
+    fade: completion
+    objective: O4
+    title: An old file from Windows
+    prompt: |
+      `old.txt` was saved by an old program in cp1252, `new.txt` in UTF-8.
+      **Replace the `___`** so that `read_any(name)` reads both: UTF-8
+      first, and cp1252 when UTF-8 fails.
+
+      ```text
+      Café crème, 5 €
+      Café crème, 5 €
+      ```
+    given: |
+      from pathlib import Path
+
+      Path("old.txt").write_bytes("Café crème, 5 €".encode("cp1252"))
+      Path("new.txt").write_bytes("Café crème, 5 €".encode("utf-8"))
+    starter: |
+      from pathlib import Path
+
+
+      def read_any(name):
+          data = Path(name).read_bytes()
+          try:
+              return data.decode(___)
+          except ___:
+              return data.decode("cp1252")
+
+
+      print(read_any("new.txt"))
+      print(read_any("old.txt"))
+    solution: |
+      from pathlib import Path
+
+
+      def read_any(name):
+          data = Path(name).read_bytes()
+          try:
+              return data.decode("utf-8")
+          except UnicodeDecodeError:
+              return data.decode("cp1252")
+
+
+      print(read_any("new.txt"))
+      print(read_any("old.txt"))
+    after: >-
+      UTF-8 goes first because its rules are strict: bytes from another
+      encoding almost never pass by chance. cp1252 accepts nearly any bytes,
+      so as the first try it would read UTF-8 files wrong.
+    checks:
+      - expr: "err is None and lines == ['Café crème, 5 €', 'Café crème, 5 €']"
+        pass: "Both files are read with the right letters"
+        hint: "`data.decode(\"utf-8\")` in `try`, `except UnicodeDecodeError:`."
+        misconceptions:
+          - when: "err == 'UnicodeDecodeError'"
+            say: "The cp1252 file raises a `UnicodeDecodeError`. Catch exactly that error in the `except`."
+      - expr: "callable(ns.get('read_any')) and (lambda p: (p.write_bytes('日本 🙂'.encode('utf-8')), read_any('emoji.txt'))[1])(__import__('pathlib').Path('emoji.txt')) == '日本 🙂'"
+        pass: "A UTF-8 file with any characters is read as UTF-8"
+        hint: "Try UTF-8 first."
+        misconceptions:
+          - when: "callable(ns.get('read_any')) and (lambda p: (p.write_bytes('é'.encode('utf-8')), read_any('e.txt'))[1])(__import__('pathlib').Path('e.txt')) == 'Ã©'"
+            say: "A UTF-8 file is read as cp1252, so é becomes Ã©. Try `\"utf-8\"` in the `try`, and cp1252 only in the `except`."
+      - expr: "'except UnicodeDecodeError' in src"
+        pass: "It catches only `UnicodeDecodeError`"
+        hint: "Name the error: `except UnicodeDecodeError:`."
+    hints:
+      - "The first `___` is the name of an encoding, as a text."
+      - "The second `___` is the error that `decode` raises for wrong bytes."
+      - "`data.decode(\"utf-8\")` and `except UnicodeDecodeError:`."
+
+  # 10. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check what you know
+    items:
+      - kind: predict
+        id: q-len
+        objective: O1
+        code: |
+          word = "naïve"
+          print(len(word), len(word.encode("utf-8")))
+        explain: "5 characters, but ï needs 2 bytes in UTF-8, so 6 bytes."
+      - kind: predict
+        id: q-index
+        objective: O1
+        code: |
+          data = b"AB"
+          print(data[0], data[1:])
+        explain: "One index gives the number of the byte (A is 65). A slice gives bytes."
+      - kind: mcq
+        id: q-mode
+        objective: O2
+        prompt: "Which mode reads a PDF file so that you get its bytes as they are?"
+        options:
+          - text: "`\"rb\"`"
+            correct: true
+            why: "Binary mode: `read()` gives `bytes`, nothing is decoded or changed."
+          - text: "`\"r\"`"
+            why: "Text mode decodes the bytes and fails on most of a PDF."
+          - text: "`\"w\"`"
+            why: "That opens a file for writing text, and empties it."
+      - kind: predict
+        id: q-bytes-list
+        objective: O1
+        code: |
+          print(bytes([80, 121]).decode())
+        explain: "80 is P and 121 is y in ASCII and UTF-8."
+      - kind: mcq
+        id: q-hash
+        objective: O3
+        prompt: "Your download gives another SHA-256 than the one on the download page. What does that mean?"
+        options:
+          - text: "The file is not the same: broken, cut short, or changed"
+            correct: true
+            why: "One different byte gives a very different code. Download it again from the real page."
+          - text: "Nothing: checksums are often different"
+            why: "The same bytes always give the same SHA-256."
+          - text: "The file is a newer version"
+            why: "A checksum belongs to exactly one file; it says nothing about versions."
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 6
+
+review:
+  - kind: predict
+    id: r-encode
+    objective: O1
+    code: |
+      data = "€".encode("utf-8")
+      print(len(data), data[0])
+    explain: "The euro sign needs 3 bytes in UTF-8; the first is 226."
+  - kind: mcq
+    id: r-decode
+    objective: O1
+    prompt: "What turns bytes into text?"
+    options:
+      - text: "`data.decode(\"utf-8\")`"
+        correct: true
+        why: "`decode` reads bytes with the rules of an encoding."
+      - text: "`data.encode()`"
+        why: "`encode` turns text into bytes, the other way."
+      - text: "`str(data)`"
+        why: "That gives the text `b'...'`, with the b and the quotes."
+  - kind: mcq
+    id: r-text-mode
+    objective: O2
+    prompt: "Why does `open(\"photo.jpg\").read()` often stop with a `UnicodeDecodeError`?"
+    options:
+      - text: "Text mode decodes the bytes as UTF-8, and a photo is not UTF-8 text"
+        correct: true
+        why: "Open it with `\"rb\"` to get its bytes."
+      - text: "The photo is too big"
+        why: "The size is not the problem: the mode is."
+      - text: "Python cannot open photos"
+        why: "It can, in binary mode."
+  - kind: mcq
+    id: r-signature
+    objective: O3
+    prompt: "A file is called `report.pdf`, but its first bytes are `PK\\x03\\x04`. What is it?"
+    options:
+      - text: "A ZIP file (or a file inside ZIP, like .docx)"
+        correct: true
+        why: "The first bytes say what a file is, not its name."
+      - text: "A PDF, because of the name"
+        why: "A name can be anything; a PDF starts with `%PDF`."
+      - text: "A broken file"
+        why: "It is a correct ZIP file with the wrong name."
+  - kind: predict
+    id: r-chunks
+    objective: O3
+    code: |
+      import io
+
+      f = io.BytesIO(b"abcdefg")
+      while True:
+          chunk = f.read(3)
+          if not chunk:
+              break
+          print(chunk)
+    explain: "`io.BytesIO` acts like a file in binary mode. Parts of 3 bytes: abc, def, and the last one, g. Then `read` gives `b''`."
+  - kind: mcq
+    id: r-old
+    objective: O4
+    prompt: "Which order reads both old cp1252 files and UTF-8 files correctly?"
+    options:
+      - text: "Try UTF-8 first; on `UnicodeDecodeError`, use cp1252"
+        correct: true
+        why: "UTF-8 is strict, so its error is a good sign that the file is in another encoding."
+      - text: "Try cp1252 first, then UTF-8"
+        why: "cp1252 accepts almost any bytes, so UTF-8 files would be read wrong without an error."
+      - text: "Always use `errors=\"replace\"`"
+        why: "Then letters are lost and become �."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-hexdump
+    type: exercise
+    fade: independent
+    objective: O2
+    title: A small hex viewer
+    prompt: |
+      **Write `hexdump(name)`**: it prints the bytes of a binary file, 8 on
+      each line, in hexadecimal with a space between them, like the
+      program `xxd` does.
+
+      ```text
+      89 50 4e 47 0d 0a 1a 0a
+      00 00 00 0d 49 48 44 52
+      00 00
+      ```
+    given: |
+      from pathlib import Path
+
+      Path("icon.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00")
+    starter: |
+      # Your function here.
+
+
+      hexdump("icon.png")
+    solution: |
+      def hexdump(name):
+          with open(name, "rb") as f:
+              data = f.read()
+          for start in range(0, len(data), 8):
+              print(data[start:start + 8].hex(" "))
+
+
+      hexdump("icon.png")
+    after: >-
+      Developers look at files like this when a program cannot read them.
+      The first line here is the PNG signature.
+    cases:
+      - {}
+      - label: "the file has 17 bytes"
+        setup: |
+          from pathlib import Path
+
+          Path("icon.png").write_bytes(bytes(range(17)))
+    checks:
+      - expr: "err is None and lines[:2] == [b.hex(' ') for b in (open('icon.png', 'rb').read()[:8], open('icon.png', 'rb').read()[8:16])]"
+        pass: "It prints 8 bytes on each line, in hex"
+        hint: "`for start in range(0, len(data), 8):` and `data[start:start + 8].hex(\" \")`."
+        misconceptions:
+          - when: "err == 'UnicodeDecodeError'"
+            say: "Open the picture in binary mode: `open(name, \"rb\")`."
+      - expr: "(lambda d: lines == [d[i:i + 8].hex(' ') for i in range(0, len(d), 8)])(open('icon.png', 'rb').read())"
+        pass: "It works for files of any length; the last line has the bytes that are left"
+        hint: "The last line can have fewer than 8 bytes: a slice past the end is fine."
+      - expr: "callable(ns.get('hexdump')) and syntax('For') >= 1 and '.hex(' in src"
+        pass: "It loops over parts of 8 bytes and uses `.hex`"
+        hint: "`bytes` have `.hex(\" \")`: two hex digits for each byte, with spaces."
+    hints:
+      - "Read the whole file with `\"rb\"`: it is small."
+      - "`range(0, len(data), 8)` gives 0, 8, 16, ..."
+      - "`print(data[start:start + 8].hex(\" \"))`."
+  - id: x-to-utf8
+    type: exercise
+    fade: completion
+    objective: O4
+    title: Convert old files to UTF-8
+    prompt: |
+      **Replace the `___`**: `convert(name)` reads a cp1252 file, and
+      writes it again in UTF-8, under the same name. Then the file is read
+      with `encoding="utf-8"` to show that it works.
+
+      ```text
+      Größe: 5 €
+      ```
+    given: |
+      from pathlib import Path
+
+      Path("price.txt").write_bytes("Größe: 5 €".encode("cp1252"))
+    starter: |
+      from pathlib import Path
+
+
+      def convert(name):
+          text = Path(name).read_text(encoding=___)
+          Path(name).write_text(text, encoding=___)
+
+
+      convert("price.txt")
+      print(Path("price.txt").read_text(encoding="utf-8"))
+    solution: |
+      from pathlib import Path
+
+
+      def convert(name):
+          text = Path(name).read_text(encoding="cp1252")
+          Path(name).write_text(text, encoding="utf-8")
+
+
+      convert("price.txt")
+      print(Path("price.txt").read_text(encoding="utf-8"))
+    after: >-
+      Read with the old encoding, write with the new one: the text in
+      between is plain Python `str`, which has no encoding at all.
+    checks:
+      - expr: "err is None and open('price.txt', 'rb').read() == 'Größe: 5 €'.encode('utf-8')"
+        pass: "The file is now UTF-8"
+        hint: "Read with `encoding=\"cp1252\"`, write with `encoding=\"utf-8\"`."
+        misconceptions:
+          - when: "err == 'UnicodeDecodeError'"
+            say: "The file is read as UTF-8, but it is cp1252. Read it with `encoding=\"cp1252\"`."
+      - expr: "lines == ['Größe: 5 €']"
+        pass: "It prints the text with the right letters"
+        hint: "Keep the last two lines."
+    hints:
+      - "The file is in cp1252 now."
+      - "It must be in UTF-8 after."
+      - "`encoding=\"cp1252\"` to read, `encoding=\"utf-8\"` to write."

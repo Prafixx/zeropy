@@ -4884,3 +4884,18 @@ code {
   width: 64px;
   height: 64px;
 }
+
+/* Phone: the lesson bar keeps close, the rail, the count and two buttons;
+   a long lesson name would push it wider than the screen. */
+.player > .bar .rail {
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .player > .bar .bar-title {
+    display: none;
+  }
+  .player > .bar {
+    gap: var(--s-3);
+    padding-inline: var(--s-3);
+  }
+}

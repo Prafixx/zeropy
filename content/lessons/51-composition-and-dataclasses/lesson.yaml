@@ -1,0 +1,788 @@
+id: composition-and-dataclasses
+order: 51
+title: Composition and dataclasses
+summary: Build bigger objects from smaller ones, and let Python write the boring parts of a class for you.
+minutes: 35
+outcomes: [A8, A9]
+
+objectives:
+  - id: O1
+    text: Build an object that holds other objects, like a cart that holds items
+  - id: O2
+    text: Let each object do its own job - the big object asks its parts
+  - id: O3
+    text: Write a dataclass, and use what it gives for free - __init__, a clear print and ==
+  - id: O4
+    text: Give a dataclass a list that is new for each object, with field(default_factory=list)
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: compose
+    type: theory
+    objective: O1
+    title: Objects made of objects
+    body: |
+      Real things are made of parts: a cart holds items, a library holds
+      books, a game holds players. In code, an attribute of an object can
+      hold other objects, often in a list:
+
+      ```python
+      class Cart:
+          def __init__(self):
+              self.items = []
+
+          def add(self, item):
+              self.items.append(item)
+
+          def total(self):
+              return sum(item.price for item in self.items)
+      ```
+
+      This is called **composition**. Each object keeps its own job:
+
+      - An `Item` knows its name and its price.
+      - The `Cart` knows its items. For the total, it **asks** them for
+        their prices: it does not keep the prices itself.
+
+      The cart holds the item objects themselves, not copies. A change to
+      an item is seen in the cart too.
+    keys:
+      - code: "self.items = []"
+        means: "A new, empty list for each cart, in `__init__`."
+      - code: "self.items.append(item)"
+        means: "The cart now also points at this item."
+      - code: "item.price for item in self.items"
+        means: "Ask each part for its value."
+
+  # 2. DEMO ------------------------------------------------------------------
+  - id: try
+    type: demo
+    objective: O2
+    title: A cart with items
+    intro: |
+      Press **Run**: the picture shows the items, and the cart that holds
+      them. Then change the program in the ways below.
+    code: |
+      class Item:
+          def __init__(self, name, price):
+              self.name = name
+              self.price = price
+
+      class Cart:
+          def __init__(self):
+              self.items = []
+
+          def add(self, item):
+              self.items.append(item)
+
+          def total(self):
+              return sum(item.price for item in self.items)
+
+      tea = Item("tea", 2.5)
+      cake = Item("cake", 4)
+      cart = Cart()
+      cart.add(tea)
+      cart.add(cake)
+      print(len(cart.items), cart.total())
+    experiments:
+      - text: "Run it. How many items, and what total?"
+        expr: "err is None and '2 6.5' in lines"
+      - text: "Before the `print`, add `cart.add(Item(\"milk\", 1.5))`. This item has no name of its own: only the cart holds it."
+        expr: "err is None and any(l.startswith('3 ') for l in lines)"
+      - text: "At the end, add `tea.price = 3` and `print(cart.total())`. Is the tea in the cart the same object?"
+        expr: "err is None and getattr(ns.get('tea'), 'price', None) == 3 and len(lines) >= 2"
+      - text: "Print the name of the first item of the cart: `print(cart.items[0].name)`."
+        expr: "err is None and 'tea' in lines"
+    investigate:
+      - kind: spot
+        id: i-ask
+        prompt: "Which line asks each item for its price?"
+        code: |
+          class Item:
+              def __init__(self, name, price):
+                  self.name = name
+                  self.price = price
+
+          class Cart:
+              def __init__(self):
+                  self.items = []
+
+              def add(self, item):
+                  self.items.append(item)
+
+              def total(self):
+                  return sum(item.price for item in self.items)
+
+          tea = Item("tea", 2.5)
+          cake = Item("cake", 4)
+          cart = Cart()
+          cart.add(tea)
+          cart.add(cake)
+          print(len(cart.items), cart.total())
+        line: 14
+        wrong:
+          - line: 11
+            say: "This line adds an item to the list."
+          - line: 4
+            say: "This line gives one item its price, when the item is made."
+        explain: >-
+          The cart does not keep prices of its own. For the total, it asks
+          each of its items: `item.price`.
+      - kind: mcq
+        id: i-not-added
+        prompt: "You add `milk = Item(\"milk\", 1.5)`, but never `cart.add(milk)`. Does `cart.total()` change?"
+        options:
+          - text: "No: the cart only knows the items in its list"
+            correct: true
+            why: "Making an item does not put it in a cart. Only `add` does."
+          - text: "Yes: every item counts"
+            why: "The cart adds up `self.items`, and milk is not in it."
+          - text: "An error"
+            why: "An item outside the cart is fine."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-shared
+    type: predict
+    objective: O1
+    title: The part changes
+    item:
+      kind: predict
+      id: p-part
+      prompt: "**What does this program print?**"
+      code: |
+        class Item:
+            def __init__(self, price):
+                self.price = price
+
+        class Cart:
+            def __init__(self):
+                self.items = []
+
+        tea = Item(2)
+        cart = Cart()
+        cart.items.append(tea)
+        tea.price = 5
+        print(cart.items[0].price)
+      explain: >-
+        The cart holds the object that `tea` names, not a copy. So when
+        `tea.price` changes, the cart sees the new price.
+      misconceptions:
+        - answer: "2"
+          say: "`append(tea)` puts the object itself into the list. There is one item, with two ways to reach it."
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-library
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A library of books
+    prompt: |
+      **Replace the three `___`**, so that a `Library` keeps its own books,
+      finds a book by its title (or gives `None`), and adds up the pages of
+      all its books.
+    starter: |
+      class Book:
+          def __init__(self, title, pages):
+              self.title = title
+              self.pages = pages
+
+      class Library:
+          def __init__(self):
+              self.books = ___
+
+          def add(self, book):
+              self.books.append(book)
+
+          def find(self, title):
+              for book in self.books:
+                  if ___:
+                      return book
+              return None
+
+          def total_pages(self):
+              return sum(___ for book in self.books)
+
+      library = Library()
+      library.add(Book("Atlas", 120))
+      library.add(Book("Middlemarch", 880))
+      print(library.find("Atlas").pages)
+      print(library.find("Nothing"))
+      print(library.total_pages())
+    solution: |
+      class Book:
+          def __init__(self, title, pages):
+              self.title = title
+              self.pages = pages
+
+      class Library:
+          def __init__(self):
+              self.books = []
+
+          def add(self, book):
+              self.books.append(book)
+
+          def find(self, title):
+              for book in self.books:
+                  if book.title == title:
+                      return book
+              return None
+
+          def total_pages(self):
+              return sum(book.pages for book in self.books)
+
+      library = Library()
+      library.add(Book("Atlas", 120))
+      library.add(Book("Middlemarch", 880))
+      print(library.find("Atlas").pages)
+      print(library.find("Nothing"))
+      print(library.total_pages())
+    after: >-
+      The library never looks inside a book in its own way: it asks each
+      book for its title or its pages. A book can change how it keeps its
+      data, and the library still works.
+    checks:
+      - expr: "isinstance(ns.get('Library'), type) and (lambda a, b: (a.add(Book('X', 1)), len(a.books) == 1 and len(b.books) == 0)[1])(Library(), Library())"
+        pass: "Each library starts with its own empty list"
+        hint: "`self.books = []` in `__init__`."
+      - expr: "isinstance(ns.get('Library'), type) and (lambda lib, b: (lib.add(Book('Atlas', 1)), lib.add(b), lib.find('Dune') is b and lib.find('Nope') is None)[2])(Library(), Book('Dune', 412))"
+        pass: "`find` gives the book with that title, or `None`"
+        hint: "`if book.title == title:`."
+        misconceptions:
+          - when: "isinstance(ns.get('Library'), type) and (lambda lib: (lib.add(Book('Atlas', 1)), lib.add(Book('Dune', 2)), getattr(lib.find('Dune'), 'title', None) == 'Atlas')[2])(Library())"
+            say: "`find` gives back the first book every time. Compare the title of each book with the title that you look for: `book.title == title`."
+      - expr: "isinstance(ns.get('Library'), type) and (lambda lib: (lib.add(Book('A', 10)), lib.add(Book('B', 32)), lib.total_pages() == 42 and Library().total_pages() == 0)[2])(Library())"
+        pass: "`total_pages` adds up the pages of all books"
+        hint: "Ask each book: `book.pages`."
+        misconceptions:
+          - when: "isinstance(ns.get('Library'), type) and raises(Library().total_pages) is None and (lambda lib: (lib.add(Book('A', 10)), raises(lib.total_pages))[1])(Library()) == 'AttributeError'"
+            say: "The library has no pages, its books have. Write `book.pages`, not `self.pages`."
+      - expr: "err is None and lines == ['120', 'None', '1000']"
+        pass: "It prints `120`, `None` and `1000`"
+        hint: "Keep the lines at the end as they are."
+    hints:
+      - "The first `___` is a new, empty list."
+      - "The second `___` compares the title of `book` with `title`."
+      - "The third `___` is the pages of each `book`: `book.pages`."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: dataclass
+    type: theory
+    objective: O3
+    title: Dataclasses
+    body: |
+      Many classes are mostly data. Their `__init__` only copies values
+      into attributes. A **dataclass** writes that part for you:
+
+      ```python
+      from dataclasses import dataclass
+
+      @dataclass
+      class Item:
+          name: str
+          price: float
+          count: int = 1
+
+          def cost(self):
+              return self.price * self.count
+      ```
+
+      Each line like `name: str` is a field: a name and its type. Python
+      does not check the types: they are notes for people and for the
+      editor. `count: int = 1` has a default value. You get for free:
+
+      - `__init__`: `Item("tea", 2.5)` or `Item("tea", 2.5, 3)`.
+      - A clear print: `Item(name='tea', price=2.5, count=1)`.
+      - `==` that compares the values of the fields.
+
+      ## A list as a default
+
+      `items: list = []` is not allowed: all objects would share one list.
+      Use `field` to get a new list for each object:
+
+      ```python
+      from dataclasses import dataclass, field
+
+      @dataclass
+      class Cart:
+          items: list = field(default_factory=list)
+      ```
+    keys:
+      - code: "@dataclass"
+        means: "Put above the class: Python writes `__init__`, the print and `==`."
+      - code: "price: float"
+        means: "A field. The type is a note: Python does not check it."
+      - code: "field(default_factory=list)"
+        means: "A new, empty list for each object."
+
+  # 6. PREDICT ---------------------------------------------------------------
+  - id: predict-equal
+    type: predict
+    objective: O3
+    title: Two equal points
+    item:
+      kind: predict
+      id: p-equal
+      prompt: "**What does this program print?**"
+      code: |
+        from dataclasses import dataclass
+
+        @dataclass
+        class Point:
+            x: int
+            y: int
+
+        a = Point(1, 2)
+        b = Point(1, 2)
+        print(a == b, a)
+      explain: >-
+        A dataclass compares the values of its fields, so two points with
+        the same `x` and `y` are equal. It also prints its fields clearly.
+      misconceptions:
+        - answer: "False Point(x=1, y=2)"
+          say: "A normal class would say `False`: two objects. A dataclass compares the values, and they are the same."
+        - answer: "True <__main__.Point object>"
+          say: "A dataclass writes a clear text for print: the class and its fields."
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-default
+    type: exercise
+    fade: debug
+    objective: O4
+    title: Two playlists, one list?
+    prompt: |
+      Each playlist should have its own songs. The program should print
+      `['Highway'] []`. **Run it**, read the message, and fix the class.
+    starter: |
+      from dataclasses import dataclass
+
+      @dataclass
+      class Playlist:
+          name: str
+          songs: list = []
+
+          def add(self, song):
+              self.songs.append(song)
+
+      road = Playlist("Road")
+      road.add("Highway")
+      sleep = Playlist("Sleep")
+      print(road.songs, sleep.songs)
+    solution: |
+      from dataclasses import dataclass, field
+
+      @dataclass
+      class Playlist:
+          name: str
+          songs: list = field(default_factory=list)
+
+          def add(self, song):
+              self.songs.append(song)
+
+      road = Playlist("Road")
+      road.add("Highway")
+      sleep = Playlist("Sleep")
+      print(road.songs, sleep.songs)
+    after: >-
+      Python refuses `[]` as a default because it would be one list for
+      every playlist. `default_factory=list` calls `list()` again for each
+      new object.
+    checks:
+      - expr: "err is None and lines == [\"['Highway'] []\"]"
+        pass: "Each playlist has its own songs"
+        hint: "Use `field(default_factory=list)`, and import `field` too."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "Python does not allow `[]` as a default: all playlists would share one list. Write `songs: list = field(default_factory=list)`."
+          - when: "err == 'NameError'"
+            say: "`field` comes from `dataclasses` too: `from dataclasses import dataclass, field`."
+          - when: "err is None and lines == [\"['Highway'] ['Highway']\"]"
+            say: "Both playlists share one list. Each needs its own: `field(default_factory=list)`."
+      - expr: "err is None and isinstance(ns.get('Playlist'), type) and '__dataclass_fields__' in vars(ns['Playlist']) and Playlist('A') == Playlist('A')"
+        pass: "`Playlist` is still a dataclass"
+        hint: "Keep `@dataclass` above the class."
+    hints:
+      - "The message names the field and the fix: `default_factory`."
+      - "`songs: list = field(default_factory=list)`."
+      - "Import it: `from dataclasses import dataclass, field`."
+
+  # 8. EXERCISE: independent -------------------------------------------------
+  - id: ex-order
+    type: exercise
+    fade: independent
+    objective: O3
+    title: An order of items
+    prompt: |
+      **Write two dataclasses.**
+
+      - `Item` has the fields `name`, `price` and `count` (default 1), and
+        a method `cost()`: price times count.
+      - `Order` has the field `items`, a new list for each order. Its
+        methods: `add(item)`, `total()` (the costs added up), and
+        `most_expensive()`: the item with the highest cost, or `None` for
+        an empty order.
+
+      The lines at the end must print:
+
+      ```
+      13.5
+      Item(name='tea', price=2.5, count=2)
+      None
+      ```
+    starter: |
+      from dataclasses import dataclass, field
+
+      # Write the dataclasses Item and Order here.
+
+
+      order = Order()
+      order.add(Item("tea", 2.5, 2))
+      order.add(Item("cake", 4.0))
+      order.add(Item("milk", 1.5, 3))
+      print(order.total())
+      print(order.most_expensive())
+      print(Order().most_expensive())
+    solution: |
+      from dataclasses import dataclass, field
+
+      @dataclass
+      class Item:
+          name: str
+          price: float
+          count: int = 1
+
+          def cost(self):
+              return self.price * self.count
+
+      @dataclass
+      class Order:
+          items: list = field(default_factory=list)
+
+          def add(self, item):
+              self.items.append(item)
+
+          def total(self):
+              return sum(item.cost() for item in self.items)
+
+          def most_expensive(self):
+              best = None
+              for item in self.items:
+                  if best is None or item.cost() > best.cost():
+                      best = item
+              return best
+
+      order = Order()
+      order.add(Item("tea", 2.5, 2))
+      order.add(Item("cake", 4.0))
+      order.add(Item("milk", 1.5, 3))
+      print(order.total())
+      print(order.most_expensive())
+      print(Order().most_expensive())
+    after: >-
+      The order asks its items for their costs, and the dataclasses gave
+      you `__init__`, a clear print and `==` without one line of code for
+      them.
+    checks:
+      - expr: "all(isinstance(ns.get(n), type) and '__dataclass_fields__' in vars(ns[n]) for n in ('Item', 'Order'))"
+        pass: "`Item` and `Order` are dataclasses"
+        hint: "Put `@dataclass` above each class."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "A dataclass cannot have `[]` as a default. Use `items: list = field(default_factory=list)`."
+      - expr: "isinstance(ns.get('Item'), type) and Item('a', 2.0, 3).cost() == 6.0 and Item('a', 2.0).count == 1 and Item('a', 2.0).cost() == 2.0 and Item('a', 1.0) == Item('a', 1.0)"
+        pass: "An `Item` has a default count of 1, and `cost()` is price times count"
+        hint: "`count: int = 1`, and `return self.price * self.count`."
+      - expr: "isinstance(ns.get('Order'), type) and isinstance(ns.get('Item'), type) and (lambda a, b: (a.add(Item('x', 1.0)), len(a.items) == 1 and len(b.items) == 0)[1])(Order(), Order())"
+        pass: "Each order has its own list of items"
+        hint: "`items: list = field(default_factory=list)`."
+        misconceptions:
+          - when: "err == 'ValueError'"
+            say: "A dataclass cannot have `[]` as a default. Use `field(default_factory=list)`."
+      - expr: "isinstance(ns.get('Order'), type) and isinstance(ns.get('Item'), type) and (lambda o: (o.add(Item('a', 1.0, 5)), o.add(Item('b', 4.0)), o.add(Item('c', 2.0)), o.total() == 11.0 and o.most_expensive() == Item('a', 1.0, 5) and Order().total() == 0 and Order().most_expensive() is None)[3])(Order())"
+        pass: "`total()` adds up the costs, and `most_expensive()` finds the item with the highest cost"
+        hint: "`sum(item.cost() for item in self.items)`. For the most expensive: keep the best item so far, and compare `item.cost()` with `best.cost()`."
+        misconceptions:
+          - when: "isinstance(ns.get('Order'), type) and isinstance(ns.get('Item'), type) and raises(Order().most_expensive) == 'ValueError'"
+            say: "`max` of an empty list raises `ValueError`. Check `if not self.items: return None` first, or use a loop that starts with `best = None`."
+          - when: "isinstance(ns.get('Order'), type) and isinstance(ns.get('Item'), type) and (lambda o: (o.add(Item('a', 1.0, 5)), o.add(Item('b', 4.0)), o.most_expensive())[2])(Order()) == Item('b', 4.0)"
+            say: "That is the item with the highest price, not the highest cost. Compare `item.cost()`: 1.0 × 5 is more than 4.0 × 1."
+          - when: "isinstance(ns.get('Order'), type) and isinstance(ns.get('Item'), type) and (lambda o: (o.add(Item('a', 1.0, 5)), o.total())[1])(Order()) == 1.0"
+            say: "The total uses the prices, not the costs. Add up `item.cost()`."
+      - expr: "err is None and lines == ['13.5', \"Item(name='tea', price=2.5, count=2)\", 'None']"
+        pass: "It prints the three lines"
+        hint: "Keep the lines at the end. The second line comes from the free print of the dataclass."
+    hints:
+      - "Start with `@dataclass` and `class Item:` with three fields, then `def cost(self):`."
+      - "`Order` has one field: `items: list = field(default_factory=list)`."
+      - "`most_expensive`: `best = None`, then for each item: `if best is None or item.cost() > best.cost(): best = item`. Return `best`."
+
+  # PUZZLE: put the lines in order (Parsons) ----------------------------
+  - id: order
+    type: drill
+    objective: O3
+    title: Put the lines in order
+    items:
+      - kind: order
+        id: o-item
+        objective: O3
+        code: |
+          from dataclasses import dataclass
+          @dataclass
+          class Item:
+              name: str
+              price: float
+          pen = Item("pen", 1.5)
+          print(pen)
+        explain: >-
+          The order of the fields is the order of the arguments: `Item("pen",
+          1.5)` gives the name first, then the price. `@dataclass` stands right
+          above the class, and writes `__init__` and a clear print for you.
+
+  # 9. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-compose
+        objective: O1
+        prompt: "What is composition?"
+        options:
+          - text: "An object that holds other objects as its parts, like a cart with items"
+            correct: true
+            why: "Each part keeps its own job, and the big object asks them."
+          - text: "A class that is written twice"
+            why: "Composition is about objects inside objects."
+          - text: "A long method"
+            why: "It is about how objects are built from parts."
+      - kind: mcq
+        id: q-ask
+        objective: O2
+        prompt: "How should `Cart.total()` get the price of each item?"
+        options:
+          - text: "Ask each item: `item.price`, or a method like `item.cost()`"
+            correct: true
+            why: "The item knows its price. The cart only adds up."
+          - text: "Keep a second list of prices in the cart"
+            why: "Then the prices exist twice, and they can disagree."
+          - text: "Read `self.price`"
+            why: "A cart has no price of its own. Its items have."
+      - kind: mcq
+        id: q-free
+        objective: O3
+        prompt: "What does `@dataclass` write for you?"
+        options:
+          - text: "`__init__`, a clear text for print, and `==` that compares the fields"
+            correct: true
+            why: "You only write the fields and your own methods."
+          - text: "All methods of the class"
+            why: "Your own methods, like `cost()`, you still write."
+          - text: "Checks that the types of the fields are right"
+            why: "Python does not check the types. They are notes."
+      - kind: mcq
+        id: q-factory
+        objective: O4
+        prompt: "Why `field(default_factory=list)` and not `= []`?"
+        options:
+          - text: "Each object must get its own new list, not one list for all"
+            correct: true
+            why: "`default_factory` makes a new list for every object. Python refuses `[]` for this reason."
+          - text: "`[]` is too slow"
+            why: "Speed is not the reason. Sharing one list is."
+          - text: "A dataclass cannot hold lists"
+            why: "It can, with `field(default_factory=list)`."
+      - kind: mcq
+        id: q-when
+        objective: O3
+        prompt: "When is a dataclass a good choice?"
+        options:
+          - text: "When the class is mostly data, like an item, a point or a song"
+            correct: true
+            why: "It saves the boring `__init__`, and gives a clear print and `==`."
+          - text: "Only for classes without methods"
+            why: "A dataclass can have methods, like `cost()`."
+          - text: "Never: it is only for experts"
+            why: "It is a normal part of Python, and often the simplest way."
+
+  # 10. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O3
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-own-list
+    objective: O1
+    prompt: "Where does `self.items = []` belong, so that each cart has its own list?"
+    options:
+      - text: "In `__init__`"
+        correct: true
+        why: "It runs for each new object, so each one gets a new list."
+      - text: "In the method `add`"
+        why: "Then every `add` would empty the list."
+      - text: "Above the class"
+        why: "Then all carts would share one list."
+  - kind: mcq
+    id: r-same
+    objective: O1
+    prompt: "`cart.add(tea)`, then `tea.price = 5`. What does the cart see?"
+    options:
+      - text: "The new price 5: the cart holds the same object"
+        correct: true
+        why: "A list holds objects, not copies."
+      - text: "The old price"
+        why: "There is only one tea object."
+      - text: "An error"
+        why: "Changing an attribute is fine."
+  - kind: mcq
+    id: r-field
+    objective: O3
+    prompt: "In a dataclass, what is `count: int = 1`?"
+    options:
+      - text: "A field with the type `int` and the default value 1"
+        correct: true
+        why: "`Item(\"tea\", 2.5)` gets `count` 1."
+      - text: "A check that `count` is always 1"
+        why: "It is only the default. Any value can be given."
+      - text: "A variable outside the class"
+        why: "It is part of the class: a field of each object."
+  - kind: mcq
+    id: r-import
+    objective: O4
+    prompt: "Which import gives both `dataclass` and `field`?"
+    options:
+      - text: "`from dataclasses import dataclass, field`"
+        correct: true
+        why: "Both come from the module `dataclasses`."
+      - text: "`import dataclass`"
+        why: "The module is `dataclasses`, and this does not import `field`."
+      - text: "`from dataclass import field`"
+        why: "The module has an `es` at the end: `dataclasses`."
+  - kind: mcq
+    id: r-eq
+    objective: O3
+    prompt: "`Point(1, 2) == Point(1, 2)` with a dataclass `Point`. What is it?"
+    options:
+      - text: "`True`"
+        correct: true
+        why: "A dataclass compares the values of the fields."
+      - text: "`False`"
+        why: "That is the answer for a normal class: two different objects."
+      - text: "An error"
+        why: "The dataclass wrote `==` for you."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-point
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Points for free
+    prompt: |
+      **Replace the two `___`**: make `Point` a dataclass with two whole
+      numbers `x` and `y`. Then `__init__`, a clear print and `==` come for
+      free.
+
+      ```text
+      Point(x=2, y=3)
+      True
+      ```
+    starter: |
+      from dataclasses import dataclass
+
+
+      ___
+      class Point:
+          ___
+          y: int
+
+
+      p = Point(2, 3)
+      print(p)
+      print(p == Point(2, 3))
+    solution: |
+      from dataclasses import dataclass
+
+
+      @dataclass
+      class Point:
+          x: int
+          y: int
+
+
+      p = Point(2, 3)
+      print(p)
+      print(p == Point(2, 3))
+    after: >-
+      Two lines of fields replaced an `__init__`, a `__repr__` and an
+      `__eq__`. Use a dataclass for objects that mainly hold data.
+    checks:
+      - expr: "callable(ns.get('Point')) and hasattr(Point, '__dataclass_fields__') and list(Point.__dataclass_fields__) == ['x', 'y']"
+        pass: "Point is a dataclass with x and y"
+        hint: "`@dataclass` above the class, and `x: int` and `y: int`."
+      - expr: "err is None and lines == ['Point(x=2, y=3)', 'True']"
+        pass: "It prints the point and True"
+        hint: "Keep the prints."
+    hints:
+      - "A decorator goes on the line above `class`."
+      - "`@dataclass`."
+      - "Fields are written like `x: int`."
+  - id: x-shared-tags
+    type: exercise
+    fade: debug
+    objective: O4
+    title: A list for each note
+    prompt: |
+      Each note should have its own list of tags. The program stops with a
+      `ValueError` about a mutable default. **Fix the field**:
+
+      ```text
+      ['home']
+      []
+      ```
+    starter: |
+      from dataclasses import dataclass, field
+
+
+      @dataclass
+      class Note:
+          text: str
+          tags: list = []
+
+
+      a = Note("milk")
+      b = Note("call Ana")
+      a.tags.append("home")
+      print(a.tags)
+      print(b.tags)
+    solution: |
+      from dataclasses import dataclass, field
+
+
+      @dataclass
+      class Note:
+          text: str
+          tags: list = field(default_factory=list)
+
+
+      a = Note("milk")
+      b = Note("call Ana")
+      a.tags.append("home")
+      print(a.tags)
+      print(b.tags)
+    after: >-
+      One `[]` in the class would be shared by every note, so Python
+      refuses it. `default_factory=list` makes a new list for each note.
+    checks:
+      - expr: "err is None and lines == [\"['home']\", '[]']"
+        pass: "Each note has its own tags"
+        hint: "`tags: list = field(default_factory=list)`."
+      - expr: "a.tags is not b.tags"
+        pass: "Two notes, two lists"
+        hint: "`field(default_factory=list)` makes a new list each time."
+    hints:
+      - "Read the last line of the message."
+      - "A list default must be made new for each object."
+      - "`tags: list = field(default_factory=list)`."

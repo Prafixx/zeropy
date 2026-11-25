@@ -1,0 +1,756 @@
+id: fast-and-slow
+order: 25
+title: Fast and slow code
+summary: Count the steps a program makes, and how they grow with the data. Find a value by halving, and make slow lookups fast with a set or a dict.
+minutes: 40
+outcomes: [A1, A8]
+
+objectives:
+  - id: O1
+    text: Count the steps of a loop, and say how they grow when the data grows
+  - id: O2
+    text: Find a value in a sorted list by halving it - binary search
+  - id: O3
+    text: Make a slow lookup fast with a set or a dict
+  - id: O4
+    text: Find the hidden loop - in on a list, .count(), .index() - inside another loop
+
+steps:
+  # 1. HOOK ------------------------------------------------------------------
+  - id: see
+    type: hook
+    objective: O2
+    title: One by one, or halve it
+    question: A sorted list holds a million numbers. How many must Python look at to find one?
+    code: |
+      nums = [3, 8, 15, 23, 30, 41, 56, 72]
+      target = 41
+      seen = nums[5]   # one by one: 6 reads
+      seen = nums[3]   # halve: the middle first
+      seen = nums[5]   # the middle of the right half
+    beats:
+      - beat: start
+        line: 2
+        caption: "A **sorted** list of 8 numbers. We look for `target`: 41."
+      - beat: linear
+        line: 3
+        caption: "One by one: Python reads place 0, then 1, then 2 ... 41 is at place 5. That is **6 steps**."
+      - beat: middle
+        line: 4
+        caption: "Or **halve**: read the middle first. Place 3 holds 23. 41 is bigger, so the left half cannot hold it."
+      - beat: right
+        line: 5
+        caption: "Only the right half is left. Its middle, place 5, holds 41. Found in **2 steps**."
+      - beat: million
+        caption: "With a million numbers, one by one needs up to 1,000,000 steps. Halving needs at most **20**."
+
+  # 2. THEORY ----------------------------------------------------------------
+  - id: steps
+    type: theory
+    objective: O1
+    title: Count the steps
+    body: |
+      ## Steps, not seconds
+
+      Fast or slow depends less on the computer than on **how many steps**
+      the program makes. You can count them with a counter:
+
+      ```python
+      names = ["Ana", "Ben", "Cleo", "Dan"]
+      steps = 0
+      for name in names:
+          steps += 1
+      print(steps)      # 4
+      ```
+
+      The important question is: **what happens when the data grows?**
+
+      - One loop over `n` values makes **n** steps. Twice the data, twice
+        the work.
+      - A loop inside a loop over the same values makes **n × n** steps.
+        Twice the data, four times the work.
+      - `value in a_set` and `a_dict[key]` take about **one** step, however
+        big the set or the dict is.
+
+      Programmers write these as **O(n)**, **O(n²)** and **O(1)**. Say it
+      as "order of n". The letters matter less than the habit: ask how the
+      work grows.
+    keys:
+      - code: "one loop"
+        means: "n steps: the work grows like the data."
+      - code: "a loop in a loop"
+        means: "n × n steps: 10 times the data, 100 times the work."
+      - code: "x in a_set"
+        means: "About one step, at any size."
+
+  # 3. PREDICT ---------------------------------------------------------------
+  - id: predict-steps
+    type: predict
+    objective: O1
+    title: One loop, two loops
+    item:
+      kind: predict
+      id: p-steps
+      prompt: "This program prints two numbers. **Type both** before you check."
+      code: |
+        names = ["Ana", "Ben", "Cleo"]
+        steps = 0
+        for a in names:
+            steps += 1
+        print(steps)
+        steps = 0
+        for a in names:
+            for b in names:
+                steps += 1
+        print(steps)
+      explain: >-
+        The first loop runs once for each name: 3. In the second, the inner
+        loop runs all 3 rounds for each of the 3 names: 3 × 3 = 9. With 1,000
+        names it would be 1,000 and 1,000,000.
+      misconceptions:
+        - answer: "3\n6"
+          say: "The inner loop runs completely in every round of the outer loop: 3 + 3 + 3, not 3 + 3."
+        - answer: "3\n3"
+          say: "The inner loop is inside the outer one, so it runs again in each of its rounds."
+
+  # 4. DEMO ------------------------------------------------------------------
+  - id: try-search
+    type: demo
+    visual: output
+    objective: O1
+    title: Search one by one
+    intro: |
+      This program looks for `target` one value at a time and counts the
+      steps. Press **Run**, then change the target and the list.
+    code: |
+      nums = list(range(0, 100, 2))     # 0, 2, 4 ... 98
+      target = 64
+      steps = 0
+      found = False
+      for n in nums:
+          steps += 1
+          if n == target:
+              found = True
+              break
+      print("found:", found)
+      print("steps:", steps)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "err is None"
+      - text: "Look for `98`, the last value. How many steps now?"
+        expr: "err is None and ns.get('target') == 98"
+      - text: "Look for `7`, which is not in the list. Why does it need the most steps?"
+        expr: "err is None and ns.get('target') not in ns.get('nums', [])"
+      - text: "Make the list 10 times bigger with `range(0, 1000, 2)`, and look for a missing value again."
+        expr: "err is None and len(ns.get('nums', [])) >= 500 and ns.get('found') is False"
+    investigate:
+      - kind: mcq
+        id: i-missing
+        objective: O1
+        prompt: "The value is not in the list. How many steps does this search make?"
+        options:
+          - text: "One for every value: it must look at all of them before it can say no"
+            correct: true
+            why: "Only after the last place is it sure. A missing value is the slowest case."
+          - text: "None: Python knows at once"
+            why: "A list does not know what it holds. Python has to look at each place."
+          - text: "Half of the values"
+            why: "It cannot stop early: the value might be the very last one."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: halve
+    type: theory
+    objective: O2
+    title: Halve it
+    body: |
+      ## Binary search
+
+      If the list is **sorted**, there is a much faster way. Look at the
+      middle value:
+
+      - it is the target: done;
+      - the target is bigger: the left half cannot hold it, so keep only the
+        right half;
+      - the target is smaller: keep only the left half.
+
+      Each step throws away half of what is left. A million values become
+      500,000, then 250,000 ... and after about **20** steps, one value.
+
+      ```python
+      def find(nums, target):
+          low, high = 0, len(nums) - 1      # the part that is left
+          while low <= high:
+              mid = (low + high) // 2       # its middle
+              if nums[mid] == target:
+                  return mid
+              if nums[mid] < target:
+                  low = mid + 1             # keep the right half
+              else:
+                  high = mid - 1            # keep the left half
+          return -1                         # nothing left: not there
+      ```
+
+      It works only on a **sorted** list. Sorting takes time too, so binary
+      search pays when you search the same list many times. Python has it
+      ready in the module `bisect`.
+    keys:
+      - code: "(low + high) // 2"
+        means: "The middle of the part that is left."
+      - code: "low = mid + 1"
+        means: "Throw away the left half and the middle."
+      - code: "while low <= high"
+        means: "Go on while one value or more is left."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill-halve
+    type: drill
+    objective: O2
+    title: Follow the halves
+    items:
+      - kind: trace
+        id: d-trace
+        objective: O2
+        prompt: "Follow two steps of a binary search for `36`. Write each new value."
+        code: |
+          nums = [4, 9, 13, 21, 30, 36, 42]
+          low, high = 0, 6
+          mid = (low + high) // 2
+          low = mid + 1
+          mid = (low + high) // 2
+        names: [low, high, mid]
+        explain: >-
+          The first middle is place 3 (21). 36 is bigger, so `low` moves to 4.
+          The new middle is (4 + 6) // 2 = 5, and place 5 holds 36: found in
+          two steps.
+      - kind: mcq
+        id: d-thousand
+        objective: O2
+        prompt: "A sorted list has 1,000 values. At most how many steps does a binary search need?"
+        options:
+          - text: "About 10"
+            correct: true
+            why: "1,000 → 500 → 250 → 125 → ... → 1: ten halvings. 2 to the power 10 is 1,024."
+          - text: "About 500"
+            why: "That is half of the values. Halving goes much faster: half of the half of the half ..."
+          - text: "1,000"
+            why: "That is the search one by one, in the worst case."
+      - kind: mcq
+        id: d-sorted
+        objective: O2
+        prompt: "Why must the list be sorted for a binary search?"
+        options:
+          - text: "Only then does a bigger middle value prove that the target is not on the right"
+            correct: true
+            why: "In a sorted list, everything right of the middle is bigger. That is what lets you throw half away."
+          - text: "Python does not allow it on other lists"
+            why: "Python runs the code on any list. It only gives wrong answers."
+          - text: "A sorted list is shorter"
+            why: "Sorting changes the order, not the length."
+
+  # 7. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-blocked
+    type: worked
+    objective: O3
+    title: A fast check with a set
+    problem: |
+      A shop has a list of 50,000 blocked card numbers. For each of 1,000
+      payments, it must check if the card is blocked.
+
+      **Make each check fast.**
+    lines:
+      - goal: "Make the lookup fast"
+        code: "blocked = set(blocked_list)"
+        note: "A set finds a value in about one step, at any size. A list must look at its places one by one."
+      - goal: "Check each payment"
+        code: "for card in payments:"
+        note: "1,000 rounds."
+      - code: "    if card in blocked:"
+        note: "About one step in each round: about 1,000 steps in all. With the list it could be 1,000 × 50,000 = 50 million."
+      - code: "        print(\"blocked:\", card)"
+        note: "The work that matters. The lookup is no longer the slow part."
+    check:
+      kind: mcq
+      id: w-blocked
+      objective: O3
+      prompt: "Making the set also reads all 50,000 numbers. **Why does it still pay off?**"
+      options:
+        - text: "It is made once. Then each of the 1,000 checks takes about one step"
+          correct: true
+          why: "50,000 steps once, plus 1,000, is far less than 1,000 searches through 50,000 places."
+        - text: "Making a set takes no time"
+          why: "It reads every value once: 50,000 steps. But only once."
+        - text: "A set keeps the numbers sorted"
+          why: "A set has no order. It finds a value from the value itself, without looking at every place."
+
+  # 8. EXERCISE: completion --------------------------------------------------
+  - id: ex-find
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Finish the binary search
+    prompt: |
+      **Replace the three `___`** to finish the binary search. `find` gives
+      back the place of `target` (or `-1`) and the number of steps.
+
+      Two million values, and each search needs about 20 steps.
+    starter: |
+      def find(nums, target):
+          low, high = 0, len(nums) - 1
+          steps = 0
+          while low <= high:
+              steps += 1
+              mid = ___
+              if nums[mid] == target:
+                  return mid, steps
+              if nums[mid] < target:
+                  low = ___
+              else:
+                  high = ___
+          return -1, steps
+
+
+      nums = list(range(0, 2_000_000, 2))
+      print(find(nums, 1_234_568))
+      print(find(nums, 7))
+    solution: |
+      def find(nums, target):
+          low, high = 0, len(nums) - 1
+          steps = 0
+          while low <= high:
+              steps += 1
+              mid = (low + high) // 2
+              if nums[mid] == target:
+                  return mid, steps
+              if nums[mid] < target:
+                  low = mid + 1
+              else:
+                  high = mid - 1
+          return -1, steps
+
+
+      nums = list(range(0, 2_000_000, 2))
+      print(find(nums, 1_234_568))
+      print(find(nums, 7))
+    after: >-
+      A million values, about 20 steps: each step halves the part that is
+      left, and 2 to the power 20 is more than a million. One by one, the
+      missing 7 would have needed a million steps.
+    checks:
+      - expr: "callable(ns.get('find')) and all(find(list(range(0, 200, 2)), v)[0] == v // 2 for v in range(0, 200, 2))"
+        pass: "It finds every value in a list of 100"
+        hint: "The middle of the part that is left is `(low + high) // 2`."
+      - expr: "callable(ns.get('find')) and find([1, 3, 5], 4)[0] == -1 and find([], 1)[0] == -1 and find([9], 9)[0] == 0"
+        pass: "It gives -1 for a missing value, also in an empty list"
+        hint: "Keep the loop condition `low <= high` and the last `return -1, steps`."
+      - expr: "callable(ns.get('find')) and find(list(range(1_000_000)), 999_999)[1] <= 21"
+        pass: "It needs about 20 steps for a million values"
+        hint: "After each look, throw away the half that cannot hold the target: start after the middle, or end before it."
+    hints:
+      - "The middle: `(low + high) // 2`. Use `//`, because a place must be a whole number."
+      - "When the middle value is too small, the target is on the right: the part now starts at `mid + 1`."
+      - "`mid = (low + high) // 2`, `low = mid + 1`, `high = mid - 1`."
+
+  # 9. EXERCISE: debug -------------------------------------------------------
+  - id: ex-edges
+    type: exercise
+    fade: debug
+    objective: O2
+    title: It misses the edges
+    prompt: |
+      This binary search finds most values, but not all.
+
+      **Run it, look at the three results, and fix it.** It must print:
+
+      ```text
+      2
+      4
+      0
+      ```
+    starter: |
+      def find(nums, target):
+          low, high = 0, len(nums) - 1
+          while low < high:
+              mid = (low + high) // 2
+              if nums[mid] == target:
+                  return mid
+              if nums[mid] < target:
+                  low = mid + 1
+              else:
+                  high = mid - 1
+          return -1
+
+
+      print(find([10, 20, 30, 40, 50], 30))
+      print(find([10, 20, 30, 40, 50], 50))
+      print(find([7], 7))
+    solution: |
+      def find(nums, target):
+          low, high = 0, len(nums) - 1
+          while low <= high:
+              mid = (low + high) // 2
+              if nums[mid] == target:
+                  return mid
+              if nums[mid] < target:
+                  low = mid + 1
+              else:
+                  high = mid - 1
+          return -1
+
+
+      print(find([10, 20, 30, 40, 50], 30))
+      print(find([10, 20, 30, 40, 50], 50))
+      print(find([7], 7))
+    after: >-
+      A classic bug: off by one. When `low` and `high` are the same place,
+      one value is still left, and the loop must look at it. The edges are
+      where binary search goes wrong, so they are where to test.
+    checks:
+      - expr: "err is None and lines == ['2', '4', '0']"
+        pass: "It prints 2, 4 and 0"
+        hint: "The loop stops while one value is still left to look at."
+      - expr: "callable(ns.get('find')) and all(find(list(range(1, 8)), v) == v - 1 for v in range(1, 8)) and find([5], 5) == 0 and find([5], 4) == -1"
+        pass: "It finds the first, the last and every value between, also in a list of one"
+        hint: "When `low == high`, that place has not been checked yet."
+    hints:
+      - "Look for 50: write down `low` and `high` before each round. What is left when the loop stops?"
+      - "When `low` and `high` are the same place, that place has not been checked."
+      - "The condition must be `low <= high`."
+
+  # 10. THEORY ---------------------------------------------------------------
+  - id: hidden
+    type: theory
+    objective: O4
+    title: The hidden loop
+    body: |
+      ## Some lines are loops
+
+      Some short lines run a whole loop inside:
+
+      - `x in a_list` looks at the places one by one.
+      - `a_list.count(x)` and `a_list.index(x)` do the same.
+      - `a_list.remove(x)` and `a_list.insert(0, x)` move all the values
+        after that place.
+
+      Alone, each one is fine. **Inside another loop**, they make n × n:
+
+      ```python
+      for name in visitors:                 # n rounds
+          if visitors.count(name) > 1:      # n steps in each round
+              print("again:", name)
+      ```
+
+      With 10,000 visitors, that is 100 million steps. Count once with a
+      dict instead, then read the dict:
+
+      ```python
+      counts = {}
+      for name in visitors:                 # n rounds, one pass
+          counts[name] = counts.get(name, 0) + 1
+      ```
+    keys:
+      - code: "x in a_list"
+        means: "A loop over the list, hidden in one line."
+      - code: "a_list.count(x)"
+        means: "Also a loop over the whole list."
+      - code: "counts.get(name, 0) + 1"
+        means: "Count every value in one pass."
+
+  # 11. EXERCISE: independent ------------------------------------------------
+  - id: ex-in-both
+    type: exercise
+    fade: independent
+    objective: O3
+    title: In both lists, fast
+    prompt: |
+      **Write `in_both(a, b)`**: a list of the values that are in both
+      lists, in the order of `a`, each value only once.
+
+      It must stay fast for lists of 100,000 values: look up in a **set**,
+      not in a list.
+
+      ```text
+      [3, 4]
+      []
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(in_both([1, 2, 3, 4], [3, 4, 5]))
+      print(in_both(["tea", "milk"], ["juice"]))
+    solution: |
+      def in_both(a, b):
+          in_b = set(b)
+          seen = set()
+          result = []
+          for value in a:
+              if value in in_b and value not in seen:
+                  result.append(value)
+                  seen.add(value)
+          return result
+
+
+      print(in_both([1, 2, 3, 4], [3, 4, 5]))
+      print(in_both(["tea", "milk"], ["juice"]))
+    after: >-
+      Two sets, so two fast checks for each value of `a`: about n steps in
+      all. With `in b` on the list, it would be n × m.
+    checks:
+      - expr: "callable(ns.get('in_both')) and in_both([1, 2, 3, 4], [3, 4, 5]) == [3, 4] and in_both([5, 1, 5, 2], [2, 5]) == [5, 2] and in_both([], [1]) == [] and in_both([1], []) == []"
+        pass: "It gives each value of both lists once, in the order of `a`"
+        hint: "Loop over `a`. Keep a value when it is in `b` and you did not keep it before."
+        misconceptions:
+          - when: "callable(ns.get('in_both')) and raises(in_both, [5, 1, 5, 2], [2, 5]) is None and in_both([5, 1, 5, 2], [2, 5]) == [5, 5, 2]"
+            say: "`5` comes twice. Remember the values you already kept, in a second set."
+          - when: "callable(ns.get('in_both')) and raises(in_both, [5, 1, 5, 2], [2, 5]) is None and in_both([5, 1, 5, 2], [2, 5]) == [2, 5]"
+            say: "That is the order of `b`. Loop over `a`, so the result keeps its order."
+      - expr: "'set(' in src"
+        pass: "It looks up in a set"
+        hint: "Make a set of `b` once, before the loop: `in_b = set(b)`."
+      - expr: "lines == ['[3, 4]', '[]']"
+        pass: "It prints [3, 4] and []"
+        hint: "Keep the two prints."
+    hints:
+      - "Before the loop: `in_b = set(b)`. Make it once, not in each round."
+      - "A second set, `seen`, remembers what is already in the result."
+      - "`if value in in_b and value not in seen:` then append the value and add it to `seen`."
+
+  # 12. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O4
+    title: Check yourself
+    items:
+      - kind: spot
+        id: q-hidden
+        objective: O4
+        prompt: "Which line hides a loop over the whole list?"
+        code: |
+          names = ["Ana", "Ben", "Cleo"]
+          for name in names:
+              print(name.upper())
+              if names.count(name) > 1:
+                  print("twice")
+        line: 4
+        wrong:
+          - line: 2
+            say: "That loop is easy to see: it is the outer loop. Look for one that is hidden in a method."
+          - line: 3
+            say: "`upper()` works on one name, not on the whole list."
+        explain: "`names.count(name)` walks the whole list in every round of the outer loop: n × n steps."
+      - kind: mcq
+        id: q-grow
+        objective: O1
+        prompt: "A loop in a loop takes 1 second for 1,000 values. **About how long for 10,000?**"
+        options:
+          - text: "About 100 seconds"
+            correct: true
+            why: "n × n: 10 times the data is 10 × 10 = 100 times the work."
+          - text: "About 10 seconds"
+            why: "That is how one loop grows. A loop in a loop grows with n × n."
+          - text: "About 1 second"
+            why: "More data means more work."
+      - kind: mcq
+        id: q-stop
+        objective: O3
+        prompt: "For every word of a book, a program checks `if word in stop_words:`. `stop_words` is a list of 500 words. **What makes it fast?**"
+        options:
+          - text: "Make `stop_words` a set, once, before the loop"
+            correct: true
+            why: "Then each check takes about one step instead of up to 500."
+          - text: "Use `stop_words.index(word)` instead of `in`"
+            why: "`.index()` also looks one by one, and it raises a ValueError when the word is missing."
+          - text: "Sort the book first"
+            why: "The order of the book does not change how `in` searches the list."
+      - kind: predict
+        id: q-count
+        objective: O3
+        code: |
+          visitors = ["Ana", "Ben", "Ana", "Cleo", "Ana"]
+          counts = {}
+          for name in visitors:
+              counts[name] = counts.get(name, 0) + 1
+          print(counts["Ana"], len(counts))
+        explain: "Ana came 3 times. The dict has one key for each different name: Ana, Ben and Cleo, so its length is 3."
+        misconceptions:
+          - answer: "3 5"
+            say: "`len(counts)` counts the keys, and each name is a key only once."
+      - kind: mcq
+        id: q-binary
+        objective: O2
+        prompt: "When is a binary search the right tool?"
+        options:
+          - text: "When you search a sorted list, many times"
+            correct: true
+            why: "It needs a sorted list, and the sorting pays off over many searches."
+          - text: "When the list is short and not sorted"
+            why: "It gives wrong answers on a list that is not sorted. On a short list, one by one is fine."
+          - text: "Always, instead of a set"
+            why: "For \"is it there?\", a set is even faster. Binary search shines when you also need the order."
+
+  # 13. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 4
+
+review:
+  - kind: mcq
+    id: r-pairs
+    objective: O1
+    prompt: "A loop in a loop, both over the same 100 values. How many times does the inner line run?"
+    options:
+      - text: "10,000"
+        correct: true
+        why: "100 rounds outside, and 100 inside each one: 100 × 100."
+      - text: "200"
+        why: "That would be two loops one after the other, not one inside the other."
+      - text: "100"
+        why: "That is one loop."
+  - kind: mcq
+    id: r-why-fast
+    objective: O2
+    prompt: "Why does a binary search need so few steps?"
+    options:
+      - text: "Each step throws away half of what is left"
+        correct: true
+        why: "Half, then a quarter, then an eighth ... a million values need about 20 steps."
+      - text: "It looks at two values at the same time"
+        why: "It looks at one value in each step: the middle."
+      - text: "It skips the first half of the list"
+        why: "Which half it skips depends on the middle value."
+  - kind: predict
+    id: r-mid
+    objective: O2
+    code: |
+      nums = [2, 4, 6, 8, 10, 12, 14, 16]
+      low, high = 0, len(nums) - 1
+      mid = (low + high) // 2
+      print(mid, nums[mid])
+    explain: "(0 + 7) // 2 is 3, because `//` drops the .5. Place 3 holds 8."
+    misconceptions:
+      - answer: "4 10"
+        say: "`//` rounds down: (0 + 7) // 2 is 3, not 4."
+  - kind: mcq
+    id: r-quick-fix
+    objective: O3
+    prompt: "`if x in big_list:` inside a loop makes a program slow. **What is the quick fix?**"
+    options:
+      - text: "Make a set of the list once, before the loop, and use `in` on the set"
+        correct: true
+        why: "One pass to make the set, then about one step for each check."
+      - text: "Use `while` instead of `for`"
+        why: "The kind of loop does not matter. The search inside it is the slow part."
+      - text: "Make the set inside the loop"
+        why: "Then every round reads the whole list again: still slow."
+  - kind: spot
+    id: r-index
+    objective: O4
+    prompt: "Which line searches the list again in every round?"
+    code: |
+      numbers = [5, 8, 2, 9]
+      for n in numbers:
+          place = numbers.index(n)
+          print(place, n)
+    line: 3
+    wrong:
+      - line: 2
+        say: "That is the visible loop. Look for a method that also walks the list."
+    explain: "`.index(n)` searches from the start in each round. `for place, n in enumerate(numbers):` gives the place without searching."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-duplicates
+    type: exercise
+    fade: completion
+    objective: O3
+    title: Any value twice?
+    prompt: |
+      **Replace `___`** so that `has_duplicates(values)` is `True` when a
+      value comes more than once. A set keeps each value only once.
+
+      ```text
+      True
+      False
+      ```
+    starter: |
+      def has_duplicates(values):
+          return len(___) != len(values)
+
+
+      print(has_duplicates([1, 2, 3, 2]))
+      print(has_duplicates(["a", "b"]))
+    solution: |
+      def has_duplicates(values):
+          return len(set(values)) != len(values)
+
+
+      print(has_duplicates([1, 2, 3, 2]))
+      print(has_duplicates(["a", "b"]))
+    after: >-
+      One pass to make the set, and two lengths to compare. A loop in a loop
+      that compares every pair would need n × n steps.
+    checks:
+      - expr: "callable(ns.get('has_duplicates')) and has_duplicates([1, 1]) is True and has_duplicates([]) is False and has_duplicates(['x', 'y', 'x']) is True and has_duplicates([3, 1, 2]) is False"
+        pass: "It finds a value that comes twice, and only then"
+        hint: "`set(values)` drops the values that come again. Compare its length with the list."
+      - expr: "lines == ['True', 'False']"
+        pass: "It prints True and False"
+        hint: "Keep the prints."
+    hints:
+      - "A set keeps each value once: `set([1, 2, 2])` is `{1, 2}`."
+      - "If the set is shorter than the list, some value came twice."
+      - "`return len(set(values)) != len(values)`."
+  - id: x-first-repeat
+    type: exercise
+    fade: independent
+    objective: O4
+    title: The first value that comes again
+    prompt: |
+      **Write `first_repeat(values)`**: the first value that comes a second
+      time, or `None` when no value repeats. Use one loop and a set, not
+      `.count()` or `in` on the list.
+
+      ```text
+      b
+      None
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(first_repeat(["a", "b", "c", "b", "a"]))
+      print(first_repeat([1, 2, 3]))
+    solution: |
+      def first_repeat(values):
+          seen = set()
+          for value in values:
+              if value in seen:
+                  return value
+              seen.add(value)
+          return None
+
+
+      print(first_repeat(["a", "b", "c", "b", "a"]))
+      print(first_repeat([1, 2, 3]))
+    after: >-
+      The set remembers what came before, so each value needs one look, not
+      a search through the whole list.
+    checks:
+      - expr: "callable(ns.get('first_repeat')) and first_repeat([1, 2, 1]) == 1 and first_repeat([5, 6, 6, 5]) == 6 and first_repeat([]) is None and first_repeat([7]) is None"
+        pass: "It gives the first value that comes again, or None"
+        hint: "Walk the list once. Before you add a value to the set, ask if it is already there."
+        misconceptions:
+          - when: "callable(ns.get('first_repeat')) and raises(first_repeat, [5, 6, 6, 5]) is None and first_repeat([5, 6, 6, 5]) == 5"
+            say: "5 comes first, but 6 is the first value that comes a second time."
+      - expr: "'set(' in src and '.count(' not in src"
+        pass: "It uses a set, not .count()"
+        hint: "`seen = set()` before the loop, `seen.add(value)` inside it."
+      - expr: "lines == ['b', 'None']"
+        pass: "It prints b and None"
+        hint: "Keep the prints."
+    hints:
+      - "`seen = set()` before the loop."
+      - "In the loop: if the value is in `seen`, return it. Else add it."
+      - "After the loop, `return None`."

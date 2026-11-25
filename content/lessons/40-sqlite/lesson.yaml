@@ -1,0 +1,745 @@
+id: sqlite
+order: 40
+title: Databases with SQLite
+summary: Keep data in a real database. Make a table, then add, find, change and delete rows with SQL, and pass every value safely with a question mark.
+minutes: 40
+outcomes: [A4, A6]
+
+objectives:
+  - id: O1
+    text: Make a table in a SQLite database, and add rows with INSERT
+  - id: O2
+    text: Read rows with SELECT, WHERE and ORDER BY, from Python
+  - id: O3
+    text: Pass values with ? placeholders - never build the SQL text yourself
+  - id: O4
+    text: Change and delete rows with UPDATE and DELETE, and save them with commit
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: table
+    type: theory
+    objective: O1
+    title: A table, like a sheet
+    body: |
+      A **database** keeps data in **tables**: rows and columns, like a
+      sheet. You talk to it in **SQL**, a small language made for data.
+
+      **SQLite** comes with Python, in the module `sqlite3`. The whole
+      database is one file, and no server is needed.
+
+      ```python
+      import sqlite3
+
+      con = sqlite3.connect("shop.db")   # open it, or make it
+      con.execute(
+          "CREATE TABLE IF NOT EXISTS items (name TEXT, price REAL)"
+      )
+      con.execute("INSERT INTO items VALUES (?, ?)", ("tea", 2.5))
+      con.commit()                       # save the changes
+      rows = con.execute("SELECT name, price FROM items")
+      print(rows.fetchall())             # [('tea', 2.5)]
+      ```
+
+      - `CREATE TABLE` makes a table with its columns. `TEXT`, `REAL` (a
+        number with a point) and `INTEGER` are the kinds of value.
+      - `INSERT` adds a row. Each `?` is a place for a value. The values
+        come after the SQL, as a tuple.
+      - `executemany` adds many rows: the same SQL, a list of tuples.
+      - `":memory:"` instead of a file name makes a database that lives only
+        while the program runs. Good for trying things out.
+
+      SQL words are often written in capitals, so they stand out from your
+      names. SQLite does not mind either way.
+    keys:
+      - code: "sqlite3.connect(\"shop.db\")"
+        means: "Open the database file. It is made if it is not there."
+      - code: "INSERT INTO items VALUES (?, ?)"
+        means: "Add a row; the values come as a tuple."
+      - code: "con.commit()"
+        means: "Save the changes in the file."
+
+  # 2. PREDICT ---------------------------------------------------------------
+  - id: predict-select
+    type: predict
+    objective: O2
+    title: Which rows, in which order?
+    item:
+      kind: predict
+      id: p-select
+      prompt: "The program prints some rows. **Type what it prints.**"
+      code: |
+        import sqlite3
+        con = sqlite3.connect(":memory:")
+        con.execute("CREATE TABLE items (name TEXT, price REAL)")
+        rows = [("tea", 2.5), ("cake", 4.0), ("milk", 1.2)]
+        con.executemany("INSERT INTO items VALUES (?, ?)", rows)
+        query = "SELECT name, price FROM items WHERE price < 3 ORDER BY price"
+        for name, price in con.execute(query):
+            print(name, price)
+      explain: >-
+        `WHERE price < 3` keeps tea and milk; cake costs 4.0. `ORDER BY
+        price` puts the cheapest first, so milk comes before tea. Each row
+        is a tuple, so the loop can take it apart into `name` and `price`.
+      misconceptions:
+        - answer: "tea 2.5\nmilk 1.2"
+          say: "That is the order they were added. `ORDER BY price` sorts them: the cheapest first."
+        - answer: "milk 1.2\ntea 2.5\ncake 4.0"
+          say: "`WHERE price < 3` drops the cake: 4.0 is not below 3."
+
+  # 3. DEMO ------------------------------------------------------------------
+  - id: try-books
+    type: demo
+    visual: output
+    objective: O2
+    title: Ask the books
+    intro: |
+      A small table of books. Press **Run**, then change `query` and run it
+      again.
+    code: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE books (title TEXT, author TEXT, year INTEGER)")
+      con.executemany(
+          "INSERT INTO books VALUES (?, ?, ?)",
+          [
+              ("Dune", "Herbert", 1965),
+              ("Emma", "Austen", 1815),
+              ("Persuasion", "Austen", 1817),
+          ],
+      )
+
+      query = "SELECT title, year FROM books ORDER BY year"
+      for row in con.execute(query):
+          print(row)
+    experiments:
+      - text: "Run the code as it is."
+        expr: "err is None"
+      - text: "Only the books of Austen: add `WHERE author = 'Austen'` before `ORDER BY`."
+        expr: "err is None and 'WHERE' in ns.get('query', '').upper() and len(lines) == 2"
+      - text: "Newest first: `ORDER BY year DESC`."
+        expr: "err is None and 'DESC' in ns.get('query', '').upper()"
+      - text: "Count the books: `SELECT COUNT(*) FROM books`."
+        expr: "err is None and 'COUNT(' in ns.get('query', '').upper()"
+    investigate:
+      - kind: mcq
+        id: i-row
+        objective: O2
+        prompt: "In Python, what is each row of the result?"
+        options:
+          - text: "A tuple, with one value for each column you asked for"
+            correct: true
+            why: "`SELECT title, year` gives tuples like `('Dune', 1965)`."
+          - text: "A dict with the column names"
+            why: "By default sqlite3 gives tuples. The values are in the order of the SELECT."
+          - text: "One long text"
+            why: "The values keep their kind: the year is a number."
+
+  # 4. THEORY ----------------------------------------------------------------
+  - id: placeholders
+    type: theory
+    objective: O3
+    title: Never build the SQL yourself
+    body: |
+      A value that comes from a user must **never** go into the SQL text:
+
+      ```python
+      name = input("Name: ")
+      query = f"SELECT * FROM users WHERE name = '{name}'"
+      con.execute(query)                  # WRONG
+      ```
+
+      - A name like `O'Brien` breaks it: its `'` ends the text in the SQL
+        too early, and you get an error.
+      - Worse, someone can type `x' OR '1'='1`. Then the SQL reads
+        `WHERE name = 'x' OR '1'='1'`, which is true for **every** row.
+        This is **SQL injection**, one of the most common security holes.
+
+      Write `?` where a value goes, and give the values apart, as a tuple:
+
+      ```python
+      query = "SELECT * FROM users WHERE name = ?"
+      con.execute(query, (name,))
+      ```
+
+      sqlite3 sends the value as data, never as SQL, so no text can change
+      the question. Note the comma in `(name,)`: that is a tuple with one
+      value.
+    keys:
+      - code: "WHERE name = ?"
+        means: "A place for a value."
+      - code: "(name,)"
+        means: "The values, as a tuple. The comma makes it a tuple."
+      - code: "f\"... '{name}'\""
+        means: "Never: an error for O'Brien, and SQL injection."
+
+  # 5. WORKED EXAMPLE --------------------------------------------------------
+  - id: example-author
+    type: worked
+    objective: O3
+    title: Books by one author
+    problem: |
+      **Write `by_author(con, author)`**: the titles of one author, in
+      alphabetical order. The author comes from the user, so it must be safe.
+    lines:
+      - goal: "Ask with a placeholder"
+        code: "def by_author(con, author):"
+        note: "The connection comes in, so the function works with any database."
+      - code: "    query = \"SELECT title FROM books WHERE author = ? ORDER BY title\""
+        note: "The `?` marks where the value goes. The SQL text never changes."
+      - code: "    rows = con.execute(query, (author,)).fetchall()"
+        note: "The value goes in a tuple. `fetchall()` gives a list of rows."
+      - goal: "Give back plain values"
+        code: "    return [title for (title,) in rows]"
+        note: "Each row is a tuple with one value: `(title,)` takes it out."
+    check:
+      kind: mcq
+      id: w-author
+      objective: O3
+      prompt: "A user types the author `x' OR '1'='1`. **What does `by_author` give back?**"
+      options:
+        - text: "An empty list: no author has that strange name"
+          correct: true
+          why: "With `?`, the whole text is one value. It is compared with the authors, and none fits."
+        - text: "Every book in the table"
+          why: "That happens only when the value is pasted into the SQL text. With `?`, it stays a value."
+        - text: "An error, because of the quotes"
+          why: "Quotes inside a value are no problem with `?`. They are only a problem inside the SQL text."
+
+  # 6. EXERCISE: completion --------------------------------------------------
+  - id: ex-products
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Add and find products
+    prompt: |
+      **Replace the two `___`**. `add` stores a product. `cheaper_than`
+      gives the names of the products below a price, the cheapest first.
+
+      ```text
+      ['milk', 'tea']
+      ```
+    starter: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE products (name TEXT, price REAL)")
+
+
+      def add(name, price):
+          con.execute("INSERT INTO products VALUES (?, ?)", ___)
+
+
+      def cheaper_than(limit):
+          query = "SELECT name FROM products WHERE price < ? ORDER BY ___"
+          return [name for (name,) in con.execute(query, (limit,))]
+
+
+      add("tea", 2.5)
+      add("cake", 4.0)
+      add("milk", 1.2)
+      print(cheaper_than(3))
+    solution: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE products (name TEXT, price REAL)")
+
+
+      def add(name, price):
+          con.execute("INSERT INTO products VALUES (?, ?)", (name, price))
+
+
+      def cheaper_than(limit):
+          query = "SELECT name FROM products WHERE price < ? ORDER BY price"
+          return [name for (name,) in con.execute(query, (limit,))]
+
+
+      add("tea", 2.5)
+      add("cake", 4.0)
+      add("milk", 1.2)
+      print(cheaper_than(3))
+    after: >-
+      The SQL text stays the same for every product and every limit: only
+      the values change, and they always travel apart, as a tuple.
+    checks:
+      - expr: "callable(ns.get('cheaper_than')) and cheaper_than(3) == ['milk', 'tea'] and cheaper_than(1) == []"
+        pass: "It gives the names below the limit, the cheapest first"
+        hint: "Sort by the column with the prices: `ORDER BY price`."
+      - expr: "callable(ns.get('add')) and (add('juice', 0.9) or True) and cheaper_than(2) == ['juice', 'milk']"
+        pass: "A new product can be added and found"
+        hint: "The two values go in as one tuple: `(name, price)`."
+      - expr: "lines == [\"['milk', 'tea']\"]"
+        pass: "It prints ['milk', 'tea']"
+        hint: "Keep the program at the end."
+    hints:
+      - "The `?` places are filled from a tuple, in their order."
+      - "Which column holds what you want to sort by?"
+      - "`(name, price)` and `ORDER BY price`."
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-quote
+    type: exercise
+    fade: debug
+    objective: O3
+    title: O'Brien breaks it
+    prompt: |
+      `find_user` works for Ana, but it stops with an error for O'Brien.
+
+      **Find out why, and fix it with a `?` placeholder.** It must print:
+
+      ```text
+      (1, 'Ana')
+      (2, "O'Brien")
+      ```
+    starter: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE users (id INTEGER, name TEXT)")
+      con.executemany("INSERT INTO users VALUES (?, ?)", [(1, "Ana"), (2, "O'Brien")])
+
+
+      def find_user(name):
+          query = f"SELECT id, name FROM users WHERE name = '{name}'"
+          return con.execute(query).fetchone()
+
+
+      print(find_user("Ana"))
+      print(find_user("O'Brien"))
+    solution: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE users (id INTEGER, name TEXT)")
+      con.executemany("INSERT INTO users VALUES (?, ?)", [(1, "Ana"), (2, "O'Brien")])
+
+
+      def find_user(name):
+          query = "SELECT id, name FROM users WHERE name = ?"
+          return con.execute(query, (name,)).fetchone()
+
+
+      print(find_user("Ana"))
+      print(find_user("O'Brien"))
+    after: >-
+      The same fix closes the security hole: with `?`, a name can be any
+      text at all, and it is never read as SQL.
+    checks:
+      - expr: 'err is None and lines == [str((1, ''Ana'')), str((2, "O''Brien"))]'
+        pass: "It finds Ana and O'Brien"
+        hint: "Print `query` before it runs. Where does the text of the SQL end for O'Brien?"
+      - expr: "callable(ns.get('find_user')) and find_user(\"x' OR '1'='1\") is None"
+        pass: "A strange name finds nothing and changes no SQL"
+        hint: "With `?`, the name is only a value, whatever it holds."
+      - expr: "'?' in src and '{name}' not in src"
+        pass: "The name goes in with ?, not into the SQL text"
+        hint: "Write `?` in the SQL, and give `(name,)` to `execute`."
+    hints:
+      - "Print `query` for O'Brien. Look at the quotes in it."
+      - "The `'` in the name ends the SQL text too early. A value must never go into the SQL text."
+      - "`query = \"SELECT id, name FROM users WHERE name = ?\"` and `con.execute(query, (name,))`."
+
+  # 8. THEORY ----------------------------------------------------------------
+  - id: change
+    type: theory
+    objective: O4
+    title: Change, delete, save
+    body: |
+      ```python
+      change = "UPDATE items SET price = ? WHERE name = ?"
+      con.execute(change, (3.0, "tea"))
+      con.execute("DELETE FROM items WHERE price > ?", (10,))
+      con.commit()
+      ```
+
+      - `UPDATE` changes the rows that `WHERE` chooses. `DELETE` removes
+        them. **Without `WHERE`, every row** is changed or deleted.
+      - Changes are kept only after `con.commit()`. If the program stops
+        before it, they are lost.
+      - `with con:` commits by itself at the end of its block. If an error
+        happens inside it, all its changes are undone together.
+
+      Most tables have an **id** column: `id INTEGER PRIMARY KEY` gives each
+      new row its own number, 1, 2, 3 ... After an `INSERT`, the
+      `lastrowid` of what `execute` gives back is the number of the new row.
+
+      ```python
+      with con:
+          add = "INSERT INTO tasks (text) VALUES (?)"
+          new_id = con.execute(add, ("Read",)).lastrowid
+      ```
+    keys:
+      - code: "UPDATE t SET col = ? WHERE id = ?"
+        means: "Change the chosen rows."
+      - code: "DELETE FROM t WHERE id = ?"
+        means: "Remove the chosen rows. No WHERE: all rows."
+      - code: "with con:"
+        means: "Commit at the end, or undo it all after an error."
+
+  # 9. EXERCISE: independent -------------------------------------------------
+  - id: ex-todo
+    type: exercise
+    fade: independent
+    objective: O4
+    title: A to-do list in a database
+    prompt: |
+      **Write four functions** for this table of tasks:
+
+      - `add(text)` stores a task and gives back its id,
+      - `done(task_id)` marks a task as done (`done = 1`),
+      - `remove(task_id)` deletes a task,
+      - `open_tasks()` gives the texts of the tasks that are not done, the
+        oldest first.
+
+      Every value goes in with `?`.
+
+      ```text
+      ['water plants']
+      ```
+    starter: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE tasks (id INTEGER PRIMARY KEY, text TEXT, done INTEGER DEFAULT 0)")
+
+      # Your four functions here.
+
+
+      first = add("buy milk")
+      second = add("call Ben")
+      add("water plants")
+      done(first)
+      remove(second)
+      print(open_tasks())
+    solution: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE tasks (id INTEGER PRIMARY KEY, text TEXT, done INTEGER DEFAULT 0)")
+
+
+      def add(text):
+          with con:
+              return con.execute("INSERT INTO tasks (text) VALUES (?)", (text,)).lastrowid
+
+
+      def done(task_id):
+          with con:
+              con.execute("UPDATE tasks SET done = 1 WHERE id = ?", (task_id,))
+
+
+      def remove(task_id):
+          with con:
+              con.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+
+
+      def open_tasks():
+          rows = con.execute("SELECT text FROM tasks WHERE done = 0 ORDER BY id")
+          return [text for (text,) in rows]
+
+
+      first = add("buy milk")
+      second = add("call Ben")
+      add("water plants")
+      done(first)
+      remove(second)
+      print(open_tasks())
+    after: >-
+      This is the heart of most apps: add, change, delete and list, each in
+      one short SQL line with `?`. With a file name instead of
+      `":memory:"`, the tasks would still be there tomorrow.
+    checks:
+      - expr: "callable(ns.get('add')) and callable(ns.get('open_tasks')) and (lambda i: isinstance(i, int) and 'read a book' in open_tasks())(add('read a book'))"
+        pass: "add stores a task and gives back its id"
+        hint: "The `lastrowid` of the `INSERT` is the new id: return it."
+      - expr: "callable(ns.get('done')) and callable(ns.get('add')) and (lambda i: (done(i), 'go for a run' not in open_tasks())[1])(add('go for a run'))"
+        pass: "done marks a task as done"
+        hint: "`UPDATE tasks SET done = 1 WHERE id = ?`, with `(task_id,)`."
+      - expr: "callable(ns.get('remove')) and callable(ns.get('add')) and (lambda i: (remove(i), con.execute('SELECT COUNT(*) FROM tasks WHERE id = ?', (i,)).fetchone()[0] == 0)[1])(add('temp'))"
+        pass: "remove deletes the row"
+        hint: "`DELETE FROM tasks WHERE id = ?`, with `(task_id,)`."
+      - expr: "lines == [\"['water plants']\"]"
+        pass: "It prints ['water plants']"
+        hint: "Keep the program at the end, and sort the open tasks by id."
+      - expr: "'execute(f' not in src.replace(' ', '')"
+        pass: "No SQL is built with an f-string"
+        hint: "Every value goes in with `?`."
+    hints:
+      - "`add`: `INSERT INTO tasks (text) VALUES (?)`, and return the `lastrowid` of what `execute` gives back."
+      - "`done` and `remove`: `UPDATE ... WHERE id = ?` and `DELETE ... WHERE id = ?`, each with `(task_id,)`."
+      - "`open_tasks`: `SELECT text FROM tasks WHERE done = 0 ORDER BY id`, then take the text out of each row."
+
+  # 10. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-safe
+        objective: O3
+        prompt: "Which line is safe for a `name` that the user typed?"
+        options:
+          - text: "`con.execute(\"SELECT * FROM users WHERE name = ?\", (name,))`"
+            correct: true
+            why: "The value travels apart from the SQL, so it can never change the question."
+          - text: "`con.execute(f\"SELECT * FROM users WHERE name = '{name}'\")`"
+            why: "The name becomes part of the SQL text: an error for O'Brien, and SQL injection."
+          - text: "`con.execute(\"SELECT * FROM users WHERE name = '\" + name + \"'\")`"
+            why: "This is the same problem as the f-string: the value is pasted into the SQL."
+      - kind: mcq
+        id: q-commit
+        objective: O4
+        prompt: "A program adds rows to `shop.db`, then stops before `con.commit()`. **What is in the file afterwards?**"
+        options:
+          - text: "Not the new rows: they were never saved"
+            correct: true
+            why: "Changes are kept only after a commit. `with con:` commits for you at the end of its block."
+          - text: "All the new rows"
+            why: "Without a commit, SQLite throws the changes away when the connection closes."
+          - text: "Half of them"
+            why: "A commit saves all changes together, or none of them."
+      - kind: blanks
+        id: q-blank
+        objective: O2
+        prompt: "Fill in the blank so that the program prints `[('lamp',)]`."
+        code: |
+          import sqlite3
+          con = sqlite3.connect(":memory:")
+          con.execute("CREATE TABLE items (name TEXT, price REAL)")
+          con.execute("INSERT INTO items VALUES (?, ?)", ("lamp", 12.0))
+          rows = con.execute("[?SELECT?] name FROM items WHERE price > ?", (5,)).fetchall()
+          print(rows)
+        explain: "`SELECT` asks for columns. Each row is a tuple, so one column gives `('lamp',)`."
+      - kind: mcq
+        id: q-delete-all
+        objective: O4
+        prompt: "What does `con.execute(\"DELETE FROM tasks\")` do, with no `WHERE`?"
+        options:
+          - text: "It deletes every row of the table"
+            correct: true
+            why: "`WHERE` chooses the rows. Without it, all rows are chosen."
+          - text: "It deletes the last row"
+            why: "SQL has no \"last row\" unless you choose one with WHERE."
+          - text: "It gives an error"
+            why: "It is allowed, and that is why it is dangerous."
+      - kind: predict
+        id: q-update
+        objective: O4
+        code: |
+          import sqlite3
+          con = sqlite3.connect(":memory:")
+          con.execute("CREATE TABLE t (id INTEGER PRIMARY KEY, word TEXT)")
+          for w in ["sun", "moon", "star"]:
+              con.execute("INSERT INTO t (word) VALUES (?)", (w,))
+          con.execute("UPDATE t SET word = ? WHERE id = ?", ("sky", 2))
+          print(con.execute("SELECT word FROM t ORDER BY id").fetchall())
+        explain: "The ids are 1, 2 and 3 in the order of the INSERTs. Row 2 was moon; the UPDATE makes it sky. Each row is a tuple of one value."
+        misconceptions:
+          - answer: "['sun', 'sky', 'star']"
+            say: "`fetchall()` gives rows, and each row is a tuple: `('sun',)`."
+
+  # 11. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 4
+
+review:
+  - kind: mcq
+    id: r-placeholder
+    objective: O3
+    prompt: "What does the `?` do in `WHERE name = ?`?"
+    options:
+      - text: "It marks a place for a value that sqlite3 fills in safely"
+        correct: true
+        why: "The value comes apart, as a tuple, and is never read as SQL."
+      - text: "It matches any name"
+        why: "That is not what `?` does in sqlite3. It is a place for one value."
+      - text: "It asks the user for a name"
+        why: "The value comes from your Python code, in the tuple after the SQL."
+  - kind: predict
+    id: r-desc
+    objective: O2
+    code: |
+      import sqlite3
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE p (name TEXT, age INTEGER)")
+      con.executemany("INSERT INTO p VALUES (?, ?)", [("Ana", 30), ("Ben", 25), ("Cleo", 35)])
+      for (name,) in con.execute("SELECT name FROM p ORDER BY age DESC"):
+          print(name)
+    explain: "`DESC` sorts from the biggest age down: Cleo 35, Ana 30, Ben 25."
+    misconceptions:
+      - answer: "Ben\nAna\nCleo"
+        say: "That is the youngest first. `DESC` means from the biggest down."
+  - kind: mcq
+    id: r-tuple
+    objective: O3
+    prompt: "Why `(name,)` and not `(name)` after the SQL?"
+    options:
+      - text: "The comma makes a tuple of one value; `(name)` is only the name itself"
+        correct: true
+        why: "sqlite3 wants a tuple (or a list) of values, one for each `?`."
+      - text: "There is no difference"
+        why: "Brackets alone do not make a tuple. The comma does."
+      - text: "The comma adds an empty second value"
+        why: "`(name,)` holds exactly one value."
+  - kind: mcq
+    id: r-with
+    objective: O4
+    prompt: "What does `with con:` do around some changes?"
+    options:
+      - text: "It commits them at the end, or undoes them all if an error happens"
+        correct: true
+        why: "All or nothing: the database is never left half changed."
+      - text: "It closes the database at the end"
+        why: "It commits or rolls back. The connection stays open."
+      - text: "It makes the changes faster"
+        why: "It is about safety, not speed."
+  - kind: spot
+    id: r-danger
+    objective: O3
+    prompt: "Which line opens the door to SQL injection?"
+    code: |
+      word = input("Search: ")
+      query = f"SELECT title FROM books WHERE title LIKE '%{word}%'"
+      rows = con.execute(query).fetchall()
+      print(len(rows), "books")
+    line: 2
+    wrong:
+      - line: 1
+        say: "Asking the user is fine. The danger is where the answer goes next."
+      - line: 3
+        say: "This line runs the SQL, but the problem was made one line before."
+    explain: "The typed word goes into the SQL text. Safe: `\"... WHERE title LIKE ?\"` with `(f\"%{word}%\",)`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-count
+    type: exercise
+    fade: completion
+    objective: O2
+    title: How many books?
+    prompt: |
+      **Replace `___`** so that `count_by(author)` gives the number of
+      books of that author. `COUNT(*)` counts the rows, and `fetchone()`
+      gives the one row of the result.
+
+      ```text
+      2
+      0
+      ```
+    starter: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE books (title TEXT, author TEXT)")
+      books = [("Emma", "Austen"), ("Dune", "Herbert"), ("Persuasion", "Austen")]
+      con.executemany("INSERT INTO books VALUES (?, ?)", books)
+
+
+      def count_by(author):
+          query = "SELECT COUNT(*) FROM books WHERE author = ?"
+          return con.execute(query, ___).fetchone()[0]
+
+
+      print(count_by("Austen"))
+      print(count_by("Tolkien"))
+    solution: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE books (title TEXT, author TEXT)")
+      books = [("Emma", "Austen"), ("Dune", "Herbert"), ("Persuasion", "Austen")]
+      con.executemany("INSERT INTO books VALUES (?, ?)", books)
+
+
+      def count_by(author):
+          query = "SELECT COUNT(*) FROM books WHERE author = ?"
+          return con.execute(query, (author,)).fetchone()[0]
+
+
+      print(count_by("Austen"))
+      print(count_by("Tolkien"))
+    after: >-
+      The database counts for you, and only the number comes back to
+      Python: even with a million books, that is one small answer.
+    checks:
+      - expr: "callable(ns.get('count_by')) and count_by('Austen') == 2 and count_by('Herbert') == 1 and count_by('x') == 0"
+        pass: "It counts the books of any author"
+        hint: "The value for the `?` goes in a tuple of one: `(author,)`."
+        misconceptions:
+          - when: "callable(ns.get('count_by')) and raises(count_by, 'Austen') is not None"
+            say: "`(author)` without a comma is only the text, not a tuple. Write `(author,)`."
+      - expr: "lines == ['2', '0']"
+        pass: "It prints 2 and 0"
+        hint: "Keep the prints."
+    hints:
+      - "`execute` wants the values as a tuple."
+      - "A tuple of one value needs a comma."
+      - "`(author,)`."
+  - id: x-rename
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Rename a product
+    prompt: |
+      **Write `rename(old, new)`**: it changes the name of every product
+      called `old` to `new`, saves the change, and gives back how many rows
+      changed. The `rowcount` of what `execute` gives back is that number.
+
+      ```text
+      1
+      0
+      ['coffee', 'milk']
+      ```
+    starter: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE products (name TEXT)")
+      con.executemany("INSERT INTO products VALUES (?)", [("tea",), ("milk",)])
+
+      # Your function here.
+
+
+      print(rename("tea", "coffee"))
+      print(rename("cake", "pie"))
+      print([name for (name,) in con.execute("SELECT name FROM products ORDER BY name")])
+    solution: |
+      import sqlite3
+
+      con = sqlite3.connect(":memory:")
+      con.execute("CREATE TABLE products (name TEXT)")
+      con.executemany("INSERT INTO products VALUES (?)", [("tea",), ("milk",)])
+
+
+      def rename(old, new):
+          with con:
+              cursor = con.execute("UPDATE products SET name = ? WHERE name = ?", (new, old))
+          return cursor.rowcount
+
+
+      print(rename("tea", "coffee"))
+      print(rename("cake", "pie"))
+      print([name for (name,) in con.execute("SELECT name FROM products ORDER BY name")])
+    after: >-
+      `rowcount` tells you whether anything happened: 0 means no row had
+      that name, which a program can report to the user.
+    checks:
+      - expr: "callable(ns.get('rename')) and rename('milk', 'water') == 1 and rename('nothing', 'x') == 0 and [n for (n,) in con.execute('SELECT name FROM products ORDER BY name')] == ['coffee', 'water']"
+        pass: "It renames, and gives back how many rows changed"
+        hint: "`UPDATE products SET name = ? WHERE name = ?`, with the values `(new, old)` in that order: they fill the `?` places from the left."
+      - expr: "lines == ['1', '0', \"['coffee', 'milk']\"]"
+        pass: "It prints 1, 0 and ['coffee', 'milk']"
+        hint: "Return the `rowcount` of the UPDATE."
+      - expr: "'execute(f' not in src.replace(' ', '')"
+        pass: "The names go in with ?"
+        hint: "No f-strings in the SQL."
+    hints:
+      - "`with con:` around the UPDATE saves the change."
+      - "Keep what `execute` gives back: `cursor = con.execute(...)`."
+      - "`return cursor.rowcount` after the `with` block."

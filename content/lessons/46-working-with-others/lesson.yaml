@@ -1,0 +1,695 @@
+id: working-with-others
+order: 46
+title: Working with others
+summary: How a team changes code together, with issues, branches, pull requests, code review and tests that run on every change. And how to tell when a change is ready.
+minutes: 40
+outcomes: [A9, A10]
+
+objectives:
+  - id: O1
+    text: Follow a team change from an issue to a merge - branch, commits, pull request, review
+  - id: O2
+    text: Review a change like a reviewer, and answer review comments with fixes and tests
+  - id: O3
+    text: Explain what continuous integration does, and read a workflow that runs pytest
+  - id: O4
+    text: Decide if a pull request is ready to merge
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: flow
+    type: theory
+    objective: O1
+    title: From an issue to a merge
+    body: |
+      Alone, you commit on `main`. In a team, nobody changes `main`
+      directly. A change goes this way:
+
+      ```text
+      issue  →  branch  →  commits  →  pull request  →  review + tests  →  merge
+      ```
+
+      1. **Issue**: a note on GitHub about one problem or wish: "The search
+         ignores capitals." It has a number, like `#42`, and a discussion.
+      2. **Branch**: `git switch -c fix-search-capitals`. Your work stays
+         apart from `main`.
+      3. **Commits**, then `git push -u origin fix-search-capitals`.
+      4. **Pull request** (PR; GitLab says *merge request*): on GitHub you
+         ask to merge your branch into `main`. Write what it changes and
+         why, and `Fixes #42`: the issue closes when the PR is merged.
+      5. **Review**: teammates read the change and comment on lines; they
+         approve or ask for changes. You answer with more commits on the
+         same branch, and the PR updates by itself.
+      6. **Checks**: the tests run by themselves on GitHub for each push.
+      7. **Merge**: when it is approved and green, the change goes into
+         `main`.
+
+      A **merge conflict** in a PR means `main` changed the same lines
+      since you made the branch: merge `main` into your branch, fix the
+      lines, commit, push.
+    keys:
+      - code: "Issue #42"
+        means: "One problem or wish, with a number."
+      - code: "git switch -c fix-x"
+        means: "A new branch for one change."
+      - code: "Pull request"
+        means: "Ask to merge a branch, with a review."
+      - code: "Fixes #42"
+        means: "In a PR: close the issue when merged."
+
+  # 2. EXERCISE: debug -------------------------------------------------------
+  - id: ex-review-fix
+    type: exercise
+    fade: debug
+    pytest: true
+    objective: O2
+    title: Answer the review
+    prompt: |
+      Your pull request adds `discount(total, code)`. The reviewer left two
+      comments (in the code, as `# Review:`). **Fix both problems.** The
+      tests at the end are the reviewer's: do not change them, they must
+      all pass.
+    starter: |
+      import pytest
+
+      CODES = {"SPRING10": 10, "VIP25": 25, "BIG50": 50}
+
+
+      def discount(total, code):
+          # Review: a code in small letters ("vip25") is not found.
+          percent = CODES.get(code, 0)
+          # Review: with a big discount, the result must never go below 0.
+          return round(total - total * percent / 100 - 5 * (percent >= 50), 2)
+
+
+      def test_known_code():
+          assert discount(100, "SPRING10") == 90
+
+
+      def test_small_letters():
+          assert discount(80, "vip25") == 60
+
+
+      def test_unknown_code():
+          assert discount(30, "NOPE") == 30
+
+
+      def test_never_below_zero():
+          assert discount(4, "BIG50") == 0
+    solution: |
+      import pytest
+
+      CODES = {"SPRING10": 10, "VIP25": 25, "BIG50": 50}
+
+
+      def discount(total, code):
+          percent = CODES.get(code.upper(), 0)
+          return max(0, round(total - total * percent / 100 - 5 * (percent >= 50), 2))
+
+
+      def test_known_code():
+          assert discount(100, "SPRING10") == 90
+
+
+      def test_small_letters():
+          assert discount(80, "vip25") == 60
+
+
+      def test_never_below_zero():
+          assert discount(4, "BIG50") == 0
+
+
+      def test_unknown_code():
+          assert discount(30, "NOPE") == 30
+    after: >-
+      Each review comment became a test, so the problem cannot come back
+      unseen. Remove the `# Review:` lines when they are done: the
+      conversation stays on GitHub, not in the code.
+    checks:
+      - expr: "len(test_results) >= 4 and tests_pass()"
+        pass: "The four tests of the reviewer pass"
+        hint: "`code.upper()` before the look-up, and `max(0, ...)` around the result."
+      - expr: "callable(ns.get('discount')) and discount(80, 'vip25') == 60 and discount(80, 'Vip25') == 60 and discount(2, 'BIG50') == 0 and discount(100, 'SPRING10') == 90 and discount(9.99, 'x') == 9.99"
+        pass: "Codes in any capitals work, and the result is never below 0"
+        hint: "Both fixes are in `discount`."
+      - expr: "sorted(r['name'] for r in test_results) == ['test_known_code', 'test_never_below_zero', 'test_small_letters', 'test_unknown_code']"
+        pass: "The tests of the reviewer are all still there"
+        hint: "Fix the function, not the tests."
+    hints:
+      - "Run it first and read which tests fail."
+      - "The look-up needs the code in capitals: `code.upper()`."
+      - "`max(0, ...)` never gives less than 0."
+
+  # 3. EXERCISE: independent -------------------------------------------------
+  - id: ex-pr-tests
+    type: exercise
+    fade: independent
+    pytest: true
+    objective: O2
+    title: A pull request needs its tests
+    prompt: |
+      A teammate's PR adds `parse_version("1.2.3")`, which gives `(1, 2,
+      3)`, so versions compare as numbers: `"1.10.0"` is newer than
+      `"1.9.0"`. A missing part counts as 0: `"2"` is `(2, 0, 0)`. Text
+      that is not a version raises a `ValueError`.
+
+      The reviewer asks for tests. **Write at least five.** The check puts
+      four bugs into `parse_version`, one at a time.
+    starter: |
+      import pytest
+
+
+      def parse_version(text):
+          parts = text.strip().split(".")
+          if len(parts) > 3 or not all(part.isdigit() for part in parts):
+              raise ValueError(f"not a version: {text!r}")
+          numbers = [int(part) for part in parts]
+          return tuple(numbers + [0] * (3 - len(numbers)))
+
+
+      # Your tests here.
+    solution: |
+      import pytest
+
+
+      def parse_version(text):
+          parts = text.strip().split(".")
+          if len(parts) > 3 or not all(part.isdigit() for part in parts):
+              raise ValueError(f"not a version: {text!r}")
+          numbers = [int(part) for part in parts]
+          return tuple(numbers + [0] * (3 - len(numbers)))
+
+
+      def test_three_parts():
+          assert parse_version("1.2.3") == (1, 2, 3)
+
+
+      def test_numbers_not_text():
+          assert parse_version("1.10.0") > parse_version("1.9.0")
+
+
+      def test_missing_parts_are_zero():
+          assert parse_version("2") == (2, 0, 0)
+          assert parse_version(" 3.1 ") == (3, 1, 0)
+
+
+      @pytest.mark.parametrize("text", ["", "1.2.x", "1.2.3.4", "v1.0"])
+      def test_not_a_version(text):
+          with pytest.raises(ValueError):
+              parse_version(text)
+    after: >-
+      The test of 1.10 against 1.9 is the one that matters most: compared
+      as texts, "1.10.0" comes before "1.9.0", and many real programs had
+      that bug.
+    checks:
+      - expr: "len(test_results) >= 5 and tests_pass()"
+        pass: "At least five tests, all passing"
+        hint: "Test a full version, missing parts, a comparison and bad texts."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def parse_version(text):
+              parts = text.strip().split(".")
+              if len(parts) > 3 or not all(part.isdigit() for part in parts):
+                  raise ValueError("bad")
+              return tuple(parts + ["0"] * (3 - len(parts)))
+          ''')
+        pass: "Your tests catch parts that stay texts"
+        hint: "Compare with numbers: `== (1, 2, 3)`, and compare `1.10.0` with `1.9.0`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def parse_version(text):
+              parts = text.strip().split(".")
+              if len(parts) > 3 or not all(part.isdigit() for part in parts):
+                  raise ValueError("bad")
+              return tuple(int(part) for part in parts)
+          ''')
+        pass: "Your tests catch missing parts that are not filled with 0"
+        hint: "Test a short version like `\"2\"`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def parse_version(text):
+              parts = text.strip().split(".")
+              if not all(part.isdigit() for part in parts):
+                  raise ValueError("bad")
+              numbers = [int(part) for part in parts]
+              return tuple(numbers + [0] * (3 - len(numbers)))
+          ''')
+        pass: "Your tests catch a version with too many parts"
+        hint: "Test that `\"1.2.3.4\"` raises a `ValueError`."
+      - expr: |-
+          tests_pass() and fails_with('''
+          def parse_version(text):
+              parts = text.strip().split(".")
+              if len(parts) > 3:
+                  raise ValueError("bad")
+              numbers = [int(part) if part.isdigit() else 0 for part in parts]
+              return tuple(numbers + [0] * (3 - len(numbers)))
+          ''')
+        pass: "Your tests catch letters that are accepted as 0"
+        hint: "Test that `\"1.2.x\"` raises a `ValueError`."
+    hints:
+      - "One test for each sentence of the description."
+      - "`assert parse_version(\"1.10.0\") > parse_version(\"1.9.0\")` is a test too."
+      - "Bad texts with `pytest.raises(ValueError)`, maybe with `parametrize`."
+
+  # 4. WORKED ----------------------------------------------------------------
+  - id: workflow
+    type: worked
+    objective: O3
+    title: Tests that run by themselves
+    problem: |
+      **Continuous integration** (CI) means: a server runs the tests of
+      every push and every pull request, by itself. On GitHub it is called
+      **GitHub Actions**. A file in `.github/workflows/` tells it what to do.
+
+      This is `.github/workflows/tests.yml`. It is YAML, not Python: read
+      it line by line.
+    lines:
+      - goal: "When to run"
+        code: "on: [push, pull_request]"
+        note: "For each push to any branch, and for each pull request."
+      - goal: "Where to run"
+        code: "jobs:\n  tests:\n    runs-on: ubuntu-latest"
+        note: "A fresh Linux computer for each run: the tests cannot depend on files of your own machine."
+      - goal: "Get the code and Python"
+        code: "    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: \"3.13\""
+        note: "Two ready-made steps: copy the repository, then install Python."
+      - goal: "Install what the project needs"
+        code: "      - run: pip install -r requirements.txt pytest"
+        note: "The same `requirements.txt` as on your computer. Without it, an import fails on the server."
+      - goal: "Run the tests"
+        code: "      - run: pytest"
+        note: "If one test fails, pytest ends with an exit code that is not 0, and the check on the pull request turns red."
+    check:
+      kind: mcq
+      id: w-red
+      prompt: "Your tests pass on your computer, but the check on the PR is red with `ModuleNotFoundError: requests`. What is the most likely fix?"
+      options:
+        - text: "Add `requests` to `requirements.txt`: the server installs only what is listed there"
+          correct: true
+          why: "Your computer has it installed by hand; the fresh server does not."
+        - text: "Run the tests again until they pass"
+          why: "The same server setup fails the same way."
+        - text: "Delete the workflow"
+          why: "Then nothing checks the PRs any more."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: ready
+    type: theory
+    objective: O4
+    title: Ready to merge?
+    body: |
+      Before a merge, a team checks a short list. On GitHub, **branch
+      protection** can make the list a rule, so the merge button stays
+      grey until it is true:
+
+      - It is not a **draft** (a PR that is marked "not ready yet").
+      - At least one **approval**, and no reviewer asks for **changes**.
+      - Every **check** (CI) is green.
+      - No **merge conflicts** with `main`.
+
+      Good habits make the list short: small PRs (one issue each), a clear
+      description, tests in the same PR as the change, and answers to every
+      review comment, with a commit or a reason.
+
+      A **code review** looks for: does it do what the issue asks? Is
+      there a test for it? Are the borders and errors handled? Are names
+      clear? Are there secrets in the code? Is anything left from
+      debugging, like a stray `print`?
+    keys:
+      - code: "Approved"
+        means: "A reviewer says: this can be merged."
+      - code: "Changes requested"
+        means: "A reviewer says: not yet."
+      - code: "Checks: passed"
+        means: "The CI run is green."
+      - code: "Draft"
+        means: "Work in progress; not for merging."
+
+  # 6. EXERCISE: independent -------------------------------------------------
+  - id: ex-ready
+    type: exercise
+    fade: independent
+    objective: O4
+    title: Can this pull request be merged?
+    prompt: |
+      **Write `blockers(pr)`**: it gives back the list of reasons why a
+      pull request cannot be merged yet, in this order (an empty list
+      means: ready).
+
+      1. `"It is a draft."` when `pr["draft"]` is True.
+      2. `"It needs an approval."` when `pr["approvals"]` is 0.
+      3. `"A reviewer asked for changes."` when `pr["changes_requested"]`
+         is more than 0.
+      4. For each check that did not pass, sorted by its name:
+         `"Check lint is failed."` (the name and its state).
+      5. `"It has merge conflicts."` when `pr["conflicts"]` is True.
+
+      ```text
+      []
+      ['It needs an approval.', 'Check lint is failed.', 'Check tests is running.']
+      ```
+    starter: |
+      # Your function here.
+
+
+      ready = {
+          "draft": False,
+          "approvals": 2,
+          "changes_requested": 0,
+          "checks": {"tests": "passed"},
+          "conflicts": False,
+      }
+      waiting = {
+          "draft": False,
+          "approvals": 0,
+          "changes_requested": 0,
+          "checks": {"tests": "running", "lint": "failed", "build": "passed"},
+          "conflicts": False,
+      }
+      print(blockers(ready))
+      print(blockers(waiting))
+    solution: |
+      def blockers(pr):
+          reasons = []
+          if pr["draft"]:
+              reasons.append("It is a draft.")
+          if pr["approvals"] == 0:
+              reasons.append("It needs an approval.")
+          if pr["changes_requested"] > 0:
+              reasons.append("A reviewer asked for changes.")
+          for name in sorted(pr["checks"]):
+              state = pr["checks"][name]
+              if state != "passed":
+                  reasons.append(f"Check {name} is {state}.")
+          if pr["conflicts"]:
+              reasons.append("It has merge conflicts.")
+          return reasons
+
+
+      ready = {
+          "draft": False,
+          "approvals": 2,
+          "changes_requested": 0,
+          "checks": {"tests": "passed"},
+          "conflicts": False,
+      }
+      waiting = {
+          "draft": False,
+          "approvals": 0,
+          "changes_requested": 0,
+          "checks": {"tests": "running", "lint": "failed", "build": "passed"},
+          "conflicts": False,
+      }
+      print(blockers(ready))
+      print(blockers(waiting))
+    after: >-
+      This is what the grey merge button checks on GitHub. A list of
+      reasons is more useful than True or False: it says what to do next.
+    checks:
+      - expr: "callable(ns.get('blockers')) and blockers({'draft': False, 'approvals': 1, 'changes_requested': 0, 'checks': {}, 'conflicts': False}) == []"
+        pass: "A ready pull request gives an empty list"
+        hint: "Start with `reasons = []`, and add only what blocks."
+      - expr: "callable(ns.get('blockers')) and blockers({'draft': True, 'approvals': 0, 'changes_requested': 2, 'checks': {}, 'conflicts': True}) == ['It is a draft.', 'It needs an approval.', 'A reviewer asked for changes.', 'It has merge conflicts.']"
+        pass: "Draft, approvals, changes and conflicts, in the right order"
+        hint: "Four `if`s in the order of the description, with the check names in between."
+      - expr: "callable(ns.get('blockers')) and blockers({'draft': False, 'approvals': 3, 'changes_requested': 0, 'checks': {'z': 'failed', 'a': 'cancelled', 'm': 'passed'}, 'conflicts': False}) == ['Check a is cancelled.', 'Check z is failed.']"
+        pass: "Each check that did not pass, sorted by name, with its state"
+        hint: "`for name in sorted(pr[\"checks\"]):` and skip the ones that are `\"passed\"`."
+      - expr: "err is None and lines == ['[]', \"['It needs an approval.', 'Check lint is failed.', 'Check tests is running.']\"]"
+        pass: "It prints the two lists"
+        hint: "Keep the prints at the end."
+    hints:
+      - "`reasons = []`, then one `if` for each rule, in order."
+      - "The checks: `for name in sorted(pr[\"checks\"]):` with `state = pr[\"checks\"][name]`."
+      - "`if state != \"passed\": reasons.append(f\"Check {name} is {state}.\")`."
+
+  # 7. QUIZ ------------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check what you know
+    items:
+      - kind: mcq
+        id: q-why-branch
+        objective: O1
+        prompt: "Why does a team not commit directly on `main`?"
+        options:
+          - text: "So each change can be reviewed and tested before it reaches the code everyone uses"
+            correct: true
+            why: "`main` stays working; a broken idea stays on its branch."
+          - text: "Because git does not allow it"
+            why: "git allows it; teams choose not to."
+          - text: "To have fewer commits"
+            why: "The number of commits is the same."
+      - kind: mcq
+        id: q-fixes
+        objective: O1
+        prompt: "What does `Fixes #12` in the description of a pull request do?"
+        options:
+          - text: "It links the PR to issue 12, and closes the issue when the PR is merged"
+            correct: true
+            why: "Then the issue shows how it was solved."
+          - text: "It merges the PR at once"
+            why: "It only links the issue."
+          - text: "It fixes the code by itself"
+            why: "It is a note for GitHub."
+      - kind: mcq
+        id: q-review-reply
+        objective: O2
+        prompt: "A reviewer comments: \"This crashes on an empty list.\" What is the best answer?"
+        options:
+          - text: "A commit that fixes it and adds a test for the empty list, then a reply that says so"
+            correct: true
+            why: "The test keeps the bug from coming back."
+          - text: "Close the pull request and open a new one"
+            why: "New commits on the same branch update the PR."
+          - text: "Answer \"works for me\""
+            why: "The reviewer found a real case; check it first."
+      - kind: mcq
+        id: q-ci
+        objective: O3
+        prompt: "What makes a check in GitHub Actions red when a test fails?"
+        options:
+          - text: "pytest ends with an exit code that is not 0"
+            correct: true
+            why: "CI only reads the exit code of each step."
+          - text: "GitHub reads the word FAILED in the output"
+            why: "It uses the exit code, not the text."
+          - text: "The reviewer marks it red"
+            why: "Checks are run by the server."
+      - kind: mcq
+        id: q-small
+        objective: O4
+        prompt: "Why do teams like small pull requests?"
+        options:
+          - text: "They are faster to review well, cause fewer conflicts, and are easy to undo"
+            correct: true
+            why: "A PR of 2000 lines often gets only a quick look."
+          - text: "GitHub does not accept big ones"
+            why: "It accepts them; people review them badly."
+          - text: "Small PRs need no tests"
+            why: "Every change needs its tests."
+
+  # 8. REVIEW ----------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 6
+
+review:
+  - kind: mcq
+    id: r-issue
+    objective: O1
+    prompt: "What is an issue on GitHub?"
+    options:
+      - text: "A note about one problem or wish, with a number and a discussion"
+        correct: true
+        why: "Pull requests then say which issue they fix."
+      - text: "An error message of git"
+        why: "Issues are written by people."
+      - text: "A branch"
+        why: "A branch holds the code of a change; an issue describes the task."
+  - kind: mcq
+    id: r-pr
+    objective: O1
+    prompt: "What does a pull request ask for?"
+    options:
+      - text: "To merge one branch into another, usually into `main`, after a review"
+        correct: true
+        why: "GitLab calls the same thing a merge request."
+      - text: "To download the code"
+        why: "That is `git pull` or a clone."
+      - text: "To delete a branch"
+        why: "The branch can be deleted after the merge, but that is not the request."
+  - kind: mcq
+    id: r-update
+    objective: O2
+    prompt: "A reviewer asks for changes. How do you update the pull request?"
+    options:
+      - text: "Commit the fixes on the same branch and push: the PR shows the new commits"
+        correct: true
+        why: "A PR follows its branch."
+      - text: "Open a second pull request"
+        why: "Not needed: the same PR updates."
+      - text: "Change the code on `main`"
+        why: "The change belongs on the branch of the PR."
+  - kind: mcq
+    id: r-ci-what
+    objective: O3
+    prompt: "What does continuous integration do?"
+    options:
+      - text: "It runs the tests (and other checks) by itself on every push and pull request"
+        correct: true
+        why: "So a broken change is seen before the merge, not after."
+      - text: "It merges every pull request by itself"
+        why: "It only checks; people decide to merge."
+      - text: "It writes the tests"
+        why: "People write them; CI runs them."
+  - kind: mcq
+    id: r-workflow-file
+    objective: O3
+    prompt: "Where does GitHub Actions look for its instructions?"
+    options:
+      - text: "In YAML files in `.github/workflows/`"
+        correct: true
+        why: "Each file is one workflow, for example `tests.yml`."
+      - text: "In `requirements.txt`"
+        why: "That lists the packages; the workflow installs them."
+      - text: "In the README"
+        why: "The README is for people."
+  - kind: mcq
+    id: r-blocked
+    objective: O4
+    prompt: "A PR has two approvals, but one check is red. Can it be merged in a team with branch protection?"
+    options:
+      - text: "No: every check must be green first"
+        correct: true
+        why: "Approvals do not replace passing tests."
+      - text: "Yes: two approvals are enough"
+        why: "Branch protection asks for both."
+      - text: "Yes, if the author agrees"
+        why: "The rule is the same for everyone."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-commit-message
+    type: exercise
+    fade: completion
+    objective: O1
+    title: A good commit message
+    prompt: |
+      Teams often check commit messages: the first line at most 50
+      characters, and if there is more text, an empty second line.
+      **Replace the two `___`** in `problems(message)`.
+
+      ```text
+      []
+      ['The first line is longer than 50 characters.', 'The second line must be empty.']
+      ```
+    starter: |
+      def problems(message):
+          lines = message.splitlines()
+          found = []
+          if len(lines[0]) > ___:
+              found.append("The first line is longer than 50 characters.")
+          if len(lines) > 1 and lines[1] != ___:
+              found.append("The second line must be empty.")
+          return found
+
+
+      print(problems("Fix search with capitals\n\nThe search now compares in small letters."))
+      print(problems("This first line is far too long to read in a log of commits\nmore text"))
+    solution: |
+      def problems(message):
+          lines = message.splitlines()
+          found = []
+          if len(lines[0]) > 50:
+              found.append("The first line is longer than 50 characters.")
+          if len(lines) > 1 and lines[1] != "":
+              found.append("The second line must be empty.")
+          return found
+
+
+      print(problems("Fix search with capitals\n\nThe search now compares in small letters."))
+      print(problems("This first line is far too long to read in a log of commits\nmore text"))
+    after: >-
+      The first line is what `git log --oneline` and GitHub show in lists,
+      so it must be short. The empty line tells git where the title ends.
+    checks:
+      - expr: "callable(ns.get('problems')) and problems('a' * 50) == [] and problems('a' * 51) == ['The first line is longer than 50 characters.']"
+        pass: "The first line may have 50 characters, not 51"
+        hint: "`len(lines[0]) > 50`."
+      - expr: "callable(ns.get('problems')) and problems('Title\\n\\nBody') == [] and problems('Title\\nBody') == ['The second line must be empty.'] and problems('Title') == []"
+        pass: "The second line must be empty when there is one"
+        hint: "An empty line is the text `\"\"`."
+      - expr: "err is None and lines == ['[]', \"['The first line is longer than 50 characters.', 'The second line must be empty.']\"]"
+        pass: "It prints the two lists"
+        hint: "Keep the prints."
+    hints:
+      - "The first `___` is the most characters that are allowed."
+      - "The second is an empty text."
+      - "`50` and `\"\"`."
+  - id: x-changelog
+    type: exercise
+    fade: independent
+    objective: O1
+    title: Release notes from pull requests
+    prompt: |
+      Each merged pull request has a title and a label: `"feature"`,
+      `"fix"` or `"other"`. **Write `changelog(prs)`**: it gives back the
+      text of the release notes, with a heading for each label that has
+      PRs, in the order New, Fixed, Other, and the titles sorted.
+
+      ```text
+      ## New
+      - Add a dark theme
+      - Export to CSV
+      ## Fixed
+      - Search ignores capitals
+      ```
+    starter: |
+      # Your function here.
+
+
+      prs = [
+          {"title": "Search ignores capitals", "label": "fix"},
+          {"title": "Export to CSV", "label": "feature"},
+          {"title": "Add a dark theme", "label": "feature"},
+      ]
+      print(changelog(prs))
+    solution: |
+      HEADINGS = [("feature", "New"), ("fix", "Fixed"), ("other", "Other")]
+
+
+      def changelog(prs):
+          out = []
+          for label, heading in HEADINGS:
+              titles = sorted(pr["title"] for pr in prs if pr["label"] == label)
+              if titles:
+                  out.append(f"## {heading}")
+                  out.extend(f"- {title}" for title in titles)
+          return "\n".join(out)
+
+
+      prs = [
+          {"title": "Search ignores capitals", "label": "fix"},
+          {"title": "Export to CSV", "label": "feature"},
+          {"title": "Add a dark theme", "label": "feature"},
+      ]
+      print(changelog(prs))
+    after: >-
+      Labels on pull requests make release notes almost write themselves;
+      GitHub has a button that does this.
+    checks:
+      - expr: "err is None and lines == ['## New', '- Add a dark theme', '- Export to CSV', '## Fixed', '- Search ignores capitals']"
+        pass: "It prints the notes with headings and sorted titles"
+        hint: "One heading for each label that has titles, in the order New, Fixed, Other."
+      - expr: "callable(ns.get('changelog')) and changelog([{'title': 'B', 'label': 'other'}, {'title': 'A', 'label': 'other'}]) == '## Other\\n- A\\n- B' and changelog([]) == ''"
+        pass: "Labels without PRs get no heading"
+        hint: "Add a heading only when the list of titles is not empty."
+    hints:
+      - "Loop over the three labels in their order."
+      - "`titles = sorted(...)` of the PRs with that label."
+      - "If there are titles: the heading, then `- title` for each."
