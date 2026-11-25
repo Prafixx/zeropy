@@ -544,7 +544,10 @@ steps:
       parser.add_argument("-v", "--verbose", action="store_true")
       args = parser.parse_args()
 
-      logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, format="%(levelname)s: %(message)s")
+      logging.basicConfig(
+          level=logging.DEBUG if args.verbose else logging.WARNING,
+          format="%(levelname)s: %(message)s",
+      )
       log = logging.getLogger("total")
 
       total = 0

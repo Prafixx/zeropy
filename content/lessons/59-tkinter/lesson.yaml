@@ -354,9 +354,9 @@ steps:
       result.pack()
       root.mainloop()
     after: >-
-      These three are the most common bugs of tkinter: a call where a
-      function is wanted, a widget that is never packed, and an attribute
-      that is not an option.
+      These three are the most common bugs of tkinter. A call where a
+      function is wanted. A widget that is never packed. An attribute that
+      is not an option.
     checks:
       - expr: "err is None and gui_find('Tip') is not None"
         pass: "The window opens"

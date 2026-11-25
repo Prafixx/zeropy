@@ -7,6 +7,13 @@ const { app, BrowserWindow, ipcMain, Menu, nativeTheme, net, protocol, session, 
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
+// Windows groups windows and shortcuts by this id. The installer gives the
+// shortcuts the appId of package.json; the app must use the same one, or
+// the taskbar shows a separate button with an old, cached icon.
+if (process.platform === 'win32') app.setAppUserModelId('io.github.prafixx.zeropy');
+// The window icon (taskbar and title bar), sharp at every size.
+const ICON = path.join(__dirname, 'icon.ico');
+
 const SCHEME = 'app';
 const ORIGIN = `${SCHEME}://zeropy`;
 const ROOT = path.join(__dirname, '..', 'dist');
@@ -151,7 +158,8 @@ function createWindow() {
     minWidth: 820,
     minHeight: 600,
     title: 'ZeroPy',
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#1B1C27' : '#F3EDE2',
+    icon: ICON,
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0d0e19' : '#f7f3ec',
     autoHideMenuBar: true,
     show: false,
     webPreferences: {

@@ -186,7 +186,7 @@ steps:
         explain: >-
           `15` stays in the list. The loop reads place 0, then place 1, and
           so on. When `18` leaves place 0, every value moves one place to the
-          left: `15` is now at place 0, and the next round reads place 1,
+          left. Now `15` is at place 0, and the next round reads place 1,
           which is `31`. The loop never sees `15`. So never add or remove
           values in the list that the loop walks through. Build a new list,
           like `hot`.

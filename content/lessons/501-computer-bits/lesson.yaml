@@ -36,9 +36,9 @@ steps:
       Add the places that have a 1: `8 + 4 + 1 = 13`. So `1101` in binary
       is 13.
 
-      Counting goes like this: `0`, `1`, `10`, `11`, `100`, `101`... Just
-      as 9 + 1 needs a new place in decimal (10), 1 + 1 needs a new place in
-      binary (`10`).
+      Counting goes like this: `0`, `1`, `10`, `11`, `100`, `101`... In
+      decimal, 9 + 1 needs a new place (10). In the same way, 1 + 1 needs a
+      new place in binary (`10`).
     keys:
       - code: "bit"
         means: "One binary digit: 0 or 1."

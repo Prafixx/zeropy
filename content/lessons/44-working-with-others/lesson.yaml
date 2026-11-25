@@ -1,7 +1,7 @@
 id: working-with-others
 order: 44
 title: Working with others
-summary: How a team changes code together - issues, branches, pull requests, code review and tests that run by themselves on every change - and how to tell when a change is ready.
+summary: How a team changes code together, with issues, branches, pull requests, code review and tests that run on every change. And how to tell when a change is ready.
 minutes: 40
 outcomes: [A9, A10]
 
@@ -353,8 +353,20 @@ steps:
       # Your function here.
 
 
-      ready = {"draft": False, "approvals": 2, "changes_requested": 0, "checks": {"tests": "passed"}, "conflicts": False}
-      waiting = {"draft": False, "approvals": 0, "changes_requested": 0, "checks": {"tests": "running", "lint": "failed", "build": "passed"}, "conflicts": False}
+      ready = {
+          "draft": False,
+          "approvals": 2,
+          "changes_requested": 0,
+          "checks": {"tests": "passed"},
+          "conflicts": False,
+      }
+      waiting = {
+          "draft": False,
+          "approvals": 0,
+          "changes_requested": 0,
+          "checks": {"tests": "running", "lint": "failed", "build": "passed"},
+          "conflicts": False,
+      }
       print(blockers(ready))
       print(blockers(waiting))
     solution: |
@@ -375,8 +387,20 @@ steps:
           return reasons
 
 
-      ready = {"draft": False, "approvals": 2, "changes_requested": 0, "checks": {"tests": "passed"}, "conflicts": False}
-      waiting = {"draft": False, "approvals": 0, "changes_requested": 0, "checks": {"tests": "running", "lint": "failed", "build": "passed"}, "conflicts": False}
+      ready = {
+          "draft": False,
+          "approvals": 2,
+          "changes_requested": 0,
+          "checks": {"tests": "passed"},
+          "conflicts": False,
+      }
+      waiting = {
+          "draft": False,
+          "approvals": 0,
+          "changes_requested": 0,
+          "checks": {"tests": "running", "lint": "failed", "build": "passed"},
+          "conflicts": False,
+      }
       print(blockers(ready))
       print(blockers(waiting))
     after: >-

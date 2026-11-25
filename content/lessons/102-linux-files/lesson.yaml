@@ -78,7 +78,7 @@ steps:
     solution: ["mkdir robot", "cd robot", "touch todo.txt", "echo \"Buy two motors\" > readme.txt", "cat readme.txt"]
     after: >-
       `cat` is short for "concatenate": with several names, it prints the
-      files one after the other. For one file, it simply shows it.
+      files one after the other. For one file, it shows that file.
 
   # 3. THEORY ----------------------------------------------------------------
   - id: change

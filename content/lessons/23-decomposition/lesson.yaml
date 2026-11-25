@@ -321,7 +321,7 @@ steps:
 
           assert letter(90) == "A"
           assert letter(74.9) == "C"
-        note: "The second helper. The tests check the edges: exactly 90, and just under 75."
+        note: "The second helper. The tests check the edges: exactly 90, and a little under 75."
       - goal: "Connect the pieces"
         code: |
           def report(scores):

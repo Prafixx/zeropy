@@ -498,7 +498,7 @@ review:
       - text: "It drives forward for one second"
         why: "There is no pause, so it does not drive at all."
       - text: "An error"
-        why: "It is allowed, it is just too short."
+        why: "It is allowed, but it is too short."
   - kind: mcq
     id: r-robot-value
     objective: O3

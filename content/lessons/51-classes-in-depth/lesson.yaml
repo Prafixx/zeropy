@@ -120,8 +120,8 @@ steps:
       print(Ticket.made)
     after: >-
       `self.made += 1` reads the class value (0), adds 1, and writes the
-      result into the **object**: each ticket got its own `made`, equal to
-      1, and the class kept 0. Writing to `Ticket.made` changes the shared
+      result into the **object**. So each ticket got its own `made`, equal
+      to 1, and the class kept 0. Writing to `Ticket.made` changes the shared
       value.
     checks:
       - expr: "err is None and lines == ['1 2 3', '3']"

@@ -1,7 +1,7 @@
 id: generators
 order: 36
 title: Iterators and generators
-summary: How a for loop really gets its values, and how to make values one at a time with yield - for big files, endless rows and pipelines that use almost no memory.
+summary: How a for loop really gets its values, and how to make values one at a time with yield. For big files, endless rows and pipelines that use almost no memory.
 minutes: 40
 outcomes: [A1, A3, A4]
 
@@ -490,7 +490,7 @@ review:
       - text: "The same sum"
         why: "Only a list gives the same values again."
       - text: "An error"
-        why: "No error: it is just empty."
+        why: "No error: the result is empty."
   - kind: mcq
     id: r-file
     objective: O4

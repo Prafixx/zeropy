@@ -450,12 +450,12 @@ extra:
       print("Seconds in an hour:")
       print(60 * 60)
     after: >-
-      Python did the sum for you. Without quotes, `60 * 60` is computed;
+      Python did the calculation for you. Without quotes, `60 * 60` is computed;
       with quotes, `"60 * 60"` would be printed as it is.
     checks:
       - expr: "err is None and lines == ['Seconds in an hour:', '3600']"
         pass: "It prints the text, then 3600"
-        hint: "Put the sum inside the second `print()`, without quotes."
+        hint: "Put the calculation inside the second `print()`, without quotes."
         misconceptions:
           - when: "err is None and lines[-1:] == ['60 * 60']"
             say: "The quotes make it text, so Python prints it as it is. Remove the quotes."

@@ -210,7 +210,7 @@ steps:
 
       ## Turn it off
 
-      Do not just pull the cable: the Pi may be writing to the SD card, and
+      Do not pull out the cable: the Pi may be writing to the SD card, and
       a file can break. Turn it off first:
 
       ```text

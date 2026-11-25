@@ -1,7 +1,7 @@
 id: special-methods
 order: 52
 title: Properties and special methods
-summary: Make your classes feel like Python's own types - attributes that check themselves, other ways to make objects, and objects that work with +, ==, len(), for and sorted().
+summary: Make your classes feel like Python's own types. Attributes that check themselves, other ways to make objects, and objects that work with +, ==, len(), for and sorted().
 minutes: 45
 outcomes: [A1, A8]
 

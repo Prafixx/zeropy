@@ -568,7 +568,7 @@ review:
       - text: "The real result"
         why: "Only if the wrapper returns it."
       - text: "An error"
-        why: "No error: just None."
+        why: "No error: the result is None."
   - kind: mcq
     id: r-with
     objective: O3

@@ -1,7 +1,7 @@
 id: web-project
 order: 406
 title: "Project: a reading list"
-summary: A small web app for the books you want to read - a page from a template, a form to add books, a button to mark them read, and a JSON API.
+summary: A small web app for the books you want to read. A page from a template, a form to add books, a button to mark them read, and a JSON API.
 minutes: 50
 outcomes: []
 

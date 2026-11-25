@@ -165,7 +165,7 @@ steps:
         options:
           - text: "Find out: check what is right first. Usually the code, but a test can be wrong too"
             correct: true
-            why: "Never change a test just to make it pass. Decide what the right answer is."
+            why: "Never change a test only to make it pass. Decide what the right answer is."
           - text: "Always the test"
             why: "Then tests would never find a bug."
           - text: "Always pytest"
@@ -517,7 +517,7 @@ steps:
               return "F"
           ''')
         pass: "Your tests catch a wrong border at 50"
-        hint: "Test just below the border: `grade(49)` must be `\"F\"`."
+        hint: "Test one below the border: `grade(49)` must be `\"F\"`."
       - expr: |-
           fails_with('''
           def grade(score):
@@ -533,7 +533,7 @@ steps:
         hint: "Use `with pytest.raises(ValueError):` and call `grade(101)` inside."
     hints:
       - "Start with `def test_90_is_an_a():` and `assert grade(90) == \"A\"`."
-      - "For each border, test the value on it and the value just below: 90 and 89, 75 and 74, 50 and 49."
+      - "For each border, test the value on it and the value one below: 90 and 89, 75 and 74, 50 and 49."
       - "For a score outside: `with pytest.raises(ValueError):` then `grade(101)`."
 
   # 8. LOCAL -----------------------------------------------------------------

@@ -160,7 +160,7 @@ steps:
           - text: "It prints 3 once, then `Go!`"
             why: "The condition is checked again after each round, and it is still True."
           - text: "An error on line 2"
-            why: "There is no error: the loop simply runs forever."
+            why: "There is no error: the loop runs forever."
 
   # 5. PREDICT ---------------------------------------------------------------
   - id: predict-total

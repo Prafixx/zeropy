@@ -186,7 +186,8 @@ steps:
       Many lines at once: `path.write_text("\n".join(items) + "\n")`.
 
       Python 3.15 and newer read and write text as UTF-8. On an older
-      Python on Windows, give it yourself: `read_text(encoding="utf-8")`.
+      Python on Windows, give it yourself: `read_text(encoding="utf-8")`,
+      or `open(path, "a", encoding="utf-8")`.
     keys:
       - code: "path.write_text(text)"
         means: "The file has exactly this text now. The old text is gone."

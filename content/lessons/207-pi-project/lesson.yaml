@@ -202,9 +202,9 @@ steps:
           lights.green.on()
     after: >-
       Your crossing is done: states, times, an input and two outputs. On a
-      real Pi, wire the three LEDs with their resistors, the button to GPIO
-      2 and GND, the buzzer to GPIO 17 and GND, and run the same file with
-      `python3`.
+      real Pi, wire the three LEDs with their resistors. Wire the button to
+      GPIO 2 and GND, and the buzzer to GPIO 17 and GND. Then run the same
+      file with `python3`.
     cases:
       - {}
       - label: "a press at 1 s"
@@ -317,7 +317,7 @@ review:
         why: "Then the code follows the plan, line by line."
       - text: "The import lines"
         why: "They come first in the file, but the plan comes before the code."
-      - text: "Nothing: just try"
+      - text: "Nothing: try it"
         why: "Without a plan, the order of lights and times gets mixed up."
   - kind: mcq
     id: r-test-events

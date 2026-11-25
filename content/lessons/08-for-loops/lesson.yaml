@@ -39,7 +39,7 @@ steps:
         caption: "Then the block runs with this value."
       - beat: second
         line: 1
-        caption: "Back to the `for` line. No question this time: `n` simply gets the **next** value."
+        caption: "Back to the `for` line. No question this time: `n` gets the **next** value."
       - beat: block2
         line: 2
         caption: "The block runs again. The same lines, a new value."

@@ -739,6 +739,6 @@ extra:
         pass: "It prints True False True"
         hint: "Keep the print."
     hints:
-      - "A second name: just `=`."
+      - "A second name: only `=`."
       - "A new list with the same values: `copy()`."
       - "`b = a` and `c = a.copy()`."

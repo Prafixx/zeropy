@@ -91,13 +91,14 @@ steps:
               return None
           daily = data["daily"]
           days = []
-          for i in range(len(daily["time"])):
-              days.append({
-                  "date": daily["time"][i],
-                  "low": daily["temperature_2m_min"][i],
-                  "high": daily["temperature_2m_max"][i],
-                  "rain": daily["precipitation_sum"][i],
-              })
+          columns = zip(
+              daily["time"],
+              daily["temperature_2m_min"],
+              daily["temperature_2m_max"],
+              daily["precipitation_sum"],
+          )
+          for date, low, high, rain in columns:
+              days.append({"date": date, "low": low, "high": high, "rain": rain})
           return days
 
       def format_day(day):
@@ -111,7 +112,9 @@ steps:
           return days
 
       assert parse_days(" 3 ") == 3
-      assert format_day({"date": "2026-01-01", "low": -2, "high": 1.5, "rain": 0}) == "2026-01-01: -2 to 1.5 °C, rain 0 mm"
+      assert format_day(
+          {"date": "2026-01-01", "low": -2, "high": 1.5, "rain": 0}
+      ) == "2026-01-01: -2 to 1.5 °C, rain 0 mm"
 
       name = input("Place: ").strip()
       place = find_place(name)
@@ -358,13 +361,14 @@ steps:
               return None
           daily = data["daily"]
           days = []
-          for i in range(len(daily["time"])):
-              days.append({
-                  "date": daily["time"][i],
-                  "low": daily["temperature_2m_min"][i],
-                  "high": daily["temperature_2m_max"][i],
-                  "rain": daily["precipitation_sum"][i],
-              })
+          columns = zip(
+              daily["time"],
+              daily["temperature_2m_min"],
+              daily["temperature_2m_max"],
+              daily["precipitation_sum"],
+          )
+          for date, low, high, rain in columns:
+              days.append({"date": date, "low": low, "high": high, "rain": rain})
           return days
 
       place = find_place("Oslo")
@@ -392,7 +396,7 @@ steps:
       - &c-forecast
         expr: "callable(ns.get('get_forecast')) and all((lambda days, d: days == [{'date': d['time'][i], 'low': d['temperature_2m_min'][i], 'high': d['temperature_2m_max'][i], 'rain': d['precipitation_sum'][i]} for i in range(len(d['time']))])(get_forecast(p), __import__('requests').get('https://api.open-meteo.com/v1/forecast', params={'latitude': p['latitude'], 'longitude': p['longitude']}, timeout=1).json()['daily']) for p in [{'name': 'Lima', 'latitude': -12.04318, 'longitude': -77.02824}, {'name': 'Nairobi', 'latitude': -1.28333, 'longitude': 36.81667}]) if _online else True"
         pass: "`get_forecast` gives one dictionary for each day, with the right values"
-        hint: "Loop with `for i in range(len(daily[\"time\"])):` and append `{\"date\": daily[\"time\"][i], ...}`."
+        hint: "Walk the four lists side by side with `zip(daily[\"time\"], daily[\"temperature_2m_min\"], ...)`, and append `{\"date\": date, ...}`."
         misconceptions:
           - when: "callable(ns.get('get_forecast')) and raises(get_forecast, {'latitude': -12.04318, 'longitude': -77.02824}) == 'KeyError'"
             say: "A key is not there. The columns are in `data[\"daily\"]`, and their names are `time`, `temperature_2m_min`, `temperature_2m_max` and `precipitation_sum`. Did you send `\"daily\": DAILY`?"
@@ -412,7 +416,7 @@ steps:
             say: "`get_json` gave `None`, and `None[\"daily\"]` is not possible. Check `if data is None: return None` first."
     hints:
       - "The parameters are a dictionary: `{\"latitude\": place[\"latitude\"], \"longitude\": place[\"longitude\"], \"daily\": DAILY, \"timezone\": \"auto\"}`."
-      - "`daily = data[\"daily\"]`. Then `for i in range(len(daily[\"time\"])):`."
+      - "`daily = data[\"daily\"]`. Then `for date, low, high, rain in zip(...):` over the four lists."
       - "In the loop: `days.append({\"date\": daily[\"time\"][i], \"low\": daily[\"temperature_2m_min\"][i], ...})`. `return days` after the loop."
 
   # 5. STEP 3 ----------------------------------------------------------------
@@ -475,13 +479,14 @@ steps:
               return None
           daily = data["daily"]
           days = []
-          for i in range(len(daily["time"])):
-              days.append({
-                  "date": daily["time"][i],
-                  "low": daily["temperature_2m_min"][i],
-                  "high": daily["temperature_2m_max"][i],
-                  "rain": daily["precipitation_sum"][i],
-              })
+          columns = zip(
+              daily["time"],
+              daily["temperature_2m_min"],
+              daily["temperature_2m_max"],
+              daily["precipitation_sum"],
+          )
+          for date, low, high, rain in columns:
+              days.append({"date": date, "low": low, "high": high, "rain": rain})
           return days
 
       def format_day(day):
@@ -495,7 +500,9 @@ steps:
           return days
 
       assert parse_days(" 3 ") == 3
-      assert format_day({"date": "2026-01-01", "low": -2, "high": 1.5, "rain": 0}) == "2026-01-01: -2 to 1.5 °C, rain 0 mm"
+      assert format_day(
+          {"date": "2026-01-01", "low": -2, "high": 1.5, "rain": 0}
+      ) == "2026-01-01: -2 to 1.5 °C, rain 0 mm"
 
       place = find_place("Oslo")
       if place is not None:
@@ -819,9 +826,9 @@ review:
     objective: O2
     prompt: "Columns `{\"day\": [\"Mon\", \"Tue\"], \"temp\": [4, 6]}`. Which loop makes rows?"
     options:
-      - text: "`for i in range(len(data[\"day\"])):` and `data[\"day\"][i]`, `data[\"temp\"][i]`"
+      - text: "`for day, temp in zip(data[\"day\"], data[\"temp\"]):`"
         correct: true
-        why: "One index for all columns."
+        why: "`zip` walks the columns side by side: one row in each round."
       - text: "`for day in data:`"
         why: "That loops over the keys `day` and `temp`."
       - text: "`for temp in data[\"temp\"]:` alone"

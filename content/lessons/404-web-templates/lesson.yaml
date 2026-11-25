@@ -268,7 +268,7 @@ steps:
         hint: "Templates escape `{{ }}` by themselves. Remove `escape()`."
         misconceptions:
           - when: "'escape(' in src and '|safe' in src"
-            say: "`escape()` together with `|safe` works, but it is the long way. Just remove `|safe`."
+            say: "`escape()` together with `|safe` works, but it is the long way. Remove `|safe`."
     hints:
       - "Which part of the page comes from visitors?"
       - "`|safe` turns escaping off."

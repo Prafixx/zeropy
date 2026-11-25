@@ -1,7 +1,7 @@
 id: computer-cpu
 order: 506
 title: "Project: a tiny CPU"
-summary: Build the heart of a computer in Python - a CPU with registers, a program counter and the fetch, decode, execute loop - then write a program for it.
+summary: Build the heart of a computer in Python, a CPU with registers, a program counter and the fetch, decode, execute loop. Then write a program for it.
 minutes: 50
 outcomes: []
 
@@ -200,9 +200,13 @@ steps:
               elif op == "OUT":
                   outputs.append(registers[instruction[1]])
               elif op == "ADD":
-                  registers[instruction[1]] = (registers[instruction[1]] + registers[instruction[2]]) % 256
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] + registers[instruction[2]]
+                  ) % 256
               elif op == "SUB":
-                  registers[instruction[1]] = (registers[instruction[1]] - registers[instruction[2]]) % 256
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] - registers[instruction[2]]
+                  ) % 256
               else:
                   raise ValueError(f"unknown instruction: {op}")
 
@@ -252,7 +256,7 @@ steps:
 
       - `("JMP", 2)`: go on at instruction 2. A jump only changes `pc`.
       - `("JNZ", "A", 2)`: go on at instruction 2 **if A is not 0**.
-        Otherwise just go on.
+        Otherwise go on.
 
       Then run this countdown. It counts from 3 down to 1 with a loop:
 
@@ -286,9 +290,13 @@ steps:
               elif op == "OUT":
                   outputs.append(registers[instruction[1]])
               elif op == "ADD":
-                  registers[instruction[1]] = (registers[instruction[1]] + registers[instruction[2]]) % 256
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] + registers[instruction[2]]
+                  ) % 256
               elif op == "SUB":
-                  registers[instruction[1]] = (registers[instruction[1]] - registers[instruction[2]]) % 256
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] - registers[instruction[2]]
+                  ) % 256
               elif op == "JMP":
                   pc = instruction[1]
               elif op == "JNZ":
@@ -367,9 +375,13 @@ steps:
               elif op == "OUT":
                   outputs.append(registers[instruction[1]])
               elif op == "ADD":
-                  registers[instruction[1]] = (registers[instruction[1]] + registers[instruction[2]]) % 256
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] + registers[instruction[2]]
+                  ) % 256
               elif op == "SUB":
-                  registers[instruction[1]] = (registers[instruction[1]] - registers[instruction[2]]) % 256
+                  registers[instruction[1]] = (
+                      registers[instruction[1]] - registers[instruction[2]]
+                  ) % 256
               elif op == "JMP":
                   pc = instruction[1]
               elif op == "JNZ":

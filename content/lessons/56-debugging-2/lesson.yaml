@@ -249,7 +249,7 @@ steps:
     hints:
       - "Click the number 4, then press Continue. Each Continue is one round of the loop."
       - "Look at `best` at the second stop. It should still be 7."
-      - "Which line runs just before line 4, in every round?"
+      - "Which line runs right before line 4, in every round?"
     after: >-
       `best` was 0 again in every round: line 3 resets it, because it is
       inside the loop. The debugger showed the bug at the moment it
@@ -458,7 +458,7 @@ review:
       - text: "Not yet: it is the next line to run"
         correct: true
         why: "The Variables panel shows the values before line 7."
-      - text: "Yes, just now"
+      - text: "Yes, it has run"
         why: "The debugger stops before the line."
       - text: "Half of it"
         why: "A line runs as a whole, after the stop."
@@ -581,7 +581,7 @@ extra:
       print(biggest([3, 9, 4, 12]))
     after: >-
       `i` went 1, 2: never 3, the last place. `range(1, len(nums))` stops
-      just before `len(nums)`, which is exactly the last place.
+      one place before `len(nums)`, which is exactly the last place.
     checks:
       - expr: "callable(ns.get('biggest')) and biggest([1, 5]) == 5 and biggest([7]) == 7 and biggest([2, 8, 1]) == 8"
         pass: "It finds the biggest, also at the end"

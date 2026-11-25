@@ -131,7 +131,7 @@ steps:
           - text: "It runs four times, with `None` as the fourth name"
             why: "`zip` never adds `None`. It stops."
           - text: "It stops with an error, because the lists are not equally long"
-            why: "There is no error: `zip` simply stops at the shortest list."
+            why: "There is no error: `zip` stops at the shortest list."
 
   # 4. TRACE -----------------------------------------------------------------
   - id: trace

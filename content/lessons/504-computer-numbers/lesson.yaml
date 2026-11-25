@@ -138,9 +138,9 @@ steps:
       print(add8(200, 100))
       print(add8(255, 1))
     after: >-
-      255 + 1 gives 0 with the carry set. A CPU that adds 16-bit numbers
-      with an 8-bit adder adds the low bytes first, then the high bytes
-      plus this carry, just like your adder in the last lesson.
+      255 + 1 gives 0 with the carry set. How does an 8-bit adder add
+      16-bit numbers? It adds the low bytes first. Then it adds the high
+      bytes plus this carry, like your adder in the last lesson.
     checks:
       - expr: "callable(ns.get('add8')) and all(add8(a, b)[0] == (a + b) % 256 for a, b in [(0, 0), (100, 55), (200, 100), (255, 255), (128, 128)])"
         pass: "The result keeps 8 bits"

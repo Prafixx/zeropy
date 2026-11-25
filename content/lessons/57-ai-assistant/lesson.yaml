@@ -1,7 +1,7 @@
 id: ai-assistant
 order: 57
 title: Working with an AI assistant
-summary: Ask an AI assistant for code in a way that helps, then check its answer like a reviewer - run it, test it, and look up what it uses. Keep secrets out.
+summary: Ask an AI assistant for code in a way that helps. Then check its answer like a reviewer. Run it, test it, and look up what it uses. Keep secrets out.
 minutes: 35
 outcomes: [A1, A6]
 
@@ -106,7 +106,7 @@ steps:
     objective: O2
     title: Check before you trust
     body: |
-      An AI assistant can be wrong, and it sounds just as sure when it is.
+      An AI assistant can be wrong, and then it sounds as sure as when it is right.
       The usual mistakes:
 
       - a case it did not think of: an empty list, an even number of

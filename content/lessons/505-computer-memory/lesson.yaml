@@ -370,7 +370,7 @@ steps:
           - text: "The text gets shorter"
             why: "It gets longer: the end mark is gone."
           - text: "The computer stops"
-            why: "Usually nothing stops: it just reads the wrong data."
+            why: "Usually nothing stops: it reads the wrong data."
       - kind: mcq
         id: q-endian
         objective: O3

@@ -609,7 +609,7 @@ extra:
       print(f"{first} {last} ({age})")
     after: >-
       An f-string puts text and numbers together with no `str()` and no
-      `+`: the age is a number, and it just works.
+      `+`: the age is a number, and it works.
     cases:
       - {}
       - label: "Alan Turing, 41"

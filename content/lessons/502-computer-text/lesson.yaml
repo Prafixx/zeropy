@@ -451,7 +451,7 @@ review:
         correct: true
         why: "`decode` turns them back into text."
       - text: "A secret code"
-        why: "It is not secret: just the bytes of the text."
+        why: "It is not secret: only the bytes of the text."
       - text: "The text \"hi\" again"
         why: "It gives bytes, not text."
   - kind: mcq
