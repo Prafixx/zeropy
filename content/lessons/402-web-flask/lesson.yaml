@@ -106,12 +106,12 @@ steps:
         id: i-after
         prompt: "You add `print(\"started\")` on a line **after** `app.run()`. When is it printed?"
         options:
-          - text: "Only when the server stops (Ctrl + C on a real computer)"
+          - text: "Only when the server stops"
             correct: true
-            why: "`app.run()` waits for requests. The next line runs only after it ends."
+            why: "With Ctrl + C on a real computer. `app.run()` waits for requests; the next line runs only after it ends."
           - text: "Right after the server starts"
             why: "`app.run()` does not end while the server runs."
-          - text: "For each request"
+          - text: "Once for each request to the server"
             why: "Only the view functions run for a request."
 
   # 3. EXERCISE: completion --------------------------------------------------
@@ -415,9 +415,9 @@ steps:
         objective: O3
         prompt: "A view ends without `return`. What happens when you open its page?"
         options:
-          - text: "500: Flask says the view did not return a valid response"
+          - text: "500 Internal Server Error"
             correct: true
-            why: "The function gives `None`, and `None` is not a response. The server log shows a TypeError."
+            why: "Flask says the view did not return a valid response: the function gives `None`. The server log shows a TypeError."
           - text: "An empty page with 200 OK"
             why: "Flask needs a response. `None` is not one."
           - text: "404 Not Found"
@@ -427,9 +427,9 @@ steps:
         objective: O2
         prompt: "Why `escape(name)` in `f\"Hello, {escape(name)}!\"`?"
         options:
-          - text: "So text from the address cannot become HTML or a script in the page"
+          - text: "So the text cannot become a script"
             correct: true
-            why: "`<` becomes `&lt;`: the browser shows it as text."
+            why: "Text from the address could become HTML or a script in the page. `<` becomes `&lt;`: the browser shows it as text."
           - text: "To make the name shorter"
             why: "It only changes the special characters of HTML."
           - text: "Because f-strings need it"
@@ -448,22 +448,22 @@ review:
     objective: O1
     prompt: "What is a view in Flask?"
     options:
-      - text: "A function that answers a route; it returns the body of the response"
+      - text: "A function that answers a route"
         correct: true
-        why: "`@app.route(...)` above it says which path."
-      - text: "The browser"
+        why: "It returns the body of the response. `@app.route(...)` above it says which path."
+      - text: "The browser that shows the page"
         why: "The browser is the client."
-      - text: "A file with HTML"
+      - text: "A file with the HTML of a page"
         why: "A view is a Python function."
   - kind: mcq
     id: r-run
     objective: O1
     prompt: "What does `app.run()` do?"
     options:
-      - text: "It starts the server, and waits for requests until you stop it"
+      - text: "It starts the server and waits"
         correct: true
-        why: "So it is the last line of the program."
-      - text: "It opens each page once"
+        why: "It waits for requests until you stop it, so it is the last line of the program."
+      - text: "It opens each page once, to test it"
         why: "It waits for requests from a browser."
       - text: "It checks the code for errors"
         why: "It starts the server."
@@ -487,7 +487,7 @@ review:
       - text: "Two view functions are called page"
         correct: true
         why: "Each view needs its own function name."
-      - text: "The route is wrong"
+      - text: "Two routes have the same path `/page`"
         why: "The message is about the function name."
       - text: "The page is missing"
         why: "There are two, with the same name."
@@ -496,10 +496,10 @@ review:
     objective: O2
     prompt: "Which text needs `escape()` before it goes into HTML?"
     options:
-      - text: "Every text that comes from a visitor"
+      - text: "Every text from a visitor"
         correct: true
         why: "From the path, a form or a query: it could hold HTML or a script."
-      - text: "Only numbers"
+      - text: "Only numbers that a visitor types"
         why: "Numbers are safe. Text from a visitor is not."
       - text: "Text in your own code"
         why: "Your own text is the HTML you want."

@@ -104,12 +104,12 @@ steps:
         id: i-typo
         prompt: "You write `{{ city.nmae }}` (a typo). What does the page show in that place?"
         options:
-          - text: "Nothing: Jinja shows an unknown name as empty text"
+          - text: "Nothing: an unknown name is empty"
             correct: true
             why: "No error. So check the page after each change: an empty place often means a typo."
           - text: "An error page, 500"
             why: "Jinja is lenient with unknown names: they are empty."
-          - text: "The text city.nmae"
+          - text: "The text city.nmae, as you wrote it"
             why: "`{{ }}` always looks up a value."
 
   # 3. EXERCISE: completion --------------------------------------------------
@@ -422,19 +422,19 @@ steps:
         objective: O2
         prompt: "`comment` is `\"<b>hi</b>\"`. What does `{{ comment }}` put into the HTML?"
         options:
-          - text: "`&lt;b&gt;hi&lt;/b&gt;`: the browser shows <b>hi</b> as text"
+          - text: "`&lt;b&gt;hi&lt;/b&gt;`"
             correct: true
-            why: "Templates escape values."
+            why: "The browser shows <b>hi</b> as text: templates escape values."
           - text: "`<b>hi</b>`: a bold hi"
             why: "That needs `|safe`."
-          - text: "Nothing"
+          - text: "Nothing: tags are removed"
             why: "The value is shown, escaped."
       - kind: mcq
         id: q-folder
         objective: O3
         prompt: "`render_template(\"menu.html\")` stops with TemplateNotFound. What is wrong most often?"
         options:
-          - text: "The file is not in a folder called templates next to the program"
+          - text: "It is not in the folder `templates`"
             correct: true
             why: "Flask looks in `templates/` by default."
           - text: "The file must end with .txt"
@@ -455,13 +455,13 @@ review:
     objective: O1
     prompt: "In a Jinja template, what is the difference between `{{ }}` and `{% %}`?"
     options:
-      - text: "`{{ }}` shows a value; `{% %}` is a command like for or if"
+      - text: "`{{ }}` shows a value; `{% %}` is a command"
         correct: true
-        why: "Values go in double braces, commands in braces with %."
-      - text: "No difference"
+        why: "A command like `for` or `if`. Values go in double braces, commands in braces with %."
+      - text: "No difference: both show a value"
         why: "`{% %}` shows nothing by itself."
-      - text: "`{% %}` is a comment"
-        why: "A comment is `{# #}`."
+      - text: "`{{ }}` is a command; `{% %}` is a comment"
+        why: "The other way round, and a comment is `{# #}`."
   - kind: mcq
     id: r-call
     objective: O1
@@ -494,7 +494,7 @@ review:
       - text: "It shows as empty text"
         correct: true
         why: "No error. An empty place often means a typo."
-      - text: "NameError"
+      - text: "A NameError, like in Python"
         why: "Jinja does not raise an error for an unknown name."
       - text: "It shows None"
         why: "It shows nothing."
@@ -503,10 +503,10 @@ review:
     objective: O3
     prompt: "What is `base.html` with `{% block content %}` for?"
     options:
-      - text: "The frame that all pages share; each page fills the block"
+      - text: "The frame that all pages share"
         correct: true
-        why: "Pages start with `{% extends \"base.html\" %}`."
-      - text: "The home page"
+        why: "Each page fills the block, and starts with `{% extends \"base.html\" %}`."
+      - text: "The home page, at the path `/`"
         why: "It is the frame of all pages."
       - text: "A backup of the templates"
         why: "It is the shared layout."

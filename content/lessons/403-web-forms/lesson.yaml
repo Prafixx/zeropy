@@ -426,7 +426,7 @@ steps:
           - text: "405 Method Not Allowed"
             correct: true
             why: "Without `methods=`, a route takes only GET."
-          - text: "200 OK"
+          - text: "200 OK, and the form is saved"
             why: "The route does not take POST."
           - text: "404 Not Found"
             why: "The path exists, but not for POST."
@@ -435,13 +435,13 @@ steps:
         objective: O2
         prompt: "Why `redirect(...)` after a POST, and not the page itself?"
         options:
-          - text: "So a reload asks for the page with GET, and does not send the form again"
+          - text: "So a reload does not send the form again"
             correct: true
-            why: "Without it, a reload would add the same message twice."
-          - text: "It is faster"
+            why: "After the redirect, a reload asks for the page with GET. Without it, a reload would add the same message twice."
+          - text: "It is faster: one request less"
             why: "It is one more request. It is safer."
-          - text: "POST cannot have a body"
-            why: "POST has a body: the fields of the form."
+          - text: "A POST answer cannot have a page in it"
+            why: "It can. The reason is the reload: it would send the form again."
       - kind: mcq
         id: q-number
         objective: O1
@@ -459,10 +459,10 @@ steps:
         objective: O3
         prompt: "What can a visitor do when your page shows their text without `escape()`?"
         options:
-          - text: "Put a script in your page that runs in other visitors' browsers"
+          - text: "Run a script in other visitors' browsers"
             correct: true
             why: "That is XSS. Escape every text from visitors."
-          - text: "Nothing, HTML is safe"
+          - text: "Nothing, because the text is only HTML"
             why: "A browser runs any `<script>` in a page."
           - text: "Only make the text bold"
             why: "Bold is harmless, but the same hole lets in scripts."
@@ -495,7 +495,7 @@ review:
       - text: "Into the query of the address: GET"
         correct: true
         why: "GET is the default for forms."
-      - text: "Into the body: POST"
+      - text: "Into the body of the request: POST"
         why: "Only with `method=\"post\"`."
       - text: "Nowhere"
         why: "They go into the query."

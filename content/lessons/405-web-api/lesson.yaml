@@ -106,9 +106,9 @@ steps:
         id: i-none
         prompt: "For `/api/towns`, `r.get_json()` is `None`. Why?"
         options:
-          - text: "No route matches, so Flask answers its own 404 page in HTML, not JSON"
+          - text: "Flask answers a 404 page in HTML"
             correct: true
-            why: "`get_json()` gives `None` when the body is not JSON."
+            why: "No route matches, so Flask answers its own 404 page. `get_json()` gives `None` when the body is not JSON."
           - text: "The city list is empty"
             why: "The view is never called: no route matches."
           - text: "The test client cannot read 404s"
@@ -441,12 +441,12 @@ steps:
         objective: O2
         prompt: "A program sends `{\"title\": 42}` to your API. What should it answer?"
         options:
-          - text: "400 with an error in JSON: the data is wrong"
+          - text: "400 with an error in JSON"
             correct: true
-            why: "The client sent bad data: a 4xx, and a clear message."
+            why: "The data is wrong: the client sent it, so a 4xx and a clear message."
           - text: "201: add the task \"42\""
             why: "A title must be text. Check the data."
-          - text: "500"
+          - text: "500 with the Python error"
             why: "500 means a bug in the server. Check and answer 400 instead."
       - kind: predict
         id: q-test
@@ -518,7 +518,7 @@ review:
     objective: O2
     prompt: "Why check the JSON that comes in?"
     options:
-      - text: "Any program can send anything: wrong types, missing keys, nothing"
+      - text: "Any program can send anything"
         correct: true
         why: "Bad data gets 400, and never reaches your data."
       - text: "Flask cannot read JSON without a check"
@@ -530,10 +530,10 @@ review:
     objective: O3
     prompt: "What does `app.test_client()` give?"
     options:
-      - text: "A client that sends requests to the app without a server"
+      - text: "A client that talks to the app"
         correct: true
-        why: "For trying and testing an app: `client.get(...)`, `client.post(...)`."
-      - text: "A browser window"
+        why: "It sends requests to the app without a server, for trying and testing: `client.get(...)`, `client.post(...)`."
+      - text: "A browser window with the app in it"
         why: "It is a Python object, without a window."
       - text: "A copy of the app"
         why: "It talks to the same app."
@@ -542,12 +542,12 @@ review:
     objective: O1
     prompt: "The keys of `tasks` are ints. Why does the route need `<int:id>`?"
     options:
-      - text: "Without it, id is text, and \"1\" is not the key 1"
+      - text: "Without it, `id` is text"
         correct: true
-        why: "Parts of the path are text unless a converter says otherwise."
+        why: "And \"1\" is not the key 1. Parts of the path are text unless a converter says otherwise."
       - text: "Routes cannot have text"
         why: "They can: `<name>` gives text."
-      - text: "For speed"
+      - text: "For speed, as ints are faster"
         why: "It is about the type of id."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).

@@ -290,9 +290,9 @@ steps:
         objective: O2
         prompt: "The server runs with `flask --app app run`. Your phone cannot open `http://192.168.1.23:5000`. Why?"
         options:
-          - text: "Without --host 0.0.0.0 the server listens only on 127.0.0.1"
+          - text: "It listens only on 127.0.0.1"
             correct: true
-            why: "127.0.0.1 is only for the computer itself."
+            why: "Without --host 0.0.0.0, it listens only on 127.0.0.1, which is only for the computer itself."
           - text: "Phones cannot open Flask sites"
             why: "A phone is a browser like any other."
           - text: "The port must be 80"
@@ -302,10 +302,10 @@ steps:
         objective: O3
         prompt: "Why never `--debug` together with `--host 0.0.0.0`?"
         options:
-          - text: "The debugger lets anyone who can open the page run code on your computer"
+          - text: "Anyone on the network could run code"
             correct: true
-            why: "Debug mode is only for your own computer, on 127.0.0.1."
-          - text: "It makes the server slow"
+            why: "The debugger lets anyone who can open the page run code on your computer. Debug mode is only for your own computer, on 127.0.0.1."
+          - text: "It makes the server slow for everyone"
             why: "The problem is safety."
           - text: "Flask does not allow it"
             why: "Flask allows it. You must not do it."
@@ -314,9 +314,9 @@ steps:
         objective: O1
         prompt: "`app.py` ends with `app.run()`, without a guard. A test file does `import app`. What happens?"
         options:
-          - text: "The server starts during the import, and the test waits forever"
+          - text: "The server starts, and the test waits"
             correct: true
-            why: "Put `app.run()` under `if __name__ == \"__main__\":`."
+            why: "The import runs `app.run()`, and it waits forever. Put it under `if __name__ == \"__main__\":`."
           - text: "Nothing, import never runs code"
             why: "Import runs the whole file."
           - text: "The test gets an error at once"
@@ -371,12 +371,12 @@ review:
     objective: O2
     prompt: "What does `--host 0.0.0.0` do?"
     options:
-      - text: "The server listens on all addresses: other devices in the network can reach it"
+      - text: "Other devices in the network can reach it"
         correct: true
-        why: "Without it, only 127.0.0.1."
+        why: "The server listens on all addresses. Without it, only 127.0.0.1."
       - text: "It puts the site on the internet"
         why: "Only your local network, unless you open the router."
-      - text: "It makes the server faster"
+      - text: "It makes the server faster for many users"
         why: "It changes who can reach it."
   - kind: mcq
     id: r-ip
@@ -395,12 +395,12 @@ review:
     objective: O3
     prompt: "Flask says \"This is a development server\". What does a real site use?"
     options:
-      - text: "A production server like waitress or gunicorn"
+      - text: "A production server like waitress"
         correct: true
-        why: "The development server is for learning and testing."
+        why: "Or gunicorn. The development server is for learning and testing."
       - text: "The same, with --debug"
         why: "Debug mode is even less safe."
-      - text: "No server"
+      - text: "No server: only the files"
         why: "Every site needs a server."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).

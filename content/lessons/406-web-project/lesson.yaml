@@ -429,24 +429,24 @@ steps:
         objective: O1
         prompt: "Why is \"I read it\" a POST form, and not a link to `/books/2/read`?"
         options:
-          - text: "It changes data. A link is a GET, and a GET must never change anything"
+          - text: "It changes data, and a link is a GET"
             correct: true
-            why: "Browsers and search engines may open links by themselves. Changes go with POST."
+            why: "A GET must never change anything: browsers and search engines may open links by themselves. Changes go with POST."
           - text: "Links cannot have numbers"
             why: "They can. The reason is that it changes data."
-          - text: "POST is faster"
+          - text: "POST is faster than a link"
             why: "The reason is safety."
       - kind: mcq
         id: q-400
         objective: O2
         prompt: "Why check the fields of the form on the server, when the page could also check them?"
         options:
-          - text: "Anyone can send a request without your page, for example with requests"
+          - text: "Anyone can send a request without the page"
             correct: true
-            why: "Checks in the browser help people. Checks on the server protect the data."
+            why: "For example with `requests`. Checks in the browser help people. Checks on the server protect the data."
           - text: "Browsers cannot check forms"
             why: "They can (`required`), but a server cannot trust them."
-          - text: "It is not needed"
+          - text: "It is not needed when the page checks"
             why: "Without it, empty books get into the list."
       - kind: mcq
         id: q-id
@@ -486,10 +486,10 @@ review:
     objective: O1
     prompt: "What do you write down first when you plan a web app?"
     options:
-      - text: "The data, and the routes: method, path, what each answers"
+      - text: "The data, and the routes"
         correct: true
-        why: "Then each route is one small function."
-      - text: "The colors of the page"
+        why: "For each route: method, path, what it answers. Then each route is one small function."
+      - text: "The colors and the fonts of the page"
         why: "The look comes last."
       - text: "The test client"
         why: "Tests come with the routes."
@@ -498,12 +498,12 @@ review:
     objective: O1
     prompt: "Which method for a request that changes data?"
     options:
-      - text: "POST (or PUT and DELETE in an API)"
+      - text: "POST"
         correct: true
-        why: "GET only reads."
+        why: "Or PUT and DELETE in an API. GET only reads."
       - text: "GET"
         why: "GET must never change anything."
-      - text: "Any method"
+      - text: "Any method, the server decides"
         why: "GET is for reading only."
   - kind: mcq
     id: r-redirect
@@ -522,12 +522,12 @@ review:
     objective: O2
     prompt: "What does `abort(404)` do in a view?"
     options:
-      - text: "It stops the view, and the server answers 404 Not Found"
+      - text: "It stops the view with 404 Not Found"
         correct: true
-        why: "For an id that does not exist."
-      - text: "It stops the server"
+        why: "The server answers 404, for example for an id that does not exist."
+      - text: "It stops the server with an error"
         why: "Only this request ends."
-      - text: "It returns the text 404"
+      - text: "It returns the text 404 with status 200"
         why: "It answers with the status 404."
   - kind: mcq
     id: r-api-same

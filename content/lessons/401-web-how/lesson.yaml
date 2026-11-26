@@ -95,9 +95,9 @@ steps:
         id: i-qs
         prompt: "Why does `parse_qs` give `['pi']`, a list, and not `'pi'`?"
         options:
-          - text: "A query may give the same name more than once, like `tag=a&tag=b`"
+          - text: "A name may come more than once"
             correct: true
-            why: "Then the list is `['a', 'b']`. Take `[0]` for the first value."
+            why: "Like `tag=a&tag=b`: then the list is `['a', 'b']`. Take `[0]` for the first value."
           - text: "Because the value is a number"
             why: "`pi` is text. Every value in a query is text."
           - text: "It is a mistake of urllib"
@@ -492,7 +492,7 @@ steps:
         objective: O3
         prompt: "Your own server answers `500 Internal Server Error`. Where is the problem?"
         options:
-          - text: "In the code of your server: look at its log"
+          - text: "In your server's code"
             correct: true
             why: "5xx is the server's mistake. The server log shows the error."
           - text: "In the URL you typed"
@@ -504,10 +504,10 @@ steps:
         objective: O2
         prompt: "How does a client know where the headers of a response end?"
         options:
-          - text: "At the first empty line; the body comes after it"
+          - text: "At the first empty line"
             correct: true
-            why: "That is `\\r\\n\\r\\n`: the end of the last header line, then an empty line."
-          - text: "After 10 lines"
+            why: "The body comes after it. That is `\\r\\n\\r\\n`: the end of the last header line, then an empty line."
+          - text: "After 10 lines, like every response"
             why: "A response may have any number of headers."
           - text: "At the first `<`"
             why: "The body may be JSON or an image, without `<`."
@@ -540,7 +540,7 @@ review:
       - text: "localhost: the computer you are on"
         correct: true
         why: "A request to it never leaves your computer."
-      - text: "The address of Google"
+      - text: "The address of Google's main server"
         why: "It is your own computer, on every computer."
       - text: "The router"
         why: "The router often has an address like 192.168.1.1."
@@ -549,10 +549,10 @@ review:
     objective: O2
     prompt: "What is in the first line of an HTTP request?"
     options:
-      - text: "The method and the path, like `GET /today HTTP/1.1`"
+      - text: "The method and the path"
         correct: true
-        why: "Then the headers follow."
-      - text: "The status code"
+        why: "Like `GET /today HTTP/1.1`. Then the headers follow."
+      - text: "The status code, like `200 OK`"
         why: "That is in the first line of the response."
       - text: "The body"
         why: "The body comes after the headers and an empty line."
@@ -561,9 +561,9 @@ review:
     objective: O3
     prompt: "What does 404 mean?"
     options:
-      - text: "Not Found: the server has no page at that path"
+      - text: "Not Found"
         correct: true
-        why: "A 4xx code: the client asked for something wrong."
+        why: "The server has no page at that path. A 4xx code: the client asked for something wrong."
       - text: "The server crashed"
         why: "That is 500."
       - text: "Go to another address"
@@ -573,10 +573,10 @@ review:
     objective: O3
     prompt: "A response has the status 302 and `Location: /today`. What does the browser do?"
     options:
-      - text: "It sends a new request for /today by itself"
+      - text: "It asks for /today by itself"
         correct: true
-        why: "That is a redirect."
-      - text: "It shows an error"
+        why: "It sends a new request: that is a redirect."
+      - text: "It shows an error page for 302"
         why: "3xx is not an error."
       - text: "It shows an empty page"
         why: "It follows the Location."
