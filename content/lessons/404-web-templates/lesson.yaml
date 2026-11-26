@@ -434,12 +434,12 @@ steps:
         objective: O3
         prompt: "`render_template(\"menu.html\")` stops with TemplateNotFound. What is wrong most often?"
         options:
-          - text: "It is not in the folder `templates`"
+          - text: "No `templates` folder next to the program"
             correct: true
             why: "Flask looks in `templates/` by default."
           - text: "The file must end with .txt"
             why: "`.html` is right: it is escaped too."
-          - text: "render_template needs the full path"
+          - text: "render_template needs the full path of the file"
             why: "Only the name inside `templates/`."
 
   # 9. REVIEW ---------------------------------------------------------------

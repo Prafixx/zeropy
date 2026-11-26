@@ -423,7 +423,7 @@ review:
         correct: true
         why: "2 ** 10 = 1024."
       - text: "1000"
-        why: "That is 10 decimal digits. Each bit doubles the values: 2 ** 10."
+        why: "That is 10 to the power 3. Each bit doubles the values: 2 ** 10."
       - text: "20"
         why: "That would be adding, not doubling."
   - kind: mcq

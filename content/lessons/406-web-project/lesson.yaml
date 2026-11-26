@@ -429,10 +429,10 @@ steps:
         objective: O1
         prompt: "Why is \"I read it\" a POST form, and not a link to `/books/2/read`?"
         options:
-          - text: "It changes data, and a link is a GET"
+          - text: "It changes data; a GET must not"
             correct: true
             why: "A GET must never change anything: browsers and search engines may open links by themselves. Changes go with POST."
-          - text: "Links cannot have numbers"
+          - text: "Links cannot have numbers like 2 in them"
             why: "They can. The reason is that it changes data."
           - text: "POST is faster than a link"
             why: "The reason is safety."

@@ -385,12 +385,12 @@ steps:
         objective: O3
         prompt: "Why `random_state=0` in `train_test_split`?"
         options:
-          - text: "So the shuffle is the same each run"
+          - text: "So each run shuffles the same"
             correct: true
             why: "Then the results can be repeated. Any number works: the same number gives the same split."
           - text: "So there is no shuffle at all"
             why: "It still shuffles, the same way each time."
-          - text: "So the test set has 0 % of the data"
+          - text: "So the test set is always empty"
             why: "`test_size` sets the size of the test set."
       - kind: mcq
         id: q-pip-name

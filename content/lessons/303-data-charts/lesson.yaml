@@ -448,7 +448,7 @@ review:
       - text: "A scatter chart"
         correct: true
         why: "One point per pair of values."
-      - text: "A histogram of each"
+      - text: "A histogram of each value"
         why: "That shows how one set of values spreads."
       - text: "A bar chart"
         why: "Bars compare things side by side."

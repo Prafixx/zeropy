@@ -356,13 +356,13 @@ steps:
         objective: O3
         prompt: "`cat latest.log` says `No such file or directory`, but `ls` shows `latest.log`. Why?"
         options:
-          - text: "Its link points to a lost file"
+          - text: "The link points to a file that is gone"
             correct: true
             why: "The link is broken: its target was moved or deleted. `ls -l latest.log` shows where it points."
-          - text: "The file has no read permission"
+          - text: "The file has no read permission for you"
             why: "That would be `Permission denied`."
-          - text: "ls shows files that are gone"
-            why: "The link exists. Its target does not."
+          - text: "The file is empty"
+            why: "An empty file gives no output and no error message."
       - kind: mcq
         id: q-proc
         objective: O4

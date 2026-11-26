@@ -313,8 +313,8 @@ steps:
             why: "Everything outside your network goes through it: `default` is the way for all addresses that are not in your network."
           - text: "The address of the Pi"
             why: "The Pi's address is in `ip addr` (`inet`), here after `src`."
-          - text: "A DNS server"
-            why: "Often the router answers DNS too, but here it is the way out: the router."
+          - text: "A website name"
+            why: "It is a number, an address, not a name. Here it is the router."
       - kind: mcq
         id: q-port22
         objective: O1
@@ -344,10 +344,10 @@ steps:
         objective: O4
         prompt: "ana is in `users` and `video`. Then `sudo usermod -G gpio ana`. Her groups now?"
         options:
-          - text: "Only `gpio` (and her own group `ana`)"
+          - text: "Only `gpio` and `ana`"
             correct: true
-            why: "`-G` without `-a` replaces the list. Use `-aG` to add."
-          - text: "users, video and gpio: one more"
+            why: "`ana` is her own group. `-G` without `-a` replaces the list. Use `-aG` to add."
+          - text: "users, video and gpio"
             why: "That needs `-aG`."
           - text: "Nothing changed"
             why: "The groups changed: the old ones are gone."
