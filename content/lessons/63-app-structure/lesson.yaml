@@ -166,7 +166,7 @@ steps:
           return tasks + [text]
       ```
 
-      The logic needs no window, so tests can check it, like in lesson 57.
+      The logic needs no window, so tests can check it, like in lesson [[#pytest]].
       The window code stays short: read, call, show.
 
       ## Three new tools

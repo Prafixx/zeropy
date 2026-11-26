@@ -397,6 +397,11 @@ steps:
 
       **After each change of `todo.py`, build again**: the program in
       `dist` has the old code inside.
+
+      Antivirus programs sometimes **wrongly** report a new `.exe` made
+      with PyInstaller as dangerous, because it is unsigned and unknown. It
+      is not a bug in your code. Tell your users, or report the file to the
+      antivirus maker as a false alarm.
     keys:
       - code: "pip install pyinstaller"
         means: "Install PyInstaller into the active venv."

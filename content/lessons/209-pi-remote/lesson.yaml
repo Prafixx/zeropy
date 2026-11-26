@@ -245,8 +245,11 @@ steps:
       - **Keys instead of a password**: `ssh-keygen -t ed25519` on your PC
         makes a pair of keys. The public half goes to the Pi, into
         `~/.ssh/authorized_keys` (`ssh-copy-id pi@raspberrypi.local` on
-        macOS and Linux does it for you). Then SSH needs no password, and a
-        guessed password does not help an attacker.
+        macOS and Linux does it for you). Windows has no `ssh-copy-id`; in
+        PowerShell, this line does the same:
+        `type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh pi@raspberrypi.local "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"`.
+        Then SSH needs no password, and a guessed password does not help an
+        attacker.
       - **Do not open SSH to the internet** on your router. To reach the Pi
         from outside your home, use **Raspberry Pi Connect**: free with a
         Raspberry Pi ID, from a browser at `connect.raspberrypi.com`, with

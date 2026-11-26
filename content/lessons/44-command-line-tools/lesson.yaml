@@ -188,7 +188,7 @@ steps:
 
       Every program ends with a number, its **exit code**: `0` means "it
       worked", anything else means a problem. Scripts and other programs
-      read it; you saw it in the terminal lessons. argparse uses `2` for
+      read it (the Linux path shows it in the terminal). argparse uses `2` for
       wrong words. Your program sets it with `sys.exit`:
 
       ```python

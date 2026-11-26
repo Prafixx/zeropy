@@ -76,8 +76,8 @@ steps:
       ## Named arguments
 
       A call can name the parameter: `greet(greeting="Hey", name="Cleo")`.
-      Then the order does not matter, and the call is easier to read. You
-      already know one: `print("a", "b", sep="-")`.
+      Then the order does not matter, and the call is easier to read.
+      `print` has one too: `print("a", "b", sep="-")` prints `a-b`.
     keys:
       - code: 'def greet(name, greeting="Hello"):'
         means: "`greeting` is optional. Without it, it is `\"Hello\"`."

@@ -359,7 +359,10 @@ steps:
       - Changes are kept only after `con.commit()`. If the program stops
         before it, they are lost.
       - `with con:` commits by itself at the end of its block. If an error
-        happens inside it, all its changes are undone together.
+        happens inside it, all its changes are undone together. It does
+        **not** close the connection.
+      - When the program is done with the database, close it with
+        `con.close()`. Then the file is free for other programs.
 
       Most tables have an **id** column: `id INTEGER PRIMARY KEY` gives each
       new row its own number, 1, 2, 3 ... After an `INSERT`, the
@@ -376,7 +379,9 @@ steps:
       - code: "DELETE FROM t WHERE id = ?"
         means: "Remove the chosen rows. No WHERE: all rows."
       - code: "with con:"
-        means: "Commit at the end, or undo it all after an error."
+        means: "Commit at the end, or undo it all after an error. It does not close."
+      - code: "con.close()"
+        means: "Close the connection when you are done."
 
   # 9. EXERCISE: independent -------------------------------------------------
   - id: ex-todo

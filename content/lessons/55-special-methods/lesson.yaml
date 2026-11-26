@@ -169,8 +169,9 @@ steps:
       ```
 
       A **staticmethod** gets neither the object nor the class: it is a
-      plain function that belongs to the class by its topic. You know a
-      classmethod already: `dict.fromkeys(...)`.
+      plain function that belongs to the class by its topic. Python has
+      classmethods of its own: `dict.fromkeys(["a", "b"], 0)` makes the dict
+      `{"a": 0, "b": 0}`.
     keys:
       - code: "@classmethod  def f(cls, ...)"
         means: "Gets the class: often makes a new object."

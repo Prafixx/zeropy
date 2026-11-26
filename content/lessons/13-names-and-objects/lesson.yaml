@@ -530,7 +530,7 @@ steps:
         pass: "It prints `prices`, `sale` and `extra`"
         hint: "Three `print` lines at the end, in this order."
     hints:
-      - "`sale` is a loop pattern from lesson 12: an empty list, and `append` in the loop."
+      - "`sale` is a loop pattern from lesson [[#loop-patterns]]: an empty list, and `append` in the loop."
       - "`extra` starts as `prices.copy()`."
       - "Then `extra.append(15)`, and three `print` lines."
 

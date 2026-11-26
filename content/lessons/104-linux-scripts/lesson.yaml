@@ -115,8 +115,9 @@ steps:
 
       ## nano, an editor in the terminal
 
-      `nano file.txt` opens a small editor. Type, then save and exit (Ctrl+X
-      on a real Pi asks "Save?", here the button does it).
+      `nano file.txt` opens a small editor. Type, then save with **Ctrl+O**
+      and Enter, and exit with **Ctrl+X** (Ctrl+X alone asks "Save?"). Here
+      in the app, the button saves.
 
       ## Python in the terminal
 
@@ -130,11 +131,14 @@ steps:
       command as root:
 
       ```text
+      sudo apt update
       sudo apt install tree
       ```
 
-      `apt` installs programs from the internet. On a real computer, `sudo`
-      asks for your password. Use it only when a command needs it.
+      `apt` installs programs from the internet. First, `apt update` reads
+      the list of the newest versions; without it, apt may look for an old
+      version that is no longer there. On a real computer, `sudo` asks for
+      your password. Use it only when a command needs it.
     keys:
       - code: "chmod +x run.sh"
         means: "Add the run permission."
@@ -142,6 +146,8 @@ steps:
         means: "Run the script in this folder."
       - code: "python3 app.py"
         means: "Run a Python program."
+      - code: "sudo apt update"
+        means: "Read the list of the newest versions. Before every install."
       - code: "sudo apt install tree"
         means: "Install the program `tree`, as root."
 
@@ -216,7 +222,8 @@ steps:
 
       1. Try `tree`: read the message.
       2. Try `apt install tree` without `sudo`: read the message.
-      3. Install it as the administrator.
+      3. Install it as the administrator: first let apt read the list of
+         new versions.
       4. Run `tree projects`.
     start:
       files:
@@ -224,6 +231,9 @@ steps:
         projects/robot/README.txt: ""
         projects/weather/station.py: "print('weather')\n"
     checks:
+      - expr: "lists_updated"
+        pass: "apt read the list of new versions"
+        hint: "`sudo apt update` before the install."
       - expr: "'tree' in packages"
         pass: "`tree` is installed"
         hint: "`sudo apt install tree`."
@@ -232,9 +242,9 @@ steps:
         hint: "After the install: `tree projects`."
     hints:
       - "Without `sudo`, `apt` says that you are not root."
-      - "`sudo apt install tree` runs `apt` as the administrator."
+      - "`sudo apt update`, then `sudo apt install tree`: both as the administrator."
       - "Then `tree projects`."
-    solution: ["sudo apt install tree", "tree projects"]
+    solution: ["sudo apt update", "sudo apt install tree", "tree projects"]
     after: >-
       The messages before the install are worth reading: `command not
       found` means "not installed", and `are you root?` means "this needs

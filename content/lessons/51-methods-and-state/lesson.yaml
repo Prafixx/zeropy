@@ -89,7 +89,7 @@ steps:
       ```
 
       The code that calls the method can catch the `ValueError` with
-      `try` and `except`, as in lesson 35.
+      `try` and `except`, as in lesson [[#exceptions]].
     keys:
       - code: "a command"
         means: "Changes the object: `deposit`, `withdraw`, `finish`."

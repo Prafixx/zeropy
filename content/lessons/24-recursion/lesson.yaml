@@ -43,9 +43,10 @@ steps:
       - the **base case**: a small input with a direct answer, and no call;
       - the **recursive case**: a call on a **smaller** input.
 
-      Each call has its own `n`, in its own box on the **call stack** (you
-      saw the stack in the lesson on the debugger). The calls wait for each
-      other, then end in reverse order.
+      Each call has its own `n`, in its own box on the **call stack**: a
+      pile of the calls that are not finished yet. The calls wait for each
+      other, then end in reverse order. (The lesson on the debugger shows
+      the stack live.)
     keys:
       - code: "base case"
         means: "A small input with a direct answer: no more calls."

@@ -205,7 +205,7 @@ steps:
     lines:
       - goal: "Get the data"
         code: 'age = int(input("Age: "))'
-        note: "Ask and convert, as in lesson 4."
+        note: "Ask and convert, as in lesson [[#input-and-conversion]]."
       - goal: "Decide: one rule per block"
         code: |
           if age < 12:

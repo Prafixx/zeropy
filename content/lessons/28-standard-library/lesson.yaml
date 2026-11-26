@@ -106,8 +106,9 @@ steps:
       which modules it uses.
 
       These modules are the **standard library**: they come with Python.
-      One rule: do not call your own file `random.py` or `math.py`. Then
-      `import random` loads your file instead of the real module.
+      One rule: do not give your own file the name of a module you use,
+      like `random.py`. Then `import random` loads your file instead of the
+      real module.
     keys:
       - code: "import random"
         means: "One name `random`. Use `random.randint(1, 6)`."

@@ -36,7 +36,7 @@ steps:
         caption: "Four prices. We want a new list: the double of each price that is more than 5."
       - beat: empty
         line: 2
-        caption: "The pattern from lesson 12: start with an empty list."
+        caption: "The pattern from lesson [[#loop-patterns]]: start with an empty list."
       - beat: first
         line: 4
         caption: "Read each value. 4 is not more than 5: it is not kept."

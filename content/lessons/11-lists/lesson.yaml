@@ -166,7 +166,7 @@ steps:
       To ask if a value is in a list, use `in`. The answer is `True` or
       `False`, so `in` fits in an `if`.
 
-      In lesson 8, `for` walked through the characters of a text. It walks
+      In lesson [[#for-loops]], `for` walked through the characters of a text. It walks
       through a list the same way: one value in each round, in order.
     keys:
       - code: 'basket.append("tea")'

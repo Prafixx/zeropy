@@ -170,7 +170,7 @@ steps:
 
       ## The plan
 
-      `get_json` is your function from the last lesson: it is in the code
+      `get_json` is your function from lesson [[#web-apis]]: it is in the code
       already. Each step adds one function. The last step connects them.
     keys:
       - code: "1  find_place(name)"
@@ -293,7 +293,7 @@ steps:
         pass: "It says `No place called ...` only when the server said so"
         hint: "Print `No place called {name}.` only when the list of results is empty, not when `data` is `None`."
     hints:
-      - "Start like `find` of the last lesson, but with `get_json(GEO_URL, {\"name\": name, \"count\": 1})`."
+      - "Start like `find` of lesson [[#web-apis]], but with `get_json(GEO_URL, {\"name\": name, \"count\": 1})`."
       - "`if data is None: return None` comes before you read `data`."
       - "`results = data.get(\"results\", [])`. If it is empty, print and `return None`. Else `return results[0]`."
 
@@ -645,7 +645,7 @@ steps:
       a place that does not exist, with bad numbers, and without internet.
       It needs internet itself.
 
-      If you like, put the project on GitHub as in lesson 45.
+      If you like, put the project on GitHub as in lesson [[#git]].
     task: weather
     needs: 5
     example:

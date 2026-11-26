@@ -296,7 +296,7 @@ steps:
 
       - A circle **is a** shape → inheritance: `class Circle(Shape)`.
       - A cart **has** items → composition: the cart keeps a list of items
-        (lesson 52).
+        (lesson [[#composition-and-dataclasses]]).
 
       When you are not sure, choose composition. Long chains of classes
       that inherit from each other are hard to change. One level, like

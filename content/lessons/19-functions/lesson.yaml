@@ -438,7 +438,7 @@ steps:
 
       print(initials("Ada Lovelace"))
     after: >-
-      Lesson 16 had a version for exactly two words. Your function works for
+      Lesson [[#strings]] had a version for exactly two words. Your function works for
       any number of words, and any other program can now use it with one
       line.
     checks:

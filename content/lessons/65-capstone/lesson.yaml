@@ -194,11 +194,11 @@ steps:
         hint: "For example: `with pytest.raises(ValueError):` and a call with an empty name."
       - expr: "'DATA_FILE' in src and 'Path.home()' in src and 'json' in src.replace('import json', '')"
         pass: "Save and load use JSON and `DATA_FILE` in the home folder"
-        hint: "A `save(data, path=DATA_FILE)` with `json.dumps`, and a `load(path=DATA_FILE)` with `json.loads`, like in lessons 63 and 64."
+        hint: "A `save(data, path=DATA_FILE)` with `json.dumps`, and a `load(path=DATA_FILE)` with `json.loads`, like in lessons [[#app-structure]] and [[#packaging]]."
     hints:
       - "Start with the data: a list, or a dictionary? Then one function for each change."
       - "Each function gets the data and gives back the new data. Bad input raises `ValueError`."
-      - "Copy `save` and `load` from the to-do app of lesson 63, with `DATA_FILE` instead of a fixed name."
+      - "Copy `save` and `load` from the to-do app of lesson [[#app-structure]], with `DATA_FILE` instead of a fixed name."
 
   # 4. EXERCISE: independent -------------------------------------------------
   - id: ex-window
@@ -335,7 +335,7 @@ steps:
         pass: "A change is saved in the home folder"
         hint: "After each change, call your `save` function with `DATA_FILE`."
     hints:
-      - "Start from the to-do app of lesson 63: an entry, a list, two buttons."
+      - "Start from the to-do app of lesson [[#app-structure]]: an entry, a list, two buttons."
       - "Each method: read the widgets, call your logic in `try`, save, show."
       - "Click every button in the window once, also with an empty entry. Each one must give a message, not an error."
 
@@ -359,7 +359,7 @@ steps:
       Your `README.md` says, in a few lines: what the app does, how to
       start it (`python app.py`), and how to run the tests.
 
-      If you like, put the project on GitHub (lesson 45): then it is also
+      If you like, put the project on GitHub (lesson [[#git]]): then it is also
       a page that you can show to others.
     keys:
       - code: "app.py"
@@ -477,7 +477,7 @@ steps:
     hints:
       - "Work part by part, and run the check after each: it shows what is still missing."
       - "Your main file is `app.py`. Your logic can be in another file, like `habits.py`."
-      - "Stuck on one part? Go back to the lesson for it: 30 venv, 31 git, 37 pytest, 39 and 40 the window, 41 the build."
+      - "Stuck on one part? Go back to the lesson for it: [[#venv-and-pip]] venv, [[#git]] git, [[#pytest]] pytest, [[#tkinter]] and [[#app-structure]] the window, [[#packaging]] the build."
     after: >-
       You planned, built, tested and shipped your own program. That is
       what a programmer does. Congratulations: you finished the course.
@@ -543,10 +543,10 @@ steps:
         options:
           - text: "Build more of your own programs, and read the docs of the tools that you need"
             correct: true
-            why: "You can now learn a new library from its docs, like in lesson 27."
+            why: "You can now learn a new library from its docs, like in lesson [[#reading-docs]]."
           - text: "Stop: you know all of Python"
             why: "Nobody does. You know enough to learn the rest yourself."
-          - text: "Start the course again from lesson 1"
+          - text: "Start the course again from lesson [[#first-program]]"
             why: "The review cards keep the basics fresh. New projects teach you more."
 
   # 8. REVIEW ---------------------------------------------------------------

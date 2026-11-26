@@ -272,7 +272,7 @@ steps:
         code: "jobs:\n  tests:\n    runs-on: ubuntu-latest"
         note: "A fresh Linux computer for each run: the tests cannot depend on files of your own machine."
       - goal: "Get the code and Python"
-        code: "    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: \"3.13\""
+        code: "    steps:\n      - uses: actions/checkout@v7\n      - uses: actions/setup-python@v7\n        with:\n          python-version: \"3.14\""
         note: "Two ready-made steps: copy the repository, then install Python."
       - goal: "Install what the project needs"
         code: "      - run: pip install -r requirements.txt pytest"

@@ -221,11 +221,13 @@ steps:
     objective: O2
     title: Where Python looks
     body: |
-      For `import helpers`, Python looks for a file `helpers.py` in the
-      folders of the list `sys.path`, in order:
+      For `import helpers`, Python first checks its **built-in** modules,
+      the ones inside Python itself, like `sys` and often `math`. Then it
+      looks for a file `helpers.py` in the folders of the list `sys.path`,
+      in order:
 
       1. the folder of your program,
-      2. the standard library (`math`, `random`, ...),
+      2. the rest of the standard library (`random`, `json`, ...),
       3. the packages you installed with pip.
 
       The first match wins. So a file **`random.py` of your own**, next to
@@ -472,7 +474,8 @@ steps:
       - `[build-system]` says which tool turns the folder into an
         installable package. Copy these three lines as they are.
 
-      In lesson 43 you will use **pip** in a venv. In the folder of
+      In the lesson "Packages with venv and pip" you will use **pip** in a
+      venv. In the folder of
       `pyproject.toml`, `pip install -e .` then installs your package so
       that `import shapes` works in any of your programs, and a change in
       the code counts at once. (`-e` means editable; `.` means this folder.)
@@ -790,7 +793,7 @@ extra:
       print(round(sh.circle_area(2), 2))
     after: >-
       `as` gives a module a second, shorter name. You know it from
-      `import numpy as np`.
+      `import helpers as h`; many programs also write `import numpy as np`.
     checks:
       - expr: "err is None and lines == ['12.57']"
         pass: "It prints 12.57"

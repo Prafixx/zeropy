@@ -50,7 +50,7 @@ steps:
 
       - **Waiting** (the network, a disk, a slow device): yes, a lot.
       - **Computing** (sums, sorting, loops over numbers): in normal Python,
-        threads do not make this faster. Fast code (lesson 25) helps there.
+        threads do not make this faster. Fast code (lesson [[#fast-and-slow]]) helps there.
 
       `time.perf_counter()` gives a time in seconds. The difference of two
       readings is how long the code between them took.
@@ -120,7 +120,7 @@ steps:
       - `ThreadPoolExecutor` is a **pool**: a team of threads, here 3
         **workers**.
       - `pool.map(download, names)` calls `download` once for each name,
-        spread over the workers. Like the `map` of lesson 22, it gives the
+        spread over the workers. Like the `map` of lesson [[#functions-as-values]], it gives the
         results in the order of `names`.
       - The `with` block ends only when all the tasks are done.
 

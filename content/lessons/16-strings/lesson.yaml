@@ -445,7 +445,7 @@ steps:
       print(longest)
     after: >-
       `split` turned the text into a list, and then the tools of lists did
-      the rest: `len`, `join` and the best-so-far pattern of lesson 12.
+      the rest: `len`, `join` and the best-so-far pattern of lesson [[#loop-patterns]].
     cases:
       - {}
       - label: "the sentence is `the quick fox`"

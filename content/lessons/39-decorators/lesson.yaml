@@ -50,8 +50,8 @@ steps:
           return f"hello, {name}"
       ```
 
-      You already used decorators: `@app.route(...)`, `@property`,
-      `@dataclass`.
+      You will meet many decorators: later in this course `@dataclass` and
+      `@property`, and in web programs `@app.route(...)`.
     keys:
       - code: "@shout above def greet"
         means: "The same as greet = shout(greet)."

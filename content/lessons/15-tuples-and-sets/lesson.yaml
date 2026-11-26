@@ -90,7 +90,7 @@ steps:
       explain: >-
         Python first builds the tuple on the right side, `(2, 1)`, from the
         old values. Then it unpacks it into `a` and `b`. This is the short
-        form of the swap with three lines from lesson 2.
+        form of the swap with three lines from lesson [[#variables]].
       misconceptions:
         - answer: "1\n2"
           say: "Line 2 swaps the values: the right side `b, a` is `(2, 1)`."
@@ -266,7 +266,7 @@ steps:
               print(f"{name}: {mark}")
               if mark > best_mark:
                   best_name, best_mark = name, mark
-        note: "Each round unpacks one pair. The best-so-far pattern of lesson 12 keeps a name and a mark together."
+        note: "Each round unpacks one pair. The best-so-far pattern of lesson [[#loop-patterns]] keeps a name and a mark together."
       - goal: "Show the result"
         code: 'print(f"Best: {best_name}")'
         note: "`Best: Ben`."
@@ -309,7 +309,7 @@ steps:
     objective: O1
     title: The swap in one line
     prompt: |
-      In lesson 2 you swapped two values with three lines and a third
+      In lesson [[#variables]] you swapped two values with three lines and a third
       variable. **Replace `___`** to swap `left` and `right` in one line.
     given: |
       left = "tea"

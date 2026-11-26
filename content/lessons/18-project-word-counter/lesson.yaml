@@ -212,7 +212,7 @@ steps:
       **Make a dictionary `counts`.** Each clean word is a key, and its value
       is how often the word comes in `clean`.
 
-      This is the counting pattern of lesson 14. Print `counts` to test it.
+      This is the counting pattern of lesson [[#dictionaries]]. Print `counts` to test it.
     given: *text
     solution: |
       words = text.split()
@@ -256,7 +256,7 @@ steps:
     hints:
       - "Before the loop: `counts = {}`."
       - "In the loop: `if w in counts:` add 1, `else:` start with 1."
-      - "The code is the same as the vote counter in lesson 14, with `clean` and `w`."
+      - "The code is the same as the vote counter in lesson [[#dictionaries]], with `clean` and `w`."
 
   # 6. STEP 4 -----------------------------------------------------------------
   - id: m4-top

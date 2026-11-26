@@ -31,6 +31,11 @@ steps:
       | Raspberry Pi 5 | 5 V, 5 A (27 W) | USB-C |
       | Raspberry Pi 4 | 5 V, 3 A (15 W) | USB-C |
       | Raspberry Pi 3 | 5 V, 2.5 A | micro-USB |
+      | Raspberry Pi Zero 2 W | 5 V, 2.5 A | micro-USB |
+
+      The **Zero 2 W** is small and cheap, and gpiozero works on it the same
+      way. Its pins come without the header: buy one "with headers", or
+      solder the header on yourself.
 
       A phone charger often gives less current than this. Then the Pi
       restarts at random, or files on the SD card break. The official

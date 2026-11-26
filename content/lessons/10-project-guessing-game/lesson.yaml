@@ -332,7 +332,7 @@ steps:
       print(f"You needed {tries} tries.")
     after: >-
       A start value before the loop and a change inside it: the counter
-      has the same form as the counting loops of lesson 7. Here it does
+      has the same form as the counting loops of lesson [[#while-loops]]. Here it does
       not control the loop. It only watches it.
     cases:
       - {}
