@@ -103,28 +103,28 @@ worked step (firstuse.py), then read by hand.
 
 | # | Concept | Status | Evidence |
 |---|---|---|---|
-| 3.1 | try/except before L35 | CONFIRMED | First at 33.7 (theory), 33.9 (exercise), 34.4, 34.5, 34.10. L35 depends only on `Path` (L31) and JSON (L32): moving L35 after L32 works. |
-| 3.2 | break / continue | CONFIRMED | No Learn step in L7 or L8. `break` first in code at 25.4 (demo), needed in 30.7; first explained in 33.7. `continue` first in 31.6 (worked). |
-| 3.3 | `#` comments | CONFIRMED | Starters from 1.8 use `# ...`; first Learn mention 23.2 ("write the steps as comments"). |
-| 3.4 | type() | CONFIRMED (minor) | L3 names int, float and str (3.2, 3.7) but never shows `type()`; first use 32.5. |
-| 3.5 | round() | CONFIRMED | 4.E3, 4.E5, 9.E1, 22.E1; explained in 27.1. |
-| 3.6 | split / join | CONFIRMED | split in 14.E2, then drills 16.6, 16.8; no L16 Learn step; Learn mentions at 36.5 and 31.4. |
-| 3.7 | .sort() | CONFIRMED | Only 60.4 [59.4]. |
-| 3.8 | .insert() / .index() / .extend() | CONFIRMED | insert first 25.10; index first 16.R11 (a card); extend only in extras 46.E2, 49.E2. |
-| 3.9 | enumerate | CONFIRMED | 25.R5 (card), then 27.7. |
-| 3.10 | Comprehensions before L36 | CONFIRMED | 22.5 shows `[n * 2 for n in nums]` as known. **Disagree with moving L36** (it also needs CSV and files): proposal, teach the plain list comprehension in L12 (loop patterns), keep L36 for the rest. |
-| 3.11 | `if __name__ == "__main__"` | CONFIRMED | L29 objective; shown in demo 29.2, needed in 29.6; no Learn step explains it (29.1, 29.5, 29.7, 29.9). |
-| 3.12 | super().__init__ | CONFIRMED (narrower) | 54.3 [53.3] is a demo (See it before Learn is the course style), but drill 54.4 and exercise 54.5 need it before theory 54.6. |
-| 3.13 | pytest.raises in 46.3 | CONFIRMED | Also 46.4 runs pytest in CI; pytest is taught in L57 [56]. |
-| 3.14 | global | CONFIRMED | 0 uses in the Python course; used in Pi 3.4 and Pi 5.E2. |
-| 3.15 | externally-managed-environment | CONFIRMED | 43.0 objective; only in drill 43.4, not in 43.2's known problems. |
+| 3.1 | try/except before L35 | FIXED (phase 3) | First at 33.7 (theory), 33.9 (exercise), 34.4, 34.5, 34.10. L35 depends only on `Path` (L31) and JSON (L32): moving L35 after L32 works. |
+| 3.2 | break / continue | FIXED (phase 3) | No Learn step in L7 or L8. `break` first in code at 25.4 (demo), needed in 30.7; first explained in 33.7. `continue` first in 31.6 (worked). |
+| 3.3 | `#` comments | FIXED (phase 3) | Starters from 1.8 use `# ...`; first Learn mention 23.2 ("write the steps as comments"). |
+| 3.4 | type() | FIXED (phase 3) | L3 names int, float and str (3.2, 3.7) but never shows `type()`; first use 32.5. |
+| 3.5 | round() | FIXED (phase 3) | 4.E3, 4.E5, 9.E1, 22.E1; explained in 27.1. |
+| 3.6 | split / join | FIXED (phase 3) | split in 14.E2, then drills 16.6, 16.8; no L16 Learn step; Learn mentions at 36.5 and 31.4. |
+| 3.7 | .sort() | FIXED (phase 3) | Only 60.4 [59.4]. |
+| 3.8 | .insert() / .index() / .extend() | FIXED (phase 3) | insert first 25.10; index first 16.R11 (a card); extend only in extras 46.E2, 49.E2. |
+| 3.9 | enumerate | FIXED (phase 3) | 25.R5 (card), then 27.7. |
+| 3.10 | Comprehensions before L36 | FIXED (phase 3) | 22.5 shows `[n * 2 for n in nums]` as known. **Disagree with moving L36** (it also needs CSV and files): proposal, teach the plain list comprehension in L12 (loop patterns), keep L36 for the rest. |
+| 3.11 | `if __name__ == "__main__"` | FIXED (phase 3) | L29 objective; shown in demo 29.2, needed in 29.6; no Learn step explains it (29.1, 29.5, 29.7, 29.9). |
+| 3.12 | super().__init__ | FIXED (phase 3) | Lesson 53 (the audit's 52): 53.3 is a demo (See it before Learn is the course style), but drill 53.4 and exercise 53.5 needed it before theory 53.6. (Phase 0 wrote 54 here by mistake.) |
+| 3.13 | pytest.raises in 46.3 | FIXED (phase 3) | Also 46.4 runs pytest in CI; pytest is taught in L57 [56]. |
+| 3.14 | global | FIXED (phase 3) | 0 uses in the Python course; used in Pi 3.4 and Pi 5.E2. |
+| 3.15 | externally-managed-environment | FIXED (phase 3) | 43.0 objective; only in drill 43.4, not in 43.2's known problems. |
 
 ### Cross-references
 
 | Step | Status | Note |
 |---|---|---|
 | 20.2 sep= | FIXED (phase 2) | "You already know one: `print("a", "b", sep="-")`": first appearance. |
-| 11.5 L8 for over text | CONFIRMED | In L8 only in quiz 8.12. |
+| 11.5 L8 for over text | FIXED (phase 3) | In L8 only in quiz 8.12. |
 | 24.1 stack, debugger | FIXED (phase 2) | Debugger is L59 [58]. |
 | 39.1 decorators used | FIXED (phase 2) | `@dataclass` L52, `@property` L55, `@app.route` Web path. |
 | 41.6 CSV in L32 | ALREADY FIXED | Fixed in 1.4.0 (now "Lesson 36"). |
@@ -148,7 +148,7 @@ worked step (firstuse.py), then read by hand.
 | L40 con.close() | FIXED (phase 2) | 0 uses; `with con:` commits or rolls back, it does not close. |
 | 46.4 action versions | FIXED (phase 2), NEEDS HUMAN TEST | v4 / v5 in 46.4; READMEs now show `actions/checkout@v7` (release v7.0.1) and `actions/setup-python@v7` (v7.1.0). |
 | L45 clone, revert, time | CONFIRMED | `git clone` only as text in 45.11 (local step); `git revert` 0; 55 minutes. |
-| Debugger earlier | NEEDS DECISION | L59 [58] needs only functions for its in-app part; O4 needs VS Code (L42). It cannot move before L42 whole. |
+| Debugger earlier | FIXED (phase 3) | L59 [58] needs only functions for its in-app part; O4 needs VS Code (L42). It cannot move before L42 whole. |
 | L54 [53] advanced, Enum | NEEDS DECISION | |
 | tkinter after() | CONFIRMED | 0 uses in L62-63 [61-62]. |
 | PyInstaller antivirus | FIXED (phase 2) | 0 mentions in L64 [63]. |
@@ -261,6 +261,62 @@ worked step (firstuse.py), then read by hand.
   the running app (lesson 49: "lesson 47"; capstone: the list), the robot
   on the 14 changed lessons.
 
+## Phase 3: what changed
+
+**Old-to-new lesson numbers** (only these 8 changed; lessons 47-58 keep
+their numbers, because the debugger moved forward and "Working with
+others" moved back). Progress, review cards, saved code and knowledge are
+keyed by lesson id, so nothing a learner did is lost. Inside a lesson
+with new steps, "Continue" may land one step off (a step index).
+
+| Old | New | Lesson id |
+|---|---|---|
+| 33 | 34 | bytes-and-binary |
+| 34 | 35 | files-in-depth |
+| 35 | 33 | exceptions |
+| 43 | 44 | venv-and-pip |
+| 44 | 45 | command-line-tools |
+| 45 | 46 | git |
+| 46 | 59 | working-with-others |
+| 59 | 43 | debugging-2 |
+
+The audit's numbers: for lessons of the audit's 48 and up, add 1 (phase 0
+note), then apply this table.
+
+**Learn steps added** (each with a key fact, and practised in a review
+card or a quiz item):
+- L1 "print() shows a value": comments.
+- L3 "Three types and six signs": `type()`.
+- L4 "Ask, then convert": `round()`, and halves to the even neighbour.
+- L7 "Three parts of a counting loop": `break`, `while True`; quiz `q-break`.
+- L8 "Three forms of range": `for` over a text, `continue`; quiz
+  `q-continue`. 11.5 ("in lesson 8, for walked through the characters")
+  is now true.
+- L11 "A list can change": `sort`, `insert`, `extend`, `index`.
+- L12 "Shortcuts that Python has": `enumerate`, and a first list
+  comprehension (keep / change), so 22.5 can use it. L36 stays where it
+  is (it needs CSV and files).
+- L16 "Text methods": `split` and `join`. 14.E2 gives `split()` ready-made
+  and now says so.
+- L20 "Several results, and an early end": `global` and why to avoid it
+  (the Pi path uses it).
+- L29 "A file is a module": `__name__ == "__main__"`.
+- L44 (venv): `externally-managed-environment` as a known problem.
+- L53 "A class on top of a class": the child's own `__init__` with
+  `super().__init__`, before the drill and exercise that use it.
+- L57 "Code that checks code": `pytest.raises`, before the drill and the
+  exercise that use it (found while checking, same kind of problem).
+
+**Moves:** Exceptions after JSON (try/except is taught before L34 and
+L35 use it); the debugger right after "Install Python and an editor"
+(its VS Code goal needs it); "Working with others" after "Better tests"
+(its CI runs pytest).
+
+Verified: check:content, quiz-bias.mjs, the audit, the first-use search
+(every concept above now has its Learn step before its first use), the
+renumbering (8 folders, the references followed), and the robot on the
+19 changed lessons.
+
 ## NEEDS HUMAN TEST
 Never marked as tested. Each with steps and the expected result.
 1. **Button (Pi 3)**: button between GPIO 2 and GND, `Button(2)`,
@@ -301,3 +357,4 @@ Never marked as tested. Each with steps and the expected result.
   lesson content changed.
 - 2026-11-26 Phase 1 done (P1: Pi wiring, services, Data 5, path name).
 - 2026-11-26 Phase 2 done (references by id, cross-references, small facts).
+- 2026-11-26 Phase 3 done (Learn steps for 15 concepts, 3 lessons moved).
