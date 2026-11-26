@@ -136,9 +136,9 @@ steps:
         id: i-no-sleep
         prompt: "Both `sleep` lines are removed. What do you see on a real Pi?"
         options:
-          - text: "Almost nothing: the LED is on for a tiny moment, too short to see"
+          - text: "Almost nothing"
             correct: true
-            why: "The loop takes a millionth of a second. Without sleep, there is no time to see."
+            why: "The LED is on for a tiny moment: the loop takes a millionth of a second. Without sleep, there is no time to see."
           - text: "Three flashes, very fast"
             why: "They are far too fast for the eye: microseconds."
           - text: "An error"
@@ -309,9 +309,9 @@ steps:
         objective: O1
         prompt: "Why does an LED need a resistor?"
         options:
-          - text: "It limits the current, so the LED and the pin are not damaged"
+          - text: "It limits the current"
             correct: true
-            why: "Without it, too much current flows."
+            why: "So the LED and the pin are not damaged. Without it, too much current flows."
           - text: "It makes the LED brighter"
             why: "It makes it a little darker, and safe."
           - text: "It stores the light"
@@ -321,9 +321,9 @@ steps:
         objective: O1
         prompt: "The LED stays dark, the code is right. What do you check first?"
         options:
-          - text: "The legs: the long leg must go towards the GPIO pin"
+          - text: "Which way the LED legs go"
             correct: true
-            why: "An LED lets current through in one direction only."
+            why: "The long leg must go towards the GPIO pin: an LED lets current through in one direction only."
           - text: "The Python version"
             why: "The code is right. The hardware is the suspect."
           - text: "The resistor should be removed"
@@ -333,21 +333,21 @@ steps:
         objective: O2
         prompt: "`led.on()` and then `led.off()` with nothing between. What happens?"
         options:
-          - text: "The LED is on for a tiny moment, too short to see"
+          - text: "It flashes, too fast to see"
             correct: true
-            why: "Use `sleep()` between them to hold the state."
-          - text: "The LED stays on"
+            why: "The LED is on for a tiny moment. Use `sleep()` between them to hold the state."
+          - text: "The LED stays on until the end"
             why: "`off()` switches it off at once."
-          - text: "An error"
+          - text: "Python stops with an error"
             why: "It is valid, only too fast to see."
       - kind: mcq
         id: q-background
         objective: O3
         prompt: "`led.blink()`, and then `print(\"hi\")`. When is `hi` printed?"
         options:
-          - text: "At once: blink() works in the background"
+          - text: "At once"
             correct: true
-            why: "With `background=False`, the program would wait for the blinking."
+            why: "`blink()` works in the background. With `background=False`, the program would wait for the blinking."
           - text: "After the blinking ends"
             why: "By default it blinks in the background, so the program goes on."
           - text: "Never"
@@ -369,18 +369,18 @@ review:
       - text: "GPIO pin → resistor → LED (long leg first) → GND"
         correct: true
         why: "One loop, with the resistor to limit the current."
-      - text: "GPIO pin → LED → 5V"
-        why: "No: 5 V is a power pin, and the loop needs ground."
-      - text: "GND → LED → GND"
-        why: "No pin switches it, so it never lights."
+      - text: "GPIO pin → LED → resistor → 5V"
+        why: "5 V is a power pin, and the loop must end at ground."
+      - text: "GPIO pin → resistor → LED (short leg first) → GND"
+        why: "The long leg goes towards the GPIO pin: the LED lets current through one way only."
   - kind: mcq
     id: r-blink-n
     objective: O3
     prompt: "What does `led.blink(on_time=0.5, off_time=0.5, n=4)` do?"
     options:
-      - text: "4 flashes of half a second, with half a second between them"
+      - text: "4 flashes of half a second"
         correct: true
-        why: "`n` is the number of flashes."
+        why: "With half a second between them. `n` is the number of flashes."
       - text: "It blinks forever, every 4 seconds"
         why: "`n=4` stops after 4 flashes."
       - text: "It blinks 0.5 times"
@@ -393,10 +393,10 @@ review:
       - text: "`led.on()`, then `sleep(3)`, then `led.off()`"
         correct: true
         why: "The wait between the two switches is the time it is on."
-      - text: "`led.on(3)`"
+      - text: "`led.on(3)`, then `led.off()`"
         why: "`on()` takes no time. Use `sleep`."
-      - text: "`sleep(3)`, then `led.on()`"
-        why: "That waits first, then switches on."
+      - text: "`sleep(3)`, then `led.on()`, then `led.off()`"
+        why: "That waits first, then switches on and at once off: almost nothing."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

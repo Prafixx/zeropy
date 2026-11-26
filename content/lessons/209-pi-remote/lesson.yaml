@@ -339,12 +339,12 @@ steps:
         objective: O3
         prompt: "`scp notes.txt pi@raspberrypi.local` runs without an error, but the file is not on the Pi. Why?"
         options:
-          - text: "The colon is missing: it made a file `pi@raspberrypi.local` on the PC"
+          - text: "The colon is missing at the end"
             correct: true
-            why: "Write `pi@raspberrypi.local:` with the colon."
-          - text: "scp needs `sudo`"
+            why: "Without the colon, scp copied it on the PC, to a file called `pi@raspberrypi.local`. Write `pi@raspberrypi.local:`."
+          - text: "scp needs `sudo` to write on the Pi"
             why: "Copying into your home folder needs no `sudo`."
-          - text: "The Pi was off"
+          - text: "The Pi was off, so scp gave up"
             why: "Then scp would show an error."
       - kind: mcq
         id: q-where-scp
@@ -354,9 +354,9 @@ steps:
           - text: "On your PC, in the folder of `blink.py`"
             correct: true
             why: "scp runs where the file is, and sends it to the Pi."
-          - text: "On the Pi, after `ssh`"
+          - text: "On the Pi, in your home folder, after `ssh`"
             why: "The Pi cannot see the files of your PC."
-          - text: "In nano"
+          - text: "In nano, then save with Ctrl+O"
             why: "nano is an editor. scp is a command."
       - kind: mcq
         id: q-internet
@@ -432,9 +432,9 @@ review:
     objective: O4
     prompt: "Why are SSH keys safer than a password?"
     options:
-      - text: "An attacker cannot guess a key, and you need no password to log in"
+      - text: "A key cannot be guessed"
         correct: true
-        why: "The private key stays on your PC. The Pi only has the public half."
+        why: "And you need no password to log in. The private key stays on your PC; the Pi only has the public half."
       - text: "Keys make the connection faster"
         why: "Speed is the same. Keys are about safety."
       - text: "Keys turn SSH off"

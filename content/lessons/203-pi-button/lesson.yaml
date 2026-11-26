@@ -347,12 +347,12 @@ steps:
         objective: O3
         prompt: "Why `pause()` at the end of a program with events?"
         options:
-          - text: "Without it, the program ends at once, and no event is called"
+          - text: "It keeps the program running"
             correct: true
-            why: "`pause()` keeps it alive, so gpiozero can call your functions."
+            why: "Without it, the program ends at once, and no event is called. `pause()` keeps it alive, so gpiozero can call your functions."
           - text: "It makes the events faster"
-            why: "It only keeps the program running."
-          - text: "It pauses the button"
+            why: "It does not change their speed: it only keeps the program running."
+          - text: "It pauses the button until you press"
             why: "It pauses the program, not the parts."
       - kind: mcq
         id: q-brackets
@@ -407,9 +407,9 @@ review:
       - text: "`global count` as its first line"
         correct: true
         why: "Without it, Python sees a new local name and stops with an UnboundLocalError."
-      - text: "Nothing"
-        why: "Changing an outer name needs `global`."
-      - text: "`return count`"
+      - text: "Nothing: functions can change any name"
+        why: "Changing an outer name needs `global`; without it, Python stops with an UnboundLocalError."
+      - text: "`return count` at its end"
         why: "An event cannot use a returned value: gpiozero ignores it."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).

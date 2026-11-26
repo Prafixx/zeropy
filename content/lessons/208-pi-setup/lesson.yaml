@@ -85,10 +85,10 @@ steps:
         objective: O1
         prompt: "A Pi 4 restarts by itself while it works hard. What is the first thing to try?"
         options:
-          - text: "Another power supply, one that gives 5 V and 3 A"
+          - text: "Another power supply: 5 V and 3 A"
             correct: true
             why: "A weak power supply is the most common cause. Change it first."
-          - text: "Install the system again"
+          - text: "Install the system again from Imager"
             why: "Try that later. First the power supply, then another SD card."
           - text: "A bigger SD card"
             why: "The size of the card does not make a Pi restart."
@@ -168,10 +168,10 @@ steps:
         objective: O2
         prompt: "What is the user name and the password of a new Raspberry Pi OS?"
         options:
-          - text: "The ones you choose in Imager (or at the first start)"
+          - text: "The ones you chose in Imager"
             correct: true
-            why: "There is no default user any more, so nobody can guess it."
-          - text: "pi and raspberry"
+            why: "There is no default user any more, so nobody can guess it. Without Imager settings, the Pi asks at the first start."
+          - text: "pi and raspberry, as in older guides"
             why: "That was the old default. It is gone because everyone knew it."
           - text: "admin and admin"
             why: "There is no default password."
@@ -180,9 +180,9 @@ steps:
         objective: O2
         prompt: "The Pi has no screen, and you forgot to turn on SSH in Imager. What is the easy fix?"
         options:
-          - text: "Write the card again with Imager, and turn on SSH in the customisation"
+          - text: "Write the card again, with SSH turned on"
             correct: true
-            why: "Without a screen and without SSH, you cannot reach the Pi. Writing again takes a few minutes."
+            why: "Turn on SSH in Imager's customisation. Without a screen and without SSH, you cannot reach the Pi. Writing again takes a few minutes."
           - text: "Wait: SSH turns on by itself after a day"
             why: "SSH stays off until you turn it on."
           - text: "Use a bigger SD card"
@@ -369,7 +369,7 @@ steps:
           - text: "No power or heat problem since the start"
             correct: true
             why: "0x0: nothing to report."
-          - text: "The Pi is slowed down"
+          - text: "The Pi is slowed down right now, to cool off"
             why: "Then a bit would be set, for example 0x50005."
           - text: "The temperature is 0 °C"
             why: "The temperature is `measure_temp`."
@@ -435,10 +435,10 @@ review:
     objective: O3
     prompt: "What is the difference between `apt update` and `apt full-upgrade`?"
     options:
-      - text: "`update` reads the list of new versions; `full-upgrade` installs them"
+      - text: "`update` reads the list; `full-upgrade` installs"
         correct: true
-        why: "Always in this order."
-      - text: "There is none"
+        why: "`update` reads the list of new versions; `full-upgrade` installs them. Always in this order."
+      - text: "There is none: both install the new versions"
         why: "`update` installs nothing."
       - text: "`update` installs, `full-upgrade` restarts"
         why: "`full-upgrade` installs. A restart is `sudo reboot`."
@@ -459,9 +459,9 @@ review:
     objective: O4
     prompt: "`dmesg` says `read kernel buffer failed: Operation not permitted`. Why?"
     options:
-      - text: "The log of the kernel needs `sudo`: `sudo dmesg`"
+      - text: "Reading it needs `sudo`"
         correct: true
-        why: "`journalctl -k` shows the same lines without `sudo`."
+        why: "The log of the kernel needs `sudo`: `sudo dmesg`. `journalctl -k` shows the same lines without `sudo`."
       - text: "The kernel is broken"
         why: "The message is about permission, not about the kernel."
       - text: "`dmesg` is not installed"

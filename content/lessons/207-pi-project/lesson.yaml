@@ -267,9 +267,9 @@ steps:
         objective: O3
         prompt: "How did the checks test step 2, without anybody pressing?"
         options:
-          - text: "They ran the program with presses at fixed times, and looked at the lights at chosen times"
+          - text: "With presses at fixed times, as data"
             correct: true
-            why: "Inputs and times as data: the same idea as test cases."
+            why: "Then they looked at the lights at chosen times: inputs and times as data, the same idea as test cases."
           - text: "They looked at the code"
             why: "They looked at what the program did."
           - text: "They pressed the button with a robot"
@@ -315,19 +315,19 @@ review:
       - text: "The states and the times between them"
         correct: true
         why: "Then the code follows the plan, line by line."
-      - text: "The import lines"
+      - text: "The import lines and the pin numbers"
         why: "They come first in the file, but the plan comes before the code."
-      - text: "Nothing: try it"
+      - text: "Nothing: try it, and fix it as you go"
         why: "Without a plan, the order of lights and times gets mixed up."
   - kind: mcq
     id: r-test-events
     objective: O3
     prompt: "What is a good test for a program that reacts to a button?"
     options:
-      - text: "Press at known times, and check the outputs a little later"
+      - text: "Press at known times, check later"
         correct: true
-        why: "Inputs with times, outputs at times: the test can be repeated."
-      - text: "Look at the LEDs once"
+        why: "Inputs with times, outputs checked a little later: the test can be repeated."
+      - text: "Look at the LEDs once while it runs"
         why: "Your eyes miss short states and timing errors."
       - text: "Run it without any press"
         why: "That tests only the start."

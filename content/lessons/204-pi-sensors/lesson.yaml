@@ -249,9 +249,9 @@ steps:
         objective: O1
         prompt: "How does PWM make an LED half as bright?"
         options:
-          - text: "It switches the pin on and off very fast, on half of the time"
+          - text: "It is on half of the time"
             correct: true
-            why: "The eye sees the average."
+            why: "It switches the pin on and off very fast, on half of the time. The eye sees the average."
           - text: "It gives the LED half the volts"
             why: "A GPIO pin is 0 V or 3.3 V. PWM changes the time, not the volts."
           - text: "It uses half of the LED"
@@ -261,9 +261,9 @@ steps:
         objective: O2
         prompt: "`buzzer.beep(n=3)` and then `print(\"done\")`. When is `done` printed?"
         options:
-          - text: "At once: beep() works in the background, like blink()"
+          - text: "At once"
             correct: true
-            why: "`background=False` would wait for the three beeps."
+            why: "`beep()` works in the background, like `blink()`. `background=False` would wait for the three beeps."
           - text: "After the 3 beeps"
             why: "Only with `background=False`."
           - text: "Never"
@@ -285,10 +285,10 @@ steps:
         objective: O3
         prompt: "Why does the echo pin of an HC-SR04 need two resistors on a real Pi?"
         options:
-          - text: "It gives 5 V, and a GPIO pin may only get 3.3 V"
+          - text: "It gives 5 V, too much for a pin"
             correct: true
-            why: "Two resistors (a voltage divider) bring 5 V down to about 3.3 V."
-          - text: "To make the sound louder"
+            why: "A GPIO pin may only get 3.3 V. Two resistors (a voltage divider) bring 5 V down to about 2.9 V."
+          - text: "To make the sound pulses louder and longer"
             why: "The resistors protect the pin from 5 V."
           - text: "They are not needed"
             why: "Without them, 5 V reaches the GPIO pin. Rule number one."
@@ -309,9 +309,9 @@ review:
       - text: "From 0 (off) to 1 (full)"
         correct: true
         why: "0.5 is half bright."
-      - text: "From 0 to 100"
+      - text: "From 0 (off) to 100 (full)"
         why: "It is a part of 1, not a percent."
-      - text: "Only 0 or 1"
+      - text: "Only 0 (off) or 1 (on)"
         why: "That is a normal LED. A PWMLED takes anything between."
   - kind: mcq
     id: r-buzzer
@@ -321,10 +321,10 @@ review:
       - text: "`buzzer.on()`, `sleep(2)`, `buzzer.off()`"
         correct: true
         why: "Like an LED: on, wait, off."
-      - text: "`buzzer.sound(2)`"
+      - text: "`buzzer.on()`, then `buzzer.sound(2)`"
         why: "Buzzer has no `sound` method."
-      - text: "`buzzer.value = 2`"
-        why: "The value of a Buzzer is 0 or 1."
+      - text: "`buzzer.on()`, `buzzer.wait(2)`, `buzzer.off()`"
+        why: "Buzzer has no `wait` method: the program waits with `sleep(2)`."
   - kind: mcq
     id: r-pins-hcsr04
     objective: O3

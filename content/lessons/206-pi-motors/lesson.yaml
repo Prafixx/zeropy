@@ -111,9 +111,9 @@ steps:
         id: i-too-fast
         prompt: "Line 9 becomes `motor.forward(2)`. What happens?"
         options:
-          - text: "A `ValueError`: the speed must be between 0 and 1"
+          - text: "A `ValueError`"
             correct: true
-            why: "1 is full speed. gpiozero refuses more."
+            why: "The speed must be between 0 and 1. 1 is full speed; gpiozero refuses more."
           - text: "The motor turns twice as fast"
             why: "1 is already the fastest: the controller gives the full voltage."
           - text: "The motor turns backward"
@@ -280,8 +280,8 @@ steps:
           - text: "The left wheel turns backward, the right wheel forward"
             correct: true
             why: "So the robot turns on the spot, to the left."
-          - text: "Only the left wheel turns"
-            why: "Both turn, in opposite directions."
+          - text: "The left wheel turns forward, the right wheel backward"
+            why: "That is `robot.right()`: the robot turns to the right."
           - text: "Both turn backward"
             why: "That is `robot.backward()`."
 
@@ -409,10 +409,10 @@ steps:
         objective: O1
         prompt: "Why not connect a motor straight to a GPIO pin?"
         options:
-          - text: "A pin gives far too little current, and the motor's spikes can damage the Pi"
+          - text: "A pin gives far too little current"
             correct: true
-            why: "A motor controller and batteries do the heavy work."
-          - text: "Motors only work with 12 V"
+            why: "A pin gives a few milliamps, and the motor's spikes can damage the Pi. A motor controller and batteries do the heavy work."
+          - text: "Motors only work with 12 V or more"
             why: "Many small motors run on 3 to 6 V. The problem is the current."
           - text: "There is no reason"
             why: "It can break the Pi."
@@ -421,12 +421,12 @@ steps:
         objective: O1
         prompt: "Where does the power for the motors come from?"
         options:
-          - text: "From batteries connected to the motor controller"
+          - text: "From batteries on the controller"
             correct: true
-            why: "The Pi sends only the signals."
+            why: "Batteries connected to the motor controller. The Pi sends only the signals."
           - text: "From the 5V pin of the Pi"
             why: "The motors would take too much: the Pi could restart."
-          - text: "From the GPIO pins"
+          - text: "From the GPIO pins, through the board"
             why: "They give only a few milliamps."
       - kind: mcq
         id: q-value
@@ -457,12 +457,12 @@ steps:
         objective: O3
         prompt: "On your real robot, `right()` with `sleep(0.5)` turns only 60°, not 90°. What do you do?"
         options:
-          - text: "Test a longer time, like `sleep(0.75)`, until it fits"
+          - text: "Test a longer time until it fits"
             correct: true
-            why: "Each robot is different: wheels, motors, batteries, floor. Test and adjust."
+            why: "Try `sleep(0.75)`, then adjust. Each robot is different: wheels, motors, batteries, floor."
           - text: "Nothing: 0.5 s is always 90°"
             why: "That is only true on the board. Real robots differ."
-          - text: "Use `forward()` instead"
+          - text: "Use `forward()` for the rest of the turn"
             why: "That drives straight. The turn needs more time."
 
   # 9. REVIEW ---------------------------------------------------------------
@@ -478,12 +478,12 @@ review:
     objective: O1
     prompt: "What does an H-bridge on a motor controller do?"
     options:
-      - text: "It switches the big current of the motor, in both directions"
+      - text: "It switches the motor's current"
         correct: true
-        why: "The Pi gives small signals; the H-bridge does the heavy work."
+        why: "In both directions, so the motor can go forward and backward. The Pi gives small signals; the H-bridge does the heavy work."
       - text: "It makes the Pi faster"
         why: "It drives motors."
-      - text: "It measures the speed"
+      - text: "It measures how fast the motor turns"
         why: "It switches power. It does not measure."
   - kind: mcq
     id: r-half

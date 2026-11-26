@@ -478,19 +478,19 @@ steps:
           - text: "VCC to 5V, GND to ground, OUT to a GPIO pin"
             correct: true
             why: "It needs 5 V to work, and its output gives a safe 3.3 V."
-          - text: "VCC to a GPIO pin"
-            why: "A GPIO pin is for the signal, not for power."
-          - text: "OUT to 5V"
-            why: "OUT is the signal: it goes to the GPIO pin."
+          - text: "VCC to a GPIO pin, GND to ground, OUT to 5V"
+            why: "VCC is the power and OUT the signal: here they are swapped."
+          - text: "VCC to 3V3, GND to ground, OUT to 5V"
+            why: "OUT is the signal: it goes to a GPIO pin. And the sensor needs 5 V on VCC."
       - kind: mcq
         id: q-adc
         objective: O3
         prompt: "Why do you need an MCP3008 for a knob?"
         options:
-          - text: "The Pi has no analogue inputs: its pins know only on and off"
+          - text: "The Pi has no analogue inputs"
             correct: true
-            why: "The MCP3008 turns the voltage of the knob into a number."
-          - text: "The knob needs more power"
+            why: "Its pins know only on and off. The MCP3008 turns the voltage of the knob into a number."
+          - text: "The knob needs more power than a pin"
             why: "The knob gets 3.3 V. The chip is there to measure the voltage."
           - text: "Only for more than 8 knobs"
             why: "Even one knob needs it: the Pi cannot measure a voltage."
@@ -511,9 +511,9 @@ steps:
         objective: O3
         prompt: "What does `led.source = pot` do?"
         options:
-          - text: "The LED takes the value of the knob again and again, by itself"
+          - text: "The LED follows the knob"
             correct: true
-            why: "About 100 times a second. No loop is needed."
+            why: "Again and again, about 100 times a second, by itself. No loop is needed."
           - text: "It copies the value once"
             why: "That would be `led.value = pot.value`."
           - text: "It connects the pins with a wire"
@@ -556,10 +556,10 @@ review:
     objective: O2
     prompt: "A loop with `pir.wait_for_motion()` prints many times for one movement. What is missing?"
     options:
-      - text: "`pir.wait_for_no_motion()` at the end of the loop"
+      - text: "`pir.wait_for_no_motion()`"
         correct: true
-        why: "Then the loop waits until the movement is over."
-      - text: "A longer `sleep`"
+        why: "At the end of the loop: then it waits until the movement is over."
+      - text: "A longer `sleep(5)` in the loop"
         why: "That only slows it down. Wait for the end of the movement instead."
       - text: "A second sensor"
         why: "One sensor is enough. The loop must wait for the end."
@@ -583,9 +583,9 @@ review:
       - text: "SPI, in Interface Options"
         correct: true
         why: "The chip talks to the Pi over SPI."
-      - text: "SSH"
-        why: "SSH is for logging in from another computer."
-      - text: "VNC"
+      - text: "SSH, in Interface Options"
+        why: "SSH is for logging in from another computer. The chip needs SPI."
+      - text: "VNC, in Interface Options"
         why: "VNC shows the desktop on another computer. The chip needs SPI."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).

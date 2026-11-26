@@ -272,12 +272,12 @@ steps:
         objective: O1
         prompt: "What can a program do with a GPIO pin?"
         options:
-          - text: "Switch it on or off (output), or read if it is on or off (input)"
+          - text: "Switch it on or off, or read it"
             correct: true
-            why: "That is what general purpose input and output means."
+            why: "Output: switch it on or off. Input: read if it is on or off. That is what general purpose input and output means."
           - text: "Only show text on a screen"
             why: "A screen uses its own port. GPIO pins switch and read parts."
-          - text: "Store files"
+          - text: "Store files, like a small memory card"
             why: "Files are on the memory card. Pins switch and read."
       - kind: mcq
         id: q-led17
@@ -308,9 +308,9 @@ steps:
         objective: O3
         prompt: "Will the gpiozero code from ZeroPy run on a real Raspberry Pi?"
         options:
-          - text: "Yes: the pretend Pi uses the same class names and the same pin numbers"
+          - text: "Yes, the same code works"
             correct: true
-            why: "gpiozero is installed on Raspberry Pi OS. Wire the parts as in the lesson."
+            why: "The pretend Pi uses the same class names and pin numbers. gpiozero is installed on Raspberry Pi OS. Wire the parts as in the lesson."
           - text: "No: a real Pi needs a different language"
             why: "A real Pi runs Python and gpiozero."
           - text: "Only after a translation"
@@ -353,11 +353,11 @@ review:
     objective: O3
     prompt: "Which part needs no wires?"
     options:
-      - text: "`CPUTemperature()`: the sensor is inside the Pi"
+      - text: "`CPUTemperature()`"
         correct: true
-        why: "It reads the temperature of the processor."
-      - text: "`LED(17)`"
-        why: "An LED is wired to a pin, with a resistor."
+        why: "The sensor is inside the Pi: it reads the temperature of the processor."
+      - text: "`DistanceSensor(24, 23)`"
+        why: "It is a part on the breadboard, wired to two pins."
       - text: "`Button(2)`"
         why: "A button is wired to a pin and to ground."
 
