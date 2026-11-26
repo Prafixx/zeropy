@@ -160,7 +160,7 @@ export class Run3D implements ProgramRun {
     code.forEach((text, i) => {
       const face = new MeshBasicMaterial({
         map: canvasTexture(1024, pixels, (ctx) => {
-          ctx.fillStyle = PALETTE.ink;
+          ctx.fillStyle = PALETTE.slab;
           ctx.fillRect(0, 0, 1024, pixels);
           ctx.textBaseline = 'middle';
           ctx.font = `500 ${Math.round(pixels * 0.4)}px ${FONT_MONO}`;

@@ -1,10 +1,14 @@
-// The bridge between the page and the app: only the updater, nothing else.
+// The bridge between the page and the app: the window and the updater, nothing else.
 // The page cannot reach Node or the file system through it.
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('zeropyWindow', {
   /** Colors the window buttons like the title bar: { color, symbolColor }. */
   titleBar: (colors) => ipcRenderer.send('window:title-bar', colors),
+  /** Full screen on or off. */
+  fullScreen: (on) => ipcRenderer.send('window:full-screen', Boolean(on)),
+  /** The state of the window: { full, zoom }, after each change. */
+  onState: (listener) => ipcRenderer.on('window:state', (_event, state) => listener(state)),
 });
 
 contextBridge.exposeInMainWorld('zeropyUpdates', {

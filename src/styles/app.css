@@ -2485,7 +2485,7 @@ code {
 .pr2d-line {
   counter-increment: line;
   position: relative;
-  background: var(--ink);
+  background: var(--slab);
   color: var(--code-text);
   border-radius: var(--r-s);
   padding: 3px 10px 3px 34px;
@@ -2510,10 +2510,10 @@ code {
 }
 .pr2d-line.is-error {
   border-left-color: var(--tomato);
-  background: #5a2430;
+  background: color-mix(in srgb, var(--tomato) 28%, var(--slab));
 }
 .pr2d-screen {
-  background: var(--paper-2);
+  background: var(--screen);
   border: 6px solid var(--edge);
   border-radius: var(--r-m);
   padding: 6px 10px;
@@ -2833,8 +2833,7 @@ code {
 }
 .vb2d-idx {
   font: 600 12px/1 var(--font-mono);
-  color: var(--ink);
-  opacity: 0.8;
+  color: var(--accent-ink); /* on the cardboard of the rack, in both themes */
 }
 .vb2d-more {
   margin-bottom: 21px;
@@ -2891,7 +2890,7 @@ code {
 .vb2d-lock {
   align-self: center;
   margin-bottom: 18px;
-  color: var(--ink);
+  color: var(--accent-ink);
 }
 .vb2d-rack.is-set .vb2d-idx {
   visibility: hidden;
@@ -3966,7 +3965,7 @@ code {
 
 /* ---------- Terminal (pretend Linux) ---------- */
 .tag-terminal {
-  color: var(--code-str);
+  color: var(--success);
 }
 .term {
   display: grid;
@@ -4063,7 +4062,7 @@ code {
   color: transparent;
 }
 .term-frame.is-pc .term-bar {
-  color: var(--blue);
+  color: var(--code-fn);
 }
 .term-frame:focus-within {
   outline: 2px solid var(--info);
@@ -5058,6 +5057,26 @@ code {
 .titlebar-meter i.is-on {
   background: var(--success);
 }
+.titlebar-full {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 24px;
+  margin-left: var(--s-2);
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.titlebar-full:hover {
+  background: var(--paper-3);
+  color: var(--ink);
+}
+/* Full screen: Windows hides its buttons, so the bar needs no room for them. */
+.is-full-screen .titlebar {
+  padding-right: var(--s-3);
+}
 
 /* ---------- Playground: the editor first, the picture beside it ---------- */
 .step-body.playground > h1 {
@@ -5401,4 +5420,48 @@ code {
 }
 .sky-figure.is-4 {
   animation-delay: -18s;
+}
+
+/* ---------- Text over the sky ----------
+   Text with no box behind it sits on the stars. A soft halo in the color of
+   the page keeps each letter clear of them. Boxes, buttons and code have
+   their own background, so they do not need it. */
+:root[data-theme='dark'] .app-page,
+:root[data-theme='dark'] .player-main,
+:root[data-theme='dark'] .side {
+  text-shadow:
+    0 0 3px var(--paper-1),
+    0 0 8px var(--paper-1);
+}
+:root[data-theme='dark'] :is(.btn, .nav-count, .know-badge, .code, .cm-editor, .stage, .stage2d, .out, .gw, .term-frame, .bench-frame, .traceback, .side .brand, .side .side-link.is-current, input, textarea, select) {
+  text-shadow: none;
+}
+
+/* Dark theme: the code slab is close to the night of the page, so code that
+   stands on its own gets a thin frame. */
+:root[data-theme='dark'] .code,
+:root[data-theme='dark'] .traceback,
+:root[data-theme='dark'] .term-frame {
+  box-shadow: inset 0 0 0 2px var(--border);
+}
+
+/* A step of one column (predict, questions, quiz, review) sits in the
+   middle of the screen with its title, not on the left with an empty half. */
+.player-main:not(.is-page):has(> .step-body > .single) > * {
+  max-width: 760px;
+}
+.player-main:not(.is-page):has(> .step-body > .single:has(.trace-grid)) > * {
+  max-width: 980px;
+}
+
+/* Phone: the question of a "see it" step stays short, so the picture shows
+   without much scrolling; and the picture comes right after the code. */
+@media (max-width: 560px) {
+  .split-text > h1.display {
+    font-size: 22px;
+    line-height: 1.25;
+  }
+  .step-title {
+    font-size: 23px;
+  }
 }

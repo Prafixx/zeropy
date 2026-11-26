@@ -288,7 +288,7 @@ export function makeLock(): Mesh {
         ctx.stroke();
         ctx.fillRect(16, 48, 68, 56);
         ctx.strokeRect(16, 48, 68, 56);
-        ctx.fillStyle = PALETTE.ink;
+        ctx.fillStyle = PALETTE.onSun;
         ctx.fillRect(45, 66, 10, 20);
       }),
     }),
@@ -330,7 +330,7 @@ export function makeSign(text: string, width: number): Mesh {
         ctx.lineWidth = 6;
         ctx.strokeStyle = PALETTE.line;
         ctx.strokeRect(6, 6, cw - 12, ch - 12);
-        ctx.fillStyle = PALETTE.ink;
+        ctx.fillStyle = PALETTE.onSun;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         fitText(ctx, text, cw - 40, 90);

@@ -86,9 +86,10 @@
   /* Code: a dark slab in both themes. */
   --slab: #1c1b26;
   --slab-2: #262532; /* bars and gutters on the slab */
+  --screen: #fdfbf7; /* the face of a screen in a scene */
   --on-accent: var(--accent-ink);
   --code-text: #f3efe6;
-  --code-dim: #9a96ab;
+  --code-dim: #aba8bc;
   --code-kw: #ff9a80;
   --code-str: #93dcb3;
   --code-num: #f7cd66;
@@ -165,8 +166,8 @@
   --accent-ledge: #a86c00;
 
   --ink: #f3f0e8; /* 17:1 */
-  --ink-2: #c4c3d8; /* 11:1 */
-  --ink-3: #9192b0; /* 6.4:1 */
+  --ink-2: #d2d2e4; /* 13:1 */
+  --ink-3: #a6a8c6; /* 8:1: still readable over the stars */
 
   --accent: #f2b01e;
   --accent-hover: #f7c04a;
@@ -202,8 +203,9 @@
   --shadow-s: none;
   --shadow-l: var(--shadow-float);
 
-  --slab: #101017;
-  --slab-2: #1a1a23;
-  --code-dim: #8f8ba2;
+  --slab: #07080f; /* code: darker than the page, with a frame (app.css) */
+  --slab-2: #141730;
+  --code-dim: #a4a6c6;
+  --screen: #1e2139;
   color-scheme: dark;
 }

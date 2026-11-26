@@ -145,32 +145,83 @@ function buildMenu() {
   Menu.setApplicationMenu(null);
 }
 
-/** Zoom (for readers who need bigger text), full screen, and in development reload and DevTools. */
+/**
+ * The size of everything. The page grows with the window, so a maximized or
+ * full-screen window shows the same layout, bigger (not a small layout in a
+ * sea of space). A layout of 1280 x 760 is the base. Ctrl + and Ctrl - add
+ * the reader's own zoom on top, for those who need bigger text.
+ */
+const BASE_SIZE = { width: 1280, height: 760 };
+const MAX_FIT = 1.75;
+let ownZoom = 0; // steps of Ctrl + / Ctrl -
+function fit(win) {
+  if (win.isDestroyed() || win.isMinimized()) return;
+  const [width, height] = win.getContentSize();
+  const auto = Math.min(MAX_FIT, Math.max(1, Math.min(width / BASE_SIZE.width, height / BASE_SIZE.height)));
+  const zoom = Math.round(auto * 1.15 ** ownZoom * 100) / 100;
+  win.webContents.setZoomFactor(zoom);
+  // The bar of the page grows with the zoom: the window buttons grow with it.
+  barColors.height = Math.round(TITLE_BAR_HEIGHT * zoom);
+  try {
+    win.setTitleBarOverlay(barColors);
+  } catch {
+    // No overlay (full screen on some systems): nothing to size.
+  }
+  win.webContents.send('window:state', { full: win.isFullScreen(), zoom });
+}
+
+/** Zoom, full screen, and in development reload and DevTools. */
 function keys(win) {
   win.webContents.on('before-input-event', (event, input) => {
     if (input.type !== 'keyDown') return;
     const ctrl = input.control || input.meta;
     const wc = win.webContents;
     let done = true;
-    if (ctrl && (input.key === '=' || input.key === '+')) wc.setZoomLevel(Math.min(wc.getZoomLevel() + 0.5, 4));
-    else if (ctrl && input.key === '-') wc.setZoomLevel(Math.max(wc.getZoomLevel() - 0.5, -3));
-    else if (ctrl && input.key === '0') wc.setZoomLevel(0);
+    if (ctrl && (input.key === '=' || input.key === '+')) ownZoom = Math.min(ownZoom + 1, 6);
+    else if (ctrl && input.key === '-') ownZoom = Math.max(ownZoom - 1, -4);
+    else if (ctrl && input.key === '0') ownZoom = 0;
     else if (input.key === 'F11') win.setFullScreen(!win.isFullScreen());
     else if (!app.isPackaged && ctrl && input.key.toLowerCase() === 'r') wc.reload();
     else if (!app.isPackaged && (input.key === 'F12' || (ctrl && input.shift && input.key.toLowerCase() === 'i'))) wc.toggleDevTools();
     else done = false;
-    if (done) event.preventDefault();
+    if (done) {
+      event.preventDefault();
+      fit(win);
+    }
   });
 }
+
+/**
+ * Full screen for real: the maximize button (and a double click on the bar)
+ * fills the whole screen, over the taskbar. The app's bar has a button to
+ * leave it; F11 and Esc work too.
+ */
+function fullScreen(win) {
+  // Not maximized under the full screen: leaving it would maximize the
+  // window again, and that would start full screen again.
+  win.on('maximize', () => {
+    win.unmaximize();
+    win.setFullScreen(true);
+  });
+  for (const name of ['resize', 'enter-full-screen', 'leave-full-screen', 'restore']) win.on(name, () => fit(win));
+  win.webContents.on('did-finish-load', () => fit(win));
+}
+ipcMain.on('window:full-screen', (event, on) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win && typeof on === 'boolean') win.setFullScreen(on);
+});
 
 // The title bar is the app's own (src/main.ts draws it). Windows keeps its
 // buttons on the right, in the colors of the theme.
 const TITLE_BAR_HEIGHT = 36;
 const titleBar = (dark) => ({ color: dark ? '#151729' : '#fdfbf7', symbolColor: dark ? '#f3f0e8' : '#1d1c26', height: TITLE_BAR_HEIGHT });
+const barColors = titleBar(nativeTheme.shouldUseDarkColors);
 ipcMain.on('window:title-bar', (event, colors) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win && colors && typeof colors.color === 'string' && typeof colors.symbolColor === 'string') {
-    win.setTitleBarOverlay({ color: colors.color, symbolColor: colors.symbolColor, height: TITLE_BAR_HEIGHT });
+    barColors.color = colors.color;
+    barColors.symbolColor = colors.symbolColor;
+    win.setTitleBarOverlay(barColors);
   }
 });
 
@@ -196,6 +247,7 @@ function createWindow() {
     },
   });
   keys(win);
+  fullScreen(win);
   win.once('ready-to-show', () => win.show());
   void win.loadURL(`${ORIGIN}/index.html`);
   return win;

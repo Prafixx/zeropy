@@ -14,6 +14,9 @@ type Palette = {
   line: string;
   /** Frames of screens and boards. */
   frame: string;
+  /** The dark slab of code (both themes), and text on amber. */
+  slab: string;
+  onSun: string;
   /** Soft shadows under objects. */
   shadow: string;
   shadowOpacity: number;
@@ -32,6 +35,8 @@ const LIGHT: Palette = {
   ink: '#1D1C26',
   line: '#3A3846',
   frame: '#1D1C26',
+  slab: '#1C1B26',
+  onSun: '#1D1C26',
   shadow: '#1D1C26',
   shadowOpacity: 0.1,
   sun: '#F2B01E',
@@ -43,21 +48,24 @@ const LIGHT: Palette = {
   grey: '#B9B4C0',
 };
 
+// The night of the dark theme (tokens.css): deep blue, never grey or black.
 const DARK: Palette = {
-  paper: '#16161D',
-  paper2: '#272732',
-  ink: '#ECE8DF',
-  line: '#0D0D12',
-  frame: '#101017',
+  paper: '#151729',
+  paper2: '#1E2139',
+  ink: '#F3F0E8',
+  line: '#070810',
+  frame: '#3A3F6B',
+  slab: '#0B0D1C',
+  onSun: '#1D1C26',
   shadow: '#000000',
   shadowOpacity: 0.35,
   sun: '#F2B01E',
-  blue: '#5B79E6',
+  blue: '#4A66D4', // white text on it: 5:1
   leaf: '#2BAE78',
   tomato: '#E8583D',
   kraft: '#B48A57',
   kraftDark: '#8E6B3F',
-  grey: '#8F8B9D',
+  grey: '#9192B0',
 };
 
 /** The colors of the current theme. Read them when an object is built. */
