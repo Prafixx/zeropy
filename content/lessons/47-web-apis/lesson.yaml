@@ -201,10 +201,10 @@ steps:
         objective: O4
         prompt: "Why give every request a `timeout`?"
         options:
-          - text: "Else it may wait forever"
+          - text: "It may wait forever without it"
             correct: true
             why: "For a server that does not answer. With `timeout=10`, requests raises `Timeout` after 10 seconds, and you can handle it."
-          - text: "It makes the request faster"
+          - text: "It makes the request a lot faster"
             why: "It only limits how long to wait."
           - text: "The server needs it"
             why: "The server never sees it. It is for your program."

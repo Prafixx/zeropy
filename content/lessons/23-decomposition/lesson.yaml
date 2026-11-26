@@ -689,7 +689,7 @@ review:
         correct: true
         why: "One job, one function. Split it at the \"and\"."
       - text: "It has more than one return line"
-        why: "A good helper gives back its result with return."
+        why: "A function can have several `return` lines. The warning sign is that it does more than one job."
       - text: "It has a parameter with a default"
         why: "Parameters are how a helper gets what it needs."
   - kind: diagnose

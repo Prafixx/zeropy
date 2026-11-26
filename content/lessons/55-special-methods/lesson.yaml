@@ -570,13 +570,13 @@ review:
     objective: O1
     prompt: "Why does the setter keep the value in `self._age`, not `self.age`?"
     options:
-      - text: "`self.age` would call the setter again"
+      - text: "`self.age = ...` would call the setter again"
         correct: true
-        why: "Forever. The property has the name `age`; the stored value needs another name."
+        why: "It would repeat forever. The property has the name `age`; the stored value needs another name."
       - text: "Underscores are faster to read"
         why: "It is about the name, not speed."
       - text: "Python forbids `self.age` in a class"
-        why: "It would call the setter again."
+        why: "Python allows it. The problem is the endless loop."
   - kind: mcq
     id: r-static
     objective: O2
@@ -600,7 +600,7 @@ review:
       - text: "`a.add(b)` itself"
         why: "Only the dunder name is used."
       - text: "`sum([a, b])`"
-        why: "`+` calls `__add__`."
+        why: "`sum` is a function, not what `a + b` calls. It also starts from 0, so it needs more than `__add__`."
   - kind: mcq
     id: r-eq
     objective: O3

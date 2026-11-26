@@ -360,10 +360,10 @@ steps:
       id: w-search
       prompt: "What happens if `return -1` is moved **inside** the loop, under the `if`, at the same level as `if`?"
       options:
-        - text: "It gives `-1` after one number"
+        - text: "It stops after the first number"
           correct: true
           why: "When the first number is not negative, it gives back `-1` without checking the others: the first round always reaches a `return`."
-        - text: "Nothing changes in the result"
+        - text: "Nothing changes in the result at all"
           why: "Inside the loop, `return -1` runs in the first round, after the first number."
         - text: "Python shows an error"
           why: "It is correct Python. It is a logic error: the result is wrong."

@@ -830,7 +830,7 @@ review:
         correct: true
         why: "`zip` walks the columns side by side: one row in each round."
       - text: "`for day in data[\"day\"] + data[\"temp\"]:`"
-        why: "That loops over the keys `day` and `temp`."
+        why: "`+` joins the two lists, so you get Mon, Tue, 4, 6 one by one, not rows."
       - text: "`for temp in data[\"temp\"]:` alone, then the days"
         why: "Then you have the temperatures, but not their days."
   - kind: mcq
