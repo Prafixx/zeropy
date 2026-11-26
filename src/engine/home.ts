@@ -1,40 +1,17 @@
 // Home: an app home. A returning learner sees today first (continue, review,
 // mistakes, progress), then the course map. A first visit gets a short
 // welcome with a live example instead.
-import { Boxes2D } from '@/kit/actors/variable-boxes-2d';
-import type { BoxVar } from '@/kit/actors/variable-boxes';
-import { finished, isReduced, place, sleep } from '@/kit/motion';
+import { landscape } from '@/kit/landscape';
+import { place } from '@/kit/motion';
 import { course, getLesson, lessons } from './registry';
 import { lessonAvailable, pathStatus, paths } from './paths';
 import { dueCards, isSkipped, lessonState, mistakes, openPath } from './store';
 import type { CourseModule } from './types';
-import { codeBlock, h, icon, mascot } from './ui';
+import { h, icon, mascot } from './ui';
 import { APP_VERSION } from './updates';
-
-const HERO_CODE = 'price = 4\nquantity = 3\ntotal = price * quantity\nquantity = 10';
-const HERO_STATES: { vars: BoxVar[]; from?: Record<string, string> }[] = [
-  { vars: [{ name: 'price', type: 'int', repr: '4' }] },
-  { vars: [{ name: 'price', type: 'int', repr: '4' }, { name: 'quantity', type: 'int', repr: '3' }] },
-  {
-    vars: [
-      { name: 'price', type: 'int', repr: '4' },
-      { name: 'quantity', type: 'int', repr: '3' },
-      { name: 'total', type: 'int', repr: '12' },
-    ],
-    from: { total: 'price' },
-  },
-  {
-    vars: [
-      { name: 'price', type: 'int', repr: '4' },
-      { name: 'quantity', type: 'int', repr: '10' },
-      { name: 'total', type: 'int', repr: '12' },
-    ],
-  },
-];
 
 /** `view`: 'start' is the first screen only; 'course' is the map of the course. */
 export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start'): () => void {
-  let alive = true;
   const available = lessons();
   // The next lesson: not done, not skipped, and not in a path that is still closed.
   const current = available.find((l) => !lessonState(l.id).done && lessonAvailable(l)) ?? available[0];
@@ -42,30 +19,9 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
   const due = dueCards().length;
   const missed = mistakes().length;
 
-  // Hero demo: the product in ten seconds, built from the same actor as lessons.
-  const heroCode = codeBlock(HERO_CODE, { numbers: true });
-  const heroStage = h('div', { class: 'stage2d hero-stage' });
-  const boxes = new Boxes2D({ mode: '2d', el: heroStage, dispose: () => undefined });
-
-  async function loop(): Promise<void> {
-    await sleep(700);
-    while (alive) {
-      await finished(boxes.sync([]));
-      for (let i = 0; i < HERO_STATES.length && alive; i += 1) {
-        heroCode.setActive(i + 1);
-        await finished(boxes.sync(HERO_STATES[i].vars, { from: HERO_STATES[i].from }));
-        await sleep(900);
-      }
-      if (isReduced()) return;
-      await sleep(2600);
-      heroCode.setActive(null);
-    }
-  }
-
   // Hours from the lessons themselves, so the numbers always agree.
   const minutesOf = (ids: string[]): number => ids.reduce((sum, id) => sum + (getLesson(id)?.minutes ?? 0), 0);
   const hours = (minutes: number): string => String(Math.round((minutes / 60) * 2) / 2);
-  const totalMinutes = minutesOf(course.modules.flatMap((m) => m.lessons.map((l) => l.id)));
 
   /** The lessons of a module as chips. `practice`: the link to its mixed practice. */
   const lessonChips = (module: CourseModule, practice?: string): HTMLElement =>
@@ -239,40 +195,18 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
     ];
   }
 
-  /** A first visit: what this is, a live example, and the way in. */
+  /** A first visit: the claim and the way in, over the pixel scene of the lake. */
   function welcome(): HTMLElement[] {
+    const claim = h('h1', { class: 'landing-claim', 'data-enter': true }, 'Code your first program ', h('em', null, 'today.'));
+    const start = current
+      ? h('a', { class: 'btn btn-primary btn-big', href: `#/lesson/${current.id}` }, h('span', { class: 'btn-label' }, 'Start the first lesson'), icon('right', 20))
+      : null;
     return [
       h(
         'section',
-        { class: 'hero' },
-        h(
-          'div',
-          { class: 'hero-text' },
-          h('h1', { class: 'display display-xl hero-title', 'data-enter': true }, 'Learn Python, then build ', h('em', null, 'without help.')),
-          h(
-            'p',
-            { class: 'lead', 'data-enter': true },
-            `Short lessons with code on every screen, checked at once. About ${Math.round(totalMinutes / 60)} hours from your first line to your own desktop app.`,
-          ),
-          h(
-            'div',
-            { class: 'hero-actions', 'data-enter': true },
-            current
-              ? h(
-                  'a',
-                  { class: 'btn btn-primary btn-big', href: `#/lesson/${current.id}` },
-                  h('span', { class: 'btn-label' }, `Start: ${current.title}`),
-                  icon('right', 20),
-                )
-              : null,
-            h('a', { class: 'btn btn-big', href: '#/course' }, h('span', { class: 'btn-label' }, 'See the course')),
-          ),
-        ),
-        h(
-          'div',
-          { class: 'hero-demo', 'data-enter': true, 'aria-hidden': 'true' },
-          h('div', { class: 'hero-card' }, heroCode.el, heroStage),
-        ),
+        { class: 'landing' },
+        claim,
+        h('div', { class: 'landing-actions', 'data-enter': true }, start, h('a', { class: 'btn btn-big', href: '#/course' }, h('span', { class: 'btn-label' }, 'See the course'))),
       ),
     ];
   }
@@ -331,12 +265,16 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
       ? h('div', { class: 'home' }, h('main', { class: 'home-main' }, courseMap()), footer)
       : h('div', { class: 'home' }, h('main', { class: 'home-main home-start' }, ...(anyProgress ? today() : welcome())));
 
+  // A first visit: the pixel scene at the foot of the page.
+  const scene = view === 'start' && !anyProgress ? landscape() : null;
+  if (scene) {
+    page.classList.add('has-scene');
+    page.append(scene.el);
+  }
   root.replaceChildren(page);
   place(page.querySelectorAll('[data-enter]'));
-  void loop();
 
   return () => {
-    alive = false;
-    boxes.dispose();
+    scene?.dispose();
   };
 }

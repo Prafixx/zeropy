@@ -87,6 +87,12 @@
   --slab: #1c1b26;
   --slab-2: #262532; /* bars and gutters on the slab */
   --screen: #fdfbf7; /* the face of a screen in a scene */
+  --value-str: #2b4fc9; /* text values (white words on it) */
+  /* The pixel scene of the landing: far, middle and near, then the rim. */
+  --scene-back: #ebe4d6;
+  --scene-mid: #e2d9c7;
+  --scene-front: #d5cab4;
+  --scene-rim: #bcae94;
   --on-accent: var(--accent-ink);
   --code-text: #f3efe6;
   --code-dim: #aba8bc;
@@ -207,5 +213,10 @@
   --slab-2: #141730;
   --code-dim: #a4a6c6;
   --screen: #1e2139;
+  --value-str: #4a66d4;
+  --scene-back: #1b1e3a;
+  --scene-mid: #13152b;
+  --scene-front: #090a14;
+  --scene-rim: #3a4072;
   color-scheme: dark;
 }

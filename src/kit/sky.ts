@@ -131,15 +131,10 @@ function figure(strokes: [number, number][][]): () => SVGSVGElement {
   };
 }
 
-// Star pictures of Python: a snake (a python), the prompt >>>, the brackets
-// of a list [ ] and the # of a comment. Placed in a cross over the screen
-// (top right, lower left, top left, lower right), so the sky stays balanced.
+// Star pictures of Python: a snake (a python), the prompt >>> and the # of a
+// comment, spread over the screen so the sky stays balanced.
 const SNAKE = [Array.from({ length: 9 }, (_, i) => [i * 26, Math.round(26 + Math.sin(i * 0.9) * 22)] as [number, number])];
 const PROMPT = [0, 1, 2].map((i) => [[i * 30, 0], [i * 30 + 18, 18], [i * 30, 36]] as [number, number][]);
-const LIST: [number, number][][] = [
-  [[12, 0], [0, 0], [0, 18], [0, 36], [12, 36]],
-  [[40, 0], [52, 0], [52, 18], [52, 36], [40, 36]],
-];
 const HASH: [number, number][][] = [
   [[20, 0], [12, 56]],
   [[44, 0], [36, 56]],
@@ -221,7 +216,6 @@ export function mountSky(): void {
   thing(far, () => nebula(46, 26, 9), 'sky-nebula tone-v', 4, 12);
   thing(mid, figure(SNAKE), 'sky-figure', 74, 10);
   thing(far, figure(PROMPT), 'sky-figure is-2', 19, 76);
-  thing(mid, figure(LIST), 'sky-figure is-3', 34, 7);
   thing(far, figure(HASH), 'sky-figure is-4', 82, 80);
   shootingStars(sky, rnd);
   document.body.prepend(sky);

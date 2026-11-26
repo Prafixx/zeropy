@@ -5006,7 +5006,8 @@ code {
 
 /* ---------- The title bar of the desktop app (src/engine/titlebar.ts) ----------
    It replaces the plain bar of Windows. Windows draws its buttons on the
-   right (about 140px), over the same color. */
+   right (about 140px), over the same color. The name, then the lesson meter
+   across the middle, then the count and the full-screen button. */
 :root {
   --titlebar-h: 0px;
 }
@@ -5022,35 +5023,41 @@ code {
   z-index: 1000;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: var(--titlebar-h);
+  height: 36px;
   padding: 0 156px 0 var(--s-4);
   border-bottom: 1px solid var(--border);
   background: var(--paper-2);
+  font: 400 11px / 1 var(--font-tiny);
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
   -webkit-app-region: drag;
   user-select: none;
+  transition: transform var(--dur-3) var(--ease);
 }
 .titlebar-name {
-  font: 400 11px/1 var(--font-tiny);
-  letter-spacing: 0.12em;
-  color: var(--ink-3);
+  flex: none;
+  margin-right: var(--s-10);
+  letter-spacing: 0.14em;
 }
-.titlebar-hud {
+/* One cell for each Python lesson, across the middle of the bar, with room
+   on both sides. */
+.titlebar-progress {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  font: 400 11px/1 var(--font-tiny);
-  letter-spacing: 0.08em;
-  color: var(--ink-3);
+  gap: var(--s-3);
+  max-width: 1040px;
+  margin: 0 auto;
 }
 .titlebar-meter {
+  flex: 1;
   display: flex;
   gap: 2px;
   padding: 2px;
   border: 2px solid var(--border-strong);
 }
 .titlebar-meter i {
-  width: 6px;
+  flex: 1;
   height: 8px;
   background: var(--paper-4);
 }
@@ -5058,25 +5065,79 @@ code {
   background: var(--success);
 }
 .titlebar-full {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 24px;
-  margin-left: var(--s-2);
-  border: 0;
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  margin-left: var(--s-10);
+  padding: 0 var(--s-1);
+  border: 2px solid transparent;
   background: none;
   color: var(--ink-2);
+  font: inherit;
   cursor: pointer;
   -webkit-app-region: no-drag;
+  transition:
+    background var(--dur-2) var(--ease),
+    border-color var(--dur-2) var(--ease);
 }
-.titlebar-full:hover {
+.titlebar-full-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+}
+/* The words open to the left of the icon, under the pointer only. */
+.titlebar-full-text {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition:
+    max-width var(--dur-3) var(--ease),
+    opacity var(--dur-2) var(--ease),
+    margin var(--dur-3) var(--ease);
+}
+.titlebar-full:hover,
+.titlebar-full:focus-visible {
+  border-color: var(--border-strong);
   background: var(--paper-3);
   color: var(--ink);
 }
-/* The room for the window buttons: Windows keeps them in full screen too.
-   env() gives their real width; 156px if it is not known. */
-.titlebar {
-  padding-right: max(156px, calc(100vw - env(titlebar-area-width, calc(100vw - 156px)) + var(--s-3)));
+.titlebar-full:hover .titlebar-full-text,
+.titlebar-full:focus-visible .titlebar-full-text {
+  max-width: 160px;
+  margin: 0 var(--s-2) 0 var(--s-1);
+  opacity: 1;
+}
+/* Full screen: the page takes the whole screen and the bar hides. It slides
+   down when the pointer touches the top edge, and stays while it is over it.
+   Windows hides its own buttons, so the bar needs no room for them. */
+.titlebar-edge {
+  display: none;
+}
+.is-full-screen {
+  --titlebar-h: 0px;
+}
+.is-full-screen .titlebar-edge {
+  display: block;
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 1001;
+  height: 6px;
+}
+.is-full-screen .titlebar {
+  padding-right: var(--s-3);
+  transform: translateY(-100%);
+}
+.is-full-screen .titlebar-edge:hover + .titlebar,
+.is-full-screen .titlebar:hover,
+.is-full-screen .titlebar:focus-within {
+  transform: none;
+  box-shadow: 0 4px 0 var(--ledge);
+}
+:root[data-motion='reduced'] .titlebar,
+:root[data-motion='reduced'] .titlebar-full-text {
+  transition: none;
 }
 
 /* ---------- Playground: the editor first, the picture beside it ---------- */
@@ -5432,9 +5493,6 @@ code {
 .sky-figure.is-2 {
   animation-delay: -23s;
 }
-.sky-figure.is-3 {
-  animation-delay: -4s;
-}
 .sky-figure.is-4 {
   animation-delay: -18s;
 }
@@ -5490,5 +5548,265 @@ code {
   }
   .side .side-link {
     height: 34px;
+  }
+}
+
+/* ==========================================================================
+   The landing (a first visit), like the title screen of a game: the claim
+   and two big buttons in the middle of the sky, the pixel scene of the lake
+   at the foot of the page (src/kit/landscape.ts).
+   ========================================================================== */
+.home.has-scene {
+  --scene-h: clamp(250px, 50%, 480px);
+  position: relative;
+  overflow: hidden;
+}
+/* The claim and the buttons sit in the middle of the sky above the scene,
+   a little higher than the exact middle, where the eye starts. */
+.home.has-scene .home-start {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  height: calc(100% - var(--scene-h) + 40px);
+  align-content: center;
+  padding-block: var(--s-6) var(--s-10);
+}
+.landing {
+  --claim: 66px;
+  display: grid;
+  justify-items: center;
+  gap: var(--s-10);
+  width: 100%;
+  text-align: center;
+}
+.landing-claim {
+  margin: 0;
+  font: var(--display-weight) var(--claim) / 1.1 var(--font-display);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.landing-claim em {
+  font-style: normal;
+  color: var(--accent-text);
+}
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-5);
+}
+.landing .btn-big {
+  min-height: 66px;
+  padding: 0 var(--s-10);
+  font-size: 21px;
+}
+.landing .btn-label {
+  white-space: nowrap;
+}
+
+/* The scene: mountains and hills in the colors of the night, and the lake. */
+.scene {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 0;
+  height: var(--scene-h);
+  pointer-events: none;
+}
+.scene-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.s-back {
+  fill: var(--scene-back);
+}
+.s-backRim {
+  fill: color-mix(in srgb, var(--scene-rim) 60%, var(--scene-back));
+}
+.s-mid,
+.s-trees {
+  fill: var(--scene-mid);
+}
+.s-midShade {
+  fill: var(--scene-front);
+  opacity: 0.6;
+}
+.s-water {
+  fill: var(--scene-front);
+}
+.s-rBack {
+  fill: var(--scene-back);
+}
+.s-rMid,
+.s-rTrees {
+  fill: color-mix(in srgb, var(--scene-mid) 60%, var(--scene-back));
+}
+.s-rStars {
+  fill: var(--star-w);
+  opacity: 0.5;
+}
+.s-shore {
+  fill: var(--scene-rim);
+}
+/* Short lines of light that come and go on the water. */
+.sc-ripple {
+  position: absolute;
+  height: 4px;
+  background: color-mix(in srgb, var(--ink-3) 70%, var(--scene-rim));
+  opacity: 0;
+  animation: zp-ripple 6s ease-in-out infinite;
+}
+@keyframes zp-ripple {
+  0%,
+  100% {
+    opacity: 0;
+    translate: -6px 0;
+  }
+  50% {
+    opacity: 0.8;
+    translate: 6px 0;
+  }
+}
+/* The sailboat drifts across the lake in about three minutes; its
+   reflection (the same boat, upside down, dim) rocks with it. */
+.sc-boat {
+  position: absolute;
+  left: -60px;
+  animation: zp-sail 190s linear infinite;
+  animation-delay: -70s;
+}
+.sc-boat svg {
+  display: block;
+}
+.sc-boat-up {
+  animation: zp-rock 2.4s steps(2) infinite;
+}
+.sc-boat-down {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  scale: 1 -0.8;
+  transform-origin: 50% 0;
+  opacity: 0.35;
+  -webkit-mask: repeating-linear-gradient(transparent 0 4px, #000 4px 12px);
+  mask: repeating-linear-gradient(transparent 0 4px, #000 4px 12px);
+  animation: zp-rock 2.4s steps(2) infinite reverse;
+}
+@keyframes zp-sail {
+  to {
+    left: calc(100% + 20px);
+  }
+}
+@keyframes zp-rock {
+  50% {
+    translate: 0 2px;
+  }
+}
+.bt-mast,
+.bt-dark {
+  fill: var(--scene-front);
+}
+.bt-flag {
+  fill: var(--accent);
+}
+.bt-sail {
+  fill: var(--code-text);
+}
+.bt-sail2 {
+  fill: color-mix(in srgb, var(--code-text) 75%, var(--scene-rim));
+}
+.bt-hull {
+  fill: var(--kraft);
+}
+/* The fish: out of the water in a small arc, then a ring that grows. */
+.sc-fish,
+.sc-ring {
+  position: absolute;
+  opacity: 0;
+}
+.sc-fish svg {
+  display: block;
+}
+.fs-body {
+  fill: var(--accent);
+}
+.fs-eye {
+  fill: var(--scene-front);
+}
+.sc-fish.is-on {
+  animation: zp-jump 1.1s steps(8) forwards;
+}
+@keyframes zp-jump {
+  0% {
+    opacity: 1;
+    translate: 0 0;
+    rotate: -50deg;
+  }
+  50% {
+    translate: 14px -26px;
+    rotate: 0deg;
+  }
+  95% {
+    opacity: 1;
+    translate: 28px 0;
+    rotate: 50deg;
+  }
+  100% {
+    opacity: 0;
+    translate: 28px 4px;
+  }
+}
+.sc-ring {
+  width: 40px;
+  height: 10px;
+  margin-left: 8px;
+  border: 2px solid var(--scene-rim);
+  border-radius: 50%;
+}
+.sc-ring.is-on {
+  animation: zp-ring 1.8s ease-out 0.9s forwards;
+}
+@keyframes zp-ring {
+  0% {
+    opacity: 0.9;
+    scale: 0.3;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.8;
+  }
+}
+:root[data-motion='reduced'] .scene *,
+:root[data-motion='reduced'] .scene {
+  animation: none !important;
+}
+
+@media (min-width: 1280px) and (min-height: 720px) {
+  .landing {
+    --claim: 84px;
+    gap: var(--s-12);
+  }
+  .landing .btn-big {
+    min-height: 72px;
+    font-size: 23px;
+  }
+}
+@media (max-width: 560px) {
+  .landing {
+    --claim: 36px;
+    gap: var(--s-8);
+  }
+  .landing-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .landing .btn-big {
+    min-height: 56px;
+    font-size: 17px;
+  }
+  .home.has-scene {
+    --scene-h: 32%;
   }
 }
