@@ -201,7 +201,7 @@ steps:
   - id: collections
     type: theory
     objective: O2
-    title: Handy containers
+    title: Useful containers
     body: |
       The module `collections` has containers for jobs that come back all
       the time:

@@ -243,7 +243,7 @@ steps:
         objective: O1
         prompt: "Why switch the old light off before the new one on?"
         options:
-          - text: "So only one state is shown at a time: green, amber or red"
+          - text: "So only one state shows"
             correct: true
             why: "Two lights at once would be a state that the plan does not have."
           - text: "The LEDs cannot be on at the same time"

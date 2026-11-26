@@ -81,7 +81,7 @@ steps:
         id: i-wrap
         prompt: "After 250 comes 44. Why 44?"
         options:
-          - text: "250 + 50 = 300, and 300 % 256 = 44: the ninth bit is lost"
+          - text: "300 % 256 = 44: the ninth bit is lost"
             correct: true
             why: "8 bits keep only the rest after 256."
           - text: "The counter starts again at 0, then adds 44"
@@ -92,7 +92,7 @@ steps:
         id: i-signed
         prompt: "The bits of 200 are `11001000`. Why is the last column -56?"
         options:
-          - text: "Read with a sign, it is negative"
+          - text: "With a sign, it is negative"
             correct: true
             why: "The first bit 1 means negative: 200 - 256 = -56. The same 8 bits, read another way."
           - text: "200 is too big for 8 bits"

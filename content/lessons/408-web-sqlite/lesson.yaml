@@ -397,7 +397,7 @@ steps:
       - kind: mcq
         id: d-token
         objective: O3
-        prompt: "Why can the other page not just copy the token?"
+        prompt: "Why can the other page not copy the token?"
         options:
           - text: "It cannot read your pages"
             correct: true
@@ -526,7 +526,7 @@ review:
       - text: "A secret token in the form"
         correct: true
         why: "Another site cannot read it, so its forged POST has no valid token."
-      - text: "A longer password"
+      - text: "A longer password for each user"
         why: "The attack uses your existing login. The password is never needed."
       - text: "Using GET instead"
         why: "That makes it worse: a GET must never change data."

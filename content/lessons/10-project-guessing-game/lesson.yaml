@@ -476,7 +476,7 @@ steps:
         objective: O4
         prompt: "The loop of your game starts with `while guess != secret and tries < 5:`. When does it stop?"
         options:
-          - text: "When the guess is right, or when 5 tries are used: one of the two is enough"
+          - text: "When the guess is right, or after 5 tries"
             correct: true
             why: "`and` is True only when both parts are True. When one part becomes False, the loop ends."
           - text: "Only when the guess is right and 5 tries are used"

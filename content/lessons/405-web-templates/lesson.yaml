@@ -473,7 +473,7 @@ review:
     objective: O1
     prompt: "How does the value `title` get into the template?"
     options:
-      - text: "As an argument of the call: `render_template_string(PAGE, title=\"Shop\")`"
+      - text: "As an argument: `title=\"Shop\"`"
         correct: true
         why: "Each keyword argument becomes a name in the template."
       - text: "The template reads the variables of the program"

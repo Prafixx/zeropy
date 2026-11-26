@@ -550,7 +550,7 @@ steps:
         objective: O2
         prompt: "Which three parts does a counting loop need?"
         options:
-          - text: "A start value, a condition, and a change in the block"
+          - text: "A start, a condition, a change"
             correct: true
             why: "The start is before the loop. The change makes the condition False at some point."
           - text: "A start value, a condition, and an `else`"
@@ -613,7 +613,7 @@ review:
     objective: O1
     prompt: "What does Python do after the last line of a `while` block?"
     options:
-      - text: "It goes back to the `while` line and asks the condition again"
+      - text: "It goes back to the `while` line"
         correct: true
         why: "If the answer is True, the block runs again. If it is False, Python continues after the block."
       - text: "It continues with the line after the block"
@@ -625,7 +625,7 @@ review:
     objective: O4
     prompt: "A loop never stops. What do you check first?"
     options:
-      - text: "The line that changes the condition's variable"
+      - text: "The line that changes the variable"
         correct: true
         why: "That line is in the block. Most endless loops have no change, or a change in the wrong direction."
       - text: "The `print` lines inside the loop"

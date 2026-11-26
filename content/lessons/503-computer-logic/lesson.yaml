@@ -391,7 +391,7 @@ steps:
         objective: O2
         prompt: "What does `n & 1` say about a number?"
         options:
-          - text: "1 if n is odd, 0 if n is even"
+          - text: "If n is odd (1) or even (0)"
             correct: true
             why: "The last bit is worth 1. Only odd numbers have it."
           - text: "If n is 1, it gives True"

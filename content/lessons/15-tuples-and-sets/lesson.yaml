@@ -275,7 +275,7 @@ steps:
       id: w-report
       prompt: "What does `marks.items()` give the loop in each round?"
       options:
-        - text: "One pair as a tuple, like `(\"Ana\", 72)`"
+        - text: "A tuple: `(\"Ana\", 72)`"
           correct: true
           why: "`for name, mark in ...` unpacks that tuple into two names."
         - text: "Only the key, like `\"Ana\"`"
@@ -517,9 +517,9 @@ steps:
           - text: "`set()`"
             correct: true
             why: "`{}` is already taken: it is an empty dictionary."
-          - text: "`{}`"
+          - text: "`{}`, two braces"
             why: "That is an empty dictionary."
-          - text: "`[]`"
+          - text: "`[]`, square brackets"
             why: "That is an empty list."
 
   # 12. REVIEW ---------------------------------------------------------------

@@ -661,7 +661,7 @@ review:
         why: "Users type all kinds of things. Catch it and ask again."
       - text: "`NameError` from a typo"
         why: "A typo is a bug. Fix it."
-      - text: "Every error, to be safe"
+      - text: "Every error, so nothing can stop it"
         why: "That hides bugs. Catch only what you expect."
   - kind: predict
     id: r-as

@@ -327,7 +327,7 @@ steps:
         objective: O2
         prompt: "You type your password for SSH, and nothing appears. What is wrong?"
         options:
-          - text: "Nothing: the password is not shown while you type"
+          - text: "Nothing: it is hidden"
             correct: true
             why: "Type it and press Enter."
           - text: "The keyboard does not work in SSH"
@@ -408,7 +408,7 @@ review:
     objective: O2
     prompt: "Why does SSH ask `Are you sure you want to continue connecting` only the first time?"
     options:
-      - text: "Then your PC remembers the fingerprint of the Pi"
+      - text: "It saves the Pi's fingerprint"
         correct: true
         why: "Next time it checks that it talks to the same Pi."
       - text: "Then it remembers your password"

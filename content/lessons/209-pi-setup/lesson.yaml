@@ -156,7 +156,7 @@ steps:
         objective: O2
         prompt: "Imager asks: \"I understand, erase and write\". What happens to the photos on the SD card?"
         options:
-          - text: "They are lost: the whole card is written new"
+          - text: "They are lost"
             correct: true
             why: "Copy anything you want to keep before you write."
           - text: "Imager keeps them in a folder"
@@ -378,12 +378,12 @@ steps:
         objective: O4
         prompt: "`vcgencmd measure_temp` says `temp=83.0'C` while a program runs. What happens?"
         options:
-          - text: "The Pi slows itself down to cool off"
+          - text: "It slows down to cool off"
             correct: true
             why: "Above about 80 °C it slows down; 85 °C is the limit. A heatsink or a fan helps."
           - text: "Nothing: that is normal"
             why: "It is close to the limit, and the Pi is already slower."
-          - text: "It turns off at once"
+          - text: "It turns off at once, to protect itself"
             why: "It slows down first, to protect itself."
       - kind: mcq
         id: q-lite

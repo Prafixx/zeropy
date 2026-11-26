@@ -422,7 +422,7 @@ steps:
         objective: O3
         prompt: "Why does step 4 work on `remaining = counts.copy()` and not on `counts`?"
         options:
-          - text: "Step 4 deletes keys, and `counts` must stay complete"
+          - text: "Step 4 deletes keys"
             correct: true
             why: "Without the copy, `del` would delete words from `counts` itself: two names, one dictionary."
           - text: "`del` does not work on `counts`"
@@ -472,7 +472,7 @@ review:
     objective: O1
     prompt: "What is a pipeline in a program?"
     options:
-      - text: "Steps where each one uses the result of the step before"
+      - text: "Steps that pass results on"
         correct: true
         why: "text → words → clean → counts → top. You can test the data between the steps."
       - text: "A loop that runs forever"

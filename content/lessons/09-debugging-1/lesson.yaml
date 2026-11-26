@@ -315,7 +315,7 @@ steps:
       id: w-average
       prompt: "The first test line showed `sum = 21`, which was right. **Why was this test useful?**"
       options:
-        - text: "It showed that this part is right, so the mistake must be in another part"
+        - text: "The mistake must be in another part"
           correct: true
           why: "Each test makes the place smaller where the mistake can be. A test that shows no mistake is progress too."
         - text: "It was not useful, because it found no mistake"
@@ -628,10 +628,10 @@ review:
     objective: O4
     prompt: "An error message names line 8. Where can the cause of the mistake be?"
     options:
-      - text: "On line 8 or on a line before it"
+      - text: "On line 8, or before it"
         correct: true
         why: "Line 8 is where Python could not go on. A wrong value can come from an earlier line."
-      - text: "Only on line 8"
+      - text: "Only on line 8, never elsewhere"
         why: "Often, but not always. A value from line 3 can make line 8 fail."
       - text: "On a line after line 8"
         why: "Those lines did not run yet. They cannot be the cause of this stop."

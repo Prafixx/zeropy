@@ -290,7 +290,7 @@ steps:
       id: w-tax
       prompt: "The tax changes to 10%. **How many lines must you change?**"
       options:
-        - text: "One line: the `return` line of the function"
+        - text: "One: the `return` line"
           correct: true
           why: "The rule is in one place. Every call uses it."
         - text: "Three lines: one for each call"
@@ -472,7 +472,7 @@ steps:
         objective: O1
         prompt: "What happens when Python runs a `def` line and its block?"
         options:
-          - text: "Python remembers the block under the name. It runs nothing yet"
+          - text: "It stores the block; nothing runs yet"
             correct: true
             why: "The block runs only when the function is called."
           - text: "Python runs the block one time"
@@ -495,7 +495,7 @@ steps:
         objective: O4
         prompt: "What is the difference between `print(x)` and `return x` inside a function?"
         options:
-          - text: "`print` shows `x` on the screen. `return` gives `x` back to the code that called"
+          - text: "`print` shows `x`; `return` gives it back"
             correct: true
             why: "Only `return` lets the caller store or use the value."
           - text: "There is no difference"

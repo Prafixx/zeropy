@@ -211,7 +211,7 @@ steps:
         objective: O3
         prompt: "What does the `x` in the second field of `/etc/passwd` mean?"
         options:
-          - text: "The password is in `/etc/shadow`"
+          - text: "It is in `/etc/shadow`"
             correct: true
             why: "Only root may read that file. `/etc/passwd` can be read by everyone, so the password is not there."
           - text: "The user has no password"

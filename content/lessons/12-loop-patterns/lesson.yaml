@@ -223,7 +223,7 @@ steps:
       id: w-lowest
       prompt: "The first line in the loop reads `prices[0]` again, and compares it with itself. **Is that a problem?**"
       options:
-        - text: "No. The answer is False, so nothing changes. It is one extra round, and the code stays simple"
+        - text: "No. It is one extra round, and nothing changes"
           correct: true
           why: "`7 < 7` is False. The result is right, and the loop has no special case."
         - text: "Yes. The first value is counted two times"
@@ -623,10 +623,10 @@ steps:
         objective: O4
         prompt: "Which task needs your **own** loop, because no shortcut does it?"
         options:
-          - text: "Count the scores that are 50 or more"
+          - text: "Count scores of 50 or more"
             correct: true
             why: "The rule \"50 or more\" is yours. A loop with a count and an `if` does it."
-          - text: "Add up all scores"
+          - text: "Add up all the scores of the class"
             why: "`sum(scores)` does it."
           - text: "Find the highest score"
             why: "`max(scores)` does it."
@@ -769,7 +769,7 @@ review:
     objective: O1
     prompt: "A loop gives a total that is always only the last value. What is the most likely mistake?"
     options:
-      - text: "The start value `total = 0` is inside the loop"
+      - text: "`total = 0` is inside the loop"
         correct: true
         why: "Then the total starts again in every round, and only the last round counts."
       - text: "The loop has too many rounds"

@@ -535,7 +535,7 @@ review:
     objective: O3
     prompt: "When do you escape a visitor's text?"
     options:
-      - text: "When it goes into the HTML of a page"
+      - text: "When it goes into HTML"
         correct: true
         why: "Keep the real text in your data, and escape it each time you show it."
       - text: "Never: browsers check it"

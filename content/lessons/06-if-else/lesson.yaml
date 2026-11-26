@@ -574,7 +574,7 @@ review:
     objective: O1
     prompt: "When does the `else` block of a chain run?"
     options:
-      - text: "When every condition before it was `False`"
+      - text: "When all before it were `False`"
         correct: true
         why: "`else` has no question. It catches all cases that are left."
       - text: "After every other block"

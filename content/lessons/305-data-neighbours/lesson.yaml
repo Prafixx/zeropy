@@ -619,7 +619,7 @@ steps:
         objective: O4
         prompt: "You tried 20 values of k and kept the one with the best **test** score: 96%. What is wrong?"
         options:
-          - text: "The test set helped to choose, so 96% is too good to trust"
+          - text: "The test set helped to choose k"
             correct: true
             why: "Choose on a validation set, then measure the test set once. That score is honest."
           - text: "Nothing: the test set was not used for training"

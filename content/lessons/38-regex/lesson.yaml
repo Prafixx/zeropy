@@ -134,7 +134,7 @@ steps:
           text = "Call 555-1234 or 555-9876 before 18:00."
           numbers = re.findall(r"\d+", text)
         options:
-          - text: "6: each group of digits in a row is one match"
+          - text: "6: one per group of digits"
             correct: true
             why: '`555`, `1234`, `555`, `9876`, `18` and `00`. The dash and the colon end a match.'
           - text: "2: the two phone numbers in it"
@@ -533,7 +533,7 @@ steps:
         objective: O1
         prompt: 'Why write patterns as `r"..."`?'
         options:
-          - text: "So that each backslash reaches `re` as it is"
+          - text: "So backslashes stay as they are"
             correct: true
             why: 'In a normal string, Python reads pairs like `\n` as special characters first.'
           - text: "The `r` makes the search faster"

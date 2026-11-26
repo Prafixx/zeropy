@@ -458,7 +458,7 @@ steps:
         objective: O1
         prompt: "What does the port in `http://192.168.1.20:8080/` choose?"
         options:
-          - text: "Which program on that computer gets the request"
+          - text: "Which program gets it"
             correct: true
             why: "One computer can run many servers, each on its own port."
           - text: "Which computer gets the request"

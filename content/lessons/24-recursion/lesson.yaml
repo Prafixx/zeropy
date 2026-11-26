@@ -90,10 +90,10 @@ steps:
         id: i-order
         prompt: "`factorial(4)` is printed first, but its answer `-> 24` comes last. Why?"
         options:
-          - text: "Each call waits for the one below"
+          - text: "Each call waits for the next"
             correct: true
             why: "So the first call ends last: the answers come back up the stack in reverse order."
-          - text: "Python sorts the prints"
+          - text: "Python sorts the prints by their number"
             why: "The prints come in the order they run."
           - text: "The program runs twice"
             why: "It runs once: down through the calls, then back up."

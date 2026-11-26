@@ -505,7 +505,7 @@ steps:
         objective: O3
         prompt: "In a `@contextmanager`, why put `yield` in `try:` with a `finally:`?"
         options:
-          - text: "So the cleanup runs also when the block raises an error"
+          - text: "So the cleanup always runs"
             correct: true
             why: "And the error still reaches the caller."
           - text: "So no error ever reaches the caller"

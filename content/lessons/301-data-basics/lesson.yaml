@@ -405,9 +405,9 @@ steps:
           - text: "The median"
             correct: true
             why: "The middle value is a normal house. The castle does not move it."
-          - text: "The mean"
+          - text: "The mean of the ten"
             why: "The castle pulls the mean up to about 1 170 000 €: no house costs that."
-          - text: "The max"
+          - text: "The highest price"
             why: "That is the castle."
       - kind: predict
         id: q-stdev
@@ -492,7 +492,7 @@ review:
     objective: O3
     prompt: "A column has empty values. What do you do before you take the mean?"
     options:
-      - text: "Leave them out, and count how many were missing"
+      - text: "Leave them out, and count them"
         correct: true
         why: "The mean of the real values, and an honest count of the holes."
       - text: "Write 0 into them, so every row counts"

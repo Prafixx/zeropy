@@ -514,8 +514,8 @@ review:
         why: "The sign `/` always gives a `float`."
       - text: "`4`"
         why: "For a whole number, use `//`. The sign `/` always gives a `float`."
-      - text: "`0`"
-        why: "That is the remainder, `8 % 2`."
+      - text: "`4.00`"
+        why: "Python shows one decimal: `4.0`."
   - kind: predict
     id: r-fstring
     objective: O3
@@ -529,7 +529,7 @@ review:
     objective: O4
     prompt: "What does a `TypeError` tell you?"
     options:
-      - text: "A sign or instruction got a value of the wrong type"
+      - text: "A value has the wrong type"
         correct: true
         why: "For example `\"a\" + 1`: text and a number cannot be joined."
       - text: "A name is spelled wrong"

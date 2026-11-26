@@ -689,12 +689,12 @@ review:
     objective: O1
     prompt: "What does `f.readlines()` give?"
     options:
-      - text: "A list of the lines that are left"
+      - text: "A list of the lines left"
         correct: true
         why: "Each line keeps its `\\n`: use `line.rstrip(\"\\n\")` to take the ending away."
       - text: "The next line, as a text"
         why: "That is `readline()`."
-      - text: "The number of lines left"
+      - text: "The number of lines that are left"
         why: "`len(f.readlines())` would give that."
   - kind: predict
     id: r-place

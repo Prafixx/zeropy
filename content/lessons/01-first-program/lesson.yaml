@@ -371,12 +371,12 @@ steps:
         objective: O4
         prompt: "You see `SyntaxError: unterminated string literal (detected at line 2)`. What do you look for on line 2?"
         options:
-          - text: "A missing quote at the end of the text"
+          - text: "A missing quote"
             correct: true
             why: "The words \"unterminated string\" mean: a text was started but not ended. Text is also called a string."
           - text: "A wrong number"
             why: "A number cannot cause this message. It is about a text without an end."
-          - text: "A missing line"
+          - text: "A missing empty line"
             why: "The message names line 2 and a text (string) that does not end."
 
   # 10. REVIEW ---------------------------------------------------------------
@@ -426,10 +426,10 @@ review:
     objective: O4
     prompt: "You see `NameError: name 'pritn' is not defined`. What is the problem?"
     options:
-      - text: "The word `print` has a typing mistake"
+      - text: "`print` is spelled wrong"
         correct: true
         why: "Python does not know the word `pritn`. Two letters are in the wrong order."
-      - text: "A quote is missing"
+      - text: "A quote is missing at the end"
         why: "A missing quote gives a `SyntaxError`. This message is about an unknown name."
       - text: "The number is too big"
         why: "The message names a word, `pritn`. It is not about a number."
@@ -452,7 +452,7 @@ review:
       - text: "It prints the line as a title"
         why: "Only `print` shows something. A comment is never shown."
       - text: "It stops with an error, because it is no code"
-        why: "Comments are allowed anywhere: Python just skips them."
+        why: "Comments are allowed anywhere: Python skips them."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

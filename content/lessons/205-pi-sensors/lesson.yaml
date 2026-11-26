@@ -334,9 +334,9 @@ review:
       - text: "echo and trigger"
         correct: true
         why: "trigger sends the sound, echo hears it come back."
-      - text: "in and out"
-        why: "In gpiozero they are called echo and trigger."
-      - text: "Only one"
+      - text: "an input pin and a power pin"
+        why: "It needs a pin that sends (trigger) and a pin that listens (echo)."
+      - text: "Only one: it sends and listens on it"
         why: "It sends on one pin and listens on another."
   - kind: mcq
     id: r-divider

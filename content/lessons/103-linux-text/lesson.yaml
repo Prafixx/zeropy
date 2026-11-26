@@ -300,7 +300,7 @@ review:
     objective: O2
     prompt: "What does `-n` add to `grep`?"
     options:
-      - text: "The line number before each line found"
+      - text: "The line numbers"
         correct: true
         why: "Useful to find the line in an editor."
       - text: "Only the number of lines found"

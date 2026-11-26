@@ -491,7 +491,7 @@ steps:
         objective: O3
         prompt: "How does your countdown program loop, without `for` or `while`?"
         options:
-          - text: "JNZ jumps back while a register is not 0"
+          - text: "JNZ jumps back"
             correct: true
             why: "To an earlier instruction. Every loop in every language ends up like this in the CPU."
           - text: "The CPU runs the program again"

@@ -281,7 +281,7 @@ steps:
         objective: O1
         prompt: "`git commit` says `Author identity unknown`. What do you do?"
         options:
-          - text: "Set your name and email with `git config`"
+          - text: "Use `git config`"
             correct: true
             why: "`git config --global user.name ...` and `user.email ...`: every commit needs a name and an email."
           - text: "Make an account on GitHub first"

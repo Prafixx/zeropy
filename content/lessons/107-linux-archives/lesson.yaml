@@ -145,7 +145,7 @@ steps:
         objective: O1
         prompt: "Why does `tar -cfz backup.tar.gz logs` go wrong?"
         options:
-          - text: "tar takes `z` as the name of the archive"
+          - text: "`z` becomes the file name"
             correct: true
             why: "The name must come right after `f`. Put `f` last: `tar -czf backup.tar.gz logs`."
           - text: "z is not allowed together with c"
@@ -414,7 +414,7 @@ review:
     objective: O2
     prompt: "What does `unzip -o photos.zip` do?"
     options:
-      - text: "It unpacks, overwriting files"
+      - text: "It unpacks, and overwrites"
         correct: true
         why: "Existing files are overwritten without asking. Without `-o`, unzip asks for each file that exists."
       - text: "It only lists the names"

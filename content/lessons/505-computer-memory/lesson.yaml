@@ -424,7 +424,7 @@ review:
       - text: "It marks where the text ends"
         correct: true
         why: "Readers stop at it."
-      - text: "It is a space"
+      - text: "It is a space between two texts"
         why: "A space is 32."
       - text: "It makes the text bold"
         why: "It is the end mark."

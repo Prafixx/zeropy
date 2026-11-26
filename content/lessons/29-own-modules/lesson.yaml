@@ -695,10 +695,10 @@ review:
     objective: O2
     prompt: "Where does Python look first for `import helpers`?"
     options:
-      - text: "In the folder of the program that you run"
+      - text: "In the folder of your program"
         correct: true
         why: "Then in the standard library, then in the installed packages."
-      - text: "On the internet"
+      - text: "On the internet, on the Python website"
         why: "Python looks only on your computer. pip downloads, import does not."
       - text: "Only in the standard library"
         why: "The folder of your program comes first."
@@ -744,7 +744,7 @@ review:
     objective: O2
     prompt: "A program must import a module from the folder `tools`, which is not on the search path. What works for this one program?"
     options:
-      - text: "`sys.path.insert(0, \"tools\")` before the import"
+      - text: "`sys.path.insert(0, \"tools\")`"
         correct: true
         why: "It changes the search path only while this program runs. A package or a venv is better for anything that lasts."
       - text: "Rename the folder to `sys.path`"

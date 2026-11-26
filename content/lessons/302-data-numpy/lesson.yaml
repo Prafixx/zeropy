@@ -434,7 +434,7 @@ review:
     objective: O1
     prompt: "Why do data and AI tools use numpy arrays and not lists?"
     options:
-      - text: "They are fast, and calculate with all values at once"
+      - text: "They are fast"
         correct: true
         why: "One type and a fixed size make them fast. That is also why `a * 2` multiplies each value."
       - text: "Arrays can hold texts and numbers mixed"
@@ -461,8 +461,8 @@ review:
       - text: "`(a < 0).sum()`"
         correct: true
         why: "True counts as 1."
-      - text: "`a < 0`"
-        why: "That gives True or False for each value."
+      - text: "`a.count(a < 0)`"
+        why: "A numpy array has no `count`: this stops with an error."
       - text: "`len(a) < 0`"
         why: "That compares the length."
   - kind: mcq

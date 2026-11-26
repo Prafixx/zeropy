@@ -445,7 +445,7 @@ steps:
         objective: O3
         prompt: "What does `case [\"move\", n] if n.isdigit():` add to a pattern?"
         options:
-          - text: "A condition: the case fits only when the second word is a number"
+          - text: "A condition for the case"
             correct: true
             why: "A condition after `if` checks what a pattern alone cannot."
           - text: "A loop over the words"

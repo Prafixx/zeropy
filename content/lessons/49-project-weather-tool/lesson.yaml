@@ -814,7 +814,7 @@ review:
     objective: O1
     prompt: "A program needs data from API B, and API B needs an id that only API A gives. What does it do?"
     options:
-      - text: "Request A first, then B with its id"
+      - text: "A first, then B with its id"
         correct: true
         why: "Take the id from the answer of A. Like the weather tool: name → coordinates → forecast."
       - text: "Request both at the same time"

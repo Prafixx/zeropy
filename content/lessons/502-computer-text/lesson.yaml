@@ -79,7 +79,7 @@ steps:
         id: i-next
         prompt: "Why does `chr(ord(\"a\") + 2)` give `c`?"
         options:
-          - text: "The letters have codes in a row"
+          - text: "The codes are in a row"
             correct: true
             why: "a 97, b 98, c 99. So adding to a code moves through the alphabet."
           - text: "Python knows the alphabet"

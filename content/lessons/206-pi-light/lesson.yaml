@@ -379,7 +379,7 @@ steps:
         id: i-pins
         prompt: "This program also wants an LED on GPIO 10. What happens?"
         options:
-          - text: "An error: GPIO 10 is one of the SPI pins of the MCP3008"
+          - text: "An error: GPIO 10 is an SPI pin"
             correct: true
             why: "GPIO 8, 9, 10 and 11 belong to the chip. Use another pin for the LED."
           - text: "It works: the chip does not need pins"

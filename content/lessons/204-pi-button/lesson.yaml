@@ -359,10 +359,10 @@ steps:
         objective: O4
         prompt: "What is wrong with `button.when_pressed = beep()`?"
         options:
-          - text: "`beep()` runs at once; the event gets its result, not the function"
+          - text: "`beep` runs now, not at the press"
             correct: true
             why: "Write `beep` without brackets."
-          - text: "Nothing"
+          - text: "Nothing: this is the usual way to write it"
             why: "The brackets call it now. The event should call it later."
           - text: "`when_pressed` must be called like a method"
             why: "It is a property: you give it a function with `=`."
@@ -380,7 +380,7 @@ review:
     objective: O1
     prompt: "What is `button.is_pressed`?"
     options:
-      - text: "True while the button is held down, else False"
+      - text: "True while it is held down"
         correct: true
         why: "It is a question, answered now."
       - text: "The number of presses so far"
@@ -392,7 +392,7 @@ review:
     objective: O3
     prompt: "What is an event, here?"
     options:
-      - text: "A function that gpiozero calls when something happens, like a press"
+      - text: "A function called when something happens"
         correct: true
         why: "Your program sets it once; gpiozero calls it at each press."
       - text: "A loop that asks the button again and again"

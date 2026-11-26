@@ -174,7 +174,7 @@ steps:
         objective: O2
         prompt: "The prompt has no `(.venv)` at the start. You run `pip install rich`. Where does `rich` go?"
         options:
-          - text: "Into the Python of the computer, not into `.venv`"
+          - text: "Into the Python of the computer"
             correct: true
             why: "Without an active venv, `pip` is the pip of the computer's Python. Activate first."
           - text: "Into the `.venv` of the folder, as always"

@@ -125,7 +125,7 @@ steps:
         objective: O2
         prompt: "A sensor gives 5 V on its output. Can you connect it straight to a GPIO pin?"
         options:
-          - text: "No: GPIO pins work with 3.3 V, and 5 V can damage the Pi"
+          - text: "No: it can damage the Pi"
             correct: true
             why: "Such a sensor needs a level shifter or a voltage divider in between."
           - text: "Yes: more volts give a clearer signal"
@@ -197,7 +197,7 @@ steps:
         id: i-unit
         prompt: "What is `cpu.temperature`?"
         options:
-          - text: "A float: degrees Celsius, like `47.2`"
+          - text: "A float, like `47.2`"
             correct: true
             why: "gpiozero gives the temperature of the CPU in degrees Celsius."
           - text: "A text like `\"47.2 °C\"`"

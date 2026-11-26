@@ -134,7 +134,7 @@ steps:
         id: i-wrong-type
         prompt: "`price_with_tax(\"1.5\")` stops with a `TypeError`. What stops the program?"
         options:
-          - text: "The multiplication `price * (1 + tax)`: Python cannot multiply text by a float"
+          - text: "The multiplication `price * (1 + tax)`"
             correct: true
             why: "The hint is never checked. The error comes later, from the operation that does not work on text."
           - text: "The hint `price: float`, because the value is text"
@@ -482,7 +482,7 @@ steps:
         objective: O3
         prompt: "A call gives a value of the wrong type for a hint. What does Python do when it runs?"
         options:
-          - text: "Nothing special: it runs the code as if there were no hint"
+          - text: "Nothing: it ignores the hint"
             correct: true
             why: "Hints are not checked at run time. An editor or a tool can check them before."
           - text: "It stops with a `TypeError` at the call"

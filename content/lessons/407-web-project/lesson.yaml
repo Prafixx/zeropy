@@ -46,13 +46,17 @@ steps:
       <ul>
       {% for b in books %}
       <li>{{ b.title }} by {{ b.author }}
-      {% if b.read %}(read){% else %}<form method="post" action="/books/{{ b.id }}/read"><button>I read it</button></form>{% endif %}
+      {% if b.read %}(read){% else %}
+      <form method="post" action="/books/{{ b.id }}/read"><button>I read it</button></form>
+      {% endif %}
       </li>
       {% endfor %}
       </ul>
       <h2>Add a book</h2>
       <form method="post" action="/add">
-      <input name="title" placeholder="title"> <input name="author" placeholder="author"> <button>Add</button>
+      <input name="title" placeholder="title">
+      <input name="author" placeholder="author">
+      <button>Add</button>
       </form>"""
 
 
@@ -244,7 +248,9 @@ steps:
       </ul>
       <h2>Add a book</h2>
       <form method="post" action="/add">
-      <input name="title" placeholder="title"> <input name="author" placeholder="author"> <button>Add</button>
+      <input name="title" placeholder="title">
+      <input name="author" placeholder="author">
+      <button>Add</button>
       </form>"""
 
 
@@ -325,13 +331,17 @@ steps:
       <ul>
       {% for b in books %}
       <li>{{ b.title }} by {{ b.author }}
-      {% if b.read %}(read){% else %}<form method="post" action="/books/{{ b.id }}/read"><button>I read it</button></form>{% endif %}
+      {% if b.read %}(read){% else %}
+      <form method="post" action="/books/{{ b.id }}/read"><button>I read it</button></form>
+      {% endif %}
       </li>
       {% endfor %}
       </ul>
       <h2>Add a book</h2>
       <form method="post" action="/add">
-      <input name="title" placeholder="title"> <input name="author" placeholder="author"> <button>Add</button>
+      <input name="title" placeholder="title">
+      <input name="author" placeholder="author">
+      <button>Add</button>
       </form>"""
 
 

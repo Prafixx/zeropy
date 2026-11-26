@@ -639,10 +639,10 @@ review:
     objective: O2
     prompt: "Why does `open(\"photo.jpg\").read()` often stop with a `UnicodeDecodeError`?"
     options:
-      - text: "Text mode decodes the bytes as text"
+      - text: "Text mode decodes the bytes"
         correct: true
         why: "As UTF-8, and a photo is not UTF-8 text. Open it with `\"rb\"` to get its bytes."
-      - text: "The photo is too big"
+      - text: "The photo is too big for memory"
         why: "The size is not the problem: the mode is."
       - text: "Python cannot open photos"
         why: "It can, in binary mode."
@@ -676,7 +676,7 @@ review:
     objective: O4
     prompt: "Which order reads both old cp1252 files and UTF-8 files correctly?"
     options:
-      - text: "Try UTF-8 first; on `UnicodeDecodeError`, use cp1252"
+      - text: "UTF-8 first, then cp1252"
         correct: true
         why: "UTF-8 is strict, so its error is a good sign that the file is in another encoding."
       - text: "Try cp1252 first; on an error, use UTF-8"

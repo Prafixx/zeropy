@@ -622,12 +622,12 @@ review:
     objective: O2
     prompt: "What does `continue` do inside a loop?"
     options:
-      - text: "It skips the rest of this round"
+      - text: "It skips to the next round"
         correct: true
         why: "The loop goes on with the next round."
       - text: "It ends the loop at once"
         why: "That is `break`. `continue` keeps the loop going."
-      - text: "It runs the round again"
+      - text: "It runs the same round again"
         why: "No round is repeated: the next value comes."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
