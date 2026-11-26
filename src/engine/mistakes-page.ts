@@ -7,7 +7,7 @@ import type { StepContext } from './steps/context';
 import { renderPractice } from './steps/simple';
 import { mistakes } from './store';
 import type { Item } from './types';
-import { button, emptyState, h, icon, shuffle } from './ui';
+import { button, emptyState, h, icon, shuffle, titled } from './ui';
 
 export function mountMistakes(root: HTMLElement): () => void {
   let dispose: (() => void) | undefined;
@@ -67,9 +67,9 @@ export function mountMistakes(root: HTMLElement): () => void {
         h(
           'div',
           { class: 'single mistakes' },
-          h('h1', { class: 'display' }, 'My mistakes'),
+          titled('mistakes', h('h1', { class: 'display' }, 'My mistakes')),
           emptyState(
-            'target',
+            'done',
             'No mistakes to practice',
             'When you answer a question wrong, or need the solution of an exercise, it comes here. Then you can practice exactly that.',
           ),
@@ -82,7 +82,7 @@ export function mountMistakes(root: HTMLElement): () => void {
       h(
         'div',
         { class: 'single mistakes' },
-        h('h1', { class: 'display', 'data-enter': true }, 'My mistakes'),
+        titled('mistakes', h('h1', { class: 'display' }, 'My mistakes')),
         h('p', { class: 'lead', 'data-enter': true }, 'Mistakes are where you learn the most. Practice them again until they leave this list.'),
         questions.length
           ? h(

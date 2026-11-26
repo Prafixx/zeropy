@@ -8,7 +8,7 @@ import { confirmDialog } from './dialog';
 import { settingsButton } from './settings-menu';
 import { describeWait, finishLesson, includeLesson, isSkipped, lessonState, nextDue, reachStep, skipLesson } from './store';
 import type { Lesson, Step } from './types';
-import { button, h, icon, panel } from './ui';
+import { button, h, icon, mascot, panel } from './ui';
 import type { StepContext, StepView } from './steps/context';
 import { renderDemo } from './steps/demo';
 import { renderExercise } from './steps/exercise';
@@ -101,7 +101,12 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
   const found = getLesson(lessonId);
   if (!found) {
     root.replaceChildren(
-      h('main', { class: 'notfound' }, panel('info', 'This lesson does not exist yet.', h('a', { href: '#/course' }, 'Back to the course'))),
+      h(
+        'main',
+        { class: 'notfound' },
+        mascot(64, 'empty-icon', 'oops'),
+        panel('info', 'This lesson does not exist yet.', h('a', { href: '#/course' }, 'Back to the course')),
+      ),
     );
     return () => undefined;
   }
@@ -240,7 +245,12 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
     // The last lesson of a module: time for a mixed set of the whole module.
     const moduleAt = course.modules.findIndex((m) => m.lessons.at(-1)?.id === lesson.id);
     const due = nextDue();
-    const mark = h('div', { class: 'stamp stamp-hero' }, 'Lesson complete');
+    const mark = h(
+      'div',
+      { class: 'done-head', 'data-enter': true },
+      mascot(96, 'done-mascot', 'done'),
+      h('div', { class: 'stamp stamp-hero' }, 'Lesson complete'),
+    );
     phase.textContent = 'Done';
     phase.dataset.type = 'done';
     counter.textContent = `${steps.length} of ${steps.length}`;

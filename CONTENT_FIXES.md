@@ -454,3 +454,4 @@ Never marked as tested. Each with steps and the expected result.
 - Checked: the Raspberry Pi documentation ("Outputs") says 16 mA per pin and 50 mA for all pins together; Pi 2 now teaches both (1.6.1).
 - 2026-11-26 Beginner pass: about 30 terms now explained where they first appear (argument, method, expression, URL, server, UTF-8, terminal, Linux, kernel, router, IP address, volts and current, capacitor, SPI and more). Home page: the first screen alone; the course has its own page (#/course).
 - 2026-11-26 Words and quizzes: informal words removed, long template lines split; about 90 quiz options rewritten (correct longest 38% -> 32%, correct shortest 15% -> 18%). The left code habits are right as they are (numpy arange, logging format, roman numerals with a look-ahead).
+- 2026-11-26 Pixel sprites: 13 emblems (8 modules, 5 paths), 7 page pictures, 3 mascot moods, used across the app.

@@ -6,7 +6,7 @@ import { renderDemo } from './steps/demo';
 import type { StepContext } from './steps/context';
 import { loadCode, saveCode } from './store';
 import type { DemoStep } from './types';
-import { button, h } from './ui';
+import { button, h, titled } from './ui';
 
 const STARTER = `# Your playground. Write any Python and press Run.
 # Your code is saved on this computer.
@@ -57,7 +57,7 @@ export function mountPlayground(root: HTMLElement): () => void {
       saveCode('playground', 'main', STARTER);
     },
   });
-  const body = h('div', { class: 'step-body' }, h('h1', { class: 'display page-title' }, 'Playground'), view.el);
+  const body = h('div', { class: 'step-body' }, titled('playground', h('h1', { class: 'display' }, 'Playground')), view.el);
 
   root.replaceChildren(
     h(

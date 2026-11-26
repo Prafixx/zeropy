@@ -3797,7 +3797,7 @@ code {
 }
 .know-module-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 34%);
+  grid-template-columns: auto minmax(0, 1fr) minmax(120px, 34%);
   align-items: center;
   gap: 12px;
 }
@@ -3923,7 +3923,7 @@ code {
     border-top: 1px solid var(--border);
   }
   .know-module-head {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
   }
   .know-module-head .know-bar {
     grid-column: 1 / -1;
@@ -4161,9 +4161,6 @@ code {
 .path-card.is-closed .path-icon {
   background: var(--paper-3);
   color: var(--ink-2);
-}
-.path-card.is-closed {
-  border-style: dashed;
 }
 .path-module-title {
   font: var(--display-weight) var(--text-xl) / 1.2 var(--font-display);
@@ -4995,5 +4992,147 @@ code {
   .player > .bar {
     gap: var(--s-3);
     padding-inline: var(--s-3);
+  }
+}
+
+/* ---------- Pixel sprites (src/kit/pixel-sprites.ts) ----------
+   Colored 16x16 drawings in the style of the mascot: an emblem for each
+   module and path, a picture for each page, and the mascot's moods. They
+   stand still: no animation, no background behind them. */
+.sprite {
+  display: inline-block;
+  flex: none;
+  line-height: 0;
+}
+.sprite svg {
+  display: block;
+}
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+.step-body > .title-row:first-child {
+  margin-bottom: var(--s-5);
+}
+.module-head.has-emblem {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.module-emblem {
+  margin-top: 2px;
+}
+.path-icon {
+  position: relative;
+  display: block;
+  justify-self: start;
+  min-width: 0;
+  height: auto;
+  margin-top: 2px;
+  border: 0;
+  background: none;
+}
+.path-card.is-closed .path-icon {
+  background: none;
+}
+.path-card.is-closed .path-icon .sprite {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+.path-lock {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-s);
+  background: var(--paper-2);
+  color: var(--ink-2);
+}
+.hero-paths {
+  margin-top: var(--s-8);
+}
+.hero-paths ul {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--s-2);
+  max-width: 540px;
+  margin-top: var(--s-3);
+  list-style: none;
+  padding: 0;
+}
+/* Each path is a slot, like the inventory of a game. */
+.hero-paths a {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-1) var(--s-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-s);
+  background: var(--paper-2);
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  transition: border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease);
+}
+.hero-paths a:hover {
+  border-color: var(--border-strong);
+  background: var(--paper-3);
+  color: var(--ink);
+}
+.hero-card {
+  position: relative;
+}
+.hero-sticker {
+  position: absolute;
+  pointer-events: none;
+}
+.hero-sticker-a {
+  left: -36px;
+  bottom: -30px;
+}
+.hero-sticker-b {
+  right: -18px;
+  top: -34px;
+}
+.home-start {
+  overflow-x: clip;
+}
+.done-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+}
+.notfound .empty-icon {
+  margin: 0 auto var(--s-4);
+}
+@media (max-width: 560px) {
+  .hero-paths,
+  .hero-sticker {
+    display: none;
+  }
+  .done-mascot {
+    width: 64px !important;
+    height: 64px !important;
+  }
+  .done-mascot svg {
+    width: 64px;
+    height: 64px;
+  }
+}
+.module-head.has-emblem .module-hours {
+  grid-column: 2 / -1;
+}
+@media (max-width: 560px) {
+  .module-head.has-emblem {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .module-head.has-emblem .module-meta,
+  .module-head.has-emblem .module-hours {
+    grid-column: 1 / -1;
   }
 }

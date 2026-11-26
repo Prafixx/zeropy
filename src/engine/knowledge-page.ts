@@ -7,7 +7,7 @@ import type { Level } from './knowledge';
 import { course, getLesson, lessonLabel } from './registry';
 import { includeLesson, isSkipped, knowledgeOf, lessonState, skipLesson } from './store';
 import type { Lesson } from './types';
-import { h, icon, panel } from './ui';
+import { h, icon, panel, titled, sprite } from './ui';
 
 const ORDER: Level[] = ['mastered', 'solid', 'learning', 'weak', 'new'];
 
@@ -112,8 +112,8 @@ export function mountKnowledge(root: HTMLElement): () => void {
   function render(keepOpen?: string): void {
     // The Python modules, then the modules of each path ("Linux: The terminal").
     const groups = [
-      ...course.modules.map((m, i) => ({ num: String(i + 1), path: '', title: m.title, lessons: m.lessons })),
-      ...(course.paths ?? []).flatMap((p) => p.modules.map((m) => ({ num: '', path: p.title, title: m.title, lessons: m.lessons }))),
+      ...course.modules.map((m, i) => ({ num: String(i + 1), path: '', emblem: `m${i + 1}`, title: m.title, lessons: m.lessons })),
+      ...(course.paths ?? []).flatMap((p) => p.modules.map((m) => ({ num: '', path: p.title, emblem: p.id, title: m.title, lessons: m.lessons }))),
     ];
     const lessons = groups.flatMap((g) => g.lessons.map((e) => getLesson(e.id))).filter((l): l is Lesson => Boolean(l));
     const counted = lessons.filter((l) => !isSkipped(l.id)).flatMap(topicsOf);
@@ -135,6 +135,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
         h(
           'div',
           { class: 'know-module-head' },
+          sprite(m.emblem, 32),
           h('div', null, h('span', { class: 'kicker' }, m.path || `Module ${m.num}`), h('h2', null, m.title)),
           bar(own.filter((l) => !isSkipped(l.id)).flatMap(topicsOf)),
         ),
@@ -146,7 +147,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
       h(
         'div',
         { class: 'single knowledge' },
-        h('h1', { class: 'display', 'data-enter': true }, 'My knowledge'),
+        titled('knowledge', h('h1', { class: 'display' }, 'My knowledge')),
         h(
           'p',
           { class: 'lead', 'data-enter': true },
