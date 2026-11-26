@@ -1,5 +1,5 @@
 id: pi-sensors
-order: 204
+order: 205
 title: "Brightness, sound and distance"
 summary: Dim an LED, beep a buzzer, and measure how far away something is.
 minutes: 40

@@ -1,5 +1,5 @@
 id: web-project
-order: 406
+order: 407
 title: "Project: a reading list"
 summary: A small web app for the books you want to read. A page from a template, a form to add books, a button to mark them read, and a JSON API.
 minutes: 50
@@ -91,7 +91,8 @@ steps:
           return books
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
 
   # 2. THEORY ----------------------------------------------------------------
   - id: brief
@@ -158,7 +159,8 @@ steps:
           return render_template_string(PAGE, books=books)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, render_template_string
 
@@ -182,7 +184,8 @@ steps:
           return render_template_string(PAGE, books=books)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     checks:
       - &page-lists
         expr: "client is not None and all(f\"{b['title']} by {b['author']}\" in client.get('/').get_data(as_text=True) for b in books) and client.get('/').get_data(as_text=True).count('<li>') == len(books)"
@@ -260,7 +263,8 @@ steps:
           return redirect(url_for("home"))
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     checks:
       - *page-lists
       - *page-count
@@ -356,7 +360,8 @@ steps:
           abort(404)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     checks:
       - *page-lists
       - *add-works
@@ -570,7 +575,8 @@ extra:
 
       # Your route here.
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, render_template_string
 
@@ -592,7 +598,8 @@ extra:
           return books
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       One list, two ways out: HTML for people, JSON for programs. When a
       book is added, both show it, because both read the same data.
@@ -636,7 +643,8 @@ extra:
           return redirect(url_for("home"))
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, redirect, request, url_for
 
@@ -658,7 +666,8 @@ extra:
           return redirect(url_for("home"))
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       `"   ".strip()` is `""`, and an empty text is false. So one check
       refuses both an empty title and a title of only spaces.

@@ -52,7 +52,8 @@ desktop app, in about 43 hours.
   distance sensor, a light sensor, a motion sensor, a knob, motors and a
   two-wheel robot that drives on a floor. You write real `gpiozero` code (the same
   class names and pin numbers as on a real Pi), and the board plays it in
-  real time. Wiring and safety are part of the lessons. Then a real Pi:
+  real time. Parts, the breadboard, resistors and safe wiring are part of the
+  lessons. Then a real Pi:
   the parts, Raspberry Pi Imager, updates, power problems, and working
   from your PC with `ssh` and `scp` (a pretend PowerShell and Pi, with the
   real questions and messages).
@@ -64,8 +65,9 @@ desktop app, in about 43 hours.
   lies. At the end, train a real model with `pandas` and `scikit-learn`
   on your own computer.
 - **Networks and the web.** How the web works: URLs, requests, responses
-  and status codes. Then your own web server with real `Flask` inside the
-  app: pages, forms, templates and a JSON API, with a small browser that
+  and status codes, and the HTML of a page. Then your own web server with
+  real `Flask` inside the app: pages, forms, templates, a JSON API and data
+  in SQLite, with a small browser that
   shows each page and the HTTP messages behind it. At the end, run your
   site on your own computer or a Raspberry Pi, and open it from your phone.
 - **How computers work.** Bits and bytes, letters and colours as numbers,

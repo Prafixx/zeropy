@@ -1,5 +1,5 @@
 id: web-templates
-order: 404
+order: 405
 title: Pages from templates
 summary: Keep the HTML apart from the Python, in templates with places for values, loops and decisions. Templates also escape for you.
 minutes: 40
@@ -91,7 +91,8 @@ steps:
           return render_template_string(PAGE, title="Weather today", cities=CITIES)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     experiments:
       - text: "Run it as it is."
         expr: "err is None and served"
@@ -144,7 +145,8 @@ steps:
           return render_template_string(PAGE, tasks=tasks)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, render_template_string
 
@@ -163,7 +165,8 @@ steps:
           return render_template_string(PAGE, tasks=tasks)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       The Python only gives the data; the template decides how it looks.
       The same template works for 0, 2 or 200 tasks.
@@ -231,7 +234,8 @@ steps:
           return render_template_string(PAGE, reviews=reviews)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, render_template_string
 
@@ -252,7 +256,8 @@ steps:
           return render_template_string(PAGE, reviews=reviews)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       The `<b>` around the name is in the template, so it stays HTML. The
       review is a value, so `{{ }}` escapes it. That is the whole rule.
@@ -366,7 +371,8 @@ steps:
           return render_template("menu.html", items=MENU)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     experiments:
       - text: "Run it, and open the menu."
         expr: "err is None and served"
@@ -533,7 +539,8 @@ extra:
           return render_template_string(PAGE, name="ada")
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, render_template_string
 
@@ -546,7 +553,8 @@ extra:
           return render_template_string(PAGE, name="ada")
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       A filter changes a value on its way into the page. The value itself,
       `name` in Python, stays as it was.
@@ -583,7 +591,8 @@ extra:
           return render_template_string(PAGE, products=products)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, render_template_string
 
@@ -599,7 +608,8 @@ extra:
           return render_template_string(PAGE, products=products)
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       `{% for %}` repeats a piece of the page, and `{% if %}` shows a piece
       only sometimes. The data stays in Python; the template decides how it

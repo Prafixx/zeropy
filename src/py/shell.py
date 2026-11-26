@@ -65,6 +65,7 @@ _HELP = {
     "history": "history: the commands you typed.",
     "clear": "clear: empty the screen.",
     "man": "man command: help for a command.",
+    "less": "less file: show a long file one screen at a time. Space: the next screen, b: back, /word: search, q: quit.",
     "test": "test expression, or [ expression ]: true or false, as the exit status. -f file, -d dir, -z text, a = b, 3 -gt 2.",
     "export": "export NAME=value: a variable that programs and scripts started from here can see.",
     "seq": "seq [first] last: the numbers from first (1) to last, one per line.",
@@ -1336,6 +1337,9 @@ class Shell:
         fn = getattr(self, "c_" + name.replace("-", "_"), None) if re.fullmatch(r"[a-z0-9_-]+", name) else None
         if fn is None:
             raise _Exit(f"bash: {name}: command not found", 127)
+        if args == ["--help"] and name in _HELP:
+            # Most commands print a short help with --help.
+            return f"Usage: {_HELP[name]}\n"
         return fn(args, stdin, piped)
 
     # ---- options -------------------------------------------------------------

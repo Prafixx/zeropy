@@ -1,5 +1,5 @@
 id: pi-button
-order: 203
+order: 204
 title: Buttons and events
 summary: Read a button in three ways - ask it, wait for it, or let it call your function.
 minutes: 35

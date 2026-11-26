@@ -1,5 +1,5 @@
 id: pi-motors
-order: 206
+order: 207
 title: Motors and a robot
 summary: Drive a motor at any speed and in both directions, steer a robot with two wheels, and stop it before a wall.
 minutes: 45

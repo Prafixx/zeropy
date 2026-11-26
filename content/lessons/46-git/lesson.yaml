@@ -2,7 +2,7 @@ id: git
 order: 46
 title: Git
 summary: Save versions of your project, go back when something breaks, try ideas on a branch, and put the project online on GitHub.
-minutes: 55
+minutes: 65
 outcomes: [A10]
 
 objectives:
@@ -496,6 +496,14 @@ steps:
 
       A public repository can be read by everyone. Never commit passwords
       or keys.
+
+      ## Copy a project, and undo a commit
+
+      - `git clone https://github.com/you/colors.git` makes a copy of a
+        repository on GitHub, with its whole history, in a new folder.
+      - `git revert abc123` undoes the commit `abc123` with a **new** commit.
+        The history keeps both, so it is safe also for commits you already
+        pushed. (`git restore` is for changes that are not committed yet.)
     keys:
       - code: "origin"
         means: "The usual name of the copy online."
@@ -503,6 +511,10 @@ steps:
         means: "Send your new commits to GitHub."
       - code: "git pull"
         means: "Get new commits from GitHub, for example from another computer."
+      - code: "git clone URL"
+        means: "A copy of a repository, with its history."
+      - code: "git revert abc123"
+        means: "A new commit that undoes an old one."
 
   # 11. LOCAL: PUSH ---------------------------------------------------------
   - id: check-push
@@ -699,6 +711,18 @@ review:
         why: "Commits are local. They do not need GitHub."
       - text: "A `.gitignore`"
         why: "`.gitignore` is not needed for a commit."
+  - kind: mcq
+    id: r-revert
+    objective: O5
+    prompt: "A pushed commit broke the app. How do you undo it safely?"
+    options:
+      - text: "`git revert` with its id"
+        correct: true
+        why: "A new commit undoes it, and the history stays honest for everyone."
+      - text: "`git restore` of the files"
+        why: "That throws away changes that are not committed. This commit is already in the history."
+      - text: "Delete the repository on GitHub"
+        why: "Then the whole history is gone, also the good commits."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

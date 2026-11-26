@@ -1,5 +1,5 @@
 id: pi-led
-order: 202
+order: 203
 title: Light an LED
 summary: Wire an LED safely, switch it on and off, and make it blink with exact timing.
 minutes: 30

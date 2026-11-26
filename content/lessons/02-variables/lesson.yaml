@@ -32,7 +32,7 @@ steps:
         caption: "Python starts with nothing. To remember a value, you give it a **name**."
       - beat: create
         line: 1
-        caption: "This line makes a box with the label `age` and puts **25** in it. The box is a **variable**."
+        caption: "This line puts the **name** `age`, like a label, on the value **25**. A name with its value is a **variable**."
       - beat: second
         line: 2
         caption: "Each variable has its own name. Text is written in quotes."
@@ -134,8 +134,8 @@ steps:
           - line: 1
             say: "This line makes a variable, but from a number, not from other variables."
         explain: >-
-          `price * quantity` reads the two boxes, and `total =` puts the
-          result in a new box.
+          `price * quantity` reads the values of the two names, and
+          `total =` puts the name `total` on the result.
       - kind: mcq
         id: i-no-update
         prompt: "After line 3 you add `quantity = 10`. What is `total` now?"

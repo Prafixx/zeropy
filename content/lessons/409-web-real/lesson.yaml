@@ -1,5 +1,5 @@
 id: web-real
-order: 407
+order: 409
 title: A real server on your computer and your Pi
 summary: Run your Flask app on your own computer with a real browser, then open it from your phone - and keep it safe on the network.
 minutes: 45
@@ -143,7 +143,8 @@ steps:
           return "<h1>Hello from the Pi</h1><p>Temperature: 21.5 °C</p>"
 
 
-      app.run(debug=True)
+      if __name__ == "__main__":
+          app.run(debug=True)
     solution: |
       from flask import Flask
 
@@ -425,7 +426,8 @@ extra:
           return "<h1>Shared shopping list</h1>"
 
 
-      app.run(host="0.0.0.0", port=8000, debug=___)
+      if __name__ == "__main__":
+          app.run(host="0.0.0.0", port=8000, debug=___)
     solution: |
       from flask import Flask
 
@@ -437,7 +439,8 @@ extra:
           return "<h1>Shared shopping list</h1>"
 
 
-      app.run(host="0.0.0.0", port=8000, debug=False)
+      if __name__ == "__main__":
+          app.run(host="0.0.0.0", port=8000, debug=False)
     after: >-
       Debug mode is for your own computer, with `127.0.0.1`. When others can
       reach the server, keep it off.

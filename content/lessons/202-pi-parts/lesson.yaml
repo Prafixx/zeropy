@@ -1,0 +1,611 @@
+id: pi-parts
+order: 202
+title: Parts, the breadboard and resistors
+summary: The parts of a first kit, how a breadboard joins them, how to read and choose a resistor, and the limits that keep a Pi safe.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Name the parts of a first kit, and use a breadboard - which holes are joined, and the middle groove
+  - id: O2
+    text: Read the colour bands of a resistor, and choose one with Ohm's law
+  - id: O3
+    text: Keep within the limits of a GPIO pin, and run the lesson code on a real Pi
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: kit
+    type: theory
+    objective: O1
+    title: A first kit, and the breadboard
+    body: |
+      The lessons of this path use a few cheap parts:
+
+      | Part | What it does |
+      |---|---|
+      | **breadboard** | a board with holes; parts and wires plug in, no soldering |
+      | **jumper wires** | short wires with pins, from the Pi to the breadboard |
+      | **LED** | a small light; current flows through it one way only |
+      | **resistor** | limits the current, so the LED and the pin stay safe |
+      | **push button** | joins its two legs while you press it |
+
+      Buy jumper wires with a female end for the Pi's pins and a male end
+      for the breadboard ("female to male").
+
+      ## Which holes are joined?
+
+      Inside a breadboard, metal strips join some holes:
+
+      - In the middle part, each short **row of 5 holes** is joined. Two
+        legs in the same row are connected.
+      - The **middle groove** separates the two halves: a row on the left
+        is not joined with the row on the right.
+      - The long **rails** along the edges (often marked `+` and `-`) are
+        joined along their whole length. Use one for GND.
+
+      So a part never goes with both legs in the same row of 5: that
+      would join its legs, and the current would go around it.
+
+      **Lessons 1 to 8 of this path use the pretend board in ZeroPy.** You
+      can follow them without any parts. "Set up a real Pi" shows how to
+      start with a real one.
+    keys:
+      - code: "row of 5"
+        means: "The 5 holes of a short row are joined."
+      - code: "middle groove"
+        means: "Separates the two halves of the board."
+      - code: "rails"
+        means: "Long lines along the edges, for GND and power."
+
+  # 2. DRILL -----------------------------------------------------------------
+  - id: drill-board
+    type: drill
+    objective: O1
+    title: Read the breadboard
+    items:
+      - kind: mcq
+        id: d-row
+        objective: O1
+        prompt: "An LED has both legs in the same row of 5 holes. What happens?"
+        options:
+          - text: "It stays dark"
+            correct: true
+            why: "Its two legs are joined by the strip, so the current goes around the LED, not through it."
+          - text: "It lights more brightly"
+            why: "The strip joins its legs: no current flows through the LED at all."
+          - text: "It lights as normal"
+            why: "Each leg must be in its own row, so the current must pass through the LED."
+      - kind: mcq
+        id: d-groove
+        objective: O1
+        prompt: "A chip sits across the middle groove. Are its left and right legs joined?"
+        options:
+          - text: "No: the groove separates the halves"
+            correct: true
+            why: "That is why chips like the MCP3008 go across the groove."
+          - text: "Yes: the whole row is one strip"
+            why: "Each half has its own strips. The groove is the break between them."
+          - text: "Only the legs at the ends"
+            why: "No leg is joined across the groove."
+      - kind: mcq
+        id: d-rail
+        objective: O1
+        prompt: "What is a long rail along the edge good for?"
+        options:
+          - text: "One line for GND, for many parts"
+            correct: true
+            why: "Wire GND of the Pi to the rail once; each part can then reach it nearby."
+          - text: "Storing a part you do not use"
+            why: "A rail is a strip of metal: anything in it is connected."
+          - text: "It joins every row of the board"
+            why: "It joins only its own holes, along the edge."
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: ohm
+    type: theory
+    objective: O2
+    title: Resistors and Ohm's law
+    body: |
+      ## Read the colour bands
+
+      A resistor's value is painted on it in colour bands. Each colour is
+      a digit:
+
+      | black | brown | red | orange | yellow |
+      |---|---|---|---|---|
+      | 0 | 1 | 2 | 3 | 4 |
+
+      | green | blue | violet | grey | white |
+      |---|---|---|---|---|
+      | 5 | 6 | 7 | 8 | 9 |
+
+      With 4 bands, read from the side away from the gold or silver band:
+      the first two bands are **digits**, the third is the **number of
+      zeros**, the fourth (gold or silver) is the tolerance. Red, red,
+      brown: 2, 2 and one zero, so **220 Ω** (ohm). If you are not sure, a
+      multimeter measures it.
+
+      ## Ohm's law
+
+      **V = I × R**: voltage (volts) is current (amperes) times resistance
+      (ohms). For an LED on a GPIO pin:
+
+      ```text
+      R = (3.3 V - 2.0 V) / 0.010 A = 130 Ω
+      ```
+
+      - 3.3 V comes from the pin; a red LED uses about 2.0 V itself.
+      - 0.010 A is 10 mA, a good current for a small LED.
+      - Take the next bigger value you have, like 220 Ω: a little less
+        current, a little less light, and safe.
+
+      A **bigger** resistor gives **less** current. When in doubt, choose
+      the bigger one.
+    keys:
+      - code: "red red brown"
+        means: "2, 2, one zero: 220 Ω."
+      - code: "V = I × R"
+        means: "So R = V / I, and I = V / R."
+      - code: "10 mA = 0.010 A"
+        means: "Milli means one thousandth."
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-resistor
+    type: exercise
+    fade: completion
+    objective: O2
+    title: Which resistor for this LED?
+    prompt: |
+      A green LED uses 2.2 V, and you want 5 mA. **Replace the two `___`**
+      so that the program prints the resistance, and the current that the
+      next bigger value, 330 Ω, gives:
+
+      ```text
+      220.0 ohm
+      3.3 mA
+      ```
+    starter: |
+      supply = 3.3       # volts from the GPIO pin
+      led = 2.2          # volts the LED uses
+      current = 0.005    # 5 mA, in amperes
+
+      r = (supply - led) / ___
+      print(f"{r:.1f} ohm")
+
+      i = (supply - led) / ___
+      print(f"{i * 1000:.1f} mA")
+    solution: |
+      supply = 3.3       # volts from the GPIO pin
+      led = 2.2          # volts the LED uses
+      current = 0.005    # 5 mA, in amperes
+
+      r = (supply - led) / current
+      print(f"{r:.1f} ohm")
+
+      i = (supply - led) / 330
+      print(f"{i * 1000:.1f} mA")
+    after: >-
+      The same law, turned two ways: R = V / I gives the resistor, I = V / R
+      gives the current. Times 1000 turns amperes into milliamperes.
+    checks:
+      - expr: "err is None and lines[0] == '220.0 ohm'"
+        pass: "It computes the resistance: 220 ohm"
+        hint: "R = V / I: divide the voltage by `current`."
+      - expr: "err is None and lines[1:] == ['3.3 mA']"
+        pass: "It computes the current with 330 ohm"
+        hint: "I = V / R: divide the voltage by 330."
+    hints:
+      - "The voltage on the resistor is `supply - led`."
+      - "R = V / I and I = V / R."
+      - "`/ current` in the first line, `/ 330` in the second."
+
+  # 5. EXERCISE: independent -------------------------------------------------
+  - id: ex-bands
+    type: exercise
+    fade: independent
+    objective: O2
+    title: Read the bands in Python
+    prompt: |
+      **Write `ohms(bands)`**: it gets the three colour bands of a resistor,
+      like `["red", "red", "brown"]`, and gives back the value in ohms. Use
+      the list `COLOURS`: the place of a colour is its digit.
+
+      ```text
+      220
+      10000
+      ```
+    starter: |
+      COLOURS = ["black", "brown", "red", "orange", "yellow",
+                 "green", "blue", "violet", "grey", "white"]
+
+      # Your function here.
+
+
+      print(ohms(["red", "red", "brown"]))
+      print(ohms(["brown", "black", "orange"]))
+    solution: |
+      COLOURS = ["black", "brown", "red", "orange", "yellow",
+                 "green", "blue", "violet", "grey", "white"]
+
+
+      def ohms(bands):
+          first = COLOURS.index(bands[0])
+          second = COLOURS.index(bands[1])
+          zeros = COLOURS.index(bands[2])
+          return (first * 10 + second) * 10 ** zeros
+
+
+      print(ohms(["red", "red", "brown"]))
+      print(ohms(["brown", "black", "orange"]))
+    after: >-
+      `index` turns a colour into its digit. Two digits make a number, and
+      the third band says how many zeros follow.
+    checks:
+      - expr: "callable(ns.get('ohms')) and ohms(['red', 'red', 'brown']) == 220 and ohms(['brown', 'black', 'orange']) == 10000"
+        pass: "It reads 220 and 10 000 ohm"
+        hint: "Two digits: `first * 10 + second`, then times `10 ** zeros`."
+      - expr: "callable(ns.get('ohms')) and ohms(['orange', 'orange', 'black']) == 33 and ohms(['yellow', 'violet', 'red']) == 4700"
+        pass: "It works for any colours, also with zero zeros"
+        hint: "`10 ** 0` is 1, so black as the third band adds no zero."
+        misconceptions:
+          - when: "callable(ns.get('ohms')) and raises(ohms, ['orange', 'orange', 'black']) is None and ohms(['orange', 'orange', 'black']) == 330"
+            say: "Black is 0 zeros, not one zero: use `10 ** zeros`."
+      - expr: "err is None and lines == ['220', '10000']"
+        pass: "It prints 220 and 10000"
+        hint: "Keep the two prints."
+    hints:
+      - "`COLOURS.index(\"red\")` is 2: the place is the digit."
+      - "The value is the two digits as a number, times 10 for each zero."
+      - "`(first * 10 + second) * 10 ** zeros`."
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: limits
+    type: theory
+    objective: O3
+    title: The limits of a pin, and a real Pi
+    body: |
+      ## A pin is not a power supply
+
+      A GPIO pin gives 3.3 V and only a little current: keep each pin at
+      **about 16 mA or less**, and the Pi stays healthy. That is fine for
+      an LED with a resistor, or a small active buzzer. It is not enough
+      for motors, servos, long LED strips or a loud speaker: those get their
+      **own power**, and the Pi only sends a signal (like the motor board
+      later in this path).
+
+      Two habits protect the Pi:
+
+      - **Switch it off** before you change the wires.
+      - **Check twice** before you power it on: no wire from 5V or 3V3
+        straight to GND, and no 5 V on a GPIO pin.
+
+      ## The same code on a real Pi
+
+      The code of these lessons runs on a real Pi as it is: gpiozero comes
+      with Raspberry Pi OS. Save it in a file and run it with
+      `python3 led.py`.
+
+      If you use a venv on the Pi, make it with the system packages, so
+      that gpiozero and its pin library from Raspberry Pi OS are inside:
+
+      ```text
+      python3 -m venv --system-site-packages .venv
+      ```
+    keys:
+      - code: "about 16 mA"
+        means: "The most one GPIO pin should give."
+      - code: "own power"
+        means: "For motors, servos and other hungry parts."
+      - code: "--system-site-packages"
+        means: "A venv on the Pi that can use gpiozero from the system."
+
+  # 7. EXERCISE: debug -------------------------------------------------------
+  - id: ex-units
+    type: exercise
+    fade: debug
+    objective: O3
+    title: Too little current?
+    prompt: |
+      The program checks if an LED with a 220 Ω resistor stays under the
+      limit of a pin. It says `0.6 mA`, which is far too low. **Find the
+      bug and fix it.** It must print:
+
+      ```text
+      5.9 mA
+      safe
+      ```
+    starter: |
+      voltage = 3.3 - 2.0      # volts on the resistor
+      ohm = 220
+
+      current_ma = voltage / ohm * 100
+      print(f"{current_ma:.1f} mA")
+      if current_ma <= 16:
+          print("safe")
+      else:
+          print("too much for one pin")
+    solution: |
+      voltage = 3.3 - 2.0      # volts on the resistor
+      ohm = 220
+
+      current_ma = voltage / ohm * 1000
+      print(f"{current_ma:.1f} mA")
+      if current_ma <= 16:
+          print("safe")
+      else:
+          print("too much for one pin")
+    after: >-
+      One milliampere is a thousandth of an ampere. Mixing units is the most
+      common mistake in these calculations: write the unit in the name, like
+      `current_ma`.
+    checks:
+      - expr: "err is None and lines == ['5.9 mA', 'safe']"
+        pass: "It prints 5.9 mA and safe"
+        hint: "Amperes to milliamperes is times 1000, not 100."
+        misconceptions:
+          - when: "err is None and lines[:1] == ['0.6 mA']"
+            say: "Times 100 gives the wrong unit. 1 A is 1000 mA."
+      - expr: "'/ ohm' in src.replace('/ohm', '/ ohm')"
+        pass: "It still computes the current from the voltage and the resistor"
+        hint: "Keep `voltage / ohm`."
+    hints:
+      - "How many milliamperes are in one ampere?"
+      - "Look at the number after `/ ohm *`."
+      - "`* 1000`."
+
+  # 8. DRILL -----------------------------------------------------------------
+  - id: drill-real
+    type: drill
+    objective: O3
+    title: Safe or not?
+    items:
+      - kind: mcq
+        id: d-motor
+        objective: O3
+        prompt: "A small motor needs 200 mA. Can a GPIO pin drive it alone?"
+        options:
+          - text: "No: it needs a driver board and its own power"
+            correct: true
+            why: "A pin gives about 16 mA at most. The motor would not turn, or it would damage the Pi."
+          - text: "Yes, with a bigger resistor"
+            why: "A resistor only lowers the current. The motor needs more, not less."
+          - text: "Yes, if the program runs it slowly"
+            why: "Slow or fast, the pin cannot give 200 mA."
+      - kind: mcq
+        id: d-venv
+        objective: O3
+        prompt: "On a real Pi, `import gpiozero` fails inside your venv. What is the simplest fix?"
+        options:
+          - text: "Make the venv with `--system-site-packages`"
+            correct: true
+            why: "Then the venv can use gpiozero and its pin library from Raspberry Pi OS."
+          - text: "Use a Python from the internet instead"
+            why: "The Python of Raspberry Pi OS is fine. The venv only needs to see its packages."
+          - text: "Copy the code into the pretend board"
+            why: "That works here, but not on the real Pi."
+      - kind: mcq
+        id: d-wires
+        objective: O3
+        prompt: "You want to move a wire on the breadboard. What do you do first?"
+        options:
+          - text: "Switch the Pi off"
+            correct: true
+            why: "A wire in the wrong place for a moment can short a pin while the power is on."
+          - text: "Stop the Python program only"
+            why: "The pins can still have power. Switch the Pi off."
+          - text: "Nothing: the board is safe"
+            why: "A breadboard has no protection at all."
+
+  # 9. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O2
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-bands
+        objective: O2
+        prompt: "A resistor has the bands brown, black, red, gold. What is its value?"
+        options:
+          - text: "1000 Ω"
+            correct: true
+            why: "1, 0, then two zeros: 1000 Ω, often written 1 kΩ."
+          - text: "102 Ω"
+            why: "The third band is the number of zeros, not a third digit."
+          - text: "10 Ω"
+            why: "Red means two zeros: 10 becomes 1000."
+      - kind: mcq
+        id: q-bigger
+        objective: O2
+        prompt: "You have 220 Ω and 1000 Ω. With which one is the LED brighter?"
+        options:
+          - text: "With 220 Ω"
+            correct: true
+            why: "Less resistance, more current, more light. Both are safe here."
+          - text: "With 1000 Ω"
+            why: "More resistance gives less current, so less light."
+          - text: "With both the same"
+            why: "I = V / R: the resistor decides the current."
+      - kind: mcq
+        id: q-ohm
+        objective: O2
+        prompt: "3.3 V, an LED of 2.0 V, and a 130 Ω resistor. What current flows?"
+        options:
+          - text: "10 mA"
+            correct: true
+            why: "1.3 V / 130 Ω = 0.010 A = 10 mA."
+          - text: "25 mA"
+            why: "That uses 3.3 V on the resistor. The LED takes 2.0 V of it, so 1.3 V is left."
+          - text: "1 mA"
+            why: "0.010 A is 10 mA, not 1 mA."
+      - kind: mcq
+        id: q-pin
+        objective: O3
+        prompt: "About how much current should one GPIO pin give at most?"
+        options:
+          - text: "About 16 mA"
+            correct: true
+            why: "Enough for an LED or a small buzzer. Bigger parts get their own power."
+          - text: "About 2 A"
+            why: "That is a power supply, not a pin."
+          - text: "No limit"
+            why: "Too much current damages the pin, and maybe the Pi."
+
+  # 10. REVIEW --------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-row
+    objective: O1
+    prompt: "On a breadboard, which holes are joined?"
+    options:
+      - text: "Each short row of 5"
+        correct: true
+        why: "And the long rails along the edges. The middle groove separates the two halves."
+      - text: "All holes of a column"
+        why: "Only the 5 holes of one short row, and the rails."
+      - text: "None: wires do it"
+        why: "Metal strips inside join the rows of 5."
+  - kind: mcq
+    id: r-ohm
+    objective: O2
+    prompt: "What is Ohm's law?"
+    options:
+      - text: "V = I × R"
+        correct: true
+        why: "So R = V / I gives the resistor, and I = V / R the current."
+      - text: "R = V × I"
+        why: "Volts times amperes is power (watts), not resistance."
+      - text: "I = V + R"
+        why: "The three are joined by a product, not a sum."
+  - kind: mcq
+    id: r-red-red
+    objective: O2
+    prompt: "What is red, red, brown?"
+    options:
+      - text: "220 Ω"
+        correct: true
+        why: "2, 2, and one zero."
+      - text: "221 Ω"
+        why: "The third band is the number of zeros: brown is one zero."
+      - text: "22 Ω"
+        why: "Brown is one zero: 22 becomes 220."
+  - kind: mcq
+    id: r-own-power
+    objective: O3
+    prompt: "Which part needs its own power, not a GPIO pin?"
+    options:
+      - text: "A motor"
+        correct: true
+        why: "It needs hundreds of mA. A pin gives about 16 mA."
+      - text: "An LED with 220 Ω"
+        why: "About 6 mA: fine for a pin."
+      - text: "A push button"
+        why: "A button on an input takes almost no current."
+  - kind: mcq
+    id: r-milli
+    objective: O3
+    prompt: "How many amperes are 5 mA?"
+    options:
+      - text: "0.005 A"
+        correct: true
+        why: "Milli is a thousandth: 5 / 1000."
+      - text: "0.05 A"
+        why: "That is 50 mA."
+      - text: "5000 A"
+        why: "That is the other way round."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-next-value
+    type: exercise
+    fade: independent
+    objective: O2
+    title: The next value you have
+    prompt: |
+      Your kit has the resistors in `KIT`. **Write `pick(needed)`**: it
+      gives back the smallest value in the kit that is at least `needed`,
+      or `None` if none is big enough.
+
+      ```text
+      220
+      None
+      ```
+    starter: |
+      KIT = [100, 220, 330, 1000, 10000]
+
+      # Your function here.
+
+
+      print(pick(130))
+      print(pick(20000))
+    solution: |
+      KIT = [100, 220, 330, 1000, 10000]
+
+
+      def pick(needed):
+          for value in sorted(KIT):
+              if value >= needed:
+                  return value
+          return None
+
+
+      print(pick(130))
+      print(pick(20000))
+    after: >-
+      Rounding up is the safe way: a bigger resistor gives a little less
+      current than you planned, never more.
+    checks:
+      - expr: "callable(ns.get('pick')) and pick(130) == 220 and pick(220) == 220 and pick(5) == 100 and pick(20000) is None"
+        pass: "It picks the smallest value that is big enough"
+        hint: "Go through the values from small to big, and return the first one that is at least `needed`."
+      - expr: "err is None and lines == ['220', 'None']"
+        pass: "It prints 220 and None"
+        hint: "Keep the two prints."
+    hints:
+      - "Loop over `sorted(KIT)`, small to big."
+      - "Return the first value with `value >= needed`."
+      - "After the loop, `return None`."
+  - id: x-power
+    type: exercise
+    fade: completion
+    objective: O2
+    title: How warm does it get?
+    prompt: |
+      A resistor turns power into heat: **P = V × I**, in watts. **Replace
+      `___`** so that the program prints the power in milliwatts, for 1.3 V
+      and 5.9 mA:
+
+      ```text
+      7.7 mW
+      ```
+    starter: |
+      volts = 1.3
+      amps = 0.0059
+
+      watts = volts ___ amps
+      print(f"{watts * 1000:.1f} mW")
+    solution: |
+      volts = 1.3
+      amps = 0.0059
+
+      watts = volts * amps
+      print(f"{watts * 1000:.1f} mW")
+    after: >-
+      A small resistor can take 250 mW (a quarter watt), so 7.7 mW is
+      nothing. Motors are another story: that is why they get their own
+      power.
+    checks:
+      - expr: "err is None and lines == ['7.7 mW']"
+        pass: "It prints 7.7 mW"
+        hint: "Power is volts times amperes."
+    hints:
+      - "P = V × I."
+      - "Times, in Python, is `*`."
+      - "`volts * amps`."

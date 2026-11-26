@@ -1,5 +1,5 @@
 id: web-forms
-order: 403
+order: 404
 title: Forms and questions
 summary: Let visitors send data to your server - in the query of the address, or with a form. Keep it, show it, and keep your page safe from their HTML.
 minutes: 45
@@ -88,7 +88,8 @@ steps:
           return f"<p>{len(found)} for '{escape(word)}':</p><ul>{items}</ul><a href='/'>Back</a>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     experiments:
       - text: "Run it, and search for `tea`."
         expr: "err is None and served"
@@ -141,7 +142,8 @@ steps:
           return f"Hello, {escape(name)}!"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, request
       from markupsafe import escape
@@ -160,7 +162,8 @@ steps:
           return f"Hello, {escape(name)}!"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       The form and the address do the same thing: the form only builds
       the query for you.
@@ -256,7 +259,8 @@ steps:
           return FORM + f"<ul>{items}</ul>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, redirect, request, url_for
       from markupsafe import escape
@@ -277,7 +281,8 @@ steps:
           return FORM + f"<ul>{items}</ul>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       This is the usual pattern: POST, change the data, redirect, GET.
       Open the tab **HTTP messages** after you write: the POST got a 302,
@@ -359,7 +364,8 @@ steps:
           return f"<form method='post'><input name='text'> <button>Post</button></form><ul>{items}</ul>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, redirect, request, url_for
       from markupsafe import escape
@@ -377,7 +383,8 @@ steps:
           return f"<form method='post'><input name='text'> <button>Post</button></form><ul>{items}</ul>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       Escape at the moment the text goes into HTML, not when it comes in:
       the list keeps what the visitor really wrote, and each page shows it
@@ -559,7 +566,8 @@ extra:
           return f"Results for {escape(q)}"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, request
       from markupsafe import escape
@@ -573,7 +581,8 @@ extra:
           return f"Results for {escape(q)}"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       `request.args.get` with a second value never fails: a visitor who
       opens the page without a query still gets an answer.
@@ -605,7 +614,8 @@ extra:
 
       # Your route here.
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, redirect, request, url_for
 
@@ -624,7 +634,8 @@ extra:
           return f"<form method='post'><input name='choice'> <button>Vote</button></form><p>{counts}</p>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       The redirect after the POST matters: without it, pressing reload in
       the browser would send the vote again.

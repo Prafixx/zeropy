@@ -47,6 +47,16 @@ steps:
 
       `ls` is the command, `-l` an option ("long list"), `photos` the
       argument.
+
+      ## Ask for help
+
+      You never need to remember every option:
+
+      - `man ls` shows the manual of `ls`. Many commands also print a short
+        help with `--help`: `ls --help`.
+      - A long text opens in **less**: Space shows the next screen, `b` goes
+        back, `/word` searches, and **q** quits. `less notes.txt` reads any long
+        file the same way.
     keys:
       - code: "pi@raspberrypi:~ $"
         means: "User `pi`, computer `raspberrypi`, in the home directory."
@@ -54,6 +64,10 @@ steps:
         means: "Your home directory: `/home/pi`."
       - code: "ls -l photos"
         means: "Command, option, argument."
+      - code: "man ls"
+        means: "The manual of a command. Quit with q."
+      - code: "ls --help"
+        means: "A short help of most commands."
 
   # 2. TERMINAL --------------------------------------------------------------
   - id: first
@@ -96,6 +110,42 @@ steps:
       `pwd` answers `/home/pi`: the full name of your home directory. `ls`
       shows two kinds of things: folders (`photos`, `music`, `documents`)
       and files (`notes.txt`).
+
+  # 2b. TERMINAL -------------------------------------------------------------
+  - id: help
+    type: terminal
+    objective: O2
+    title: Ask the terminal
+    prompt: |
+      **Find out what the options of `ls` do, without the internet.**
+
+      1. Read the manual of `ls` with `man`.
+      2. Print the short help of `ls` with `--help`.
+      3. Read the long file `notes.txt` with `less`.
+    start:
+      files:
+        notes.txt: |
+          Buy a power supply for the Pi.
+          Order two LEDs and a breadboard.
+          Read the manual of ls.
+    checks:
+      - expr: "any(h.startswith('man') for h in history)"
+        pass: "You read a manual with man"
+        hint: "`man ls`. In a real terminal, quit with q."
+      - expr: "any('--help' in h for h in history)"
+        pass: "You printed a short help with --help"
+        hint: "`ls --help`."
+      - expr: "any(h.startswith('less') for h in history)"
+        pass: "You read a file with less"
+        hint: "`less notes.txt`."
+    hints:
+      - "`man` and the name of the command."
+      - "`--help` comes after the command: `ls --help`."
+      - "`man ls`, `ls --help`, `less notes.txt`."
+    solution: ["man ls", "ls --help", "less notes.txt"]
+    after: >-
+      `man` and `--help` are always there, also on a server without a
+      browser. Read them before you search the web.
 
   # 3. THEORY ----------------------------------------------------------------
   - id: paths
@@ -333,6 +383,18 @@ review:
         why: "This starts at the top, `/`, where there is no `documents`."
       - text: "`cd work`"
         why: "`work` is inside `documents`, not in `~`."
+  - kind: mcq
+    id: r-man
+    objective: O2
+    prompt: "How do you quit `man` or `less`?"
+    options:
+      - text: "Press q"
+        correct: true
+        why: "q quits; Space shows the next screen."
+      - text: "Press Ctrl+S"
+        why: "That stops the output in some terminals. q quits."
+      - text: "Type `exit`"
+        why: "`exit` leaves the shell. In `man`, press q."
 
 # "Practice more": extra tasks, not shown in the lesson (practice page).
 extra:

@@ -1,5 +1,5 @@
 id: pi-project
-order: 207
+order: 208
 title: "Project: a pedestrian crossing"
 summary: Traffic lights that turn red when someone presses the button, with a beep for the people who cross.
 minutes: 40

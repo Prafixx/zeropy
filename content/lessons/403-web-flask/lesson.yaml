@@ -1,5 +1,5 @@
 id: web-flask
-order: 402
+order: 403
 title: Your first web server
 summary: Write a web server with Flask. Each address of your site is a Python function, and the browser shows what it returns.
 minutes: 40
@@ -34,7 +34,8 @@ steps:
           return "<h1>Hello from my server</h1>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
       ```
 
       - `app = Flask(__name__)` makes the app.
@@ -45,6 +46,8 @@ steps:
         adds the status `200 OK` and the headers.
       - `app.run()` starts the server. It waits for requests and never
         ends by itself (on a real computer, stop it with **Ctrl + C**).
+      - `if __name__ == "__main__":` from lesson [[#own-modules]] keeps it
+        from starting when another file, like a test, imports the app.
 
       In this course, `app.run()` opens a small browser under your code.
       Its requests go to your app, inside this page.
@@ -82,7 +85,8 @@ steps:
           return "<h1>About me</h1><p>I learn Python.</p><p><a href='/'>Home</a></p>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     experiments:
       - text: "Run it, and click the link."
         expr: "err is None and served"
@@ -144,7 +148,8 @@ steps:
       # Your route here
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask
 
@@ -161,7 +166,8 @@ steps:
           return "<h1>Menu</h1><ul><li>Tea</li><li>Coffee</li><li>Cake</li></ul>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       Each page of a site is one route and one function. The link on the
       home page is a request for `/menu`, like typing it.
@@ -254,7 +260,8 @@ steps:
           return "<p>Try <a href='/square/7'>/square/7</a></p>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask
 
@@ -271,7 +278,8 @@ steps:
           return f"{n} x {n} = {n * n}"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       The converter does the checking for you: a path that is not a whole
       number never reaches your function.
@@ -320,7 +328,8 @@ steps:
           return "<h1>News</h1><p>We are open on Sunday.</p>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask
 
@@ -337,7 +346,8 @@ steps:
           return "<h1>News</h1><p>We are open on Sunday.</p>"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       Flask knows each view by its function name (the **endpoint**). Two
       views with the same name would replace each other, so Flask stops
@@ -525,7 +535,8 @@ extra:
           return f"Hello, {name}!"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask
 
@@ -537,7 +548,8 @@ extra:
           return f"Hello, {name}!"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       The part in `< >` matches any text in that place of the path, and
       Flask gives it to the view under the same name.
@@ -568,7 +580,8 @@ extra:
 
       # Your route here.
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask
 
@@ -580,7 +593,8 @@ extra:
           return f"{a} + {b} = {a + b}"
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       `<int:a>` does two jobs: it turns the text into a number, and it lets
       only numbers in. Flask answers 404 for the rest, without your code.

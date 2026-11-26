@@ -49,6 +49,22 @@ steps:
       2. **Calculate**: ADD and SUB.
       3. **Jumps**: JMP and JNZ, for loops.
       4. **A program**: multiply two numbers, with only adding.
+
+      ## And your Python code?
+
+      The CPU runs only machine code. Python gets there in two steps:
+
+      1. Python **compiles** your file into **bytecode**: simple instructions
+         for a virtual machine. `import dis; dis.dis(f)` shows them.
+      2. The **interpreter**, a program written in C, runs the bytecode one
+         instruction at a time, a little like your `run` function.
+
+      Languages like C or Rust are **compiled** ahead: a compiler turns the
+      code into machine code once, and the CPU runs it directly. That is
+      faster, but you must compile again for each kind of computer.
+
+      The **operating system** (Windows, macOS, Linux) starts each program,
+      gives it memory, and lets it use files, the screen and the network.
     keys:
       - code: "pc"
         means: "The program counter: the address of the next instruction."
@@ -56,6 +72,12 @@ steps:
         means: "What a CPU does again and again."
       - code: "register"
         means: "A fast place for one value, inside the CPU."
+      - code: "bytecode"
+        means: "Python's simple instructions, run by the interpreter."
+      - code: "interpreter"
+        means: "The program that runs Python code."
+      - code: "operating system"
+        means: "Starts programs and gives them memory and files."
 
   # 2. PROJECT STEP 1 ---------------------------------------------------------
   - id: m1-cycle
@@ -557,6 +579,18 @@ review:
         why: "300 does not fit in 8 bits."
       - text: "255"
         why: "It wraps around, it does not stop at 255."
+  - kind: mcq
+    id: r-bytecode
+    objective: O1
+    prompt: "What runs your Python bytecode?"
+    options:
+      - text: "The Python interpreter"
+        correct: true
+        why: "A program, written in C, that runs one bytecode instruction at a time."
+      - text: "The CPU, directly"
+        why: "The CPU runs machine code. The interpreter is the machine code that runs your bytecode."
+      - text: "The operating system"
+        why: "The OS starts the interpreter and gives it memory; it does not run bytecode."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

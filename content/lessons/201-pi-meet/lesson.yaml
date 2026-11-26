@@ -77,7 +77,7 @@ steps:
       1. **GPIO pins work with 3.3 V.** Never connect 5 V to a GPIO pin.
       2. **A pin that the program switches (an output) never goes straight
          to 3V3, 5V, GND or another pin.** Put a part with a resistor in
-         between, like the LED of the next lesson. A button on a pin that
+         between, like the LED of "Light an LED". A button on a pin that
          the program reads (an input) may go to GND: "Buttons and events"
          shows why.
       3. **Switch the Pi off before you change the wires.**
@@ -235,7 +235,7 @@ steps:
           print("cool")
     after: >-
       A real Pi could switch on a fan at `hot`, with an output pin. You
-      will switch outputs in the next lesson.
+      will switch outputs two lessons on, after the parts.
     cases:
       - {}
       - label: "a CPU at 75 °C"

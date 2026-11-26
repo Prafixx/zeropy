@@ -1,5 +1,5 @@
 id: pi-remote
-order: 209
+order: 210
 title: A Pi without a screen
 summary: Find the Pi on your network, log in from your PC with SSH, copy files with scp, and keep the door safe.
 minutes: 40

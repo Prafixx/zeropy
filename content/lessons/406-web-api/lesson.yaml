@@ -1,5 +1,5 @@
 id: web-api
-order: 405
+order: 406
 title: Your own JSON API
 summary: A server for programs instead of people. Answer with JSON and the right status code, take JSON in, and test it all with Flask's test client.
 minutes: 45
@@ -574,7 +574,8 @@ extra:
           return BOOKS[book_id]
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask
 
@@ -589,7 +590,8 @@ extra:
           return BOOKS[book_id]
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       A program that calls your API reads the status code first. 404 tells
       it "this one does not exist", and the JSON says the same for people.
@@ -622,7 +624,8 @@ extra:
 
       # Your route here.
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     solution: |
       from flask import Flask, request
 
@@ -641,7 +644,8 @@ extra:
           return note, 201
 
 
-      app.run()
+      if __name__ == "__main__":
+          app.run()
     after: >-
       Check what comes in before you keep it: a program can send anything,
       also no JSON at all. A clear 400 is better than a crash later.

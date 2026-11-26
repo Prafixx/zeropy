@@ -1,5 +1,5 @@
 id: pi-light
-order: 205
+order: 206
 title: "Light, motion and knobs"
 summary: A street light that turns on in the dark, an alarm for movement, and a knob that sets the brightness of an LED.
 minutes: 45

@@ -372,6 +372,42 @@ Verified: check:content (all pass), quiz-bias.mjs (one correct option
 each), the audit (no sentence over 28 words), the robot on 9 lessons from
 all parts (no issues, no page errors).
 
+## Phase 5: what changed
+Chosen for what a beginner hits first, at a reasonable cost (owner:
+"the best option that doesn't use much token, highest quality"):
+- **New Pi 2 "Parts, the breadboard and resistors"**: the kit, the rows
+  and the middle groove, colour bands, Ohm's law (R = V / I, choosing
+  220 Ω), about 16 mA per pin, own power for big parts, and running the
+  code on a real Pi (a venv with `--system-site-packages`). It says that
+  Pi 1-8 use the pretend board. Pi 2-9 became Pi 3-10.
+- **New Web 2 "HTML, the language of pages"**: tags, nesting,
+  attributes, the page frame, headings, lists, links, forms with GET and
+  POST. Its checks read HTML with `html.parser`, so they do not depend on
+  spaces. Web 2-7 became Web 3-9.
+- **New Web 8 "Keep the data: Flask and SQLite"**: a connection per
+  request, `?`, commit and close, the data as HTML and JSON, CSRF (the
+  attack, the token) with Flask-WTF on your own computer. Flask-WTF does
+  not run in Pyodide, so the lesson does not invent its own protection.
+- **Web 3-9**: every `app.run(...)` is under `if __name__ == "__main__":`
+  (49 places), explained in "Your first web server". The extra that
+  practises adding the guard keeps its unguarded starter.
+- **Linux 1**: `man`, `--help`, `less` (a Learn section, a terminal task,
+  a card); the pretend shell now answers `--help` for its commands and has
+  a manual for `less`.
+- **L2**: the label model ("the name `age`, like a label, on the value
+  25") instead of "a box".
+- **L62**: `root.after`, and why `time.sleep` freezes a window.
+- **L46**: `git clone` and `git revert`; 55 → 65 minutes.
+- **Computer 6**: how Python runs code (bytecode, the interpreter),
+  compiled languages, and what the operating system does.
+- README: the Pi and Web descriptions.
+
+Not done (later, if wanted): servo, camera, I2C, RGB LED (the pretend
+board needs new parts in gpio.py first); Linux PATH, history, cron;
+CSS and static files; a shown recommended path order; `ls -a` and
+`find` in the main Linux path (they are in extras); the shebang before
+Linux 4.
+
 ## NEEDS HUMAN TEST
 Never marked as tested. Each with steps and the expected result.
 1. **Button (Pi 3)**: button between GPIO 2 and GND, `Button(2)`,
@@ -403,7 +439,7 @@ Never marked as tested. Each with steps and the expected result.
 9. **GitHub Actions (46.4)**: a repository with the workflow of the
    lesson (checkout@v7, setup-python@v7, Python 3.14) and one test.
    Expected: the check runs and turns green; a failing test turns it red.
-10. **Pi Zero 2 W power (Pi 8.1)**: the 2.5 A figure is the official
+10. **Pi Zero 2 W power (Pi 9.1, was 8.1)**: the 2.5 A figure is the official
    micro-USB supply; raspberrypi.com did not state the Zero 2 W's own
    minimum verbatim. Check the official docs once more.
 
@@ -414,3 +450,5 @@ Never marked as tested. Each with steps and the expected result.
 - 2026-11-26 Phase 2 done (references by id, cross-references, small facts).
 - 2026-11-26 Phase 3 done (Learn steps for 15 concepts, 3 lessons moved).
 - 2026-11-26 Phase 4 done (quizzes: 73% -> 39% correct-longest).
+- 2026-11-26 Phase 5 done (3 new lessons, small additions). Published as 1.6.0.
+- Also check: "about 16 mA per pin" (Pi 2) against the Raspberry Pi documentation.

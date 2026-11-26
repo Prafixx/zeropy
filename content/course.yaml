@@ -139,6 +139,7 @@ paths:
         goal: Wire parts safely and control them from Python with gpiozero.
         lessons:
           - { id: pi-meet, title: Meet the Raspberry Pi }
+          - { id: pi-parts, title: "Parts, the breadboard and resistors" }
           - { id: pi-led, title: Light an LED }
           - { id: pi-button, title: Buttons and events }
           - { id: pi-sensors, title: "Brightness, sound and distance" }
@@ -178,11 +179,13 @@ paths:
         goal: Read URLs and HTTP messages, and answer them with Flask.
         lessons:
           - { id: web-how, title: How the web works }
+          - { id: web-html, title: "HTML, the language of pages" }
           - { id: web-flask, title: Your first web server }
           - { id: web-forms, title: Forms and questions }
           - { id: web-templates, title: Pages from templates }
           - { id: web-api, title: Your own JSON API }
           - { id: web-project, title: "Project: a reading list", kind: project }
+          - { id: web-sqlite, title: "Keep the data: Flask and SQLite" }
           - { id: web-real, title: A real server on your computer and your Pi }
   - id: computer
     title: How computers work

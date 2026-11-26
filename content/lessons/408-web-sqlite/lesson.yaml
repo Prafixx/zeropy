@@ -1,0 +1,693 @@
+id: web-sqlite
+order: 408
+title: "Keep the data: Flask and SQLite"
+summary: A web app whose data survives a restart, in an SQLite file. Show it as HTML and as JSON, and protect its forms against CSRF.
+minutes: 45
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Keep the data of a Flask app in SQLite, so it survives a restart - a connection per request, ? placeholders, commit and close
+  - id: O2
+    text: Show the data of the database as a page and as JSON
+  - id: O3
+    text: Explain a CSRF attack, and protect POST forms with a token from Flask-WTF
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: survive
+    type: theory
+    objective: O1
+    title: Data that survives a restart
+    body: |
+      The reading list of the project keeps its books in a Python list.
+      When the server stops, the list is gone. A real app keeps its data in
+      a database: here an **SQLite** file, as in lesson [[#sqlite]].
+
+      ```python
+      import sqlite3
+      from flask import Flask, redirect, request, url_for
+      from markupsafe import escape
+
+      app = Flask(__name__)
+      DB = "books.db"
+
+
+      def db():
+          con = sqlite3.connect(DB)
+          con.execute("CREATE TABLE IF NOT EXISTS books "
+                      "(id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+          return con
+
+
+      @app.get("/")
+      def home():
+          con = db()
+          rows = con.execute("SELECT id, title FROM books ORDER BY id").fetchall()
+          con.close()
+          return "<ul>" + "".join(f"<li>{escape(t)}</li>" for _, t in rows) + "</ul>"
+
+
+      @app.post("/add")
+      def add():
+          con = db()
+          with con:
+              con.execute("INSERT INTO books (title) VALUES (?)", (request.form["title"],))
+          con.close()
+          return redirect(url_for("home"))
+      ```
+
+      - Each request opens its **own connection**, and closes it at the
+        end. Requests can come at the same time; one shared connection
+        would mix them up.
+      - `CREATE TABLE IF NOT EXISTS` makes the table on the first run only.
+      - `?` keeps the title out of the SQL (no SQL injection), and
+        `with con:` commits the change.
+      - `escape` still protects the page: data from a database came from
+        visitors too.
+    keys:
+      - code: "def db():"
+        means: "One small function opens the connection, the same way each time."
+      - code: "CREATE TABLE IF NOT EXISTS"
+        means: "Make the table only if it is not there yet."
+      - code: "with con: ... con.close()"
+        means: "Commit the change, then close the connection."
+
+  # 2. EXERCISE: completion --------------------------------------------------
+  - id: ex-insert
+    type: exercise
+    fade: completion
+    objective: O1
+    title: Save a new book
+    prompt: |
+      **Replace the two `___`** so that a POST to `/add` saves the title in
+      `books.db`, safely, and then goes back to the list.
+    starter: |
+      import sqlite3
+      from flask import Flask, redirect, request, url_for
+      from markupsafe import escape
+
+      app = Flask(__name__)
+      DB = "books.db"
+
+
+      def db():
+          con = sqlite3.connect(DB)
+          con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+          return con
+
+
+      @app.get("/")
+      def home():
+          con = db()
+          rows = con.execute("SELECT title FROM books ORDER BY id").fetchall()
+          con.close()
+          return "<ul>" + "".join(f"<li>{escape(t)}</li>" for (t,) in rows) + "</ul>"
+
+
+      @app.post("/add")
+      def add():
+          con = db()
+          with con:
+              con.execute("INSERT INTO books (title) VALUES (___)", (request.form["title"]___))
+          con.close()
+          return redirect(url_for("home"))
+
+
+      if __name__ == "__main__":
+          app.run()
+    solution: |
+      import sqlite3
+      from flask import Flask, redirect, request, url_for
+      from markupsafe import escape
+
+      app = Flask(__name__)
+      DB = "books.db"
+
+
+      def db():
+          con = sqlite3.connect(DB)
+          con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+          return con
+
+
+      @app.get("/")
+      def home():
+          con = db()
+          rows = con.execute("SELECT title FROM books ORDER BY id").fetchall()
+          con.close()
+          return "<ul>" + "".join(f"<li>{escape(t)}</li>" for (t,) in rows) + "</ul>"
+
+
+      @app.post("/add")
+      def add():
+          con = db()
+          with con:
+              con.execute("INSERT INTO books (title) VALUES (?)", (request.form["title"],))
+          con.close()
+          return redirect(url_for("home"))
+
+
+      if __name__ == "__main__":
+          app.run()
+    after: >-
+      The comma makes a tuple of one value, and the `?` is filled in from
+      it. Restart the server on your own computer: the books are still
+      there, because they are in the file.
+    checks:
+      - expr: "client is not None and client.post('/add', data={'title': 'Dune'}).status_code == 302 and __import__('sqlite3').connect('books.db').execute('SELECT title FROM books').fetchall() == [('Dune',)]"
+        pass: "A POST saves the title in books.db"
+        hint: "`VALUES (?)`, and the value as a tuple: `(request.form[\"title\"],)`."
+        misconceptions:
+          - when: "err is None and client is not None and client.post('/add', data={'title': 'Dune'}).status_code == 500"
+            say: "The value must be a tuple. `(x)` is only `x`; `(x,)` is a tuple of one value."
+      - expr: "client is not None and (client.post('/add', data={'title': \"O'Brien <b>\"}) and True) and \"O&#39;Brien &lt;b&gt;\" in client.get('/').get_data(as_text=True)"
+        pass: "Any title works, and the page escapes it"
+        hint: "With `?`, quotes in the title cannot break the SQL."
+    hints:
+      - "The SQL needs a place for the value: a question mark."
+      - "The values come as a tuple; one value needs a comma."
+      - "`VALUES (?)` and `(request.form[\"title\"],)`."
+
+  # 3. EXERCISE: debug -------------------------------------------------------
+  - id: ex-lost
+    type: exercise
+    fade: debug
+    objective: O1
+    title: The books disappear
+    prompt: |
+      After a POST, the page shows the new book. But in a new connection,
+      the book is gone, and after a restart nothing is left. **Find the bug
+      and fix it.**
+    starter: |
+      import sqlite3
+      from flask import Flask, redirect, request, url_for
+
+      app = Flask(__name__)
+      DB = "books.db"
+
+
+      def db():
+          con = sqlite3.connect(DB)
+          con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+          return con
+
+
+      @app.post("/add")
+      def add():
+          con = db()
+          con.execute("INSERT INTO books (title) VALUES (?)", (request.form["title"],))
+          con.close()
+          return redirect("/")
+
+
+      if __name__ == "__main__":
+          app.run()
+    solution: |
+      import sqlite3
+      from flask import Flask, redirect, request, url_for
+
+      app = Flask(__name__)
+      DB = "books.db"
+
+
+      def db():
+          con = sqlite3.connect(DB)
+          con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+          return con
+
+
+      @app.post("/add")
+      def add():
+          con = db()
+          with con:
+              con.execute("INSERT INTO books (title) VALUES (?)", (request.form["title"],))
+          con.close()
+          return redirect("/")
+
+
+      if __name__ == "__main__":
+          app.run()
+    after: >-
+      Without a commit, `close()` throws the change away. `with con:` (or
+      `con.commit()`) saves it first. This bug is quiet: no error, only lost
+      data.
+    checks:
+      - expr: "client is not None and client.post('/add', data={'title': 'Emma'}).status_code == 302 and __import__('sqlite3').connect('books.db').execute('SELECT title FROM books').fetchall() == [('Emma',)]"
+        pass: "The book is still there in a new connection"
+        hint: "The change is never committed. Put the INSERT inside `with con:`, or call `con.commit()`."
+      - expr: "'con.close()' in src"
+        pass: "The connection is still closed at the end"
+        hint: "Keep `con.close()`: commit first, then close."
+    hints:
+      - "Changes in SQLite are kept only after a commit."
+      - "Which line saves the change? There is none."
+      - "`with con:` around the INSERT, before `con.close()`."
+
+  # 4. EXERCISE: independent -------------------------------------------------
+  - id: ex-json
+    type: exercise
+    fade: independent
+    objective: O2
+    title: The books as JSON
+    prompt: |
+      **Add `GET /api/books`**: it reads the books from the database and
+      answers JSON, like `[{"id": 1, "title": "Dune"}]`, in the order of the
+      ids. Close the connection before you answer.
+    starter: |
+      import sqlite3
+      from flask import Flask
+
+      app = Flask(__name__)
+      DB = "books.db"
+
+
+      def db():
+          con = sqlite3.connect(DB)
+          con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+          return con
+
+
+      con = db()
+      with con:
+          con.executemany("INSERT INTO books (title) VALUES (?)", [("Dune",), ("Emma",)])
+      con.close()
+
+      # Your route here.
+
+      if __name__ == "__main__":
+          app.run()
+    solution: |
+      import sqlite3
+      from flask import Flask
+
+      app = Flask(__name__)
+      DB = "books.db"
+
+
+      def db():
+          con = sqlite3.connect(DB)
+          con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+          return con
+
+
+      con = db()
+      with con:
+          con.executemany("INSERT INTO books (title) VALUES (?)", [("Dune",), ("Emma",)])
+      con.close()
+
+
+      @app.get("/api/books")
+      def api_books():
+          con = db()
+          rows = con.execute("SELECT id, title FROM books ORDER BY id").fetchall()
+          con.close()
+          return [{"id": book_id, "title": title} for book_id, title in rows]
+
+
+      if __name__ == "__main__":
+          app.run()
+    after: >-
+      The same rows, two ways out: HTML for people, JSON for programs. The
+      list comprehension turns each tuple into a dictionary, and Flask turns
+      the list into JSON.
+    checks:
+      - expr: "client is not None and client.get('/api/books').get_json() == [{'id': 1, 'title': 'Dune'}, {'id': 2, 'title': 'Emma'}]"
+        pass: "GET /api/books answers the books as JSON"
+        hint: "`SELECT id, title FROM books ORDER BY id`, then a list of dictionaries."
+      - expr: "client is not None and (__import__('sqlite3').connect('books.db').execute(\"INSERT INTO books (title) VALUES ('Jane')\").connection.commit() or True) and client.get('/api/books').get_json()[-1] == {'id': 3, 'title': 'Jane'}"
+        pass: "It reads the database at each request"
+        hint: "Open the connection inside the view, not once at the start."
+      - expr: "'close()' in src.split('def api_books')[-1] if 'def api_books' in src else False"
+        pass: "The view closes its connection"
+        hint: "`con.close()` before the `return`."
+    hints:
+      - "Inside the view: `con = db()`, then the SELECT with `fetchall()`."
+      - "Each row is a tuple `(id, title)`. Make a dictionary of each."
+      - "`return [{\"id\": i, \"title\": t} for i, t in rows]`, after `con.close()`."
+
+  # 5. THEORY ----------------------------------------------------------------
+  - id: csrf
+    type: theory
+    objective: O3
+    title: A form that another site sends
+    body: |
+      Your browser keeps the login of each site in **cookies**, and sends
+      them with every request to that site. That opens a trick called
+      **CSRF** (cross-site request forgery):
+
+      1. You are logged in to your reading list.
+      2. You visit another page. It contains a hidden form that POSTs to
+         your reading list, like `/delete/1`, and it sends itself.
+      3. Your browser adds your cookie. Your server sees a normal request
+         from you, and deletes the book.
+
+      The defence is a **token**: a random secret that the server puts into
+      each of its own forms, as a hidden field. A POST without the right
+      token is refused. The other page cannot read your pages, so it cannot
+      know the token.
+
+      Do not build this yourself: use an established library. In Flask it
+      is **Flask-WTF**, on your own computer:
+
+      ```python
+      import os
+      from flask import Flask
+      from flask_wtf import CSRFProtect
+
+      app = Flask(__name__)
+      app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]   # never in the code
+      CSRFProtect(app)
+      ```
+
+      and in each form of a template:
+
+      ```html
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      ```
+
+      Flask-WTF does not run in the Python of this page, so here you learn
+      the idea; install it with `pip install flask-wtf` in your venv.
+    keys:
+      - code: "CSRF"
+        means: "Another site makes your browser send a request, with your cookies."
+      - code: "csrf_token"
+        means: "A secret in each form; a POST without it is refused."
+      - code: "CSRFProtect(app)"
+        means: "Flask-WTF checks the token of every POST."
+
+  # 6. DRILL -----------------------------------------------------------------
+  - id: drill-csrf
+    type: drill
+    objective: O3
+    title: Who sent this form?
+    items:
+      - kind: mcq
+        id: d-why-works
+        objective: O3
+        prompt: "Why does a CSRF attack work at all?"
+        options:
+          - text: "The browser adds your cookies"
+            correct: true
+            why: "To any request to that site, also one that another page starts."
+          - text: "The attacker knows your password"
+            why: "No password is needed: your browser is already logged in."
+          - text: "Flask has a bug"
+            why: "It is how browsers and cookies work, in every framework."
+      - kind: mcq
+        id: d-token
+        objective: O3
+        prompt: "Why can the other page not just copy the token?"
+        options:
+          - text: "It cannot read your pages"
+            correct: true
+            why: "Browsers do not let one site read the pages of another. So the token stays secret."
+          - text: "The token changes every second"
+            why: "It does not need to: the other page never sees it."
+          - text: "It is written in Python"
+            why: "The token is a random text in the HTML of your form."
+      - kind: mcq
+        id: d-get
+        objective: O3
+        prompt: "Which requests must never change data, so that a token is not needed for them?"
+        options:
+          - text: "GET requests"
+            correct: true
+            why: "Links and images are GETs, and any page can make them. Changes go with POST, and POST is checked."
+          - text: "POST requests"
+            why: "POST is the method for changes, so POST is what the token protects."
+          - text: "Requests with a cookie"
+            why: "Almost every request of a logged-in visitor has a cookie."
+
+  # 7. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O1
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-list-lost
+        objective: O1
+        prompt: "The books are in a Python list in the server. What happens when the server restarts?"
+        options:
+          - text: "The list is empty again"
+            correct: true
+            why: "It lived in memory. A database file keeps the data."
+          - text: "Flask saves it by itself"
+            why: "Flask keeps nothing between runs. You choose where data lives."
+          - text: "The browser keeps it"
+            why: "The browser only shows the pages."
+      - kind: mcq
+        id: q-own-con
+        objective: O1
+        prompt: "Why does each request open its own connection?"
+        options:
+          - text: "Requests can come at once"
+            correct: true
+            why: "One shared connection could mix their changes. Open, use, close, per request."
+          - text: "SQLite allows only one SELECT"
+            why: "A connection can run many statements. The point is requests at the same time."
+          - text: "It is faster"
+            why: "It is about keeping requests apart."
+      - kind: mcq
+        id: q-escape-db
+        objective: O2
+        prompt: "The titles come from your own database. Do you still escape them in the page?"
+        options:
+          - text: "Yes: visitors wrote them"
+            correct: true
+            why: "A title like `<script>` is still a script. Escape every text that a visitor wrote, wherever it was kept."
+          - text: "No: the database cleans them"
+            why: "SQLite stores the text as it is, scripts too."
+          - text: "No: `?` escapes them"
+            why: "`?` protects the SQL, not the HTML page."
+      - kind: mcq
+        id: q-secret
+        objective: O3
+        prompt: "Where does the `SECRET_KEY` of Flask-WTF belong?"
+        options:
+          - text: "In an environment variable"
+            correct: true
+            why: "Like an API key: never in the code, never in git."
+          - text: "In the template, as a hidden field"
+            why: "The token goes into the form. The key that signs it stays on the server."
+          - text: "In the code, next to `app`"
+            why: "Then everyone who sees the code can forge tokens."
+
+  # 8. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O1
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-survive
+    objective: O1
+    prompt: "What keeps the data of a web app after a restart?"
+    options:
+      - text: "A database file, like SQLite"
+        correct: true
+        why: "Memory is empty after a restart; the file stays."
+      - text: "A global list"
+        why: "A list lives in memory, and is gone with the server."
+      - text: "The browser's cache"
+        why: "The cache holds copies of pages, not your data."
+  - kind: mcq
+    id: r-commit
+    objective: O1
+    prompt: "A view runs an INSERT and then `con.close()`, without a commit. What is saved?"
+    options:
+      - text: "Nothing"
+        correct: true
+        why: "Without a commit, closing throws the change away. Use `with con:`."
+      - text: "The new row"
+        why: "Only a commit saves it."
+      - text: "Half of it"
+        why: "A change is saved whole, or not at all."
+  - kind: mcq
+    id: r-placeholder
+    objective: O1
+    prompt: "Why `VALUES (?)` and not an f-string with the title?"
+    options:
+      - text: "No SQL injection"
+        correct: true
+        why: "The value never becomes part of the SQL, so quotes in it are harmless."
+      - text: "It is faster to type"
+        why: "The reason is safety."
+      - text: "f-strings do not work in SQL"
+        why: "They work, and that is the danger: the text becomes SQL."
+  - kind: mcq
+    id: r-csrf
+    objective: O3
+    prompt: "What stops a CSRF attack on a POST form?"
+    options:
+      - text: "A secret token in the form"
+        correct: true
+        why: "Another site cannot read it, so its forged POST has no valid token."
+      - text: "A longer password"
+        why: "The attack uses your existing login. The password is never needed."
+      - text: "Using GET instead"
+        why: "That makes it worse: a GET must never change data."
+  - kind: mcq
+    id: r-json-rows
+    objective: O2
+    prompt: "`fetchall()` gives `[(1, 'Dune')]`. What does the API return, for nice JSON?"
+    options:
+      - text: "`[{\"id\": 1, \"title\": \"Dune\"}]`"
+        correct: true
+        why: "Dictionaries with names; a program then reads `book[\"title\"]`."
+      - text: "The tuples as they are"
+        why: "They become lists without names: `[[1, \"Dune\"]]`, harder to read."
+      - text: "A text of the rows"
+        why: "A program needs JSON, not a printed text."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-delete
+    type: exercise
+    fade: independent
+    objective: O1
+    title: Delete a book
+    prompt: |
+      **Add `POST /delete/<int:book_id>`**: it deletes that book from
+      `books.db` and goes back to `/`. A book that does not exist gives
+      404.
+    starter: |
+      import sqlite3
+      from flask import Flask, abort, redirect
+
+      app = Flask(__name__)
+      DB = "books.db"
+
+
+      def db():
+          con = sqlite3.connect(DB)
+          con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+          return con
+
+
+      con = db()
+      with con:
+          con.executemany("INSERT INTO books (title) VALUES (?)", [("Dune",), ("Emma",)])
+      con.close()
+
+      # Your route here.
+
+      if __name__ == "__main__":
+          app.run()
+    solution: |
+      import sqlite3
+      from flask import Flask, abort, redirect
+
+      app = Flask(__name__)
+      DB = "books.db"
+
+
+      def db():
+          con = sqlite3.connect(DB)
+          con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+          return con
+
+
+      con = db()
+      with con:
+          con.executemany("INSERT INTO books (title) VALUES (?)", [("Dune",), ("Emma",)])
+      con.close()
+
+
+      @app.post("/delete/<int:book_id>")
+      def delete(book_id):
+          con = db()
+          with con:
+              gone = con.execute("DELETE FROM books WHERE id = ?", (book_id,)).rowcount
+          con.close()
+          if gone == 0:
+              abort(404)
+          return redirect("/")
+
+
+      if __name__ == "__main__":
+          app.run()
+    after: >-
+      `rowcount` says how many rows the statement changed: 0 means there was
+      no such book. A delete is a change, so it is a POST, with a CSRF token
+      on a real site.
+    checks:
+      - expr: "client is not None and client.post('/delete/1').status_code == 302 and __import__('sqlite3').connect('books.db').execute('SELECT title FROM books').fetchall() == [('Emma',)]"
+        pass: "It deletes the book and redirects"
+        hint: "`DELETE FROM books WHERE id = ?` with `(book_id,)`, inside `with con:`."
+      - expr: "client is not None and client.post('/delete/9').status_code == 404"
+        pass: "A missing book gives 404"
+        hint: "`rowcount` is 0 when nothing was deleted: then `abort(404)`."
+    hints:
+      - "Without `WHERE`, every row is deleted. Choose the row with `WHERE id = ?`."
+      - "`con.execute(...).rowcount` is the number of deleted rows."
+      - "After `con.close()`: `if gone == 0: abort(404)`, else `return redirect(\"/\")`."
+  - id: x-count
+    type: exercise
+    fade: completion
+    objective: O2
+    title: How many books?
+    prompt: |
+      **Replace `___`** so that `/count` answers `{"books": 2}`, counted by
+      SQLite itself.
+    starter: |
+      import sqlite3
+      from flask import Flask
+
+      app = Flask(__name__)
+      con = sqlite3.connect("books.db")
+      con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT)")
+      with con:
+          con.executemany("INSERT INTO books (title) VALUES (?)", [("Dune",), ("Emma",)])
+      con.close()
+
+
+      @app.get("/count")
+      def count():
+          con = sqlite3.connect("books.db")
+          (n,) = con.execute("SELECT ___ FROM books").fetchone()
+          con.close()
+          return {"books": n}
+
+
+      if __name__ == "__main__":
+          app.run()
+    solution: |
+      import sqlite3
+      from flask import Flask
+
+      app = Flask(__name__)
+      con = sqlite3.connect("books.db")
+      con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title TEXT)")
+      with con:
+          con.executemany("INSERT INTO books (title) VALUES (?)", [("Dune",), ("Emma",)])
+      con.close()
+
+
+      @app.get("/count")
+      def count():
+          con = sqlite3.connect("books.db")
+          (n,) = con.execute("SELECT COUNT(*) FROM books").fetchone()
+          con.close()
+          return {"books": n}
+
+
+      if __name__ == "__main__":
+          app.run()
+    after: >-
+      `COUNT(*)` lets the database count. With a million books, that is much
+      faster than reading them all into Python and taking `len`.
+    checks:
+      - expr: "client is not None and client.get('/count').get_json() == {'books': 2}"
+        pass: "It answers the number of books"
+        hint: "SQL counts rows with `COUNT(*)`."
+      - expr: "'COUNT' in src.upper().split('DEF COUNT')[-1]"
+        pass: "SQLite does the counting"
+        hint: "`SELECT COUNT(*) FROM books`."
+    hints:
+      - "SQL has a function that counts rows."
+      - "It is written `COUNT(...)`."
+      - "`COUNT(*)`."

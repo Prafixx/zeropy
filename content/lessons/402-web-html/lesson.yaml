@@ -1,0 +1,530 @@
+id: web-html
+order: 402
+title: HTML, the language of pages
+summary: Tags, headings, lists and links, and a form that sends data to a server. Enough HTML to build your own pages with Flask.
+minutes: 35
+outcomes: []
+
+objectives:
+  - id: O1
+    text: Read and write HTML elements - tags, nesting and attributes
+  - id: O2
+    text: Build a page with headings, paragraphs, lists and links
+  - id: O3
+    text: Write a form with inputs and a button, and say where its data goes
+
+steps:
+  # 1. THEORY ----------------------------------------------------------------
+  - id: tags
+    type: theory
+    objective: O1
+    title: Tags and elements
+    body: |
+      A web page is a text in **HTML**. The browser reads the **tags** in
+      it and shows the page:
+
+      ```html
+      <h1>Weather</h1>
+      <p>Today it is <strong>sunny</strong>.</p>
+      ```
+
+      - `<h1>` **opens** an element, `</h1>` **closes** it. The text
+        between is its content.
+      - Elements can be **inside** other elements: `<strong>` is inside
+        `<p>`. Close the inner one first, like brackets.
+      - A tag can have **attributes**: `<a href="/today">Today</a>`.
+        `href` says where the link goes.
+      - A few elements have no content and no closing tag: `<br>` (a new
+        line), `<img src="sun.png" alt="A sun">`.
+
+      A whole page has a frame around it:
+
+      ```html
+      <!doctype html>
+      <html>
+        <head><title>Weather</title></head>
+        <body>
+          <h1>Weather</h1>
+        </body>
+      </html>
+      ```
+
+      `<head>` holds facts about the page, like the title on the tab.
+      `<body>` holds what you see.
+    keys:
+      - code: "<p>text</p>"
+        means: "An element: open tag, content, close tag."
+      - code: "<a href=\"/today\">"
+        means: "An attribute: a name and a value in quotes."
+      - code: "<head> / <body>"
+        means: "Facts about the page / what you see."
+
+  # 2. DRILL -----------------------------------------------------------------
+  - id: drill-tags
+    type: drill
+    objective: O1
+    title: Read the tags
+    items:
+      - kind: mcq
+        id: d-close
+        objective: O1
+        prompt: "Which line is correct HTML?"
+        options:
+          - text: "`<p><em>Hi</em></p>`"
+            correct: true
+            why: "The inner element closes first, like brackets: `( [ ] )`."
+          - text: "`<p><em>Hi</p></em>`"
+            why: "The `<p>` closes while `<em>` is still open. Close the inner one first."
+          - text: "`<p>Hi<p>`"
+            why: "The second tag opens a new paragraph. A closing tag has a `/`."
+      - kind: mcq
+        id: d-attr
+        objective: O1
+        prompt: "In `<a href=\"/help\">Help</a>`, what is `href=\"/help\"`?"
+        options:
+          - text: "An attribute"
+            correct: true
+            why: "It gives the link its target. The text `Help` is what you see."
+          - text: "The content"
+            why: "The content is between the tags: `Help`."
+          - text: "A second tag"
+            why: "It is inside the opening tag, so it belongs to it."
+      - kind: mcq
+        id: d-head
+        objective: O1
+        prompt: "Where does `<title>` go?"
+        options:
+          - text: "In `<head>`"
+            correct: true
+            why: "It is a fact about the page: the browser shows it on the tab."
+          - text: "In `<body>`"
+            why: "The body is what you see on the page. The title goes to the tab."
+          - text: "After `</html>`"
+            why: "Everything belongs inside `<html>`."
+
+  # 3. THEORY ----------------------------------------------------------------
+  - id: structure
+    type: theory
+    objective: O2
+    title: Headings, lists and links
+    body: |
+      The elements you need most:
+
+      | Element | What it is |
+      |---|---|
+      | `<h1>` to `<h6>` | headings, from big to small |
+      | `<p>` | a paragraph |
+      | `<ul>` and `<li>` | a list with dots; each item is an `<li>` |
+      | `<ol>` and `<li>` | a numbered list |
+      | `<a href="...">` | a link |
+      | `<strong>`, `<em>` | important, stressed text |
+
+      ```html
+      <h2>Books</h2>
+      <ul>
+        <li><a href="/books/1">Dune</a></li>
+        <li><a href="/books/2">Emma</a></li>
+      </ul>
+      ```
+
+      Spaces and new lines in HTML do not matter much: the browser joins
+      them. Indent the code so that **you** can read it.
+
+      A program can make HTML like any text. That is what a web server
+      does: it builds the page, then sends it.
+    keys:
+      - code: "<ul><li>...</li></ul>"
+        means: "A list: one `<li>` per item."
+      - code: "<a href=\"/books/1\">Dune</a>"
+        means: "A link to `/books/1` with the text Dune."
+      - code: "<h1> ... <h6>"
+        means: "Headings, from big to small."
+
+  # 4. EXERCISE: completion --------------------------------------------------
+  - id: ex-list
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A list from Python
+    prompt: |
+      **Replace the two `___`** so that `make_list` turns a list of names
+      into an HTML list:
+
+      ```text
+      <ul><li>tea</li><li>cake</li></ul>
+      ```
+    starter: |
+      def make_list(names):
+          items = "".join(f"<li>{name}</li>" for name in names)
+          return f"<___>{items}</___>"
+
+
+      print(make_list(["tea", "cake"]))
+    solution: |
+      def make_list(names):
+          items = "".join(f"<li>{name}</li>" for name in names)
+          return f"<ul>{items}</ul>"
+
+
+      print(make_list(["tea", "cake"]))
+    after: >-
+      Each item is an `<li>`, and the list around them is a `<ul>`. A
+      server makes its pages in the same way, from its data.
+    checks:
+      - expr: "callable(ns.get('make_list')) and make_list(['a', 'b', 'c']) == '<ul><li>a</li><li>b</li><li>c</li></ul>' and make_list([]) == '<ul></ul>'"
+        pass: "It makes a `<ul>` with one `<li>` per name"
+        hint: "A list with dots is `<ul>`, closed with `</ul>`."
+        misconceptions:
+          - when: "callable(ns.get('make_list')) and make_list(['a']) == '<ol><li>a</li></ol>'"
+            say: "`<ol>` numbers the items. The example shows a list with dots: `<ul>`."
+      - expr: "err is None and lines == ['<ul><li>tea</li><li>cake</li></ul>']"
+        pass: "It prints the list of tea and cake"
+        hint: "Keep the print."
+    hints:
+      - "The items are ready. The list around them is missing."
+      - "A list with dots is `ul`."
+      - "`<ul>` and `</ul>`."
+
+  # 5. EXERCISE: debug -------------------------------------------------------
+  - id: ex-nesting
+    type: exercise
+    fade: debug
+    objective: O1
+    title: Tags in the wrong order
+    prompt: |
+      This function makes a link to a book, in bold. The browser shows it
+      strangely, because two tags close in the wrong order. **Fix it**, so
+      that it prints:
+
+      ```text
+      <p><strong><a href="/books/1">Dune</a></strong></p>
+      ```
+    starter: |
+      def book_link(book_id, title):
+          return f'<p><strong><a href="/books/{book_id}">{title}</strong></a></p>'
+
+
+      print(book_link(1, "Dune"))
+    solution: |
+      def book_link(book_id, title):
+          return f'<p><strong><a href="/books/{book_id}">{title}</a></strong></p>'
+
+
+      print(book_link(1, "Dune"))
+    after: >-
+      The last element you opened is the first one you close. Browsers
+      try to repair wrong HTML, but each browser may repair it in its own
+      way.
+    checks:
+      - expr: "callable(ns.get('book_link')) and book_link(7, 'Emma') == '<p><strong><a href=\"/books/7\">Emma</a></strong></p>'"
+        pass: "The tags close in the right order"
+        hint: "`<a>` was opened last, so `</a>` comes first."
+      - expr: "err is None and lines == ['<p><strong><a href=\"/books/1\">Dune</a></strong></p>']"
+        pass: "It prints the link to Dune"
+        hint: "Keep the print."
+    hints:
+      - "Read the opening tags: `<p>`, `<strong>`, `<a>`."
+      - "They must close in the opposite order."
+      - "`</a></strong></p>`."
+
+  # 6. THEORY ----------------------------------------------------------------
+  - id: forms
+    type: theory
+    objective: O3
+    title: Forms send data
+    body: |
+      A **form** lets a visitor type something and send it to a server:
+
+      ```html
+      <form action="/search" method="get">
+        <label>Town <input name="q"></label>
+        <button>Search</button>
+      </form>
+      ```
+
+      - `action` is the path that gets the data; `method` is how.
+      - Each `<input>` has a `name`. The name becomes the **key** of the
+        value: here `q`.
+      - With `method="get"`, the browser puts the data into the address:
+        `/search?q=Oslo`, the query of "How the web works". With
+        `method="post"`, the data goes into the body of the request,
+        hidden from the address.
+      - `<button>` sends the form. `<label>` names the field, for people and
+        for screen readers.
+
+      Use GET to ask for something, like a search. Use POST to change
+      something, like adding a book. In the next lessons, Flask reads these
+      values with `request.args` (GET) and `request.form` (POST).
+    keys:
+      - code: "<input name=\"q\">"
+        means: "A field. Its value is sent as `q`."
+      - code: "method=\"get\""
+        means: "The data goes into the address: `?q=...`."
+      - code: "method=\"post\""
+        means: "The data goes into the body. For changes."
+
+  # 7. EXERCISE: independent -------------------------------------------------
+  - id: ex-form
+    type: exercise
+    fade: independent
+    objective: O3
+    title: A search form
+    prompt: |
+      **Write `search_form(path)`**: it gives back the HTML of a form that
+      sends with GET to `path`, with an input named `q` and a button
+      `Search`. The checks read your HTML with a parser, so spaces and the
+      order of attributes do not matter. `tags_in(html)` (ready for you)
+      shows what the parser sees.
+    given: |
+      from html.parser import HTMLParser
+
+
+      def tags_in(html):
+          """The tags of a text, with their attributes: [("form", {"action": "/s"}), ...]."""
+          found = []
+
+          class Reader(HTMLParser):
+              def handle_starttag(self, tag, attrs):
+                  found.append((tag, dict(attrs)))
+
+          Reader().feed(html)
+          return found
+    starter: |
+      # tags_in(html) is ready for you.
+
+      # Your function here.
+
+
+      print(tags_in(search_form("/search")))
+    solution: |
+      # tags_in(html) is ready for you.
+
+
+      def search_form(path):
+          return (
+              f'<form action="{path}" method="get">'
+              '<input name="q"> <button>Search</button>'
+              "</form>"
+          )
+
+
+      print(tags_in(search_form("/search")))
+    after: >-
+      A visitor who types Oslo and presses the button asks for
+      `/search?q=Oslo`. Your Flask server reads it in the next lessons.
+    checks:
+      - expr: "callable(ns.get('search_form')) and any(t == 'form' and a.get('action') == '/towns' and a.get('method', 'get').lower() == 'get' for t, a in tags_in(search_form('/towns')))"
+        pass: "A form that sends with GET to the path"
+        hint: "`<form action=\"...\" method=\"get\">`, with the path as the action."
+      - expr: "callable(ns.get('search_form')) and ('input', {'name': 'q'}) in [(t, {k: v for k, v in a.items() if k == 'name'}) for t, a in tags_in(search_form('/s'))]"
+        pass: "An input named q"
+        hint: "`<input name=\"q\">`."
+      - expr: "callable(ns.get('search_form')) and 'button' in [t for t, a in tags_in(search_form('/s'))] and 'Search' in search_form('/s')"
+        pass: "A button Search"
+        hint: "`<button>Search</button>`."
+    hints:
+      - "Start with the form tag: `<form action=\"...\" method=\"get\">`, and end with `</form>`."
+      - "Inside: `<input name=\"q\">` and `<button>Search</button>`."
+      - "Use an f-string to put `path` into the action."
+
+  # 8. QUIZ -----------------------------------------------------------------
+  - id: quiz
+    type: quiz
+    objective: O3
+    title: Check yourself
+    items:
+      - kind: mcq
+        id: q-list
+        objective: O2
+        prompt: "Which element is one item of a list?"
+        options:
+          - text: "`<li>`"
+            correct: true
+            why: "List item. It goes inside a `<ul>` or an `<ol>`."
+          - text: "`<ul>`"
+            why: "That is the list around the items."
+          - text: "`<p>`"
+            why: "That is a paragraph."
+      - kind: mcq
+        id: q-get
+        objective: O3
+        prompt: "A form with `method=\"get\"` and an input `name=\"town\"` is sent with Rome. What does the address end with?"
+        options:
+          - text: "`?town=Rome`"
+            correct: true
+            why: "With GET, the name and the value go into the query of the address."
+          - text: "`/town/Rome`"
+            why: "A form does not build the path. It adds a query: `?town=Rome`."
+          - text: "Nothing: it is hidden"
+            why: "That is POST. GET puts the data into the address."
+      - kind: mcq
+        id: q-post
+        objective: O3
+        prompt: "A form adds a book to the reading list. Which method fits?"
+        options:
+          - text: "POST"
+            correct: true
+            why: "It changes data. GET is only for asking."
+          - text: "GET"
+            why: "A GET must never change data: browsers may open links by themselves."
+          - text: "Either one"
+            why: "Changes go with POST."
+      - kind: mcq
+        id: q-head
+        objective: O1
+        prompt: "What do you see on the page itself?"
+        options:
+          - text: "What is in `<body>`"
+            correct: true
+            why: "`<head>` holds facts about the page, like the title on the tab."
+          - text: "What is in `<head>`"
+            why: "The head is not shown on the page; the title goes to the tab."
+          - text: "All the tags too"
+            why: "The browser reads the tags; you see the content."
+
+  # 9. REVIEW ---------------------------------------------------------------
+  - id: review
+    type: review
+    objective: O2
+    title: From memory
+    count: 5
+
+review:
+  - kind: mcq
+    id: r-close
+    objective: O1
+    prompt: "`<p><em>Hi` ... which tags close it right?"
+    options:
+      - text: "`</em></p>`"
+        correct: true
+        why: "The last element you opened is the first you close."
+      - text: "`</p></em>`"
+        why: "That closes the outer one first."
+      - text: "`</p>` only"
+        why: "Each opened element is closed."
+  - kind: mcq
+    id: r-href
+    objective: O2
+    prompt: "In a link, which attribute says where it goes?"
+    options:
+      - text: "`href`"
+        correct: true
+        why: "`<a href=\"/today\">Today</a>`."
+      - text: "`src`"
+        why: "`src` is for images: `<img src=\"sun.png\">`."
+      - text: "`name`"
+        why: "`name` is for form fields."
+  - kind: mcq
+    id: r-input-name
+    objective: O3
+    prompt: "What does `name=\"q\"` on an input do?"
+    options:
+      - text: "It is the key of the sent value"
+        correct: true
+        why: "The server finds the value under `q`: `?q=Oslo`."
+      - text: "It is the label people see"
+        why: "People see the `<label>`. The name is for the server."
+      - text: "It makes the field required"
+        why: "That is the attribute `required`."
+  - kind: mcq
+    id: r-ul-ol
+    objective: O2
+    prompt: "What is the difference between `<ul>` and `<ol>`?"
+    options:
+      - text: "`<ol>` numbers the items"
+        correct: true
+        why: "`<ul>` shows dots, `<ol>` shows 1, 2, 3."
+      - text: "`<ul>` is for links only"
+        why: "Both lists can hold anything in their `<li>` items."
+      - text: "There is none"
+        why: "One shows dots, the other numbers."
+  - kind: mcq
+    id: r-form-action
+    objective: O3
+    prompt: "What does `action=\"/add\"` on a form say?"
+    options:
+      - text: "Where the data is sent"
+        correct: true
+        why: "The browser sends the form to the path `/add`."
+      - text: "What the button says"
+        why: "The text of the button is between `<button>` and `</button>`."
+      - text: "That the form is a POST"
+        why: "That is the attribute `method`."
+
+# "Practice more": extra exercises, not shown in the lesson (practice page).
+extra:
+  - id: x-page
+    type: exercise
+    fade: independent
+    objective: O1
+    title: A whole page
+    prompt: |
+      **Write `page(title, body)`**: the HTML of a whole page, with
+      `<!doctype html>`, `<html>`, a `<head>` with the `<title>`, and a
+      `<body>` with the body text.
+
+      ```text
+      <!doctype html><html><head><title>Hi</title></head><body><p>Welcome</p></body></html>
+      ```
+    starter: |
+      # Your function here.
+
+
+      print(page("Hi", "<p>Welcome</p>"))
+    solution: |
+      def page(title, body):
+          return (
+              "<!doctype html><html>"
+              f"<head><title>{title}</title></head>"
+              f"<body>{body}</body>"
+              "</html>"
+          )
+
+
+      print(page("Hi", "<p>Welcome</p>"))
+    after: >-
+      Every page of a site has this frame. In Flask, templates keep it in
+      one file, so you write it only once.
+    checks:
+      - expr: "callable(ns.get('page')) and page('A', 'B') == '<!doctype html><html><head><title>A</title></head><body>B</body></html>'"
+        pass: "It builds the frame with the title and the body"
+        hint: "The title goes into `<head><title>...</title></head>`, the text into `<body>...</body>`."
+      - expr: "err is None and lines == ['<!doctype html><html><head><title>Hi</title></head><body><p>Welcome</p></body></html>']"
+        pass: "It prints the page"
+        hint: "Keep the print."
+    hints:
+      - "Start with `<!doctype html><html>` and end with `</html>`."
+      - "In between: the head, then the body."
+      - "`f\"<head><title>{title}</title></head><body>{body}</body>\"`."
+  - id: x-links
+    type: exercise
+    fade: completion
+    objective: O2
+    title: A menu of links
+    prompt: |
+      **Replace `___`** so that each page becomes a link in the menu:
+
+      ```text
+      <a href="/home">Home</a> <a href="/books">Books</a>
+      ```
+    starter: |
+      PAGES = {"/home": "Home", "/books": "Books"}
+
+      links = [f'<a href="{path}">{___}</a>' for path, name in PAGES.items()]
+      print(" ".join(links))
+    solution: |
+      PAGES = {"/home": "Home", "/books": "Books"}
+
+      links = [f'<a href="{path}">{name}</a>' for path, name in PAGES.items()]
+      print(" ".join(links))
+    after: >-
+      The path goes into the attribute, the name between the tags: that is
+      the text people click.
+    checks:
+      - expr: "err is None and lines == ['<a href=\"/home\">Home</a> <a href=\"/books\">Books</a>']"
+        pass: "It prints the two links"
+        hint: "Between the tags goes the name people see: `name`."
+    hints:
+      - "The path is already in `href`."
+      - "What should people see as the link text?"
+      - "`{name}`."

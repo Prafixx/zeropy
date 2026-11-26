@@ -50,6 +50,23 @@ steps:
       **tkinter** comes with Python. In this page, your window appears
       under the code, and you can click it. On your computer it is a real
       window, at the end of the lesson.
+
+      ## Later, without waiting: `after`
+
+      Never use `time.sleep` in a window program: while it sleeps,
+      `mainloop` cannot draw or answer clicks, and the window freezes. Ask
+      tkinter to call a function later instead:
+
+      ```python
+      def tick():
+          count.set(count.get() + 1)
+          root.after(1000, tick)     # call tick again in 1000 ms
+
+      root.after(1000, tick)         # the first call, in one second
+      ```
+
+      `after` returns at once, so the window stays alive. Long work (a big
+      download) freezes the window too: keep each event short.
     keys:
       - code: "root = tk.Tk()"
         means: "The window. Every widget goes into it."
@@ -57,6 +74,10 @@ steps:
         means: "Put the widget into the window. Without it, it is not shown."
       - code: "root.mainloop()"
         means: "Show the window, and wait for clicks. It is the last line."
+      - code: "root.after(1000, tick)"
+        means: "Call `tick` in 1000 ms; the window stays alive."
+      - code: "time.sleep in a window"
+        means: "Freezes it: mainloop cannot run."
 
   # 2. DEMO ------------------------------------------------------------------
   - id: try
@@ -645,6 +666,18 @@ review:
         why: "`pady` is room in pixels, not rows."
       - text: "It makes the text 10 big"
         why: "The size of the text is the `font`."
+  - kind: mcq
+    id: r-after
+    objective: O1
+    prompt: "A window program must update a clock every second. What do you use?"
+    options:
+      - text: "`root.after(1000, tick)`"
+        correct: true
+        why: "tkinter calls `tick` later, and the window keeps working."
+      - text: "`time.sleep(1)` in a loop"
+        why: "While it sleeps, the window cannot draw or answer: it freezes."
+      - text: "`while True:` before mainloop"
+        why: "mainloop never starts, so no window appears."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:
