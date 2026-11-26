@@ -149,9 +149,9 @@ steps:
         objective: O1
         prompt: "The value is not in the list. How many steps does this search make?"
         options:
-          - text: "One for every value: it must look at all of them before it can say no"
+          - text: "One for every value"
             correct: true
-            why: "Only after the last place is it sure. A missing value is the slowest case."
+            why: "It must look at all of them before it can say no. A missing value is the slowest case."
           - text: "None: Python knows at once"
             why: "A list does not know what it holds. Python has to look at each place."
           - text: "Half of the values"
@@ -239,9 +239,9 @@ steps:
         objective: O2
         prompt: "Why must the list be sorted for a binary search?"
         options:
-          - text: "Only then does a bigger middle value prove that the target is not on the right"
+          - text: "Only then does the middle tell which half"
             correct: true
-            why: "In a sorted list, everything right of the middle is bigger. That is what lets you throw half away."
+            why: "A bigger middle value proves the target is not on the right: everything right of the middle is bigger. That lets you throw half away."
           - text: "Python does not allow it on other lists"
             why: "Python runs the code on any list. It only gives wrong answers."
           - text: "A sorted list is shorter"
@@ -274,9 +274,9 @@ steps:
       objective: O3
       prompt: "Making the set also reads all 50,000 numbers. **Why does it still pay off?**"
       options:
-        - text: "It is made once. Then each of the 1,000 checks takes about one step"
+        - text: "It is made once, and checks are fast"
           correct: true
-          why: "50,000 steps once, plus 1,000, is far less than 1,000 searches through 50,000 places."
+          why: "Each of the 1,000 checks takes about one step. 50,000 steps once, plus 1,000, is far less than 1,000 searches through 50,000 places."
         - text: "Making a set takes no time"
           why: "It reads every value once: 50,000 steps. But only once."
         - text: "A set keeps the numbers sorted"
@@ -604,9 +604,9 @@ review:
       - text: "10,000"
         correct: true
         why: "100 rounds outside, and 100 inside each one: 100 × 100."
-      - text: "200"
+      - text: "200 (100 + 100)"
         why: "That would be two loops one after the other, not one inside the other."
-      - text: "100"
+      - text: "100, once each"
         why: "That is one loop."
   - kind: mcq
     id: r-why-fast
@@ -637,9 +637,9 @@ review:
     objective: O3
     prompt: "`if x in big_list:` inside a loop makes a program slow. **What is the quick fix?**"
     options:
-      - text: "Make a set of the list once, before the loop, and use `in` on the set"
+      - text: "A set of the list, made before the loop"
         correct: true
-        why: "One pass to make the set, then about one step for each check."
+        why: "Then use `in` on the set. One pass to make the set, then about one step for each check."
       - text: "Use `while` instead of `for`"
         why: "The kind of loop does not matter. The search inside it is the slow part."
       - text: "Make the set inside the loop"

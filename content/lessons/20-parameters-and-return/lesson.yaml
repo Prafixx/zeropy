@@ -162,9 +162,9 @@ steps:
         id: i-how-many
         prompt: "How many times does `square` run in this program?"
         options:
-          - text: "Two times: once for `a`, once for `b`"
+          - text: "Two times"
             correct: true
-            why: "Line 5 has two calls: `square(a)` and `square(b)`."
+            why: "Once for `a`, once for `b`: line 5 has two calls, `square(a)` and `square(b)`."
           - text: "One time"
             why: "There are two calls of `square` on line 5."
           - text: "Three times"
@@ -360,10 +360,10 @@ steps:
       id: w-search
       prompt: "What happens if `return -1` is moved **inside** the loop, under the `if`, at the same level as `if`?"
       options:
-        - text: "The function gives back `-1` when the first number is not negative, without checking the others"
+        - text: "It gives `-1` after one number"
           correct: true
-          why: "The first round of the loop always reaches a `return`. The loop never gets to the second number."
-        - text: "Nothing changes"
+          why: "When the first number is not negative, it gives back `-1` without checking the others: the first round always reaches a `return`."
+        - text: "Nothing changes in the result"
           why: "Inside the loop, `return -1` runs in the first round, after the first number."
         - text: "Python shows an error"
           why: "It is correct Python. It is a logic error: the result is wrong."
@@ -684,9 +684,9 @@ steps:
         objective: O3
         prompt: "Outside a function, `total = 0`. Inside the function, `total = 99`. After a call, what is `total` outside?"
         options:
-          - text: "0. The `total` inside was a local name of the call"
+          - text: "0"
             correct: true
-            why: "Assignment inside a function creates a name on its own desk."
+            why: "The `total` inside was a local name of the call: assignment inside a function creates a name on its own desk."
           - text: "99. The function changed it"
             why: "The function has its own `total`. To change the value outside, return it and assign it there."
           - text: "It is gone"
@@ -696,9 +696,9 @@ steps:
         objective: O4
         prompt: "`total` calls `square`. Which call ends first?"
         options:
-          - text: "`square`. `total` waits until it gets the value back"
+          - text: "`square`: `total` waits for it"
             correct: true
-            why: "The newest desk finishes first. Then the waiting call continues."
+            why: "`total` waits until it gets the value back. The newest desk finishes first; then the waiting call continues."
           - text: "`total`. It started first"
             why: "`total` needs the result of `square` before it can continue."
           - text: "Both end at the same time"

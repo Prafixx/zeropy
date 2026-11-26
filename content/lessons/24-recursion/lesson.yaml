@@ -90,9 +90,9 @@ steps:
         id: i-order
         prompt: "`factorial(4)` is printed first, but its answer `-> 24` comes last. Why?"
         options:
-          - text: "Each call waits for the call below it, so the first call ends last"
+          - text: "Each call waits for the one below"
             correct: true
-            why: "The answers come back up the stack in reverse order."
+            why: "So the first call ends last: the answers come back up the stack in reverse order."
           - text: "Python sorts the prints"
             why: "The prints come in the order they run."
           - text: "The program runs twice"
@@ -101,9 +101,9 @@ steps:
         id: i-zero
         prompt: "`factorial(0)` never gives an answer: the program is stopped. Why?"
         options:
-          - text: "0 never reaches the base case `n == 1`: n goes 0, -1, -2 ... forever"
+          - text: "0 never reaches the base case"
             correct: true
-            why: "A base case must be reached by every input. `if n <= 1:` would fix it. Without the prints, Python itself would stop it with a RecursionError."
+            why: "The base case is `n == 1`, and n goes 0, -1, -2 ... forever. `if n <= 1:` would fix it. Without the prints, Python itself would stop it with a RecursionError."
           - text: "Python cannot multiply by 0"
             why: "It can. The calls never stop."
           - text: "0 is not a number"
@@ -416,10 +416,10 @@ steps:
         objective: O1
         prompt: "What must every recursive function have?"
         options:
-          - text: "A base case that every input reaches, without another call"
+          - text: "A base case"
             correct: true
-            why: "Without it, the calls never end."
-          - text: "A loop"
+            why: "A case that every input reaches, without another call. Without it, the calls never end."
+          - text: "A loop inside it"
             why: "Recursion repeats without a loop."
           - text: "A global variable"
             why: "Each call has its own names."
@@ -428,9 +428,9 @@ steps:
         objective: O4
         prompt: "You must add 100 000 numbers in a list. Recursion or a loop?"
         options:
-          - text: "A loop (or sum()): flat data, and recursion would pass the limit of about 1000 calls"
+          - text: "A loop, or `sum()`"
             correct: true
-            why: "Recursion is for nested data of unknown depth."
+            why: "The data is flat, and recursion would pass the limit of about 1000 calls. Recursion is for nested data of unknown depth."
           - text: "Recursion: it is faster"
             why: "It is slower here, and too deep."
           - text: "Either, it does not matter"
@@ -440,9 +440,9 @@ steps:
         objective: O3
         prompt: "Why is recursion a good fit for folders inside folders?"
         options:
-          - text: "Each folder has the same shape as the whole, so one function can handle any depth"
+          - text: "Each folder has the shape of the whole"
             correct: true
-            why: "Each call handles one folder and asks its children."
+            why: "So one function can handle any depth: each call handles one folder and asks its children."
           - text: "Folders cannot be read with a loop"
             why: "A loop reads one level; recursion goes down."
           - text: "Because files are small"
@@ -488,19 +488,19 @@ review:
       - text: "The base case is missing, or never reached"
         correct: true
         why: "Or the data is deeper than about 1000 levels."
-      - text: "A name is spelled wrong"
+      - text: "A name is spelled wrong in the call"
         why: "That is a NameError."
-      - text: "The function has no return"
+      - text: "The function has no return line at all"
         why: "That gives None, not a RecursionError."
   - kind: mcq
     id: r-nested
     objective: O3
     prompt: "In `deep_sum`, what does the function do with an item that is a list?"
     options:
-      - text: "It calls deep_sum on that list, and adds the result"
+      - text: "It calls deep_sum on it"
         correct: true
-        why: "The same job, one level deeper."
-      - text: "It skips it"
+        why: "And adds the result: the same job, one level deeper."
+      - text: "It skips it and goes on"
         why: "Its numbers would be lost."
       - text: "It adds the list itself"
         why: "A list cannot be added to a number."
@@ -509,9 +509,9 @@ review:
     objective: O2
     prompt: "Why does `total(numbers[1:])` reach its base case?"
     options:
-      - text: "The list gets one shorter each call, so it becomes empty"
+      - text: "The list gets one shorter each call"
         correct: true
-        why: "The recursive call must always be on a smaller problem."
+        why: "So it becomes empty. The recursive call must always be on a smaller problem."
       - text: "Python stops it after 10 calls"
         why: "The limit is about 1000, and that is an error."
       - text: "Because of the return"

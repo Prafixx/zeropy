@@ -68,9 +68,9 @@ steps:
         id: i-no-import
         prompt: "You remove line 2, `import math`. What happens?"
         options:
-          - text: "Line 6 stops with a `NameError`: `math` is not defined"
+          - text: "Line 6 stops with a `NameError`"
             correct: true
-            why: "A module must be imported before its name can be used."
+            why: "`math` is not defined: a module must be imported before its name can be used."
           - text: "Nothing: `math` is always there"
             why: "Only the built-in functions, like `print`, are always there. Modules need `import`."
           - text: "Line 2 stops with an error"
@@ -389,9 +389,9 @@ steps:
       id: w-median
       prompt: "Which module would you look for first, to pick a random winner from a list of names?"
       options:
-        - text: "`random`, with `random.choice(names)`"
+        - text: "`random`"
           correct: true
-          why: "`random` has tools for random choices."
+          why: "`random` has tools for random choices: `random.choice(names)`."
         - text: "`statistics`"
           why: "`statistics` computes values like the mean. It does not choose."
         - text: "`math`"
@@ -607,9 +607,9 @@ steps:
         objective: O2
         prompt: "Why do tests use `date(2026, 11, 12)` and not `date.today()`?"
         options:
-          - text: "The result of `date.today()` changes every day, so a test with it is not repeatable"
+          - text: "`date.today()` changes every day"
             correct: true
-            why: "A test must give the same answer every time it runs."
+            why: "So a test with it is not repeatable. A test must give the same answer every time it runs."
           - text: "`date.today()` does not exist"
             why: "It exists. It gives the date of the day when the program runs."
           - text: "Fixed dates are faster"
@@ -724,9 +724,9 @@ review:
     objective: O2
     prompt: "Why would a test call `random.seed(1)` first?"
     options:
-      - text: "So the random values are the same in every run, and the test can check them"
+      - text: "So the values are the same each run"
         correct: true
-        why: "A test needs the same result every time."
+        why: "Then the test can check them: a test needs the same result every time."
       - text: "To make the values more random"
         why: "It does the opposite: they repeat."
       - text: "To start the values at 1"
@@ -737,10 +737,10 @@ review:
     objective: O2
     prompt: "`groups = defaultdict(list)`. What does `groups[\"new\"].append(1)` do when `\"new\"` is not a key yet?"
     options:
-      - text: "It makes the key with an empty list, then appends 1"
+      - text: "It makes the key, then appends"
         correct: true
-        why: "That is the job of defaultdict: a missing key starts with list()."
-      - text: "It raises a KeyError"
+        why: "With an empty list, then it appends 1. That is the job of defaultdict: a missing key starts with list()."
+      - text: "It raises a KeyError for `new`"
         why: "A plain dict would. A defaultdict makes the missing value first."
       - text: "It does nothing"
         why: "The key is made, and the list gets the 1."

@@ -263,9 +263,9 @@ steps:
       id: w-remember
       prompt: "`make_multiplier(2)` has ended. How does `double` still know `n`?"
       options:
-        - text: "The inner function keeps the names it uses from the outer call: this is a closure"
+        - text: "The inner function keeps `n`: a closure"
           correct: true
-          why: "Each call of `make_multiplier` makes a new function, with its own `n`."
+          why: "It keeps the names it uses from the outer call. Each call of `make_multiplier` makes a new function, with its own `n`."
         - text: "`n` is a global variable"
           why: "`n` is a parameter of `make_multiplier`, not global."
         - text: "It does not: `double(5)` stops with an error"
@@ -388,9 +388,9 @@ steps:
           - text: "`f` is the function itself; `f()` calls it and is its result"
             correct: true
             why: "Give `f` to another function; call `f()` when you want the result now."
-          - text: "There is none"
+          - text: "There is none: both call it"
             why: "With brackets, the function runs now."
-          - text: "`f()` is the function, `f` is an error"
+          - text: "`f()` is the function itself, `f` is an error"
             why: "`f` alone is valid: it is the function as a value."
       - kind: mcq
         id: q-key
@@ -421,9 +421,9 @@ steps:
         objective: O3
         prompt: "`print(map(str.upper, [\"a\", \"b\"]))` prints `<map object at ...>`. Why?"
         options:
-          - text: "`map` gives back a lazy object; `list(...)` makes the list"
+          - text: "`map` gives back a lazy object"
             correct: true
-            why: "`print(list(map(str.upper, [\"a\", \"b\"])))` prints `['A', 'B']`."
+            why: "`list(...)` makes the list: `print(list(map(str.upper, [\"a\", \"b\"])))` prints `['A', 'B']`."
           - text: "`str.upper` does not work with `map`"
             why: "It works. The result is only not a list yet."
           - text: "The list is empty"
@@ -475,12 +475,12 @@ review:
     objective: O1
     prompt: "`button.when_pressed = beep()` and `sorted(w, key=len())` have the same mistake. Which?"
     options:
-      - text: "The brackets call the function now, instead of giving it"
+      - text: "The brackets call the function now"
         correct: true
-        why: "Give the function itself: `beep`, `len`."
-      - text: "They miss an import"
+        why: "Instead of giving it. Give the function itself: `beep`, `len`."
+      - text: "They miss an import at the top"
         why: "Both functions exist. The brackets are the problem."
-      - text: "There is no mistake"
+      - text: "There is no mistake in them"
         why: "Both call the function too early."
   - kind: mcq
     id: r-comprehension

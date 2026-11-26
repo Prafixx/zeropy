@@ -134,9 +134,9 @@ steps:
         id: i-dir
         prompt: "What does `dir(helpers)` give?"
         options:
-          - text: "A list of the names in the module, like `euros` and `with_vat`"
+          - text: "A list of the names in the module"
             correct: true
-            why: "Also some names that start with `__`, like `__name__`: Python adds them."
+            why: "Like `euros` and `with_vat`, and some names that start with `__`, like `__name__`: Python adds them."
           - text: "The folder of the module"
             why: "That is in `helpers.__file__`. `dir` lists names."
           - text: "The text of the file"
@@ -153,9 +153,9 @@ steps:
         objective: O1
         prompt: "After `from helpers import euros`, what does `helpers.euros(5)` give?"
         options:
-          - text: "A `NameError`: the name `helpers` was not imported"
+          - text: "A `NameError`"
             correct: true
-            why: "`from ... import` brings only `euros`. Write `euros(5)`."
+            why: "The name `helpers` was not imported: `from ... import` brings only `euros`. Write `euros(5)`."
           - text: "`5.00 EUR`"
             why: "That works with `import helpers`, not with `from helpers import euros`."
           - text: "An `ImportError`"
@@ -165,9 +165,9 @@ steps:
         objective: O1
         prompt: "Your program has a function `total`. Then you write `from shop import *`, and `shop` has a `total` too. Which `total` runs?"
         options:
-          - text: "The one of `shop`: the import came later, and replaced yours"
+          - text: "The one of `shop`"
             correct: true
-            why: "This is why `import *` is risky: names come in without you seeing them."
+            why: "The import came later, and replaced yours. This is why `import *` is risky: names come in without you seeing them."
           - text: "Yours: your own names always win"
             why: "The last `total` that was set wins. Here, that is the import."
           - text: "Python stops with an error"
@@ -681,10 +681,10 @@ review:
     objective: O1
     prompt: "Why is `from shop import *` risky?"
     options:
-      - text: "It brings names you cannot see, and they can replace yours"
+      - text: "It brings in names you cannot see"
         correct: true
-        why: "Name the names you need: `from shop import total`."
-      - text: "It is slow"
+        why: "And they can replace yours. Name the names you need: `from shop import total`."
+      - text: "It is slow for big modules"
         why: "Speed is not the problem. Hidden names are."
       - text: "It only works for packages"
         why: "It works for modules too. That is not the problem."
@@ -705,9 +705,9 @@ review:
     objective: O3
     prompt: "What does `if __name__ == \"__main__\":` do?"
     options:
-      - text: "Its block runs only when the file is run as a program, not when it is imported"
+      - text: "Its block runs only as a program"
         correct: true
-        why: "Good for tests and examples inside a module."
+        why: "Not when the file is imported. Good for tests and examples inside a module."
       - text: "It makes the file run faster"
         why: "It only decides if the block runs."
       - text: "It is needed in every file"
@@ -730,9 +730,9 @@ review:
     objective: O1
     prompt: "After `from statistics import mean as average`, which name can you use?"
     options:
-      - text: "`average`; the name `mean` is not defined here"
+      - text: "Only `average`"
         correct: true
-        why: "`as` gives the imported object another name in your file."
+        why: "The name `mean` is not defined here: `as` gives the imported object another name in your file."
       - text: "`mean` and `average`"
         why: "Only the new name is put into your namespace."
       - text: "`statistics.mean`"
@@ -747,16 +747,16 @@ review:
         why: "It changes the search path only while this program runs. A package or a venv is better for anything that lasts."
       - text: "Rename the folder to `sys.path`"
         why: "`sys.path` is a list in Python, not a folder name."
-      - text: "`import tools/module`"
+      - text: "`import tools/module` at the top"
         why: "An import takes module names with dots, not paths."
   - kind: mcq
     id: r-circular
     objective: O2
     prompt: "`a.py` imports `b`, and `b.py` imports `a` at the top. What can happen?"
     options:
-      - text: "A circular import: one module is only half loaded, and a name is missing (ImportError or AttributeError)"
+      - text: "One module is only half loaded"
         correct: true
-        why: "Fix it by moving the shared part into a third module that both import."
+        why: "A circular import: a name is missing (ImportError or AttributeError). Fix it by moving the shared part into a third module that both import."
       - text: "Python loads both files forever"
         why: "Python loads each module once, which is why one of them is unfinished."
       - text: "Nothing: Python sorts it out"
@@ -769,9 +769,9 @@ review:
       - text: "In `pyproject.toml`, under `[project]`"
         correct: true
         why: "One file next to the package folder describes it, for pip and for people."
-      - text: "In `__init__.py`"
+      - text: "In `__init__.py`, at the top"
         why: "`__init__.py` makes a folder a package. The description of the package is in `pyproject.toml`."
-      - text: "In `requirements.txt`"
+      - text: "In `requirements.txt`, one per line"
         why: "That lists what one project needs to run. A package that others install describes itself in `pyproject.toml`."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).

@@ -295,9 +295,9 @@ steps:
       id: w-named
       prompt: "Why does the last call write `tax=0`, and not only `0`?"
       options:
-        - text: "Every value without a name goes into `prices`. Only a name reaches `tax`"
+        - text: "Only a name reaches `tax`"
           correct: true
-          why: "After `*prices`, a parameter is only reached by its name. `receipt(1, 2, 0)` would count 0 as a price."
+          why: "Every value without a name goes into `prices`: after `*prices`, a parameter is only reached by its name. `receipt(1, 2, 0)` would count 0 as a price."
         - text: "Because `tax` has a default value"
           why: "A default alone does not need a name: `def f(a, b=1)` can be called as `f(1, 2)`. Here, the star is the reason."
         - text: "Python needs names in every call"

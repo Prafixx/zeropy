@@ -540,9 +540,9 @@ steps:
         objective: O2
         prompt: "You want a fourth room, a cellar under the kitchen. What do you change?"
         options:
-          - text: "Only `ROOMS`: a new room, and an exit `down` in the kitchen"
+          - text: "Only the data in `ROOMS`"
             correct: true
-            why: "The functions read everything from the data. They work for any room."
+            why: "A new room, and an exit `down` in the kitchen. The functions read everything from the data: they work for any room."
           - text: "`describe`, `move` and the loop"
             why: "None of them names a room. Only the data and the start room are in the code."
           - text: "A new function for each room"
@@ -639,19 +639,19 @@ review:
       - text: "The value of `room`"
         correct: true
         why: "The second value of `get` is the default for a missing key."
-      - text: "A `KeyError`"
+      - text: "A `KeyError` for \"up\""
         why: "`exits[\"up\"]` gives a `KeyError`. `get` does not."
-      - text: "`\"up\"`"
+      - text: "`\"up\"`, the missing key"
         why: "`get` gives the default, not the key."
   - kind: mcq
     id: r-win
     objective: O4
     prompt: "The win test is `room == \"garden\" and \"key\" in bag`. What happens with `or` instead of `and`?"
     options:
-      - text: "The player wins too early: in the garden without the key, or with the key anywhere"
+      - text: "The player wins too early"
         correct: true
-        why: "With `or`, one of the two is enough. The gate needs both."
-      - text: "Nothing changes"
+        why: "In the garden without the key, or with the key anywhere: with `or`, one of the two is enough. The gate needs both."
+      - text: "Nothing changes in the game"
         why: "With `or`, taking the key in the kitchen is already a win."
       - text: "Python shows an error"
         why: "Both are correct Python. Only the game logic is wrong."

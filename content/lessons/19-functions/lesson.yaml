@@ -585,9 +585,9 @@ review:
       - text: "`result` belonged to the call, and it is gone after the call"
         correct: true
         why: "Use the value that the call gave back instead."
-      - text: "`print` cannot show values of functions"
+      - text: "`print` cannot show values made by functions"
         why: "`print` can show any value. The name does not exist outside."
-      - text: "The call did not run"
+      - text: "The call did not run, so it was not made"
         why: "It ran. Its names were removed when it ended."
   - kind: diagnose
     id: r-args

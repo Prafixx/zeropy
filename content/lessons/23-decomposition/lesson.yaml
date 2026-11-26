@@ -179,9 +179,9 @@ steps:
         id: i-first
         prompt: "On line 8, which function runs first?"
         options:
-          - text: "`cost`: the inner call runs first, its result goes to `add_tax`"
+          - text: "`cost`: the inner call"
             correct: true
-            why: "Python needs the value of the argument before it can call `add_tax`."
+            why: "Its result goes to `add_tax`: Python needs the value of the argument before it can call `add_tax`."
           - text: "`add_tax`, because it is written first"
             why: "Python works from the inside out: first the argument, then the call."
           - text: "Both at the same time"
@@ -584,7 +584,7 @@ steps:
           - text: "`is_leap_year(year)`"
             correct: true
             why: "It says the question, and `is_` shows that the answer is True or False."
-          - text: "`check(year)`"
+          - text: "`check_the_year(year)`"
             why: "Check what? The name does not say the job."
           - text: "`year2(y)`"
             why: "A reader cannot guess what it does."
@@ -615,9 +615,9 @@ steps:
         objective: O4
         prompt: "`assert is_valid(\"a@b.com\")` fails. `is_valid` calls `has_at(text)` and `has_dot(text)`. What do you do first?"
         options:
-          - text: "Call `has_at` and `has_dot` alone with the same text, and see which one is wrong"
+          - text: "Test `has_at` and `has_dot` alone"
             correct: true
-            why: "Small pieces can be tested alone. That shows where the bug is."
+            why: "With the same text, and see which one is wrong. Small pieces can be tested alone; that shows where the bug is."
           - text: "Rewrite all three functions"
             why: "Most of the code is probably right. Find the wrong piece first."
           - text: "Delete the test"
@@ -661,9 +661,9 @@ review:
     objective: O2
     prompt: "What does `assert x == 3` do when `x` is 3?"
     options:
-      - text: "Nothing. The program continues"
+      - text: "Nothing"
         correct: true
-        why: "`assert` stops the program only when the test is False."
+        why: "The program continues: `assert` stops the program only when the test is False."
       - text: "It prints True"
         why: "`assert` prints nothing when the test is True."
       - text: "It sets `x` to 3"
@@ -688,9 +688,9 @@ review:
       - text: "You need \"and\" to say what it does"
         correct: true
         why: "One job, one function. Split it at the \"and\"."
-      - text: "It has a return line"
+      - text: "It has more than one return line"
         why: "A good helper gives back its result with return."
-      - text: "It has a parameter"
+      - text: "It has a parameter with a default"
         why: "Parameters are how a helper gets what it needs."
   - kind: diagnose
     id: r-fail
@@ -710,9 +710,9 @@ review:
     objective: O4
     prompt: "A shop changes its tax. The tax is in `add_tax(amount)`, and three other functions call it. How many functions change?"
     options:
-      - text: "One: `add_tax`"
+      - text: "One"
         correct: true
-        why: "The rule is in one place. Every caller gets the new rule."
+        why: "Only `add_tax`: the rule is in one place. Every caller gets the new rule."
       - text: "Four"
         why: "The callers only call `add_tax`. They do not know the tax."
       - text: "Three"
