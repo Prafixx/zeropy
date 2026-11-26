@@ -246,9 +246,9 @@ steps:
         id: i-exit
         prompt: "For a missing name, argparse ends the program with exit code 2. Who reads that number?"
         options:
-          - text: "A script or program that started the tool, to know that it went wrong"
+          - text: "The program that started the tool"
             correct: true
-            why: "Exit code 0 is success; anything else tells the caller to stop or try again."
+            why: "A script or program reads it to know that it went wrong. Exit code 0 is success; anything else tells the caller to stop or try again."
           - text: "Nobody: it is only for Python"
             why: "Every program gives one, and terminals and scripts use it."
           - text: "The user must type it"
@@ -612,7 +612,7 @@ steps:
         objective: O2
         prompt: "Why write `add_argument(\"--top\", type=int)` and not read the text yourself?"
         options:
-          - text: "argparse turns it into an `int`, and refuses `--top ten` with a clear message and exit code 2"
+          - text: "argparse turns it into an `int`, and refuses `ten`"
             correct: true
             why: "The check is done before your code runs."
           - text: "Because `int()` does not work on texts from the command line"
@@ -639,18 +639,18 @@ steps:
           - text: "WARNING and ERROR"
             correct: true
             why: "A level shows itself and the levels above it."
-          - text: "Only WARNING"
+          - text: "Only WARNING lines"
             why: "Higher levels show too."
-          - text: "All of them"
+          - text: "All of them, DEBUG too"
             why: "DEBUG and INFO are below WARNING."
       - kind: mcq
         id: q-stderr
         objective: O4
         prompt: "Why do log messages go to stderr and not to the normal output?"
         options:
-          - text: "So the result of the tool stays clean for other programs that read it"
+          - text: "So the result stays clean"
             correct: true
-            why: "`python main.py > result.txt` saves only the result; the log still shows on the screen."
+            why: "For other programs that read it: `python main.py > result.txt` saves only the result; the log still shows on the screen."
           - text: "Because stderr is faster"
             why: "It is about keeping two kinds of text apart."
           - text: "Because log messages are always errors"
@@ -684,7 +684,7 @@ review:
       - text: "`parser.add_argument(\"--dry-run\", action=\"store_true\")`"
         correct: true
         why: "argparse makes the name `args.dry_run`, with `_`."
-      - text: "`parser.add_argument(\"--dry-run\", type=bool)`"
+      - text: "`parser.add_argument(\"--dry-run\", type=bool, default=False)`"
         why: "That needs a value after it, and any text but `\"\"` is True."
       - text: "`parser.add_argument(\"dry-run\")`"
         why: "Without `--`, it is a word that must be there."
@@ -693,12 +693,12 @@ review:
     objective: O2
     prompt: "Where does the text for `python main.py -h` come from?"
     options:
-      - text: "argparse writes it, from the arguments and their `help=`"
+      - text: "argparse writes it, from the `help=` texts"
         correct: true
         why: "You get help for free."
-      - text: "You must write it with `print`"
+      - text: "You must write it yourself with `print`"
         why: "argparse does it."
-      - text: "Python has a help text for every program"
+      - text: "Python has a help text ready for every program"
         why: "Only for programs that use argparse."
   - kind: mcq
     id: r-exit-text
@@ -720,18 +720,18 @@ review:
       - text: "The level of the log is above DEBUG, like WARNING"
         correct: true
         why: "Set `level=logging.DEBUG` (for example with a `--verbose` flag) to see them."
-      - text: "`debug` messages are never shown"
+      - text: "`debug` messages are never shown, in any program"
         why: "They show at the level DEBUG."
-      - text: "Logs only work in files"
+      - text: "Logs only work in files, not on the screen"
         why: "By default they go to stderr, on the screen."
   - kind: mcq
     id: r-why-cli
     objective: O1
     prompt: "Why do developers give tools command-line words instead of `input()` questions?"
     options:
-      - text: "A script, a scheduled task or another program can run the tool without a person"
+      - text: "The tool can run without a person"
         correct: true
-        why: "That is how tools are put together into bigger jobs."
+        why: "A script, a scheduled task or another program can run it. That is how tools are put together into bigger jobs."
       - text: "`input()` does not work outside the browser"
         why: "It works, but someone must type."
       - text: "Command lines are faster to type"

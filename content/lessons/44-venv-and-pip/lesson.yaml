@@ -177,19 +177,19 @@ steps:
           - text: "Into the Python of the computer, not into `.venv`"
             correct: true
             why: "Without an active venv, `pip` is the pip of the computer's Python. Activate first."
-          - text: "Into the `.venv` of the folder"
+          - text: "Into the `.venv` of the folder, as always"
             why: "A venv that is not active is not used, even in its own folder."
-          - text: "Nowhere: pip only works in a venv"
+          - text: "Nowhere: pip only works in an active venv"
             why: "pip works outside too. That is why you must look at the prompt."
       - kind: mcq
         id: d-not-found
         objective: O5
         prompt: "Yesterday you installed `rich` in the venv. Today, in a new terminal, `python colors.py` says `ModuleNotFoundError: No module named 'rich'`. Why?"
         options:
-          - text: "The new terminal has no active venv. Activate `.venv` again"
+          - text: "No venv is active in the new terminal yet"
             correct: true
             why: "`rich` is still in `.venv`. But the Python that runs now is the computer's Python."
-          - text: "`rich` was deleted overnight"
+          - text: "`rich` was deleted from the venv overnight"
             why: "Packages stay in `.venv` until you remove them."
           - text: "`rich` must be installed again every day"
             why: "Once is enough. Only the activation is needed in each new terminal."
@@ -198,12 +198,12 @@ steps:
         objective: O5
         prompt: "On Windows, `.venv\\Scripts\\activate` says `running scripts is disabled on this system`. What do you do?"
         options:
-          - text: "Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then activate again"
+          - text: "Allow scripts once with `Set-ExecutionPolicy`"
             correct: true
-            why: "PowerShell blocks script files at first. This allows the ones made on your own computer, for your user only."
-          - text: "Make the venv again"
+            why: "`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then activate again. PowerShell blocks script files at first; this allows the ones made on your own computer, for your user only."
+          - text: "Delete the venv and make it again"
             why: "The venv is fine. PowerShell blocks the script that activates it."
-          - text: "Run `pip install activate`"
+          - text: "Run `pip install activate` in the terminal"
             why: "Activation is part of the venv. There is nothing to install."
       - kind: mcq
         id: d-managed
@@ -213,9 +213,9 @@ steps:
           - text: "Make and activate a venv, then install there"
             correct: true
             why: "The computer's Python belongs to the system. pip asks you to keep your packages in a venv."
-          - text: "Run it again with `sudo`"
+          - text: "Run it again with `sudo` in front"
             why: "That can break programs of the system that use this Python. Use a venv."
-          - text: "pip is broken: install it again"
+          - text: "pip is broken: install it again from the web"
             why: "pip works. It protects the Python of the system."
       - kind: mcq
         id: d-where
@@ -446,9 +446,9 @@ steps:
         objective: O1
         prompt: "Why does each project get its own venv?"
         options:
-          - text: "So that projects do not share packages: each one has the versions it needs"
+          - text: "So projects do not share packages"
             correct: true
-            why: "A change for one project cannot break another."
+            why: "Each one has the versions it needs: a change for one project cannot break another."
           - text: "Because Python runs faster in a venv"
             why: "The speed is the same. A venv only keeps packages apart."
           - text: "Because pip works only in a venv"
@@ -470,33 +470,33 @@ steps:
         objective: O4
         prompt: "What does `pip freeze > requirements.txt` do?"
         options:
-          - text: "It writes the installed packages and their versions into the file"
+          - text: "It writes the packages and versions into the file"
             correct: true
             why: "`>` sends the output of `pip freeze` into the file instead of the screen."
           - text: "It stops pip from installing more packages"
             why: "\"Freeze\" means: write down the exact state, now."
-          - text: "It installs the packages in the file"
+          - text: "It installs the packages listed in the file, one by one"
             why: "That is `pip install -r requirements.txt`."
       - kind: mcq
         id: q-friend
         objective: O4
         prompt: "A friend gets your project with `requirements.txt`, but without `.venv`. What do they run?"
         options:
-          - text: "`python -m venv .venv`, then activate it, then `pip install -r requirements.txt`"
+          - text: "Make a venv, activate it, `pip install -r`"
             correct: true
-            why: "Make the venv, use it, fill it from the file."
-          - text: "Only `python colors.py`"
+            why: "`python -m venv .venv`, activate, `pip install -r requirements.txt`: make the venv, use it, fill it from the file."
+          - text: "Only `python colors.py` in the folder"
             why: "Their Python does not have `rich` yet: `ModuleNotFoundError`."
-          - text: "`pip install requirements.txt`"
+          - text: "`pip install requirements.txt`, without a venv"
             why: "Without `-r`, pip looks for a package with the name `requirements.txt`."
       - kind: mcq
         id: q-delete
         objective: O1
         prompt: "You deleted `.venv` by mistake. What is lost?"
         options:
-          - text: "Nothing important: make it again and install from `requirements.txt`"
+          - text: "Nothing important"
             correct: true
-            why: "`.venv` only holds Python and packages, and the file says which ones."
+            why: "Make it again and install from `requirements.txt`: `.venv` only holds Python and packages, and the file says which ones."
           - text: "All your code"
             why: "Your code is in your own files, next to `.venv`, not inside it."
           - text: "Python itself, on the whole computer"
@@ -520,7 +520,7 @@ review:
         why: "Each project has its own, so they do not share packages."
       - text: "The code of the project"
         why: "Your code goes next to `.venv`, never inside it."
-      - text: "A copy of all packages of pypi.org"
+      - text: "A copy of all packages of pypi.org, for offline use"
         why: "Only the packages that you installed."
   - kind: mcq
     id: r-activate
@@ -539,10 +539,10 @@ review:
     objective: O5
     prompt: "You installed `rich`, but `import rich` gives `ModuleNotFoundError`. What do you check first?"
     options:
-      - text: "Is the venv active? Look for `(.venv)` in the prompt"
+      - text: "Is the venv active? Look for `(.venv)`"
         correct: true
         why: "The package is in the venv. Without activation, another Python runs."
-      - text: "Is the internet slow?"
+      - text: "Is the internet too slow for pip?"
         why: "`import` never uses the internet."
       - text: "Is `rich` spelled with a capital letter?"
         why: "Possible, but first check which Python runs: the prompt tells you."
@@ -575,9 +575,9 @@ review:
     objective: O3
     prompt: "Why do many guides write `python -m pip install requests` and not only `pip install requests`?"
     options:
-      - text: "It runs the pip of exactly that Python, so the package goes where that Python looks"
+      - text: "It uses the pip of that Python"
         correct: true
-        why: "With more than one Python, `pip` alone may belong to another one."
+        why: "So the package goes where that Python looks. With more than one Python, `pip` alone may belong to another one."
       - text: "`-m` makes pip faster"
         why: "`-m` means: run this module as a program."
       - text: "`pip` alone cannot install packages"

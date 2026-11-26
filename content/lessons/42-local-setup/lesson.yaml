@@ -134,9 +134,9 @@ steps:
         objective: O4
         prompt: "You see `>>>` and type `python hello.py`. Python says `SyntaxError`. Why?"
         options:
-          - text: "You are inside Python. `python hello.py` is a terminal command, not Python code"
+          - text: "You are inside Python"
             correct: true
-            why: "Type `exit()` to go back to the terminal, then run the command there."
+            why: "`python hello.py` is a terminal command, not Python code. Type `exit()` to go back to the terminal, then run the command there."
           - text: "`hello.py` has a bug"
             why: "The file was not even read. The command went to the wrong place."
           - text: "Python is not installed"
@@ -146,12 +146,12 @@ steps:
         objective: O4
         prompt: "Windows says: `python : The term 'python' is not recognized`. What is the first thing to try?"
         options:
-          - text: "Close the terminal, open a new one, and try again (or try `py`)"
+          - text: "Open a new terminal and try again"
             correct: true
-            why: "A terminal that was open during the install does not know the new program yet."
+            why: "Or try `py`. A terminal that was open during the install does not know the new program yet."
           - text: "Reinstall Windows"
             why: "That is never needed. A new terminal usually fixes it."
-          - text: "Type `pip install python`"
+          - text: "Type `pip install python` in the terminal"
             why: "`pip` installs packages for Python. It cannot install Python itself."
       - kind: mcq
         id: d-no-file
@@ -173,7 +173,7 @@ steps:
           - text: "`cd games`, then `python snake.py`"
             correct: true
             why: "First go into the folder, then run the file there. `python games/snake.py` also works."
-          - text: "`python snake.py`"
+          - text: "`python snake.py` right here"
             why: "`snake.py` is not in `python-course` itself, but in `games`."
           - text: "`cd snake.py`"
             why: "`cd` goes into folders. A file is run with `python`."
@@ -185,7 +185,7 @@ steps:
           - text: "Type `exit()` and press Enter"
             correct: true
             why: "On Windows, Ctrl+Z then Enter works too. On macOS and Linux, Ctrl+D."
-          - text: "Type `cd ..`"
+          - text: "Type `cd ..` and press Enter"
             why: "`cd` is a terminal command. Inside Python it is a `SyntaxError`."
           - text: "Close VS Code"
             why: "That works, but you lose the terminal. `exit()` is enough."
@@ -290,9 +290,9 @@ steps:
         objective: O3
         prompt: "You changed `hello.py` but `python hello.py` prints the old text. Why?"
         options:
-          - text: "The file is not saved: Python runs the file on the disk"
+          - text: "The file is not saved"
             correct: true
-            why: "Save with Ctrl+S, then run again."
+            why: "Python runs the file on the disk. Save with Ctrl+S, then run again."
           - text: "Python remembers the old program"
             why: "Each run reads the file again."
           - text: "The terminal is too old"
@@ -317,9 +317,9 @@ steps:
           - text: "Press the up arrow"
             correct: true
             why: "The terminal remembers your commands. Up goes back, down goes forward."
-          - text: "Type `again`"
+          - text: "Type `again` and Enter"
             why: "There is no such command."
-          - text: "Press Ctrl+S"
+          - text: "Press Ctrl+S to repeat"
             why: "Ctrl+S saves a file in the editor."
       - kind: mcq
         id: q-two
@@ -383,9 +383,9 @@ review:
     objective: O1
     prompt: "You installed Python, but an open terminal does not find it. Why?"
     options:
-      - text: "A terminal finds new programs only when it starts. Open a new one"
+      - text: "It was open before the install"
         correct: true
-        why: "The list of programs is read when the terminal starts."
+        why: "A terminal finds new programs only when it starts: the list is read then. Open a new one."
       - text: "The install failed for sure"
         why: "Usually it worked. Try a new terminal first."
       - text: "Python works only in VS Code"

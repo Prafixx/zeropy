@@ -745,7 +745,7 @@ steps:
         objective: O1
         prompt: "Why does the tool call the geocoding API before the forecast API?"
         options:
-          - text: "The forecast API needs a latitude and a longitude, and the geocoding API gives them for a name"
+          - text: "The forecast needs coordinates, which geocoding gives"
             correct: true
             why: "The result of the first request is the input of the second."
           - text: "The forecast API is slow, so the geocoding API warms it up"
@@ -769,9 +769,9 @@ steps:
         objective: O4
         prompt: "`find_place` gives `None`. What does the tool do?"
         options:
-          - text: "It ends. The reason is already printed by `find_place` or `get_json`"
+          - text: "It ends"
             correct: true
-            why: "Each function prints its own reason, so the tool only checks for `None`."
+            why: "The reason is already printed by `find_place` or `get_json`: each function prints its own reason, so the tool only checks for `None`."
           - text: "It asks for the days anyway"
             why: "Without a place there is no forecast to show."
           - text: "It crashes with a TypeError"
@@ -781,9 +781,9 @@ steps:
         objective: O3
         prompt: "Why do `format_day` and `parse_days` get tests, and `find_place` not?"
         options:
-          - text: "They need no web and no input, so a test is one short line that always gives the same result"
+          - text: "They need no web and no input"
             correct: true
-            why: "Code that uses the web is harder to test. Lessons on pytest show more ways."
+            why: "So a test is one short line that always gives the same result. Code that uses the web is harder to test; the lessons on pytest show more ways."
           - text: "`find_place` cannot have bugs"
             why: "It can. It is only harder to test, because it needs a server."
           - text: "assert works only with text"
@@ -793,9 +793,9 @@ steps:
         objective: O5
         prompt: "A friend clones your weather project. What is not in it, and why?"
         options:
-          - text: "`.venv`: it is in `.gitignore`. They make it again with `requirements.txt`"
+          - text: "`.venv`: it is in `.gitignore`"
             correct: true
-            why: "`python -m venv .venv`, activate, `pip install -r requirements.txt`."
+            why: "They make it again with `requirements.txt`: `python -m venv .venv`, activate, `pip install -r requirements.txt`."
           - text: "`weather.py`: code is never shared"
             why: "The code is the most important part of the repository."
           - text: "`requirements.txt`: pip makes it by itself"
@@ -814,12 +814,12 @@ review:
     objective: O1
     prompt: "A program needs data from API B, and API B needs an id that only API A gives. What does it do?"
     options:
-      - text: "Request A first, take the id from its answer, then request B with it"
+      - text: "Request A first, then B with its id"
         correct: true
-        why: "Like the weather tool: name → coordinates → forecast."
+        why: "Take the id from the answer of A. Like the weather tool: name → coordinates → forecast."
       - text: "Request both at the same time"
         why: "B needs the answer of A first."
-      - text: "Guess the id"
+      - text: "Guess the id from the data"
         why: "The id comes from A."
   - kind: mcq
     id: r-rows
@@ -829,18 +829,18 @@ review:
       - text: "`for day, temp in zip(data[\"day\"], data[\"temp\"]):`"
         correct: true
         why: "`zip` walks the columns side by side: one row in each round."
-      - text: "`for day in data:`"
+      - text: "`for day in data[\"day\"] + data[\"temp\"]:`"
         why: "That loops over the keys `day` and `temp`."
-      - text: "`for temp in data[\"temp\"]:` alone"
+      - text: "`for temp in data[\"temp\"]:` alone, then the days"
         why: "Then you have the temperatures, but not their days."
   - kind: mcq
     id: r-ask-again
     objective: O4
     prompt: "How does a program ask again until an answer is good?"
     options:
-      - text: "`while True:` with `try:`, `break` after the good answer, and `except ValueError:` with a message"
+      - text: "A `while True:` loop with `try:`"
         correct: true
-        why: "The loop ends only with `break`, so a bad answer asks again."
+        why: "`break` after the good answer, and `except ValueError:` with a message. The loop ends only with `break`, so a bad answer asks again."
       - text: "One `if` after the `input()`"
         why: "An `if` asks only once."
       - text: "`try:` without a loop"
@@ -862,10 +862,10 @@ review:
     objective: O5
     prompt: "Which three files make your project easy to run for someone else?"
     options:
-      - text: "The code, `requirements.txt` and `.gitignore`, in a git repository"
+      - text: "The code, `requirements.txt` and `.gitignore`"
         correct: true
-        why: "Code to run, the packages to install, and the folder to leave out."
-      - text: "The code and the whole `.venv`"
+        why: "In a git repository: code to run, the packages to install, and the folder to leave out."
+      - text: "The code and the whole `.venv` folder, zipped"
         why: "`.venv` is large and only works on your computer."
       - text: "Only the code"
         why: "Without `requirements.txt`, they must guess the packages."

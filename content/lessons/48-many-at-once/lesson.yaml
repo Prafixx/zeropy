@@ -177,7 +177,7 @@ steps:
           - text: "In the order of `names`, always"
             correct: true
             why: "`pool.map` keeps the order of what you give it, whichever task finishes first."
-          - text: "In the order they finish"
+          - text: "In the order they finish, fastest first"
             why: "That is `as_completed`, later in this lesson. `map` keeps the order of `names`."
           - text: "In a random order"
             why: "The tasks may finish in any order, but `map` puts the results back in order."
@@ -186,9 +186,9 @@ steps:
         objective: O2
         prompt: "With `max_workers=4`, how long would **6** downloads of 1 second take?"
         options:
-          - text: "About 2 seconds: 4 in the first second, the last 2 in the next"
+          - text: "About 2 seconds"
             correct: true
-            why: "Only 4 run at once. The 5th and 6th start when a worker is free."
+            why: "4 in the first second, the last 2 in the next: only 4 run at once, and the 5th and 6th start when a worker is free."
           - text: "About 1 second"
             why: "Only 4 workers: two downloads must wait for a free one."
           - text: "About 6 seconds"
@@ -440,9 +440,9 @@ steps:
         objective: O5
         prompt: "In `main`, the line `download(\"news\")` has no `await`. What happens?"
         options:
-          - text: "Nothing is downloaded: it only makes a coroutine, and Python warns that it was never awaited"
+          - text: "Nothing is downloaded"
             correct: true
-            why: "Calling an `async def` function gives a task that has not started. `await` runs it."
+            why: "It only makes a coroutine, and Python warns that it was never awaited. Calling an `async def` function gives a task that has not started; `await` runs it."
           - text: "It downloads in the background"
             why: "Without `await` (or `gather`), the coroutine never runs."
           - text: "It downloads, but faster"
@@ -452,21 +452,21 @@ steps:
         objective: O5
         prompt: "Three async tasks each call `time.sleep(1)` instead of `await asyncio.sleep(1)`. How long does `gather` of the three take?"
         options:
-          - text: "About 3 seconds: time.sleep blocks the only thread, so no task can take a turn"
+          - text: "About 3 seconds"
             correct: true
-            why: "In asyncio, a wait must be an `await`. A normal blocking call stops every task."
+            why: "`time.sleep` blocks the only thread, so no task can take a turn. In asyncio, a wait must be an `await`."
           - text: "About 1 second, like with asyncio.sleep"
             why: "Only `await` lets the others run. `time.sleep` holds the thread."
-          - text: "It raises an error"
+          - text: "It raises an error at once"
             why: "It runs, but one task after the other."
       - kind: mcq
         id: d-cpu
         objective: O1
         prompt: "A program adds up a billion numbers. Will a pool of 8 threads make it about 8 times faster?"
         options:
-          - text: "No: the work is computing, not waiting, and in the usual Python only one thread runs Python code at a time"
+          - text: "No: the work is computing, not waiting"
             correct: true
-            why: "Concurrency helps when tasks wait. For heavy computing, look for a faster algorithm, numpy, or several processes."
+            why: "In the usual Python only one thread runs Python code at a time. Concurrency helps when tasks wait; for heavy computing, look for a faster algorithm, numpy, or several processes."
           - text: "Yes: 8 threads, 8 times the speed"
             why: "That is true for waiting tasks only."
           - text: "Yes, but only with asyncio"
@@ -661,9 +661,9 @@ steps:
           - text: "When it calls `future.result()` for that task"
             correct: true
             why: "The future keeps the error, and `result()` raises it again."
-          - text: "Never: errors in threads are lost"
+          - text: "Never: errors in threads are lost for good"
             why: "With futures they are not lost: `result()` raises them."
-          - text: "At once, and the whole pool stops"
+          - text: "At once, and the whole pool stops at the error"
             why: "The other tasks go on. The error waits in its future."
       - kind: predict
         id: q-gather-order
@@ -703,10 +703,10 @@ review:
     objective: O1
     prompt: "Concurrency makes a program faster when its tasks are mostly...?"
     options:
-      - text: "Waiting: for the network, a disk, a device"
+      - text: "Waiting"
         correct: true
-        why: "The waits overlap, so they take the time of one."
-      - text: "Computing: sums and loops"
+        why: "For the network, a disk, a device: the waits overlap, so they take the time of one."
+      - text: "Computing"
         why: "In normal Python, threads do not speed up computing."
       - text: "Printing"
         why: "Printing is fast. It is the waiting that concurrency hides."
@@ -727,7 +727,7 @@ review:
     objective: O3
     prompt: "`as_completed(futures)` gives the futures in which order?"
     options:
-      - text: "The order they finish: fastest first"
+      - text: "In the order they finish"
         correct: true
         why: "That is what it is for: each result as soon as it is ready."
       - text: "The order they were submitted"

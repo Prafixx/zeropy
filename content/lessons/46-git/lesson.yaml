@@ -245,10 +245,10 @@ steps:
         objective: O3
         prompt: "`git status` shows `Untracked files:` and then `colors.py`. What does it mean?"
         options:
-          - text: "git sees the file, but it is not in any commit yet. `git add` adds it"
+          - text: "It is not in any commit yet"
             correct: true
-            why: "New files are untracked until you add and commit them."
-          - text: "The file has an error"
+            why: "git sees the file, but does not keep it yet: new files are untracked until you add and commit them."
+          - text: "The file has an error in it"
             why: "git does not read Python. It only keeps versions."
           - text: "The file is ignored"
             why: "Ignored files are not shown at all."
@@ -269,10 +269,10 @@ steps:
         objective: O3
         prompt: "git says `fatal: not a git repository`. What is wrong?"
         options:
-          - text: "The terminal is in a folder without a repository: `cd` to the project, or `git init`"
+          - text: "This folder has no repository"
             correct: true
-            why: "git commands work only inside a repository."
-          - text: "git is not installed"
+            why: "`cd` to the project, or `git init`: git commands work only inside a repository."
+          - text: "git is not installed on this computer"
             why: "Then the terminal would not find `git` at all."
           - text: "The last commit failed"
             why: "This message is about the folder, not about a commit."
@@ -281,21 +281,21 @@ steps:
         objective: O1
         prompt: "`git commit` says `Author identity unknown`. What do you do?"
         options:
-          - text: "Set `user.name` and `user.email` with `git config --global`"
+          - text: "Set your name and email with `git config`"
             correct: true
-            why: "Every commit needs a name and an email."
-          - text: "Make an account on GitHub"
+            why: "`git config --global user.name ...` and `user.email ...`: every commit needs a name and an email."
+          - text: "Make an account on GitHub first"
             why: "A commit is local. git only needs the two settings."
-          - text: "Run `git init` again"
+          - text: "Run `git init` again in the folder"
             why: "The repository is fine. git does not know who you are."
       - kind: mcq
         id: d-editor
         objective: O2
         prompt: "You typed `git commit` without `-m`. The terminal shows a full screen with `~` on many lines. What is it?"
         options:
-          - text: "An editor that waits for the message. Press Esc, type `:q!`, Enter, then use `-m`"
+          - text: "An editor that waits for the message"
             correct: true
-            why: "Without `-m`, git opens an editor (often Vim) for the message. `:q!` leaves it without a commit."
+            why: "Without `-m`, git opens an editor (often Vim). Press Esc, type `:q!`, Enter: you leave it without a commit. Then use `-m`."
           - text: "git crashed: close the terminal"
             why: "Nothing crashed. It is an editor, and `:q!` leaves it."
           - text: "The history of the project"
@@ -386,21 +386,21 @@ steps:
         objective: O4
         prompt: "On the branch `more-colors` you commit a new line. Then you run `git switch main`. Is the new line in `colors.py` now?"
         options:
-          - text: "No. It is on `more-colors` until you merge it into `main`"
+          - text: "No, only on `more-colors` until a merge"
             correct: true
             why: "`git switch` changes the files in your folder to the version of that branch."
-          - text: "Yes. A commit changes every branch"
+          - text: "Yes. A commit changes every branch at once"
             why: "A commit is added to the branch you are on, and only to it."
-          - text: "The line is lost"
+          - text: "The line is lost for good"
             why: "It is safe on `more-colors`. `git switch more-colors` shows it again."
       - kind: mcq
         id: d-restore-gone
         objective: O3
         prompt: "You run `git restore colors.py` and then want your changes back. Can git give them back?"
         options:
-          - text: "No. The changes were not in a commit, so they are gone"
+          - text: "No, they are gone"
             correct: true
-            why: "git only keeps what was committed. Commit often."
+            why: "The changes were not in a commit: git only keeps what was committed. Commit often."
           - text: "Yes, with `git log`"
             why: "`log` shows commits. The changes were never committed."
           - text: "Yes, they are on GitHub"
@@ -575,12 +575,12 @@ steps:
         objective: O2
         prompt: "What does `git add colors.py` do?"
         options:
-          - text: "It puts the changes of `colors.py` into the next commit"
+          - text: "It adds the changes to the next commit"
             correct: true
             why: "`git commit` then saves them in the history."
-          - text: "It saves a commit"
+          - text: "It saves a commit of the file"
             why: "That is `git commit`. `add` only chooses."
-          - text: "It sends the file to GitHub"
+          - text: "It sends the file to GitHub at once"
             why: "That is `git push`, and it sends commits, not files."
       - kind: mcq
         id: q-restore
@@ -602,18 +602,18 @@ steps:
           - text: "It is large, and `requirements.txt` makes it again"
             correct: true
             why: "The repository keeps your code and the list of packages, not the packages."
-          - text: "git cannot read Python"
+          - text: "git cannot read Python files in it"
             why: "git keeps any file. `.venv` is only not worth keeping."
-          - text: "Otherwise the venv stops working"
+          - text: "Otherwise the venv stops working after a commit"
             why: "It would work. The repository would only be large and messy."
       - kind: mcq
         id: q-branch
         objective: O4
         prompt: "Why try a new idea on a branch?"
         options:
-          - text: "`main` stays as it is, and you merge the idea only if it works"
+          - text: "`main` stays as it is"
             correct: true
-            why: "If the idea fails, you switch back to `main`, and nothing is broken."
+            why: "You merge the idea only if it works. If it fails, you switch back to `main`, and nothing is broken."
           - text: "Branches make the program faster"
             why: "Branches are about history, not speed."
           - text: "git needs a branch for each file"
@@ -623,9 +623,9 @@ steps:
         objective: O5
         prompt: "You made a new commit, but GitHub does not show it. Why?"
         options:
-          - text: "A commit is local. `git push` sends it to GitHub"
+          - text: "It is not pushed yet"
             correct: true
-            why: "Commit, then push."
+            why: "A commit is local; `git push` sends it to GitHub. Commit, then push."
           - text: "GitHub needs a day"
             why: "A push shows on GitHub at once."
           - text: "The commit failed"
@@ -644,10 +644,10 @@ review:
     objective: O2
     prompt: "What is a commit?"
     options:
-      - text: "A saved version of all files of the project, with a message"
+      - text: "A saved version of the project"
         correct: true
-        why: "You can always see it again, and go back to it."
-      - text: "A file on GitHub"
+        why: "Of all its files, with a message. You can always see it again, and go back to it."
+      - text: "A file on GitHub with the code"
         why: "Commits live in your repository. GitHub can hold a copy."
       - text: "One changed line"
         why: "A commit holds all the changes that you added."
@@ -671,9 +671,9 @@ review:
       - text: "`git log --oneline`"
         correct: true
         why: "The newest commit comes first."
-      - text: "`git diff`"
+      - text: "`git diff --stat`"
         why: "`diff` shows changed lines."
-      - text: "`git list`"
+      - text: "`git list --all`"
         why: "There is no `git list`."
   - kind: mcq
     id: r-switch
@@ -692,9 +692,9 @@ review:
     objective: O1
     prompt: "`git commit` says `Author identity unknown`. What is missing?"
     options:
-      - text: "Your name and email in `git config`"
+      - text: "Your name and email"
         correct: true
-        why: "`git config --global user.name \"...\"` and `user.email`."
+        why: "Set them in `git config`: `git config --global user.name \"...\"` and `user.email`."
       - text: "A GitHub account"
         why: "Commits are local. They do not need GitHub."
       - text: "A `.gitignore`"

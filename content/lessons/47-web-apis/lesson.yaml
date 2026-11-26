@@ -134,9 +134,9 @@ steps:
         id: i-zero
         prompt: "What does `data[\"results\"][0]` give?"
         options:
-          - text: "The first place of the list of results"
+          - text: "The first place found"
             correct: true
-            why: "`data[\"results\"]` is a list of places, and `[0]` is the first one."
+            why: "`data[\"results\"]` is a list of places, and `[0]` is the first one of the list."
           - text: "The number of results"
             why: "That would be `len(data[\"results\"])`."
           - text: "The status code"
@@ -153,9 +153,9 @@ steps:
         objective: O1
         prompt: "`response.status_code` is `404`. What happened?"
         options:
-          - text: "The server works, but it has nothing at this URL"
+          - text: "Nothing is at this URL"
             correct: true
-            why: "Check the URL for a typo."
+            why: "The server works, but it has nothing there. Check the URL for a typo."
           - text: "There is no internet"
             why: "Without internet there is no response at all, so no status code."
           - text: "Everything is fine"
@@ -165,9 +165,9 @@ steps:
         objective: O1
         prompt: "The status code is `500`. Whose problem is it?"
         options:
-          - text: "The server's: it failed. Try again later"
+          - text: "The server's"
             correct: true
-            why: "Codes from 500 up are problems of the server, codes from 400 to 499 are problems of the request."
+            why: "It failed: try again later. Codes from 500 up are problems of the server, codes from 400 to 499 are problems of the request."
           - text: "Yours: the URL is wrong"
             why: "A wrong URL gives a code from 400 to 499, often 404."
           - text: "Nobody's: 500 means OK"
@@ -177,9 +177,9 @@ steps:
         objective: O1
         prompt: "Your loop sends 1,000 requests in a minute. The server starts to answer `429`. What does it mean?"
         options:
-          - text: "Too many requests: slow down, and wait a little"
+          - text: "Too many requests"
             correct: true
-            why: "Free APIs have limits. A short pause between requests is polite."
+            why: "Slow down, and wait a little: free APIs have limits. A short pause between requests is polite."
           - text: "The data is too large"
             why: "429 is about how many requests, not their size."
           - text: "The server is down"
@@ -201,9 +201,9 @@ steps:
         objective: O4
         prompt: "Why give every request a `timeout`?"
         options:
-          - text: "Without it, the program may wait forever for a server that does not answer"
+          - text: "Else it may wait forever"
             correct: true
-            why: "With `timeout=10`, requests raises `Timeout` after 10 seconds, and you can handle it."
+            why: "For a server that does not answer. With `timeout=10`, requests raises `Timeout` after 10 seconds, and you can handle it."
           - text: "It makes the request faster"
             why: "It only limits how long to wait."
           - text: "The server needs it"
@@ -691,9 +691,9 @@ steps:
         objective: O2
         prompt: "What does `response.json()` give?"
         options:
-          - text: "The answer of the server as Python data: dictionaries, lists, numbers and texts"
+          - text: "The answer as Python data"
             correct: true
-            why: "The same as `json.loads(response.text)`."
+            why: "Dictionaries, lists, numbers and texts: the same as `json.loads(response.text)`."
           - text: "A JSON file on the disk"
             why: "Nothing is saved. You get the data in memory."
           - text: "The status code"
@@ -703,9 +703,9 @@ steps:
         objective: O3
         prompt: "The server answers `404`. Does `requests.get(...)` raise an error?"
         options:
-          - text: "No. It returns the response. You check `status_code` or call `raise_for_status()`"
+          - text: "No, it returns the response"
             correct: true
-            why: "An answer came, so the request worked. Only you know if 404 is a problem."
+            why: "An answer came, so the request worked: check `status_code`, or call `raise_for_status()`. Only you know if 404 is a problem."
           - text: "Yes, always an `HTTPError`"
             why: "Only `raise_for_status()` raises it."
           - text: "Yes, a `ConnectionError`"
@@ -720,17 +720,17 @@ steps:
             why: "It is the parent of the errors of requests, and only of them."
           - text: "`except Exception:`"
             why: "That also hides your own bugs, for example a `KeyError`."
-          - text: "`except requests.HTTPError:`"
+          - text: "`except requests.HTTPError:` for all"
             why: "That is only for error codes after `raise_for_status()`."
       - kind: mcq
         id: q-no-results
         objective: O3
         prompt: "The geocoding API finds no place. What is in its answer?"
         options:
-          - text: "Status 200, and JSON without the key `\"results\"`"
+          - text: "Status 200, without `\"results\"`"
             correct: true
             why: "So use `data.get(\"results\", [])`, not `data[\"results\"]`."
-          - text: "Status 404"
+          - text: "Status 404, and an empty list"
             why: "This API answers 200 and leaves `results` out. Each API has its own way: read its docs."
           - text: "A `ConnectionError`"
             why: "The server answered, so the connection worked."
@@ -739,9 +739,9 @@ steps:
         objective: O2
         prompt: "Why use `params={\"name\": place}` instead of writing `\"?name=\" + place` into the URL?"
         options:
-          - text: "requests writes the URL correctly, also for spaces and special letters"
+          - text: "requests writes the URL correctly"
             correct: true
-            why: "`São Paulo` must be written as `S%C3%A3o+Paulo` in a URL. requests does it for you."
+            why: "Also for spaces and special letters: `São Paulo` must be written as `S%C3%A3o+Paulo` in a URL. requests does it for you."
           - text: "The server reads only `params`"
             why: "The server only sees the URL. `params` builds it safely."
           - text: "It makes the request faster"
@@ -760,12 +760,12 @@ review:
     objective: O2
     prompt: "Which call asks an API for `name=Oslo`, and waits at most 10 seconds?"
     options:
-      - text: "`requests.get(URL, params={\"name\": \"Oslo\"}, timeout=10)`"
+      - text: "`requests.get(URL, params=..., timeout=10)`"
         correct: true
-        why: "`params` builds the URL, `timeout` limits the wait."
-      - text: "`requests.get(URL, \"Oslo\", 10)`"
+        why: "With `params={\"name\": \"Oslo\"}`: `params` builds the URL, `timeout` limits the wait."
+      - text: "`requests.get(URL, \"Oslo\", 10)` with no names"
         why: "The parameters and the timeout need their names."
-      - text: "`requests.json(URL, name=\"Oslo\")`"
+      - text: "`requests.json(URL, name=\"Oslo\", wait=10)`"
         why: "`json()` is a method of the response."
   - kind: mcq
     id: r-200
@@ -784,9 +784,9 @@ review:
     objective: O4
     prompt: "What is `requests.RequestException`?"
     options:
-      - text: "The parent of all errors of requests: one `except` catches them all"
+      - text: "The parent of all errors of requests"
         correct: true
-        why: "`ConnectionError`, `Timeout` and `HTTPError` are kinds of it."
+        why: "One `except` catches them all: `ConnectionError`, `Timeout` and `HTTPError` are kinds of it."
       - text: "The error for a status code of 400"
         why: "Error codes give `HTTPError`, and only with `raise_for_status()`."
       - text: "A function that sends a request"
@@ -824,7 +824,7 @@ review:
       - text: "In an environment variable, read with `os.environ.get`"
         correct: true
         why: "The code can be shared, and the key stays on your computer."
-      - text: "In a variable at the top of the code"
+      - text: "In a variable at the top of the code, as a constant"
         why: "Then everyone who sees the code sees the key: on GitHub, in a chat, in an AI question."
       - text: "In a comment, so Python ignores it"
         why: "A comment is part of the code too, and it is shared with it."

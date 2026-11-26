@@ -176,9 +176,9 @@ steps:
         objective: O2
         prompt: "`total = add_tax(price)` gives a wrong total. The program stops on that line. Which button shows why?"
         options:
-          - text: "Step into (F11), to walk through `add_tax`"
+          - text: "Step into (F11)"
             correct: true
-            why: "The wrong value comes from inside the function."
+            why: "It walks through `add_tax`: the wrong value comes from inside the function."
           - text: "Step over (F10)"
             why: "Then you see the wrong result, but not where it comes from."
           - text: "Continue (F5)"
@@ -374,9 +374,9 @@ steps:
         objective: O1
         prompt: "What does a breakpoint do?"
         options:
-          - text: "The program stops before that line runs, and you can look at all variables"
+          - text: "The program stops before that line"
             correct: true
-            why: "Then you move on with Continue or the Step buttons."
+            why: "You can look at all variables there, then move on with Continue or the Step buttons."
           - text: "It removes the line from the program"
             why: "The line still runs. The program only waits before it."
           - text: "It prints the line"
@@ -386,9 +386,9 @@ steps:
         objective: O2
         prompt: "The call stack shows `average()` above `report()` above `<module>`. Where are you?"
         options:
-          - text: "In `average`, which `report` called, which the program called"
+          - text: "In `average`"
             correct: true
-            why: "The top of the stack is the current call."
+            why: "`report` called it, and the program called `report`. The top of the stack is the current call."
           - text: "In `report`"
             why: "`report` waits for `average` to give back its value."
           - text: "At the start of the program"
@@ -398,33 +398,33 @@ steps:
         objective: O2
         prompt: "What is the difference between Step over and Step into, on a line that calls a function?"
         options:
-          - text: "Step over runs the whole call; Step into stops inside the function"
+          - text: "Over runs the call; Into stops inside it"
             correct: true
             why: "Use Step into for a function you suspect."
-          - text: "Step over skips the line, so it does not run"
+          - text: "Step over skips the line, so the call does not run"
             why: "Every line runs. Step over only does not stop inside the call."
-          - text: "There is no difference"
+          - text: "There is no difference: both stop inside"
             why: "They differ only on lines with a call of your code."
       - kind: mcq
         id: q-find
         objective: O3
         prompt: "How do you find a bug with the debugger?"
         options:
-          - text: "Stop where the value should be right, and compare it with what you expected"
+          - text: "Stop where the value should be right, and compare"
             correct: true
             why: "The first place where a value is wrong is near the bug."
           - text: "Step through every line of the program, always"
             why: "That works for small programs, but breakpoints near the problem are faster."
-          - text: "Let the debugger fix it"
+          - text: "Let the debugger find and fix it for you"
             why: "The debugger shows. You decide and fix."
       - kind: mcq
         id: q-vscode
         objective: O4
         prompt: "How do you start the debugger in VS Code?"
         options:
-          - text: "Set a breakpoint, then press F5 (Run → Start Debugging)"
+          - text: "A breakpoint, then F5"
             correct: true
-            why: "The first time, choose Python Debugger and Python File."
+            why: "F5 is Run → Start Debugging. The first time, choose Python Debugger and Python File."
           - text: "Type `debug` in the terminal"
             why: "The debugger starts from VS Code itself."
           - text: "Add `print(debug)` to the code"
@@ -446,8 +446,8 @@ review:
       - text: "F10"
         correct: true
         why: "F11 is Step into, Shift+F11 Step out, F5 Continue."
-      - text: "F5"
-        why: "F5 starts the debugger, or continues to the next breakpoint."
+      - text: "F11"
+        why: "F11 is Step into: it stops inside the call."
       - text: "F1"
         why: "F1 opens the command list of VS Code."
   - kind: mcq
@@ -455,9 +455,9 @@ review:
     objective: O1
     prompt: "The debugger stops on line 7. Has line 7 run?"
     options:
-      - text: "Not yet: it is the next line to run"
+      - text: "Not yet"
         correct: true
-        why: "The Variables panel shows the values before line 7."
+        why: "It is the next line to run. The Variables panel shows the values before line 7."
       - text: "Yes, it has run"
         why: "The debugger stops before the line."
       - text: "Half of it"
@@ -482,9 +482,9 @@ review:
       - text: "The locals of this call, like `numbers`"
         correct: true
         why: "Then the globals of the program."
-      - text: "Only the globals"
+      - text: "Only the globals of the program"
         why: "Locals come first: the names of the current call."
-      - text: "The lines of the function"
+      - text: "The lines of the function, one by one"
         why: "The code shows the lines. The panel shows values."
   - kind: mcq
     id: r-reset
@@ -494,9 +494,9 @@ review:
       - text: "For a line inside the loop that sets it to 0"
         correct: true
         why: "A start value belongs before the loop."
-      - text: "At the print at the end"
+      - text: "At the print at the end of the program"
         why: "The print only shows the result."
-      - text: "At the name of the variable"
+      - text: "At the line where the variable is named"
         why: "The name is fine. A line resets the value."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
