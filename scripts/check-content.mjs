@@ -14,6 +14,7 @@ import { parseReport, SEAL_SALT } from '../src/engine/local-report.ts';
 import { traceRows } from '../src/engine/trace-table.ts';
 import { inheritModules, moduleTexts } from '../src/engine/modules.ts';
 import { validateLesson } from '../src/engine/validate.ts';
+import { refsIn, resolveRefs } from '../src/engine/lesson-refs.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const lessonsDir = join(root, 'content', 'lessons');
@@ -69,6 +70,13 @@ for (const folder of readdirSync(lessonsDir)) {
   const lesson = load(readFileSync(join(lessonsDir, folder, 'lesson.yaml'), 'utf8'));
   console.log(`${folder}`);
   for (const problem of validateLesson(lesson)) fail(problem);
+  // "lesson [[#id]]": a Python lesson that exists, and comes before this one.
+  for (const id of refsIn(lesson)) {
+    const target = orders.get(id);
+    if (target === undefined || target >= 100) fail(`${folder}: [[#${id}]] is not a lesson of the Python course`);
+    else if (lesson.order < 100 && target >= lesson.order) fail(`${folder}: [[#${id}]] points to lesson ${target}, which comes later`);
+  }
+  resolveRefs(lesson, (id) => (orders.get(id) < 100 ? orders.get(id) : undefined));
   // The files of project steps, as the app gets them from the registry.
   inheritModules(lesson.steps ?? []);
   inheritModules(lesson.extra ?? []);

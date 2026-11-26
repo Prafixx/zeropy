@@ -2,6 +2,7 @@
 import type { SceneFactory } from '@/kit/stage';
 import type { Course, CoursePath, Item, Lesson } from './types';
 import { inheritModules } from './modules';
+import { resolveRefs } from './lesson-refs';
 import courseData from '../../content/course.yaml';
 
 const lessonFiles = import.meta.glob<Lesson>('../../content/lessons/*/lesson.yaml', {
@@ -19,7 +20,11 @@ interface Entry {
 
 const entries = new Map<string, Entry>();
 
+// "lesson [[#git]]" in a text becomes "lesson 45" (lesson-refs.ts).
+const pythonOrder = new Map(Object.values(lessonFiles).filter((l) => l.order < 100).map((l) => [l.id, l.order]));
+
 for (const [path, lesson] of Object.entries(lessonFiles)) {
+  resolveRefs(lesson, (id) => pythonOrder.get(id));
   // The questions of a demo get their own step right after it: first
   // play with the code, then explain how it works (Investigate, PRIMM).
   lesson.steps = lesson.steps.flatMap((step) =>
