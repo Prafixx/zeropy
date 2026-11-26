@@ -689,7 +689,7 @@ review:
     code: |
       path = "docs/2026/report.final.txt"
       print(path.find("/"), path.rfind("/"), path.find("x", 20), path.find("zip"))
-    explain: "`find` gives the first place, `rfind` the last. A second argument starts the search there. Not found: `-1`."
+    explain: "`find` gives the first place, `rfind` the last. A second value in the brackets starts the search there. Not found: `-1`."
   - kind: mcq
     id: r-index-vs-find
     objective: O2
@@ -865,8 +865,8 @@ extra:
     title: Every place of a word
     prompt: |
       **Replace the two `___`**: `positions(text, word)` gives every index
-      where `word` starts. `find` with a second argument starts the search
-      there, so the loop goes on after each match.
+      where `word` starts. `find` with a second value in the brackets starts
+      the search there, so the loop goes on after each match.
 
       ```text
       [0, 7, 14]

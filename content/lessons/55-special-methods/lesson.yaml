@@ -251,7 +251,7 @@ steps:
 
       | You write | Python calls |
       |---|---|
-      | `print([m])`, the shell | `m.__repr__()` |
+      | `print([m])`, `repr(m)` | `m.__repr__()` |
       | `a == b` | `a.__eq__(b)` |
       | `a < b`, `sorted(...)`, `max(...)` | `a.__lt__(b)` |
       | `a + b` | `a.__add__(b)` |
@@ -280,7 +280,7 @@ steps:
       `>=` from `__eq__` and `__lt__`.
     keys:
       - code: "__repr__"
-        means: "How the object looks in lists and the shell."
+        means: "How the object looks in lists, and with `repr()`."
       - code: "__eq__ / __lt__"
         means: "== and <, so sorted() works."
       - code: "__add__ / __len__ / __iter__"

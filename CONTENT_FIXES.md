@@ -452,3 +452,4 @@ Never marked as tested. Each with steps and the expected result.
 - 2026-11-26 Phase 4 done (quizzes: 73% -> 39% correct-longest).
 - 2026-11-26 Phase 5 done (3 new lessons, small additions). Published as 1.6.0.
 - Checked: the Raspberry Pi documentation ("Outputs") says 16 mA per pin and 50 mA for all pins together; Pi 2 now teaches both (1.6.1).
+- 2026-11-26 Beginner pass: about 30 terms now explained where they first appear (argument, method, expression, URL, server, UTF-8, terminal, Linux, kernel, router, IP address, volts and current, capacitor, SPI and more). Home page: the first screen alone; the course has its own page (#/course).

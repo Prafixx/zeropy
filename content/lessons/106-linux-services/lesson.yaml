@@ -186,8 +186,10 @@ steps:
     title: Services and the journal
     body: |
       A **service** is a program that runs in the background, without a
-      terminal: the SSH server, the clock, a web server. A program called
-      **systemd** starts the services, watches them and keeps their log.
+      terminal: the SSH server (it lets you use this terminal from another
+      computer), the clock, a web server. A program called **systemd**
+      starts the services when the computer starts (at **boot**), watches
+      them and keeps their log.
 
       ```text
       systemctl status ssh           is it running? and its last log lines

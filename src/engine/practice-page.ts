@@ -360,7 +360,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
             ? 'All right on the first try. Next time, the set takes other tasks.'
             : 'The tasks that were hard are on your "My mistakes" list now. Practice them there, or do another mixed set.',
         ),
-        h('a', { class: 'btn btn-plain', href: '#/', 'data-enter': true }, h('span', { class: 'btn-label' }, 'Back to the course')),
+        h('a', { class: 'btn btn-plain', href: '#/course', 'data-enter': true }, h('span', { class: 'btn-label' }, 'Back to the course')),
       ),
     );
   }

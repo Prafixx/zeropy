@@ -389,7 +389,8 @@ steps:
       ```
 
       This is a **shallow** copy: one level deep. To copy all the way down,
-      use `deepcopy` from the module `copy`:
+      use `deepcopy` from the module `copy` (a toolbox that comes with
+      Python, like `random`):
 
       ```python
       import copy

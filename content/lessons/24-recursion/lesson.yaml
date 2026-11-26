@@ -315,7 +315,7 @@ steps:
 
       - **flat data** (a list, a count, a range): use a **loop**;
       - **nested data** of unknown depth (trees, folders, nested lists,
-        JSON with lists in dictionaries): use **recursion**.
+        dictionaries with lists in them): use **recursion**.
 
       Some problems are much shorter with recursion, like all orders of a
       few letters, or the path through a maze. Many sorting methods work

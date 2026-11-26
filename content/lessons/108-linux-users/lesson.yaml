@@ -22,13 +22,17 @@ steps:
     objective: O1
     title: The Pi on the network
     body: |
-      A Pi has **interfaces**: `lo` (the loopback, the Pi talking to
-      itself, 127.0.0.1), `eth0` (the cable) and `wlan0` (Wi-Fi).
+      Every computer on a network has an **IP address**, like
+      `192.168.1.42`. Data travels in small pieces, called **packets**. The
+      **router** is the box that joins your home network to the internet.
+
+      A Pi has **interfaces** (ways to connect): `lo` (the loopback, the Pi
+      talking to itself, 127.0.0.1), `eth0` (the cable) and `wlan0` (Wi-Fi).
 
       ```text
       ip addr        the interfaces and their addresses (short: ip a)
       ip route       where packets go: "default via 192.168.1.1" is the router
-      ss -tln        the ports where programs listen (t TCP, l listening, n numbers)
+      ss -tln        the ports where programs listen (t TCP, the usual way of talking; l listening; n numbers)
       ```
 
       In `ip addr`, look for `inet`: `inet 192.168.1.42/24` is the address

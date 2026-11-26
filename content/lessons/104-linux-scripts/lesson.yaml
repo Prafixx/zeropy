@@ -432,4 +432,4 @@ extra:
       - "`chmod 600 diary.txt`, then `ls -l diary.txt`."
     solution: ["chmod 600 diary.txt", "ls -l diary.txt"]
     after: >-
-      SSH keys must be `600` too: SSH refuses a key that others may read.
+      Keys for SSH (the way to log in from another computer, later in this path) must be `600` too: SSH refuses a key that others may read.

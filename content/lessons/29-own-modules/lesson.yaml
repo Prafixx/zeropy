@@ -245,7 +245,8 @@ steps:
 
       1. the folder of your program,
       2. the rest of the standard library (`random`, `json`, ...),
-      3. the packages you installed with pip.
+      3. the packages you installed with pip (the tool that downloads
+         packages; you use it in module 6).
 
       The first match wins. So a file **`random.py` of your own**, next to
       your program, hides the real `random`. Never name your files like a
@@ -370,14 +371,15 @@ steps:
       On your computer, Python makes a folder `__pycache__` next to your
       modules, with `.pyc` files: your modules, translated, so the next start
       is faster. Python makes them by itself. Do not change them, and leave
-      them out of Git (`.gitignore`).
+      them out of Git (`.gitignore`). Git is the tool that saves the versions
+      of a project; you learn it in module 6.
     keys:
       - code: "shop/__init__.py"
         means: "The folder `shop` is a package."
       - code: "shop.prices"
         means: "The module `prices` in the package `shop`: `from shop.prices import total`."
       - code: "__pycache__/"
-        means: "Python's own copies. Do not touch, do not commit."
+        means: "Python's own copies. Do not touch them, and keep them out of Git."
 
   # 8. EXERCISE: independent -------------------------------------------------
   - id: ex-receipt

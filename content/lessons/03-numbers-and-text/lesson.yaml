@@ -61,6 +61,9 @@ steps:
       A result with a `float` in it is a `float`. The sign `/` always gives
       a `float`.
 
+      A piece of code that gives a value, like `7 / 2` or `price * 3`, is
+      called an **expression**.
+
       ## Ask Python for the type
 
       `type(value)` tells you the type of a value:
@@ -70,6 +73,8 @@ steps:
       print(type(5.0))     # <class 'float'>
       print(type("5"))     # <class 'str'>
       ```
+
+      Here `class` means the same as type.
     keys:
       - code: "7 / 2"
         means: "Divide. Always a `float`: `3.5`."

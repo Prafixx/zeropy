@@ -32,7 +32,8 @@ const HERO_STATES: { vars: BoxVar[]; from?: Record<string, string> }[] = [
   },
 ];
 
-export function mountHome(root: HTMLElement): () => void {
+/** `view`: 'start' is the first screen only; 'course' is the map of the course. */
+export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start'): () => void {
   let alive = true;
   const available = lessons();
   // The next lesson: not done, not skipped, and not in a path that is still closed.
@@ -215,10 +216,15 @@ export function mountHome(root: HTMLElement): () => void {
                 h('span', { class: 'muted small' }, started ? `Step ${at} of ${steps}` : `About ${current.minutes} minutes`),
               ),
               h(
-                'a',
-                { class: 'btn btn-primary btn-big', href: `#/lesson/${current.id}` },
-                h('span', { class: 'btn-label' }, started ? 'Continue' : 'Start the lesson'),
-                icon('right', 20),
+                'div',
+                { class: 'hero-actions' },
+                h(
+                  'a',
+                  { class: 'btn btn-primary btn-big', href: `#/lesson/${current.id}` },
+                  h('span', { class: 'btn-label' }, started ? 'Continue' : 'Start the lesson'),
+                  icon('right', 20),
+                ),
+                h('a', { class: 'btn btn-big', href: '#/course' }, h('span', { class: 'btn-label' }, 'See the course')),
               ),
             )
           : null,
@@ -259,9 +265,8 @@ export function mountHome(root: HTMLElement): () => void {
                   icon('right', 20),
                 )
               : null,
-            h('a', { class: 'btn btn-big', href: '#course' }, h('span', { class: 'btn-label' }, 'See the course')),
+            h('a', { class: 'btn btn-big', href: '#/course' }, h('span', { class: 'btn-label' }, 'See the course')),
           ),
-          h('p', { class: 'muted small', 'data-enter': true }, 'No account needed. Your progress stays on this device.'),
         ),
         h(
           'div',
@@ -281,7 +286,8 @@ export function mountHome(root: HTMLElement): () => void {
       h(
         'div',
         { class: 'section-head' },
-        h('h2', null, 'The course'),
+        h('a', { class: 'back-link', href: '#/' }, icon('left', 16), h('span', null, 'Back')),
+        h('h1', { class: 'course-title' }, 'The course'),
         h('p', { class: 'muted' }, `${course.modules.length} modules, ${pythonIds.length} lessons. Each module ends with a project.`),
       ),
       h('div', { class: 'modules' }, ...modules),
@@ -308,23 +314,23 @@ export function mountHome(root: HTMLElement): () => void {
     );
   }
 
-  const page = h(
-    'div',
-    { class: 'home' },
-    h('main', { class: 'home-main' }, ...(anyProgress ? today() : welcome()), courseMap()),
+  // The footer belongs to the course page: the first screen shows the hero alone.
+  const footer = h(
+    'footer',
+    { class: 'foot' },
     h(
-      'footer',
-      { class: 'foot' },
-      h(
-        'div',
-        { class: 'foot-inner' },
-        h('span', null, `ZeroPy ${APP_VERSION}`),
-        h('span', null, 'Made by Prafix, with AI assistance'),
-        h('span', null, 'Your progress stays on this device'),
-        h('a', { href: 'THIRD-PARTY-NOTICES.txt', target: '_blank', rel: 'noopener' }, 'Licenses'),
-      ),
+      'div',
+      { class: 'foot-inner' },
+      h('span', null, `ZeroPy ${APP_VERSION}`),
+      h('span', null, 'Made by Prafix, with AI assistance'),
+      h('span', null, 'Your progress stays on this device'),
+      h('a', { href: 'THIRD-PARTY-NOTICES.txt', target: '_blank', rel: 'noopener' }, 'Licenses'),
     ),
   );
+  const page =
+    view === 'course'
+      ? h('div', { class: 'home' }, h('main', { class: 'home-main' }, courseMap()), footer)
+      : h('div', { class: 'home' }, h('main', { class: 'home-main home-start' }, ...(anyProgress ? today() : welcome())));
 
   root.replaceChildren(page);
   place(page.querySelectorAll('[data-enter]'));

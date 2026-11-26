@@ -2133,6 +2133,104 @@ code {
   font-variant-numeric: tabular-nums;
 }
 
+/* The first screen: the hero alone, in the middle of the window. The sizes
+   grow in steps (not fluid), so the pixel font stays sharp. */
+.home:has(> .home-start) {
+  height: 100%;
+}
+.home-start {
+  min-height: 100%;
+  align-content: center;
+  padding-block: var(--s-8);
+}
+.home-start .hero {
+  --hero-title: var(--text-hero);
+  --hero-code: 16px;
+  --hero-card: 440px;
+  --hero-stage: 210px;
+  width: 100%;
+}
+.home-start .hero-title {
+  font-size: var(--hero-title);
+}
+.home-start .hero-card {
+  max-width: var(--hero-card);
+}
+.home-start .hero-card .code {
+  font-size: var(--hero-code);
+}
+.home-start .hero-stage {
+  height: var(--hero-stage);
+}
+@media (min-width: 1360px) and (min-height: 760px) {
+  .home-start .hero {
+    --hero-title: 48px;
+    --hero-code: 18px;
+    --hero-card: 500px;
+    --hero-stage: 250px;
+  }
+}
+@media (min-width: 1680px) and (min-height: 920px) {
+  .home-start .hero {
+    --hero-title: 60px;
+    --hero-code: 20px;
+    --hero-card: 580px;
+    --hero-stage: 300px;
+  }
+  .home-start .lead {
+    font-size: 21px;
+  }
+}
+@media (max-width: 560px) {
+  .home-start {
+    padding-block: var(--s-3);
+  }
+  .home-start .hero {
+    --hero-title: 34px;
+    --hero-code: 14px;
+    --hero-stage: 166px;
+    gap: var(--s-4);
+  }
+  .home-start .lead {
+    font-size: 16px;
+  }
+  .home-start .hero-card {
+    padding: var(--s-2);
+  }
+  .home-start .hero-card .code {
+    line-height: 1.5;
+  }
+  .home-start .hero-note {
+    display: none;
+  }
+  .home-start .today-continue {
+    padding: var(--s-5);
+  }
+  .home-start .today-stats {
+    grid-auto-rows: auto;
+  }
+  .home-start .today-stat {
+    padding: var(--s-3) var(--s-5);
+  }
+}
+.course-title {
+  font: var(--display-weight) var(--text-3xl) / 1.15 var(--font-display);
+  letter-spacing: -0.015em;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  justify-self: start;
+  margin-bottom: var(--s-2);
+  color: var(--ink-2);
+  font-size: var(--text-s);
+  text-decoration: none;
+}
+.back-link:hover {
+  color: var(--ink);
+}
+
 /* The course map. */
 .modules {
   display: grid;

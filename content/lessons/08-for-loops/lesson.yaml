@@ -532,12 +532,12 @@ steps:
           for word in ["tea", "", "jam"]:
               if word == "":
                   continue
-              print(word.upper())
+              print(word)
         explain: >-
           The empty word makes `continue` skip the rest of its round, so it
           prints nothing. The loop goes on with `jam`.
         misconceptions:
-          - answer: "TEA"
+          - answer: "tea"
             say: "`continue` skips only one round. The loop goes on with the next word."
 
   # 11. REVIEW ---------------------------------------------------------------

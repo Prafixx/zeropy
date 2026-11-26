@@ -63,7 +63,8 @@ steps:
 
       - The **last line** says what happened: the kind of error, then a
         short message. Start here.
-      - The line with `line 4` says **where** Python stopped.
+      - The line with `line 4` says **where** Python stopped. `in <module>`
+        means: in the main part of the file, not inside a function.
       - Under it is the code of that line. The `^` signs mark the exact place.
 
       The first line is always the same. You can skip it.

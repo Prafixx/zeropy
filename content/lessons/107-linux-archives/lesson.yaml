@@ -257,7 +257,8 @@ steps:
 
       - **`/tmp`**: temporary files. Every user may write there, and it can
         be emptied when the computer restarts. Never keep work there.
-      - **`/proc`**: not on the SD card at all. The kernel makes these files
+      - **`/proc`**: not on the SD card at all. The **kernel** (the core of
+        Linux, which runs everything else) makes these files
         when you read them: `/proc/cpuinfo` (the processor and the model of
         the Pi), `/proc/meminfo` (memory), `/proc/uptime`. `ls -l` shows
         the size 0.

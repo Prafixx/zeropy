@@ -20,6 +20,9 @@ steps:
     objective: O1
     title: A computer you talk to
     body: |
+      **Linux** is an operating system: the base program of a computer, like
+      Windows or macOS. Most servers and every Raspberry Pi run it.
+
       A Raspberry Pi, a web server, a robot: many computers have no screen
       and no mouse. You talk to them in a **terminal**: you type a command,
       press Enter, and the computer answers with text. The program that

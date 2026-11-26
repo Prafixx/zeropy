@@ -341,7 +341,7 @@ steps:
       print(list(map(sale, prices)))
     after: >-
       `make_discount` is a small factory: one line makes a 20% sale, another
-      a 50% sale, each a function of its own. AI libraries use the same idea,
+      a 50% sale, each a function of its own. Big AI tools use the same idea,
       for example to make a function from a few settings.
     checks:
       - expr: "callable(ns.get('make_discount')) and raises(make_discount, 10) is None and callable(make_discount(10))"

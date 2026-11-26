@@ -23,8 +23,10 @@ steps:
     title: A sensor for light
     body: |
       A **light-dependent resistor** (LDR) lets more current through when
-      more light falls on it. The Pi has no analogue inputs, so gpiozero
-      uses a trick: an LDR and a small **capacitor** (1 µF). It measures how
+      more light falls on it. The Pi has no analogue inputs (inputs that
+      measure a level, not only on or off), so gpiozero uses a trick: an
+      LDR and a small **capacitor** (1 µF), a part that stores a little
+      electricity, like a tiny tank. It measures how
       fast the capacitor fills through the LDR. Fast means bright.
 
       Wiring: one leg of the LDR to **3V3**, one leg of the capacitor to
@@ -285,8 +287,8 @@ steps:
       A **potentiometer** (a knob) gives any voltage between 0 and 3.3 V.
       But the Pi has no analogue inputs: a GPIO pin knows only on and off.
       An **MCP3008** chip turns a voltage into a number. It has **8
-      channels** (0 to 7), and it talks to the Pi over **SPI**, on GPIO 8,
-      9, 10 and 11.
+      channels** (0 to 7), and it talks to the Pi over **SPI** (a way for
+      chips to send data over a few wires), on GPIO 8, 9, 10 and 11.
 
       Wiring the knob: the two outer legs to **3V3** and **GND**, the middle
       leg to channel 0 of the MCP3008. Never 5 V: the chip would give the

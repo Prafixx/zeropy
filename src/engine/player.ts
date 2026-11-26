@@ -101,7 +101,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
   const found = getLesson(lessonId);
   if (!found) {
     root.replaceChildren(
-      h('main', { class: 'notfound' }, panel('info', 'This lesson does not exist yet.', h('a', { href: '#/' }, 'Back to the course'))),
+      h('main', { class: 'notfound' }, panel('info', 'This lesson does not exist yet.', h('a', { href: '#/course' }, 'Back to the course'))),
     );
     return () => undefined;
   }

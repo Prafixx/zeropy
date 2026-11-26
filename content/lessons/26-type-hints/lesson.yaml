@@ -520,7 +520,7 @@ steps:
         options:
           - text: "People, the editor, and the docs"
             correct: true
-            why: "People who read the code, the editor, and the docs of a library: hints are notes for all of them. Python itself ignores them when it runs."
+            why: "People who read the code, the editor, and the docs of a module: hints are notes for all of them. Python itself ignores them when it runs."
           - text: "Only Python, to make the program safe"
             why: "Python does not check hints when it runs."
           - text: "Nobody: they are old and not used today"

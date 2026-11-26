@@ -512,7 +512,7 @@ steps:
       - code: "git pull"
         means: "Get new commits from GitHub, for example from another computer."
       - code: "git clone URL"
-        means: "A copy of a repository, with its history."
+        means: "A copy of a repository, with its history. The URL is its web address, like `https://github.com/...`."
       - code: "git revert abc123"
         means: "A new commit that undoes an old one."
 

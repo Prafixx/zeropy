@@ -185,7 +185,9 @@ steps:
 
       Many lines at once: `path.write_text("\n".join(items) + "\n")`.
 
-      Python 3.15 and newer read and write text as UTF-8. On an older
+      In a file, each letter is stored as a number. **UTF-8** is the usual
+      code for this, and it has every letter, like `é` or `ß`. Python 3.15
+      and newer read and write text as UTF-8. On an older
       Python on Windows, give it yourself: `read_text(encoding="utf-8")`,
       or `open(path, "a", encoding="utf-8")`.
     keys:

@@ -159,8 +159,8 @@ steps:
     body: |
       ## Change a list
 
-      A list has its own instructions. You write them after the name and a
-      **dot**: `basket.append("tea")`. They change the list itself. No new
+      A list has its own instructions, called **methods**. You write them
+      after the name and a **dot**: `basket.append("tea")`. They change the list itself. No new
       list is made, and you do not need an `=`.
 
       To ask if a value is in a list, use `in`. The answer is `True` or

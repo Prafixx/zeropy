@@ -60,7 +60,7 @@ function route(): void {
     unmount = mountCheatSheet(page);
     at('cheatsheet');
   } else {
-    unmount = mountHome(page);
+    unmount = mountHome(page, parts[0] === 'course' ? 'course' : 'start');
     at('course');
   }
 }

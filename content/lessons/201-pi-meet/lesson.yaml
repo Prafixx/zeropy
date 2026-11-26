@@ -28,13 +28,23 @@ steps:
       output. A program can use each one in two ways:
 
       - **Output**: the program switches the pin on (3.3 volts) or off (0
-        volts). An LED, a buzzer or a motor driver on that pin follows.
+        volts). An LED, a buzzer or a motor driver (a board that gives a
+        motor its power) on that pin follows.
       - **Input**: the program reads whether the pin is on or off. A button,
-        or a sensor, decides.
+        or a sensor (a part that measures, like light or distance), decides.
 
       This is how a program reaches the real world: lights, sounds,
       movement, measurements. Robots, weather stations and smart homes
       start here.
+
+      ## Volts and current
+
+      Think of electricity as water in a pipe. The **voltage** (in volts, V)
+      is how hard it pushes. The **current** (in amperes, A) is how much
+      flows; a milliampere (mA) is a thousandth of one. A **resistor** makes
+      the pipe narrow, so less current flows. A **circuit** is a closed
+      loop: from a pin, through a part, and back to **GND** (ground, 0 V).
+      No closed loop, no current.
 
       ## gpiozero
 

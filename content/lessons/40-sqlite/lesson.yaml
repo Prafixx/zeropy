@@ -26,7 +26,7 @@ steps:
       sheet. You talk to it in **SQL**, a small language made for data.
 
       **SQLite** comes with Python, in the module `sqlite3`. The whole
-      database is one file, and no server is needed.
+      database is one file, and no extra program runs next to yours.
 
       ```python
       import sqlite3

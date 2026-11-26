@@ -500,7 +500,7 @@ review:
         correct: true
         why: "No words, so the list is empty. A program must handle this case."
       - text: "`['']`, a list with one empty text"
-        why: "`split()` with no argument gives no empty words."
+        why: "`split()` with nothing in the brackets gives no empty words."
       - text: "An error"
         why: "There is no error. The danger comes later, for example from `clean[0]`."
 

@@ -273,7 +273,7 @@ steps:
       print(save("docs", "Oops"))
       print(Path("notes.txt").read_text())
     after: >-
-      `"x"` asks the operating system to make the file only if it is new,
+      `"x"` asks the operating system (Windows, macOS or Linux) to make the file only if it is new,
       in one step. Checking `exists()` first and then writing with `"w"`
       leaves a moment in which another program could make the file.
     checks:
@@ -518,7 +518,8 @@ steps:
       print("skipped a bad line", file=sys.stderr)
       ```
 
-      The terminal can connect them to files: `python main.py < in.txt >
+      In a **terminal** (a window where you type commands; you use one in
+      module 6) you can connect them to files: `python main.py < in.txt >
       out.txt 2> errors.txt`. Then `sys.stdin` reads `in.txt`, the results
       go to `out.txt`, and the messages to `errors.txt`. Keeping results on
       stdout and messages on stderr makes this work.

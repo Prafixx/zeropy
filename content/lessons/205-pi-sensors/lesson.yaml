@@ -37,8 +37,9 @@ steps:
       An **active** buzzer beeps while its pin is on. It works like an LED:
       its `+` leg (the longer one) to the GPIO pin, the other to GND. Buy a
       small **active** buzzer for 3.3 V that takes **15 mA or less** (look
-      in its data sheet): a GPIO pin cannot give much more. A bigger buzzer
-      needs a transistor. A **passive** buzzer stays silent here: it needs a
+      in its data sheet, the document of the maker with its numbers): a
+      GPIO pin cannot give much more. A bigger buzzer needs a transistor (a
+      small electronic switch). A **passive** buzzer stays silent here: it needs a
       tone signal (gpiozero has `TonalBuzzer` for that).
 
       ```python

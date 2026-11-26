@@ -26,9 +26,11 @@ steps:
     objective: O1
     title: Programs that ask the web
     body: |
-      A **web API** is a URL that answers with data for programs, usually
-      JSON. Your program sends a **request**, and the server sends back a
-      **response**.
+      A **URL** is a web address, like `https://open-meteo.com`. A
+      **server** is a computer on the internet that waits for questions and
+      answers them. A **web API** is a URL that answers with data for
+      programs, usually JSON. Your program sends a **request**, and the
+      server sends back a **response**.
 
       ```python
       import requests
