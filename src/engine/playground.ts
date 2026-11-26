@@ -6,7 +6,7 @@ import { renderDemo } from './steps/demo';
 import type { StepContext } from './steps/context';
 import { loadCode, saveCode } from './store';
 import type { DemoStep } from './types';
-import { button, h, titled } from './ui';
+import { button, h } from './ui';
 
 const STARTER = `# Change anything, then press Run.
 name = "Ada"
@@ -54,7 +54,7 @@ export function mountPlayground(root: HTMLElement): () => void {
   const body = h(
     'div',
     { class: 'step-body playground' },
-    titled('playground', h('h1', { class: 'display' }, 'Playground')),
+    h('h1', { class: 'display' }, 'Playground'),
     h('p', { class: 'lead playground-lead', 'data-enter': true }, 'Write any Python and press Run. Nothing is checked, and your code is saved.'),
     view.el,
   );

@@ -1,7 +1,6 @@
 // Small DOM helpers shared by all views.
 import { marked } from 'marked';
 import { MASCOT_SVG, PIXEL_ICONS } from '@/kit/pixel-art';
-import { PIXEL_SPRITES } from '@/kit/pixel-sprites';
 
 type Child = Node | string | null | undefined | false;
 type Attrs = Record<string, unknown> | null;
@@ -41,38 +40,15 @@ export function icon(name: string, size = 20): HTMLElement {
   return span;
 }
 
-/** What the mascot shows on its screen: `>_`, a check, z z, or a !. */
-export type Mood = 'code' | 'done' | 'rest' | 'oops';
-
 /** The crate mascot, `size` px square. */
-export function mascot(size: number, className = '', mood: Mood = 'code'): HTMLElement {
+export function mascot(size: number, className = ''): HTMLElement {
   const span = document.createElement('span');
   span.className = `mascot ${className}`.trim();
   span.setAttribute('aria-hidden', 'true');
   span.style.width = `${size}px`;
   span.style.height = `${size}px`;
-  const svg = mood === 'code' ? MASCOT_SVG : PIXEL_SPRITES[`mascot-${mood}`];
-  span.innerHTML = svg.replace('<svg ', `<svg width="${size}" height="${size}" `);
+  span.innerHTML = MASCOT_SVG.replace('<svg ', `<svg width="${size}" height="${size}" `);
   return span;
-}
-
-/**
- * A colored pixel sprite (src/kit/pixel-sprites.ts): a module or path
- * emblem, or the picture of a page. The size snaps to whole pixels of the
- * 16x16 drawing (16, 32, 48, 64...), so every pixel stays sharp.
- */
-export function sprite(name: string, size = 32, className = ''): HTMLElement {
-  const px = Math.max(16, Math.round(size / 16) * 16);
-  const span = document.createElement('span');
-  span.className = `sprite ${className}`.trim();
-  span.setAttribute('aria-hidden', 'true');
-  span.innerHTML = (PIXEL_SPRITES[name] ?? '').replace('<svg ', `<svg width="${px}" height="${px}" `);
-  return span;
-}
-
-/** A page title with its sprite on the left. */
-export function titled(name: string, title: HTMLElement): HTMLElement {
-  return h('div', { class: 'title-row', 'data-enter': true }, sprite(name, 48, 'title-sprite'), title);
 }
 
 export interface CodeBlock {
@@ -184,11 +160,11 @@ export function panel(kind: PanelKind, title: string, ...body: Child[]): HTMLEle
  * An empty page or a finished set: a quiet icon, a title, one sentence and
  * at most two actions, in the middle of the page.
  */
-export function emptyState(mood: Mood, title: string, text: string, ...actions: (HTMLElement | null)[]): HTMLElement {
+export function emptyState(_iconName: string, title: string, text: string, ...actions: (HTMLElement | null)[]): HTMLElement {
   return h(
     'div',
     { class: 'empty-state', role: 'status' },
-    mascot(64, 'empty-icon', mood),
+    mascot(64, 'empty-icon'),
     h('h2', { class: 'empty-title' }, title),
     h('p', { class: 'empty-text' }, text),
     actions.some(Boolean) ? h('div', { class: 'empty-actions' }, ...actions) : null,

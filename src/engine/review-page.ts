@@ -2,7 +2,7 @@
 import { place } from '@/kit/motion';
 import { allCards } from './registry';
 import { describeWait, dueCards, nextDue, seenCardCount } from './store';
-import { button, emptyState, h, shuffle, titled } from './ui';
+import { button, emptyState, h, shuffle } from './ui';
 import type { StepContext } from './steps/context';
 import { renderCards } from './steps/simple';
 
@@ -29,9 +29,9 @@ export function mountReview(root: HTMLElement): () => void {
       h(
         'div',
         { class: 'single' },
-        titled('review', h('h1', { class: 'display' }, 'Review')),
+        h('h1', { class: 'display' }, 'Review'),
         emptyState(
-          'done',
+          'check',
           'Review done',
           due ? `Your next review is ${describeWait(due)}. Short tests after a pause make memory last.` : 'Come back after your next lesson.',
         ),
@@ -73,9 +73,9 @@ export function mountReview(root: HTMLElement): () => void {
       h(
         'div',
         { class: 'single' },
-        titled('review', h('h1', { class: 'display' }, 'Review')),
+        h('h1', { class: 'display' }, 'Review'),
         emptyState(
-          'rest',
+          'loop',
           'Nothing is due now',
           seenCardCount() === 0 ? 'Finish a lesson first. Its questions will come back here, just before you would forget them.' : `Your next review is ${describeWait(due ?? 0)}.`,
           allCards().length > 0 ? button('Practice anyway', { kind: 'plain', onClick: () => start(true) }) : null,

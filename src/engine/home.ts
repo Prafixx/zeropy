@@ -8,7 +8,7 @@ import { course, getLesson, lessons } from './registry';
 import { lessonAvailable, pathStatus, paths } from './paths';
 import { dueCards, isSkipped, lessonState, mistakes, openPath } from './store';
 import type { CourseModule } from './types';
-import { codeBlock, h, icon, mascot, sprite } from './ui';
+import { codeBlock, h, icon, mascot } from './ui';
 import { APP_VERSION } from './updates';
 
 const HERO_CODE = 'price = 4\nquantity = 3\ntotal = price * quantity\nquantity = 10';
@@ -31,15 +31,6 @@ const HERO_STATES: { vars: BoxVar[]; from?: Record<string, string> }[] = [
     ],
   },
 ];
-
-/** Short names of the paths, for the row under the hero. */
-const PATH_NAMES: Record<string, string> = {
-  linux: 'Linux',
-  pi: 'Raspberry Pi',
-  data: 'Data',
-  web: 'The web',
-  computer: 'Computers',
-};
 
 /** `view`: 'start' is the first screen only; 'course' is the map of the course. */
 export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start'): () => void {
@@ -123,8 +114,7 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
       { class: `module${ids.includes(current?.id ?? '') ? ' is-current' : ''}` },
       h(
         'div',
-        { class: 'module-head has-emblem' },
-        sprite(`m${m + 1}`, 48, 'module-emblem'),
+        { class: 'module-head' },
         h('div', null, h('span', { class: 'kicker' }, `Module ${m + 1}`), h('h3', null, module.title), h('p', null, module.goal)),
         h(
           'div',
@@ -159,8 +149,8 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
       { class: `module path-card${status.open ? ' is-open' : ' is-closed'}` },
       h(
         'div',
-        { class: 'module-head has-emblem' },
-        h('span', { class: 'path-icon', 'aria-hidden': 'true' }, sprite(path.id, 48), status.open ? null : h('span', { class: 'path-lock' }, icon('lock', 12))),
+        { class: 'module-head' },
+        h('span', { class: 'path-icon', 'aria-hidden': 'true' }, status.open ? '>_' : icon('lock', 22)),
         h('div', null, h('h3', null, path.title), h('p', null, path.goal)),
         h('span', { class: 'module-hours' }, icon('clock', 14), `${hours(minutes)} h`),
       ),
@@ -277,30 +267,11 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
               : null,
             h('a', { class: 'btn btn-big', href: '#/course' }, h('span', { class: 'btn-label' }, 'See the course')),
           ),
-          h(
-            'div',
-            { class: 'hero-paths', 'data-enter': true },
-            h('span', { class: 'kicker' }, 'Then go further'),
-            h(
-              'ul',
-              null,
-              ...paths().map((path) =>
-                h('li', null, h('a', { href: '#/course', title: path.title }, sprite(path.id, 32), h('span', null, PATH_NAMES[path.id] ?? path.title))),
-              ),
-            ),
-          ),
         ),
         h(
           'div',
           { class: 'hero-demo', 'data-enter': true, 'aria-hidden': 'true' },
-          h(
-            'div',
-            { class: 'hero-card' },
-            heroCode.el,
-            heroStage,
-            sprite('m3', 64, 'hero-sticker hero-sticker-a'),
-            sprite('m4', 64, 'hero-sticker hero-sticker-b'),
-          ),
+          h('div', { class: 'hero-card' }, heroCode.el, heroStage),
         ),
       ),
     ];

@@ -141,6 +141,6 @@ export function brand(): HTMLElement {
     'a',
     { class: 'brand', href: '#/', 'aria-label': 'ZeroPy home' },
     mascot(34, 'brand-mark'),
-    h('span', { class: 'brand-name' }, 'ZeroPy'),
+    h('span', { class: 'brand-text' }, h('span', { class: 'brand-name' }, 'Zero', h('b', null, 'Py')), h('span', { class: 'brand-sub' }, 'Python from zero')),
   );
 }

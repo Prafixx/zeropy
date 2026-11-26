@@ -3,7 +3,7 @@
 import { place } from '@/kit/motion';
 import { course, getLesson, lessonLabel } from './registry';
 import { lessonState } from './store';
-import { h, icon, mdInline, titled } from './ui';
+import { h, icon, mdInline } from './ui';
 
 interface Entry {
   code: string;
@@ -88,7 +88,7 @@ export function mountCheatSheet(root: HTMLElement): () => void {
       h(
         'div',
         { class: 'sheet' },
-        titled('cheatsheet', h('h1', { class: 'display' }, 'Cheat sheet')),
+        h('h1', { class: 'display', 'data-enter': true }, 'Cheat sheet'),
         h('p', { class: 'lead', 'data-enter': true }, 'The key facts of every lesson on one page. Search for a word, or open the lesson to learn more.'),
         h('label', { class: 'sheet-search-row', 'data-enter': true }, icon('search', 20), search),
         count,

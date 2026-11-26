@@ -12,7 +12,7 @@ import { renderTerminal } from './steps/terminal';
 import { renderItem } from './steps/item';
 import { isSkipped, lastPracticed, lessonState, noteAnswer, notePracticed } from './store';
 import type { ExerciseStep, Item, Lesson, TerminalStep } from './types';
-import { button, h, icon, mascot, panel, shuffle, titled } from './ui';
+import { button, h, icon, panel, shuffle } from './ui';
 
 type Task = { lesson: Lesson; ref: string } & ({ kind: 'exercise'; step: ExerciseStep | TerminalStep } | { kind: 'item'; item: Item });
 
@@ -209,7 +209,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
       h(
         'div',
         { class: 'single practice' },
-        titled('practice', h('h1', { class: 'display' }, 'Mixed practice')),
+        h('h1', { class: 'display', 'data-enter': true }, 'Mixed practice'),
         h(
           'p',
           { class: 'lead', 'data-enter': true },
@@ -345,7 +345,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
       h(
         'div',
         { class: 'single practice' },
-        h('div', { class: 'done-head', 'data-enter': true }, mascot(96, 'done-mascot', 'done'), h('h1', { class: 'display' }, 'Set done')),
+        h('h1', { class: 'display', 'data-enter': true }, 'Set done'),
         h(
           'div',
           { class: 'done-stats', 'data-enter': true },

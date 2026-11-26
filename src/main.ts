@@ -8,6 +8,7 @@ import '@fontsource-variable/jetbrains-mono';
 import './styles/tokens.css';
 import './styles/app.css';
 import { onSettings } from './kit/settings';
+import { mountSky } from './kit/sky';
 import { mountHome } from './engine/home';
 import { mountLesson } from './engine/player';
 import { mountReview } from './engine/review-page';
@@ -67,6 +68,7 @@ function route(): void {
   }
 }
 
+mountSky();
 mountTitleBar();
 onSettings(() => paintTitleBar());
 window.addEventListener('hashchange', route);

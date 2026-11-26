@@ -1,7 +1,7 @@
 // "What next": a path after the course, from content/next.yaml.
 import { place } from '@/kit/motion';
 import nextData from '../../content/next.yaml';
-import { h, icon, titled } from './ui';
+import { h, icon } from './ui';
 
 interface Link {
   name: string;
@@ -44,7 +44,7 @@ export function mountNext(root: HTMLElement): () => void {
       h(
         'div',
         { class: 'single next' },
-        titled('next', h('h1', { class: 'display' }, data.title)),
+        h('h1', { class: 'display', 'data-enter': true }, data.title),
         h('p', { class: 'lead', 'data-enter': true }, data.lead),
         ...data.stages.map((stage) =>
           h(
