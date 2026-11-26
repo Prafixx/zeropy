@@ -493,9 +493,9 @@ steps:
         objective: O1
         prompt: "Why write the logic and its tests before the window?"
         options:
-          - text: "The logic is the easiest part to test, so the window is built on parts that work"
+          - text: "The logic is easiest to test"
             correct: true
-            why: "When something breaks later, you know where it is not."
+            why: "So the window is built on parts that work. When something breaks later, you know where it is not."
           - text: "tkinter needs the tests"
             why: "tkinter does not know your tests."
           - text: "It makes the app faster"
@@ -505,9 +505,9 @@ steps:
         objective: O1
         prompt: "Your idea is big. What is the best start?"
         options:
-          - text: "A small first version that works, then one feature at a time"
+          - text: "A small working version first"
             correct: true
-            why: "Each finished step is a commit and a working app."
+            why: "Then one feature at a time. Each finished step is a commit and a working app."
           - text: "Write all of it, then run it once"
             why: "Then a hundred bugs come at once."
           - text: "Wait until you know everything"
@@ -520,7 +520,7 @@ steps:
           - text: "Show a clear message, and keep running"
             correct: true
             why: "`try`, `except ValueError`, and `messagebox.showerror`."
-          - text: "Crash, so the user learns"
+          - text: "Crash, so the user learns to type it right"
             why: "A crash loses the work of the user."
           - text: "Use 0 without a word"
             why: "Then the user does not know that the input was wrong."
@@ -529,10 +529,10 @@ steps:
         objective: O4
         prompt: "What belongs in `README.md`?"
         options:
-          - text: "What the app does, how to start it, and how to run its tests"
+          - text: "What it does, how to start and test it"
             correct: true
             why: "It is the first page that others (and you, later) read."
-          - text: "All the code again"
+          - text: "All the code again, for safety"
             why: "The code is in its files."
           - text: "Nothing: it is optional"
             why: "A project without a README is hard to use for anyone else."
@@ -541,7 +541,7 @@ steps:
         objective: O4
         prompt: "You finished the course. What is a good next step?"
         options:
-          - text: "Build more of your own programs, and read the docs of the tools that you need"
+          - text: "Build your own programs, with the docs"
             correct: true
             why: "You can now learn a new library from its docs, like in lesson [[#reading-docs]]."
           - text: "Stop: you know all of Python"
@@ -565,7 +565,7 @@ review:
       - text: "Logic and tests, then the window, then save and load, then ship"
         correct: true
         why: "Each part rests on the one before, and each ends with a commit."
-      - text: "Ship first, then the code"
+      - text: "Ship it first, then write the code and the tests"
         why: "There is nothing to ship before the code."
       - text: "The window first, the tests at the very end"
         why: "Tests help most while you write the code."
@@ -574,10 +574,10 @@ review:
     objective: O2
     prompt: "What makes a logic function easy to test?"
     options:
-      - text: "It gets values and gives back a value, without a window or input()"
+      - text: "It gets values, gives back a value"
         correct: true
-        why: "Then one `assert` is a test."
-      - text: "It prints the result"
+        why: "Without a window or input(): then one `assert` is a test."
+      - text: "It prints the result for the user"
         why: "A test needs a value to compare, not text on the screen."
       - text: "It uses many global names"
         why: "Global names make results depend on things outside the call."
@@ -589,7 +589,7 @@ review:
       - text: "After each change, to a file in the home folder"
         correct: true
         why: "Then no change is lost, wherever the program starts."
-      - text: "Only when the computer shuts down"
+      - text: "Only when the computer shuts down at night"
         why: "The app may never see that moment."
       - text: "Never: the window remembers"
         why: "A closed window forgets everything."
@@ -598,10 +598,10 @@ review:
     objective: O4
     prompt: "Which files does someone need to run your project from git?"
     options:
-      - text: "The code, the tests, `requirements.txt` and `README.md`"
+      - text: "Code, tests, `requirements.txt`, README"
         correct: true
-        why: "They make a venv, install from `requirements.txt`, and follow the README."
-      - text: "Your `.venv` folder"
+        why: "The code, the tests, `requirements.txt` and `README.md`: they make a venv, install from `requirements.txt`, and follow the README."
+      - text: "Your `.venv` folder and the code"
         why: "Each computer makes its own venv."
       - text: "The `build` folder"
         why: "`build` holds only work files of PyInstaller."
@@ -610,9 +610,9 @@ review:
     objective: O2
     prompt: "You need a library that the course never showed. How do you start?"
     options:
-      - text: "Install it in the venv, read its docs, and try a small example"
+      - text: "Read its docs, try a small example"
         correct: true
-        why: "The same way you learned `requests` and `pytest`."
+        why: "Install it in the venv first. The same way you learned `requests` and `pytest`."
       - text: "Guess the names of its functions"
         why: "The docs show the names and their parameters."
       - text: "Copy a big program from the web"

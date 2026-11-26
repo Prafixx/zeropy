@@ -127,10 +127,10 @@ steps:
         id: i-parens
         prompt: "Why `command=convert`, and not `command=convert()`?"
         options:
-          - text: "With `()`, Python calls `convert` at once, before any click, and gives its result to the button"
+          - text: "With `()`, `convert` runs at once"
             correct: true
-            why: "The button needs the function itself, to call it at each click."
-          - text: "The two are the same"
+            why: "Before any click, and its result goes to the button. The button needs the function itself, to call it at each click."
+          - text: "The two are the same for a button"
             why: "`convert()` runs the function now. `convert` is the function, not yet run."
           - text: "`()` is not allowed in an argument"
             why: "It is allowed, but here it calls the function too early."
@@ -196,9 +196,9 @@ steps:
         objective: O2
         prompt: "`tk.Button(root, text=\"Save\", command=save())`: the window opens, and the button does nothing. Why?"
         options:
-          - text: "`save()` ran once while the window was built. The button got `None`"
+          - text: "`save()` ran once, at the start"
             correct: true
-            why: "Write `command=save`, without parentheses."
+            why: "While the window was built, and the button got `None`. Write `command=save`, without parentheses."
           - text: "Buttons need two clicks"
             why: "One click calls the command, if there is one."
           - text: "`save` must print something"
@@ -211,9 +211,9 @@ steps:
           - text: "`result.config(text=\"Done\")`"
             correct: true
             why: "`config` changes an option of the widget, and the screen shows it."
-          - text: "`result = \"Done\"`"
+          - text: "`result = \"Done\"` in the function"
             why: "That makes `result` a name for a text. The label stays as it was."
-          - text: "`print(\"Done\")`"
+          - text: "`print(\"Done\")` into the label"
             why: "`print` writes to the terminal, not into the window."
       - kind: mcq
         id: d-mainloop
@@ -223,21 +223,21 @@ steps:
           - text: "`root.mainloop()` at the end"
             correct: true
             why: "Without it, the program ends after the last line, and the window with it."
-          - text: "`root.pack()`"
+          - text: "`root.pack()` at the end"
             why: "The window itself is not packed. Its widgets are."
-          - text: "`time.sleep(100)`"
+          - text: "`time.sleep(100)` at the end"
             why: "Then the window would not react to clicks. `mainloop` waits and answers."
       - kind: mcq
         id: d-get
         objective: O3
         prompt: "`entry.get()` gives `\"20\"`. What does `entry.get() + 5` do?"
         options:
-          - text: "A `TypeError`: the text of an entry is a `str`. Use `float(entry.get())`"
+          - text: "A `TypeError`"
             correct: true
-            why: "Like `input()`, an entry gives text."
-          - text: "`25`"
+            why: "The text of an entry is a `str`, like `input()`. Use `float(entry.get())`."
+          - text: "`25`, the sum"
             why: "`\"20\"` is a text. Convert it first."
-          - text: "`\"205\"`"
+          - text: "`\"205\"`, joined"
             why: "`\"20\" + 5` adds a text and a number: a `TypeError`."
 
   # 5. EXERCISE: completion --------------------------------------------------
@@ -521,9 +521,9 @@ steps:
         objective: O1
         prompt: "What does `root.mainloop()` do?"
         options:
-          - text: "It shows the window and waits for clicks, until the window is closed"
+          - text: "It shows the window and waits"
             correct: true
-            why: "While it waits, tkinter calls your functions when something happens."
+            why: "For clicks, until the window is closed. While it waits, tkinter calls your functions when something happens."
           - text: "It runs the program once more"
             why: "It runs nothing again. It waits and answers events."
           - text: "It closes the window"
@@ -557,21 +557,21 @@ steps:
         objective: O4
         prompt: "A button function does `print(\"Saved\")`. Where does the text appear?"
         options:
-          - text: "In the terminal, not in the window"
+          - text: "In the terminal"
             correct: true
-            why: "To show it in the window, change a label with `config`."
-          - text: "On the button"
+            why: "Not in the window. To show it there, change a label with `config`."
+          - text: "On the button you clicked"
             why: "The button keeps its text. `print` writes to the terminal."
-          - text: "Nowhere"
+          - text: "Nowhere, in a window app"
             why: "It appears in the terminal where the program runs."
       - kind: mcq
         id: q-pack
         objective: O1
         prompt: "`tk.Label(root, text=\"Hi\")` alone. What do you see?"
         options:
-          - text: "Nothing: the label is made, but not packed"
+          - text: "Nothing"
             correct: true
-            why: "Add `.pack()` to show it."
+            why: "The label is made, but not packed. Add `.pack()` to show it."
           - text: "The label, at the top"
             why: "Without `pack()`, tkinter does not place it."
           - text: "An error"
@@ -626,9 +626,9 @@ review:
     objective: O2
     prompt: "Why is `command=save()` a bug?"
     options:
-      - text: "It calls `save` at once, and gives the button its result, `None`"
+      - text: "It calls `save` at once"
         correct: true
-        why: "`command=save` gives the function, to call on each click."
+        why: "And gives the button its result, `None`. `command=save` gives the function, to call on each click."
       - text: "`save` needs two parentheses"
         why: "The parentheses are the problem: they call the function."
       - text: "Buttons cannot save"
@@ -638,9 +638,9 @@ review:
     objective: O1
     prompt: "What does `label.pack(pady=10)` do?"
     options:
-      - text: "It shows the label, with 10 pixels of room above and below"
+      - text: "10 pixels of room above and below"
         correct: true
-        why: "`padx` is the room left and right."
+        why: "The label is shown with room around it. `padx` is the room left and right."
       - text: "It moves the label 10 rows down"
         why: "`pady` is room in pixels, not rows."
       - text: "It makes the text 10 big"

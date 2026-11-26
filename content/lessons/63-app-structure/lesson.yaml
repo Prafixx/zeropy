@@ -137,9 +137,9 @@ steps:
         id: i-self-label
         prompt: "Why `self.label`, and not only `label = tk.Label(...)`?"
         options:
-          - text: "`add_one` needs the label later. A name without `self.` is gone when `__init__` ends"
+          - text: "`add_one` needs the label later"
             correct: true
-            why: "An attribute lives as long as the object. A local name lives only during the call."
+            why: "A name without `self.` is gone when `__init__` ends. An attribute lives as long as the object."
           - text: "tkinter only accepts labels with `self.`"
             why: "tkinter does not care about the name. The method `add_one` does."
           - text: "It makes the label bigger"
@@ -613,12 +613,12 @@ steps:
         objective: O1
         prompt: "In `__init__` of an app, why `self.entry = tk.Entry(root)`, and not `entry = tk.Entry(root)`?"
         options:
-          - text: "A method like `add` needs the entry later. A local name is gone after `__init__`"
+          - text: "`add` needs the entry later"
             correct: true
-            why: "Attributes live as long as the object."
+            why: "A local name is gone after `__init__`; attributes live as long as the object."
           - text: "tkinter needs `self` to show it"
             why: "The window shows it either way. Your methods need to reach it."
-          - text: "It is only a style"
+          - text: "It is only a style, not needed"
             why: "Without `self.`, `add` cannot find the entry: `AttributeError`."
       - kind: mcq
         id: q-command
@@ -649,10 +649,10 @@ steps:
         objective: O3
         prompt: "Nothing is selected in the list. What is `listbox.curselection()`?"
         options:
-          - text: "`()`, an empty tuple"
+          - text: "`()`"
             correct: true
-            why: "So check `if not selection: return` before you use `selection[0]`."
-          - text: "`0`"
+            why: "An empty tuple. So check `if not selection: return` before you use `selection[0]`."
+          - text: "`0`, the first"
             why: "0 would be the first line. Nothing selected is `()`."
           - text: "An error"
             why: "It gives an empty tuple."
@@ -664,7 +664,7 @@ steps:
           - text: "After every change: add and remove"
             correct: true
             why: "Then closing the window never loses a task."
-          - text: "Only at the start"
+          - text: "Only at the start of the app"
             why: "At the start it loads. Changes come later."
           - text: "Never: tkinter remembers"
             why: "A closed window forgets everything. The file remembers."
@@ -685,7 +685,7 @@ review:
       - text: "In an attribute of the app: `self.count`"
         correct: true
         why: "Every method can read and change it through `self`."
-      - text: "In a label only"
+      - text: "In the text of a label only"
         why: "A label shows it. The value itself lives in the object."
       - text: "In a local name of `__init__`"
         why: "That is gone when `__init__` ends."
@@ -706,10 +706,10 @@ review:
     objective: O3
     prompt: "What does `button.grid(row=0, column=1)` do?"
     options:
-      - text: "It puts the button in the first row, second column"
+      - text: "First row, second column"
         correct: true
-        why: "Rows and columns count from 0."
-      - text: "It puts it in row 1, column 0"
+        why: "Rows and columns count from 0: `row=0, column=1`."
+      - text: "Second row, first column"
         why: "`row=0` is the first row."
       - text: "It packs it under the others"
         why: "That is `pack`. `grid` uses rows and columns."
@@ -721,19 +721,19 @@ review:
       - text: "`messagebox.showerror(\"To-do\", \"A task needs a text.\")`"
         correct: true
         why: "The first text is the title, the second the message."
-      - text: "`print(\"A task needs a text.\")`"
+      - text: "`print(\"A task needs a text.\")` in the function"
         why: "That goes to the terminal, not to the user."
-      - text: "`raise ValueError(...)` in the window"
+      - text: "`raise ValueError(...)` in the window code"
         why: "That crashes the click. Show the message instead."
   - kind: mcq
     id: r-main
     objective: O1
     prompt: "Why do the last lines of `todo.py` go under `if __name__ == \"__main__\":`?"
     options:
-      - text: "So that tests can import the logic without opening the window"
+      - text: "So tests can import the logic"
         correct: true
-        why: "The window starts only when the file itself runs."
-      - text: "tkinter needs it to draw"
+        why: "Without opening the window: it starts only when the file itself runs."
+      - text: "tkinter needs it to draw the window"
         why: "tkinter draws without it. Imports need it."
       - text: "It makes the app faster"
         why: "It changes when the lines run, not how fast."

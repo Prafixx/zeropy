@@ -97,12 +97,12 @@ steps:
         objective: O2
         prompt: "An app saves to `Path(\"notes.txt\")`. Ana starts it once from the Desktop, once from Documents. What happens?"
         options:
-          - text: "Two files, one in each folder: she sees different notes"
+          - text: "Two files: different notes"
             correct: true
-            why: "A relative path is in the folder where the program was started."
+            why: "One in each folder: a relative path is in the folder where the program was started."
           - text: "One file next to the program"
             why: "A relative path follows the working folder, not the program."
-          - text: "An error"
+          - text: "An error at the second start"
             why: "It works. It only writes in a different place each time."
       - kind: mcq
         id: d-home
@@ -121,34 +121,34 @@ steps:
         objective: O2
         prompt: "Why not save next to the code with `Path(__file__).parent` in a `--onefile` program?"
         options:
-          - text: "The code runs from a temporary folder, which is deleted after each run"
+          - text: "It runs from a folder that is deleted"
             correct: true
-            why: "The tasks would be gone at the next start."
+            why: "A temporary folder, deleted after each run: the tasks would be gone at the next start."
           - text: "`__file__` does not exist in Python"
             why: "It exists: the path of the running file. In a one-file program it is temporary."
-          - text: "It is too slow"
+          - text: "It is too slow to find"
             why: "Speed is not the problem. The folder disappears."
       - kind: mcq
         id: d-name
         objective: O2
         prompt: "Why `todo-tasks.json`, and not only `tasks.json`, in the home folder?"
         options:
-          - text: "Many apps share the home folder: the name says which app the file belongs to"
+          - text: "It says which app the file is for"
             correct: true
-            why: "Another app could use `tasks.json` too."
-          - text: "JSON files need a dash"
+            why: "Many apps share the home folder, and another app could use `tasks.json` too."
+          - text: "JSON files need a dash in their name"
             why: "Any name works. A clear one avoids trouble."
-          - text: "PyInstaller needs it"
+          - text: "PyInstaller needs it to find the file"
             why: "PyInstaller does not care about your data files."
       - kind: mcq
         id: d-mac
         objective: O1
         prompt: "You have a Windows PC. Can you build the program for a friend with a Mac?"
         options:
-          - text: "No: PyInstaller builds for the system it runs on. The Mac program must be built on a Mac"
+          - text: "No: it must be built on a Mac"
             correct: true
-            why: "Your friend can build it from your code, with the same command."
-          - text: "Yes, with `--mac`"
+            why: "PyInstaller builds for the system it runs on. Your friend can build it from your code, with the same command."
+          - text: "Yes, with `--mac` at the end"
             why: "There is no such option."
           - text: "Yes: `todo.exe` runs on a Mac"
             why: "An `.exe` is a Windows program."
@@ -421,9 +421,9 @@ steps:
         objective: O4
         prompt: "You double-click `todo.exe`, and nothing happens. How do you see the error?"
         options:
-          - text: "Build without `--windowed`, and start the program from a terminal"
+          - text: "Build without `--windowed`"
             correct: true
-            why: "Then the traceback is printed in the terminal."
+            why: "And start the program from a terminal: then the traceback is printed there."
           - text: "Build again with the same command"
             why: "The same build hides the same error."
           - text: "Restart the computer"
@@ -433,10 +433,10 @@ steps:
         objective: O3
         prompt: "You fixed a bug in `todo.py`, but `dist/todo.exe` still has it. Why?"
         options:
-          - text: "The program in `dist` has the old code inside: build again"
+          - text: "It has the old code: build again"
             correct: true
-            why: "PyInstaller copies your code when it builds."
-          - text: "PyInstaller ignores changes"
+            why: "The program in `dist` holds a copy of your code from the time of the build."
+          - text: "PyInstaller ignores small changes"
             why: "It uses the code at the time of the build."
           - text: "The bug is in Python"
             why: "The program has the old copy of your code."
@@ -445,9 +445,9 @@ steps:
         objective: O4
         prompt: "The built program says `ModuleNotFoundError: No module named 'requests'`. `python todo.py` works. Why?"
         options:
-          - text: "PyInstaller ran in a Python where `requests` is not installed. Install it in that venv, and build again"
+          - text: "`requests` is not in that venv"
             correct: true
-            why: "PyInstaller packs the packages of the Python that runs it."
+            why: "PyInstaller ran in a Python without `requests`, and packs the packages of the Python that runs it. Install it there, and build again."
           - text: "PyInstaller cannot pack packages"
             why: "It can. It packs those of its own venv."
           - text: "The program needs internet to install it"
@@ -469,9 +469,9 @@ steps:
         objective: O1
         prompt: "`todo.exe` is 12 MB, but `todo.py` is only 3 KB. Why?"
         options:
-          - text: "Python itself and tkinter are inside the program"
+          - text: "Python and tkinter are inside"
             correct: true
-            why: "That is why it runs on a computer without Python."
+            why: "Python itself and tkinter are packed in. That is why it runs on a computer without Python."
           - text: "PyInstaller adds empty space"
             why: "The size is Python and its parts."
           - text: "The tasks are inside"
@@ -553,10 +553,10 @@ steps:
         objective: O1
         prompt: "What does `pyinstaller --onefile todo.py` make?"
         options:
-          - text: "One program file in `dist`, with Python and your code inside"
+          - text: "One program file in `dist`"
             correct: true
-            why: "It runs without Python on a computer with the same system."
-          - text: "A faster `todo.py`"
+            why: "With Python and your code inside. It runs without Python on a computer with the same system."
+          - text: "A faster `todo.py` in the same folder"
             why: "The code runs at the same speed. It is packed with Python."
           - text: "An installer for Python"
             why: "It packs Python into your program instead."
@@ -577,10 +577,10 @@ steps:
         objective: O4
         prompt: "What is the cost of `--windowed`?"
         options:
-          - text: "Errors are not shown, because there is no terminal"
+          - text: "Errors are not shown"
             correct: true
-            why: "To find a crash, build without it and start from a terminal."
-          - text: "The window has no buttons"
+            why: "There is no terminal. To find a crash, build without it and start from a terminal."
+          - text: "The window has no buttons at all"
             why: "The window is the same. Only the terminal is missing."
           - text: "It works only on macOS"
             why: "It works on Windows and macOS."
@@ -589,9 +589,9 @@ steps:
         objective: O3
         prompt: "When must you run PyInstaller again?"
         options:
-          - text: "After each change of the code that the program should have"
+          - text: "After each change of the code"
             correct: true
-            why: "The program holds a copy of the code at the time of the build."
+            why: "That the program should have: it holds a copy of the code at the time of the build."
           - text: "Every time you start the program"
             why: "A built program starts without PyInstaller."
           - text: "Never: it updates itself"
@@ -601,9 +601,9 @@ steps:
         objective: O1
         prompt: "Your friend has Linux, you have Windows. What do you send?"
         options:
-          - text: "The code: your friend builds it with PyInstaller on Linux, or runs it with Python"
+          - text: "The code"
             correct: true
-            why: "A program is built for one system."
+            why: "Your friend builds it with PyInstaller on Linux, or runs it with Python: a program is built for one system."
           - text: "`todo.exe`"
             why: "Linux does not run Windows programs."
           - text: "The `build` folder"
@@ -634,9 +634,9 @@ review:
     objective: O2
     prompt: "What is the working folder of a program?"
     options:
-      - text: "The folder where it was started. Relative paths like `Path(\"a.txt\")` are in it"
+      - text: "The folder where it was started"
         correct: true
-        why: "It can be a different folder for every start."
+        why: "Relative paths like `Path(\"a.txt\")` are in it, and it can be a different folder for every start."
       - text: "Always the folder of the program file"
         why: "Only if you start it there."
       - text: "Always the home folder"
@@ -646,10 +646,10 @@ review:
     objective: O4
     prompt: "A `--windowed` program closes at once, with no message. What is the first step?"
     options:
-      - text: "Build without `--windowed`, and start it from a terminal to read the error"
+      - text: "Build without `--windowed`"
         correct: true
-        why: "The traceback then appears in the terminal."
-      - text: "Add `--onefile` twice"
+        why: "And start it from a terminal to read the error: the traceback then appears there."
+      - text: "Add `--onefile` twice, to be sure"
         why: "That changes nothing."
       - text: "Delete `dist` and give up"
         why: "The error is there to be read: show it first."
@@ -658,9 +658,9 @@ review:
     objective: O4
     prompt: "Why keep `dist/` out of git?"
     options:
-      - text: "It is large, and each build makes it again from the code"
+      - text: "Each build makes it again"
         correct: true
-        why: "Git keeps the code, the program is built from it."
+        why: "It is large, and made from the code. Git keeps the code, the program is built from it."
       - text: "Git cannot store programs"
         why: "It can, but it should not: they are large and built again."
       - text: "PyInstaller deletes git"
