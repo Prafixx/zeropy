@@ -123,17 +123,17 @@ worked step (firstuse.py), then read by hand.
 
 | Step | Status | Note |
 |---|---|---|
-| 20.2 sep= | CONFIRMED | "You already know one: `print("a", "b", sep="-")`": first appearance. |
+| 20.2 sep= | FIXED (phase 2) | "You already know one: `print("a", "b", sep="-")`": first appearance. |
 | 11.5 L8 for over text | CONFIRMED | In L8 only in quiz 8.12. |
-| 24.1 stack, debugger | CONFIRMED | Debugger is L59 [58]. |
-| 39.1 decorators used | CONFIRMED | `@dataclass` L52, `@property` L55, `@app.route` Web path. |
+| 24.1 stack, debugger | FIXED (phase 2) | Debugger is L59 [58]. |
+| 39.1 decorators used | FIXED (phase 2) | `@dataclass` L52, `@property` L55, `@app.route` Web path. |
 | 41.6 CSV in L32 | ALREADY FIXED | Fixed in 1.4.0 (now "Lesson 36"). |
 | 49.7 [48.7], 51.x [50.2], 53.x [52.6], 63.x [62.3], 65.3, 65.4, 65.5 [64.3-64.5], 65.7 [64.7] | ALREADY FIXED | Fixed in 1.4.0 (45, 35, 52, 57, 63/64, 63, 45, 27). |
-| 65.6 [64.6] lesson list | CONFIRMED | "30 venv, 31 git, 37 pytest, 39 and 40 the window, 41 the build" → 43, 45, 57, 62-63, 64. |
-| 44.4 terminal lessons | CONFIRMED | Linux is a path the learner may not have done. |
-| 49.2, 49.3 "the last lesson" | NEW (my 1.4.0 regression) | Means Web APIs (47); since 1.4.0 the last lesson is 48. |
-| 29.E1 numpy | NEW | "You know it from `import numpy as np`": numpy is only in the Data path. |
-| 55.3 dict.fromkeys | NEW | "You know a classmethod already: `dict.fromkeys(...)`": never shown before. |
+| 65.6 [64.6] lesson list | FIXED (phase 2) | "30 venv, 31 git, 37 pytest, 39 and 40 the window, 41 the build" → 43, 45, 57, 62-63, 64. |
+| 44.4 terminal lessons | FIXED (phase 2) | Linux is a path the learner may not have done. |
+| 49.2, 49.3 "the last lesson" | FIXED (phase 2) | Means Web APIs (47); since 1.4.0 the last lesson is 48. |
+| 29.E1 numpy | FIXED (phase 2) | "You know it from `import numpy as np`": numpy is only in the Data path. |
+| 55.3 dict.fromkeys | FIXED (phase 2) | "You know a classmethod already: `dict.fromkeys(...)`": never shown before. |
 
 ## P4. By area
 
@@ -143,25 +143,25 @@ worked step (firstuse.py), then read by hand.
 | Box vs label (2.1 vs 13.2) | CONFIRMED | 2.1 "makes a box with the label `age`"; 13.2 "Labels, not boxes". Also the 3D actor is `variableBoxes` (crates): a visual change too. |
 | Walrus 7.11 | CONFIRMED | 7.11, 7.12, 7.R6. NEEDS DECISION (extra or remove). |
 | L17, L24, L25 as extra | NEEDS DECISION | Needs optional lessons (see app facts). |
-| 28.2, 29.5 math.py | CONFIRMED (minor) | Tested: Windows Python 3.14, `math` is built in, a local `math.py` is ignored; `random.py` shadows. 28.2's sentence is about `random` (true) but names `math.py` too; 29.5's search order puts the standard library after the program folder, wrong for built-in modules. |
+| 28.2, 29.5 math.py | FIXED (phase 2) | Tested: Windows Python 3.14, `math` is built in, a local `math.py` is ignored; `random.py` shadows. 28.2's sentence is about `random` (true) but names `math.py` too; 29.5's search order puts the standard library after the program folder, wrong for built-in modules. |
 | M5 extras (L33, L37, L38, L39) | NEEDS DECISION | |
-| L40 con.close() | CONFIRMED | 0 uses; `with con:` commits or rolls back, it does not close. |
-| 46.4 action versions | CONFIRMED | v4 / v5 in 46.4; READMEs now show `actions/checkout@v7` (release v7.0.1) and `actions/setup-python@v7` (v7.1.0). |
+| L40 con.close() | FIXED (phase 2) | 0 uses; `with con:` commits or rolls back, it does not close. |
+| 46.4 action versions | FIXED (phase 2), NEEDS HUMAN TEST | v4 / v5 in 46.4; READMEs now show `actions/checkout@v7` (release v7.0.1) and `actions/setup-python@v7` (v7.1.0). |
 | L45 clone, revert, time | CONFIRMED | `git clone` only as text in 45.11 (local step); `git revert` 0; 55 minutes. |
 | Debugger earlier | NEEDS DECISION | L59 [58] needs only functions for its in-app part; O4 needs VS Code (L42). It cannot move before L42 whole. |
 | L54 [53] advanced, Enum | NEEDS DECISION | |
 | tkinter after() | CONFIRMED | 0 uses in L62-63 [61-62]. |
-| PyInstaller antivirus | CONFIRMED | 0 mentions in L64 [63]. |
+| PyInstaller antivirus | FIXED (phase 2) | 0 mentions in L64 [63]. |
 | 31.4 UTF-8, 42.1 install manager | KEEP | As the audit says. |
 
 ### Linux
 | Item | Status | Evidence |
 |---|---|---|
 | man, --help, less, q | CONFIRMED | 0 matches. |
-| apt update before first install | CONFIRMED | Linux 4.3 installs with `sudo apt install tree`; `sudo apt update` first appears in Pi 8.5. |
+| apt update before first install | FIXED (phase 2) | Linux 4.3 installs with `sudo apt install tree`; `sudo apt update` first appears in Pi 8.5. |
 | ls -a, find in main path | CONFIRMED | `ls -a` only Linux 1.E2; find only extras. |
 | Shebang after ./ | CONFIRMED (minor) | Scripts run with `./` in Linux 4; `#!/bin/bash` first in Linux 5.4. |
-| nano Ctrl+O | CONFIRMED (minor) | Linux 4.3 teaches Ctrl+X (then save). |
+| nano Ctrl+O | FIXED (phase 2) | Linux 4.3 teaches Ctrl+X (then save). |
 | PATH, history, cron | LATER | Additions. |
 
 ### Raspberry Pi
@@ -172,8 +172,8 @@ worked step (firstuse.py), then read by hand.
 | Real setup comes last | CONFIRMED | Pi 8-9 after all circuits. |
 | Button on GPIO 2 | **DISAGREE** | gpiozero's own recipes use `Button(2)`; it works (the fixed pull-up and the internal one pull the same way). Only an I2C conflict, and the Pi lessons use no I2C. Proposal: keep, add one sentence; change only if you prefer. |
 | Servo, camera, I2C, RGB | LATER | |
-| Pi 8.1 Zero 2 W | NEEDS DECISION | Table has Pi 5, 4, 3 only. |
-| Pi 9 Windows key install | CONFIRMED | Pi 9.7 gives `ssh-copy-id` only (not on Windows). PowerShell command → NEEDS HUMAN TEST. |
+| Pi 8.1 Zero 2 W | FIXED (phase 2) | Table has Pi 5, 4, 3 only. |
+| Pi 9 Windows key install | FIXED (phase 2), NEEDS HUMAN TEST | Pi 9.7 gives `ssh-copy-id` only (not on Windows). PowerShell command → NEEDS HUMAN TEST. |
 
 ### Data, Web, Computer
 | Item | Status | Evidence |
@@ -231,6 +231,36 @@ worked step (firstuse.py), then read by hand.
   serial console is on. It is off by default, and gpiozero's own examples
   use `Motor(4, 14)`; noted, no change.
 
+## Phase 2: what changed
+- **Lesson references by id.** `src/engine/lesson-refs.ts`: `[[#git]]` in
+  any lesson text becomes the number of that Python lesson ("45"). The
+  registry resolves them once for the whole app; the lesson document and
+  the index tools do the same. `check:content` fails on an unknown id and
+  on a reference from a Python lesson to a later one (tested: both fail).
+  All 26 "lesson N" mentions are now references, plus the capstone list.
+- **Cross-references fixed:** 20.2 (`sep=` is now introduced, not "you
+  already know"), 24.1 (the stack explained, the debugger lesson named as
+  later), 39.1 (decorators you "will meet"), 44.4 (exit codes: "the Linux
+  path shows it"), 49.2 and 49.3 (lesson 47, not "the last lesson"),
+  65.6 (43 venv, 45 git, 57 pytest, 62-63 window, 64 build), 29.E1
+  (`import helpers as h` from the same lesson), 55.3 (`dict.fromkeys`
+  shown, not assumed). 29.9 (my pyproject.toml text) named lesson 43 as a
+  forward reference: now by title.
+- **Small facts:** 28.2 (only `random.py` as the example), 29.5 (built-in
+  modules come first, then `sys.path`), L40 (`with con:` does not close;
+  `con.close()` in the text and the keys), 46.4 (`actions/checkout@v7`,
+  `actions/setup-python@v7`, Python 3.14), L64 (antivirus false alarms),
+  Linux 4.3 (`sudo apt update` before `apt install`, in the text, the
+  keys and the install task, with a check; nano Ctrl+O to save), Pi 8.1
+  (Zero 2 W, 5 V 2.5 A micro-USB, header not soldered), Pi 9.7 (a
+  PowerShell line for the key on Windows).
+- Left for phase 3 (they need new Learn steps): 11.5 ("in lesson 8, for
+  walked through the characters": L8 gets that Learn step), and the rest
+  of P3.
+- Verified: check:content, quiz-bias.mjs, the audit, the references in
+  the running app (lesson 49: "lesson 47"; capstone: the list), the robot
+  on the 14 changed lessons.
+
 ## NEEDS HUMAN TEST
 Never marked as tested. Each with steps and the expected result.
 1. **Button (Pi 3)**: button between GPIO 2 and GND, `Button(2)`,
@@ -255,10 +285,19 @@ Never marked as tested. Each with steps and the expected result.
    `User=<your user>` and `WorkingDirectory=/home/<your user>`.
    `systemctl status logger` and `ps -o user= -p <PID>`. Expected:
    active, and the user is yours, not root.
-8. (Later phases) The PowerShell key install for Pi 9, on real Windows;
-   the updated GitHub Actions workflow of 46.4 on GitHub.
+8. **SSH key from Windows (Pi 9.7)**: in PowerShell on Windows 10/11
+   with OpenSSH, after `ssh-keygen -t ed25519`, run the line of the
+   lesson (user `pi` or yours). Then `ssh pi@raspberrypi.local`.
+   Expected: no password asked.
+9. **GitHub Actions (46.4)**: a repository with the workflow of the
+   lesson (checkout@v7, setup-python@v7, Python 3.14) and one test.
+   Expected: the check runs and turns green; a failing test turns it red.
+10. **Pi Zero 2 W power (Pi 8.1)**: the 2.5 A figure is the official
+   micro-USB supply; raspberrypi.com did not state the Zero 2 W's own
+   minimum verbatim. Check the official docs once more.
 
 ## Progress
 - 2026-11-25 Phase 0 done: all findings checked, this file written. No
   lesson content changed.
 - 2026-11-26 Phase 1 done (P1: Pi wiring, services, Data 5, path name).
+- 2026-11-26 Phase 2 done (references by id, cross-references, small facts).
