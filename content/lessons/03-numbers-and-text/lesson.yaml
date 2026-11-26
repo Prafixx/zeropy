@@ -60,6 +60,16 @@ steps:
 
       A result with a `float` in it is a `float`. The sign `/` always gives
       a `float`.
+
+      ## Ask Python for the type
+
+      `type(value)` tells you the type of a value:
+
+      ```python
+      print(type(5))       # <class 'int'>
+      print(type(5.0))     # <class 'float'>
+      print(type("5"))     # <class 'str'>
+      ```
     keys:
       - code: "7 / 2"
         means: "Divide. Always a `float`: `3.5`."
@@ -69,6 +79,8 @@ steps:
         means: "What is left? The remainder: `1`."
       - code: "2 ** 3"
         means: "Power: 2 * 2 * 2 is `8`."
+      - code: "type(5)"
+        means: "The type of a value: `<class 'int'>`."
 
   # 3. PREDICT ---------------------------------------------------------------
   - id: predict-division
@@ -531,6 +543,17 @@ review:
         why: "That is the remainder, `20 % 6`."
       - text: "`3.33`"
         why: "The sign `/` gives decimals. `//` cuts them off."
+  - kind: predict
+    id: r-type
+    objective: O2
+    code: |
+      print(type("12"))
+      print(type(12))
+    explain: >-
+      The quotes make `"12"` a text: `str`. Without quotes, `12` is a whole number: `int`.
+    misconceptions:
+      - answer: "<class 'int'>\n<class 'int'>"
+        say: "With quotes it is a text, even if it holds digits."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

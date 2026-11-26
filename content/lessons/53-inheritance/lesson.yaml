@@ -53,6 +53,19 @@ steps:
       Big libraries are used this way. In PyTorch, a library for AI, every
       model starts like `class MyModel(nn.Module):`. You write only what is
       special about your model; the library class gives the rest.
+
+      ## The child's own `__init__`
+
+      A child can have its own `__init__`, for its extra attributes. Then it
+      must also run the parent's `__init__`, or the parent's attributes are
+      missing. `super()` means "the parent class":
+
+      ```python
+      class Savings(Account):
+          def __init__(self, owner, rate):
+              super().__init__(owner)    # the parent's part: owner and balance
+              self.rate = rate           # the child's own part
+      ```
     keys:
       - code: "class Savings(Account):"
         means: "`Savings` gets everything of `Account`."
@@ -60,6 +73,8 @@ steps:
         means: "Not in `Savings`? Python looks in `Account`."
       - code: "isinstance(s, Account)"
         means: "`True`: a savings account is an account."
+      - code: "super().__init__(owner)"
+        means: "Run the parent's `__init__`, then add the child's part."
 
   # 2. PREDICT ---------------------------------------------------------------
   - id: predict-lookup
@@ -671,6 +686,18 @@ review:
         why: "That would say that a car is an engine."
       - text: "Neither: it needs one class"
         why: "Two classes are fine here: `Car` holds an `Engine`."
+  - kind: mcq
+    id: r-super-init
+    objective: O1
+    prompt: "A child class has its own `__init__` but does not call `super().__init__(...)`. What happens?"
+    options:
+      - text: "The attributes that the parent sets are missing"
+        correct: true
+        why: "The parent's `__init__` never ran, so for example `self.balance` does not exist."
+      - text: "Python calls the parent's `__init__` by itself"
+        why: "Only when the child has no `__init__` of its own."
+      - text: "Python stops at once with a SyntaxError"
+        why: "The code is valid. The error comes later, when a missing attribute is used."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

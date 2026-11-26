@@ -1,5 +1,5 @@
 id: git
-order: 45
+order: 46
 title: Git
 summary: Save versions of your project, go back when something breaks, try ideas on a branch, and put the project online on GitHub.
 minutes: 55

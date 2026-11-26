@@ -184,6 +184,20 @@ steps:
       ```
 
       Read them; write f-strings.
+
+      ## Split and join
+
+      `split` cuts a text into a list. `join` glues a list of texts together:
+
+      ```python
+      words = "red green blue".split()     # ['red', 'green', 'blue']
+      parts = "a,b,c".split(",")           # ['a', 'b', 'c']: cut at each comma
+      print("-".join(words))               # red-green-blue
+      ```
+
+      Without a value, `split()` cuts at spaces. `join` belongs to the text
+      that goes **between** the parts: `"-".join(...)`. All parts must be
+      texts.
     keys:
       - code: "s.lower()    s.upper()"
         means: "Small letters, capital letters."
@@ -199,6 +213,12 @@ steps:
         means: "Older: the values fill the `{}` in order."
       - code: '"%s: %d" % (name, n)'
         means: "Oldest: %s text, %d whole number."
+      - code: "s.split()"
+        means: "A list of the words."
+      - code: "s.split(\",\")"
+        means: "Cut at each comma."
+      - code: "\"-\".join(words)"
+        means: "Glue the texts, with `-` between them."
 
   # 6. DRILL -----------------------------------------------------------------
   - id: drill
@@ -682,6 +702,18 @@ review:
         why: "Only `find` and `rfind` give `-1`."
       - text: "Both raise a `ValueError`"
         why: "`find` never raises for a missing text."
+  - kind: predict
+    id: r-split-join
+    objective: O2
+    code: |
+      parts = "2026-11-26".split("-")
+      print(parts)
+      print("/".join(parts))
+    explain: >-
+      `split("-")` cuts at each `-`. `join` puts `/` between the parts.
+    misconceptions:
+      - answer: "['2026-11-26']\n2026-11-26"
+        say: "`split(\"-\")` cuts at each `-`, so there are three parts."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

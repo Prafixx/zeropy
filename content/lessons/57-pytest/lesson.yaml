@@ -53,6 +53,22 @@ steps:
       Each `.` is a test that passed, each `F` a test that failed. In this
       page, the report appears under the output when you press **Run**.
       On your computer, you run pytest yourself (at the end of the lesson).
+
+      ## A test for an error
+
+      Some inputs must fail: `parse_days("8")` must raise a `ValueError`.
+      `pytest.raises` makes that a test. It passes only when the code inside
+      the `with` block raises that error:
+
+      ```python
+      import pytest
+
+      def test_too_big():
+          with pytest.raises(ValueError):
+              parse_days("8")
+      ```
+
+      If no error comes, pytest reports `DID NOT RAISE`.
     keys:
       - code: "def test_small():"
         means: "A test: pytest runs every function whose name starts with `test`."
@@ -60,6 +76,8 @@ steps:
         means: "The test fails if this is not true."
       - code: "main.py ..F"
         means: "Two tests passed, one failed."
+      - code: "with pytest.raises(ValueError):"
+        means: "The test passes only if the block raises a `ValueError`."
 
   # 2. DEMO ------------------------------------------------------------------
   - id: try

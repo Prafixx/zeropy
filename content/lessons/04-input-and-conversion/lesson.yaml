@@ -56,6 +56,19 @@ steps:
 
       Programmers often write both steps on one line:
       `age = int(input("Age? "))`. Python works from the inside to the outside.
+
+      ## Round a number
+
+      `round(x)` gives the nearest whole number. `round(x, 2)` keeps two
+      decimals:
+
+      ```python
+      print(round(7.6))          # 8
+      print(round(3.14159, 2))   # 3.14
+      ```
+
+      A number exactly in the middle goes to the even neighbour:
+      `round(2.5)` is 2, and `round(3.5)` is 4.
     keys:
       - code: 'input("Name: ")'
         means: "Ask. The result is always text."
@@ -67,6 +80,8 @@ steps:
         means: 'Number to text: `"12"`.'
       - code: 'int("ten")'
         means: "Not possible. Python stops with a `ValueError`."
+      - code: "round(3.14159, 2)"
+        means: "Round to two decimals: `3.14`."
 
   # 3. PREDICT ---------------------------------------------------------------
   - id: predict-convert
@@ -481,6 +496,18 @@ review:
         why: "That needs `int()` first. Without conversion the answers are text."
       - text: "A `TypeError`"
         why: "Text plus text is allowed. That is why this mistake is hard to see."
+  - kind: mcq
+    id: r-round
+    objective: O1
+    prompt: "What does `round(9.81, 1)` give?"
+    options:
+      - text: "9.8"
+        correct: true
+        why: "One decimal is kept, and 9.81 is closer to 9.8."
+      - text: "10"
+        why: "That is `round(9.81)`, without the 1: a whole number."
+      - text: "9.81"
+        why: "`round` changes the number: one decimal is kept."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

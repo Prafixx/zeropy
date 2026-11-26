@@ -1,5 +1,5 @@
 id: command-line-tools
-order: 44
+order: 45
 title: Command-line tools
 summary: Write programs that take their input from the command line, like real tools - sys.argv, argparse with options and help, exit codes, and logging instead of print.
 minutes: 45

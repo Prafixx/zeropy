@@ -1,5 +1,5 @@
 id: exceptions
-order: 35
+order: 33
 title: Exceptions
 summary: Catch the errors that you expect, like bad input or a missing file, so the program can go on.
 minutes: 35

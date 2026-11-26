@@ -168,6 +168,20 @@ steps:
 
       In lesson [[#for-loops]], `for` walked through the characters of a text. It walks
       through a list the same way: one value in each round, in order.
+
+      ## More list methods
+
+      ```python
+      nums = [3, 1, 2]
+      nums.sort()            # nums is now [1, 2, 3]
+      nums.insert(0, 9)      # 9 at index 0: [9, 1, 2, 3]
+      nums.extend([7, 8])    # each value of the other list at the end
+      print(nums.index(7))   # 4: the index of the first 7
+      ```
+
+      Like `append`, `sort()` changes the list itself and gives back nothing:
+      `nums = nums.sort()` makes `nums` `None`. `index` stops with an error
+      when the value is not in the list: ask with `in` first.
     keys:
       - code: 'basket.append("tea")'
         means: "Adds a value at the end."
@@ -181,6 +195,14 @@ steps:
         means: "`True` when the value is in the list."
       - code: "for item in basket:"
         means: "One round for each value."
+      - code: "nums.sort()"
+        means: "Sorts the list itself, small to big."
+      - code: "nums.insert(0, 9)"
+        means: "Puts 9 at index 0."
+      - code: "nums.extend([7, 8])"
+        means: "Adds each value of the other list."
+      - code: "nums.index(7)"
+        means: "The index of the first 7."
 
   # 6. DRILL -----------------------------------------------------------------
   - id: read-errors
@@ -645,6 +667,19 @@ review:
         why: "In the brackets of a list goes an index, a whole number."
       - text: '`basket.find("egg")`'
         why: "A list has no `find`. The word is `in`."
+  - kind: predict
+    id: r-sort
+    objective: O2
+    code: |
+      nums = [5, 2, 4]
+      nums.sort()
+      print(nums)
+      print(nums.index(4))
+    explain: >-
+      `sort()` changes the list itself: `[2, 4, 5]`. Then 4 is at index 1.
+    misconceptions:
+      - answer: "[5, 2, 4]\n2"
+        say: "`sort()` changes the list itself, so `nums` is sorted after it."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

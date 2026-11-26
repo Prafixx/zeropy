@@ -204,6 +204,27 @@ steps:
       A name that a function creates belongs to the call: it is **local**.
       Outside, a name with the same spelling is a different box, and the
       function does not change it. To get a new value out, use `return`.
+
+      ## `global`, and why to avoid it
+
+      A function can change a name outside it, if its first line says so:
+
+      ```python
+      count = 0
+
+      def add_one():
+          global count       # the count outside the function
+          count = count + 1
+
+      add_one()
+      print(count)           # 1
+      ```
+
+      Without `global count`, Python stops with an `UnboundLocalError`:
+      `count = count + 1` makes `count` a local name, and it has no value yet.
+      Use `global` rarely. A function that changes names outside is hard to
+      test and to understand. Most of the time, give the value in and
+      `return` the result.
     keys:
       - code: "return low, high"
         means: "Gives back one tuple with two values."
@@ -211,6 +232,8 @@ steps:
         means: "Unpacks the tuple into two names."
       - code: 'return "negative"'
         means: "Ends the call here. Later lines do not run."
+      - code: "global count"
+        means: "Change the name outside the function. Use it rarely."
 
   # 6. DRILL -----------------------------------------------------------------
   - id: drill
@@ -770,6 +793,24 @@ review:
         why: "The calls of `square` run one after the other, not together."
       - text: "One"
         why: "`total` waits on its desk while `square` runs on a second desk."
+  - kind: predict
+    id: r-global
+    objective: O2
+    code: |
+      total = 10
+
+      def add(n):
+          global total
+          total = total + n
+
+      add(5)
+      add(1)
+      print(total)
+    explain: >-
+      With `global total`, each call changes the `total` outside: 10 + 5 + 1.
+    misconceptions:
+      - answer: "10"
+        say: "`global total` makes the function change the name outside, so the calls add up."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

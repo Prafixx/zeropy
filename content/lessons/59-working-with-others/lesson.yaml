@@ -1,5 +1,5 @@
 id: working-with-others
-order: 46
+order: 59
 title: Working with others
 summary: How a team changes code together, with issues, branches, pull requests, code review and tests that run on every change. And how to tell when a change is ready.
 minutes: 40

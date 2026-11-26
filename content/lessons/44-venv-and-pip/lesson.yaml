@@ -1,5 +1,5 @@
 id: venv-and-pip
-order: 43
+order: 44
 title: Packages with venv and pip
 summary: Give each project its own Python and packages. Install a package, use it, and write down what the project needs.
 minutes: 40
@@ -79,7 +79,7 @@ steps:
       new terminal. (VS Code can do it for you: choose the Python of `.venv`
       when it asks for an interpreter.)
 
-      ## Two known problems
+      ## Three known problems
 
       **Windows:** activation says that "running scripts is disabled on
       this system". Run this once, then activate again. It allows script
@@ -95,6 +95,11 @@ steps:
       ```
       sudo apt install python3-venv
       ```
+
+      **Linux and macOS:** `pip install` without a venv stops with
+      `error: externally-managed-environment`. The Python of the system
+      protects itself from changes. Do not force it: make and activate a
+      venv (above), then install there.
     keys:
       - code: "python -m venv .venv"
         means: "Make a venv in the folder `.venv`. `-m venv` runs the module `venv`."

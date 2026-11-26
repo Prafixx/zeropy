@@ -77,6 +77,25 @@ steps:
         one day.
 
       Without the change, the loop never stops.
+
+      ## Stop early with `break`
+
+      `break` ends the loop at once, even if the condition is still `True`.
+      Python goes on with the first line after the loop:
+
+      ```python
+      count = 1
+      while True:          # this loop would never stop by itself
+          if count > 3:
+              break
+          print(count)
+          count = count + 1
+      print("done")
+      ```
+
+      It prints 1, 2, 3 and `done`. `while True` with a `break` inside is the
+      usual way when the program finds out in the middle of a round that it
+      must stop.
     keys:
       - code: "n = 1"
         means: "The start value. One time, before the loop."
@@ -86,6 +105,8 @@ steps:
         means: "The change. Inside the block."
       - code: "n += 1"
         means: "A short form of `n = n + 1`. You will see it often."
+      - code: "break"
+        means: "Leave the loop at once."
 
   # 3. PREDICT ---------------------------------------------------------------
   - id: predict-count
@@ -550,6 +571,22 @@ steps:
         misconceptions:
           - answer: "10\n7\n4\n1"
             say: "The change comes first, in the condition: the first value that is printed is 7."
+      - kind: predict
+        id: q-break
+        objective: O2
+        code: |
+          n = 10
+          while n > 0:
+              if n == 7:
+                  break
+              print(n)
+              n = n - 1
+        explain: >-
+          When `n` is 7, `break` ends the loop before the `print`. So 10, 9
+          and 8 are printed, and nothing after.
+        misconceptions:
+          - answer: "10\n9\n8\n7"
+            say: "The `break` comes before the `print`: when `n` is 7, the loop ends without printing it."
 
   # 11. REVIEW ---------------------------------------------------------------
   - id: review
@@ -630,6 +667,18 @@ review:
         why: "Comparing is `==` or `!=`. `:=` gives a name."
       - text: "It is a syntax error"
         why: "It is allowed since Python 3.8, with the brackets."
+  - kind: mcq
+    id: r-break
+    objective: O2
+    prompt: "What does `break` do inside a loop?"
+    options:
+      - text: "It ends the loop at once"
+        correct: true
+        why: "Python goes on with the first line after the loop."
+      - text: "It ends this round only"
+        why: "That is `continue`, in the lesson on `for`."
+      - text: "It stops the whole program"
+        why: "Only the loop ends. The lines after the loop still run."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

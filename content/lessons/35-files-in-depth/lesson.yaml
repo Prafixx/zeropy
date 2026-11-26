@@ -1,5 +1,5 @@
 id: files-in-depth
-order: 34
+order: 35
 title: Files in depth
 summary: Read a file line by line in three ways, choose the right mode and handle file errors, work with paths and folders, and use the three standard streams.
 minutes: 45

@@ -1,5 +1,5 @@
 id: debugging-2
-order: 59
+order: 43
 title: The debugger
 summary: Stop a program in the middle, look at every variable, and walk through it line by line, into calls and out again. Then do it in VS Code.
 minutes: 40

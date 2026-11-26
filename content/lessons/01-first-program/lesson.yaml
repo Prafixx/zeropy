@@ -58,6 +58,18 @@ steps:
       - **Numbers** have no quotes. Python can compute with them.
 
       Write one instruction on each line.
+
+      ## Comments
+
+      A line, or the end of a line, that starts with `#` is a **comment**.
+      Python skips it: it is a note for people.
+
+      ```python
+      # Minutes in one day
+      print(24 * 60)    # 24 hours of 60 minutes
+      ```
+
+      The exercises use comments to tell you where to write.
     keys:
       - code: 'print("Hello")'
         means: "Text, in quotes. Shows `Hello`."
@@ -67,6 +79,8 @@ steps:
         means: "Python computes first. Shows `5`."
       - code: 'print("2 + 3")'
         means: "Quotes make it text. Shows `2 + 3`."
+      - code: "# a note"
+        means: "A comment: Python skips it."
 
   # 3. PREDICT ---------------------------------------------------------------
   - id: predict-quotes
@@ -427,6 +441,18 @@ review:
       print("a")
       print(1 + 1)
     explain: "Python runs the lines from top to bottom. The order on the screen is the order of the lines."
+  - kind: mcq
+    id: r-comment
+    objective: O2
+    prompt: "What does Python do with `# minutes in a day`?"
+    options:
+      - text: "It skips the line: it is a note for people"
+        correct: true
+        why: "A `#` starts a comment. Python does not run it."
+      - text: "It prints the line as a title"
+        why: "Only `print` shows something. A comment is never shown."
+      - text: "It stops with an error, because it is no code"
+        why: "Comments are allowed anywhere: Python just skips them."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

@@ -67,6 +67,30 @@ steps:
 
       One rule is the same in all forms: **the stop value is not included.**
       So `range(5)` gives five values, and the block runs five times.
+
+      ## A text is a row too
+
+      `for` also walks through a text: one character in each round.
+
+      ```python
+      for letter in "tea":
+          print(letter)      # t, then e, then a
+      ```
+
+      ## Skip a round with `continue`
+
+      `continue` jumps to the next round at once. The rest of this round is
+      skipped:
+
+      ```python
+      for n in range(1, 6):
+          if n == 3:
+              continue
+          print(n)           # 1 2 4 5
+      ```
+
+      `break` (lesson [[#while-loops]]) ends the whole loop. `continue` ends
+      only this round.
     keys:
       - code: "range(5)"
         means: "From 0, up to 5 but without 5: `0 1 2 3 4`."
@@ -76,6 +100,10 @@ steps:
         means: "With a step of 2: `0 2 4 6 8`."
       - code: "range(5, 0, -1)"
         means: "A step below zero counts down: `5 4 3 2 1`."
+      - code: "for letter in \"tea\":"
+        means: "One round for each character."
+      - code: "continue"
+        means: "Skip the rest of this round."
 
   # 3. PREDICT ---------------------------------------------------------------
   - id: predict-range
@@ -497,6 +525,20 @@ steps:
             why: "The values are 0 to 9. Count them: there are ten."
           - text: "11 times"
             why: "The 10 is not included. The values are 0 to 9."
+      - kind: predict
+        id: q-continue
+        objective: O2
+        code: |
+          for word in ["tea", "", "jam"]:
+              if word == "":
+                  continue
+              print(word.upper())
+        explain: >-
+          The empty word makes `continue` skip the rest of its round, so it
+          prints nothing. The loop goes on with `jam`.
+        misconceptions:
+          - answer: "TEA"
+            say: "`continue` skips only one round. The loop goes on with the next word."
 
   # 11. REVIEW ---------------------------------------------------------------
   - id: review
@@ -564,6 +606,29 @@ review:
         why: "Nobody knows how many rounds that takes. That is a job for `while`."
       - text: "When the block has more than one line"
         why: "The size of the block does not matter for the choice."
+  - kind: predict
+    id: r-letters
+    objective: O2
+    code: |
+      for c in "hi!":
+          print(c)
+    explain: >-
+      A text is a row of characters: `h`, `i` and `!`, one in each round.
+    misconceptions:
+      - answer: "hi!"
+        say: "The loop runs once for each character, so each one gets its own line."
+  - kind: mcq
+    id: r-continue
+    objective: O2
+    prompt: "What does `continue` do inside a loop?"
+    options:
+      - text: "It skips the rest of this round"
+        correct: true
+        why: "The loop goes on with the next round."
+      - text: "It ends the loop at once"
+        why: "That is `break`. `continue` keeps the loop going."
+      - text: "It runs the round again"
+        why: "No round is repeated: the next value comes."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

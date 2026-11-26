@@ -47,6 +47,21 @@ steps:
       `from helpers import *` takes every name at once. Avoid it: you cannot
       see which names came in, and a name of the module can hide one of
       yours with the same name.
+
+      ## Code that runs only as a program
+
+      Python gives every file a name, `__name__`. When you run the file, it is
+      `"__main__"`. When another file imports it, it is the name of the
+      module, like `"helpers"`. So this `if` runs its block only when you run
+      the file, not when it is imported:
+
+      ```python
+      def area(w, h):
+          return w * h
+
+      if __name__ == "__main__":
+          print(area(3, 4))      # a quick test, only as a program
+      ```
     keys:
       - code: "import helpers"
         means: "Use the names with a dot: `helpers.euros`."
@@ -54,6 +69,8 @@ steps:
         means: "Only `euros`, without a dot."
       - code: "import helpers as h"
         means: "The module with a short name."
+      - code: "if __name__ == \"__main__\":"
+        means: "Only when this file is run, not when it is imported."
 
   # 2. DEMO -----------------------------------------------------------------
   - id: use-helpers

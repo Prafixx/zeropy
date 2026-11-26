@@ -313,6 +313,30 @@ steps:
 
       Knowing the pattern helps you also with the shortcuts: `max([])` of
       an empty list gives an error for the same reason as `names[0]` did.
+
+      ## Count the rounds: `enumerate`
+
+      `enumerate` gives each value together with its index. Each round gets
+      two names, the index and the value:
+
+      ```python
+      for i, name in enumerate(["Ana", "Ben"]):
+          print(i, name)       # 0 Ana, then 1 Ben
+      ```
+
+      ## A new list in one line
+
+      "An empty list, then `append` in a loop" is so common that Python has a
+      short form, a **list comprehension**:
+
+      ```python
+      prices = [2, 5, 3]
+      doubled = [p * 2 for p in prices]         # [4, 10, 6]
+      cheap = [p for p in prices if p < 4]      # [2, 3]
+      ```
+
+      Read it as "`p * 2` for each `p` in `prices`". With `if`, only some
+      values are kept. A later lesson shows more.
     keys:
       - code: "sum([3, 5, 2])"
         means: "The total: `10`."
@@ -322,6 +346,12 @@ steps:
         means: "The smallest value: `2`."
       - code: "sum(nums) / len(nums)"
         means: "The average."
+      - code: "enumerate(names)"
+        means: "Each value with its index."
+      - code: "[p * 2 for p in prices]"
+        means: "A new list: each value changed."
+      - code: "[p for p in prices if p < 4]"
+        means: "A new list: only some values."
 
   # PUZZLE: put the lines in order (Parsons) ----------------------------
   - id: order
@@ -770,6 +800,29 @@ review:
         why: "That is `board[1][1]` or `board[0][0]`."
       - text: "`[\"o\", \"x\"]`"
         why: "That is `board[1]`: the whole row."
+  - kind: predict
+    id: r-comprehension
+    objective: O4
+    code: |
+      nums = [1, 2, 3, 4]
+      print([n * 10 for n in nums if n % 2 == 0])
+    explain: >-
+      Only the even numbers 2 and 4 are kept, and each is multiplied by 10.
+    misconceptions:
+      - answer: "[10, 20, 30, 40]"
+        say: "The `if` keeps only the even numbers."
+  - kind: mcq
+    id: r-enumerate
+    objective: O4
+    prompt: "`for i, name in enumerate([\"Ana\", \"Ben\"]):` What is `i` in the first round?"
+    options:
+      - text: "0"
+        correct: true
+        why: "`enumerate` counts from 0, like the indexes of a list."
+      - text: "1"
+        why: "It counts from 0, the first index, unless you ask for another start."
+      - text: "\"Ana\""
+        why: "That is `name`. `i` is the index."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

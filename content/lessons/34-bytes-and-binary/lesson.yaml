@@ -1,5 +1,5 @@
 id: bytes-and-binary
-order: 33
+order: 34
 title: Bytes and binary files
 summary: Text is stored as bytes. Turn text into bytes and back, read pictures and other binary files, find a file's type by its first bytes, and check a download with SHA-256.
 minutes: 40
