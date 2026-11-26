@@ -248,7 +248,7 @@ steps:
             why: "The pipe gives the output of `cat` to `sort`."
           - text: "It sorts the file itself, on the disk"
             why: "The file does not change. Only the output is sorted."
-          - text: "It writes a file called `sort`"
+          - text: "It writes the sorted lines into a file `sort`"
             why: "That would be `>`. `|` sends output to a command."
       - kind: mcq
         id: q-count
@@ -312,9 +312,9 @@ review:
     objective: O3
     prompt: "What does the pipe `|` do?"
     options:
-      - text: "It sends the output of the command on its left into the command on its right"
+      - text: "Left's output goes into the right"
         correct: true
-        why: "Small tools joined into a strong one."
+        why: "The output of the command on its left goes into the command on its right: small tools joined into a strong one."
       - text: "It writes the output into a file"
         why: "That is `>`."
       - text: "It runs two commands at random"
@@ -327,9 +327,9 @@ review:
       - text: "The number of lines in `notes.txt`"
         correct: true
         why: "`-l` counts lines."
-      - text: "The number of words"
+      - text: "The number of words in the file"
         why: "Words are `-w`."
-      - text: "The size in bytes"
+      - text: "The size of the file in bytes"
         why: "Bytes are `-c`."
 
 # "Practice more": extra tasks, not shown in the lesson (practice page).

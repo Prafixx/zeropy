@@ -171,9 +171,9 @@ steps:
         objective: O2
         prompt: "`uptime` on a Pi 4 (4 cores) says `load average: 3.98, 3.95, 3.60`. What does it mean?"
         options:
-          - text: "The processor has been fully busy for the last 15 minutes"
+          - text: "The processor is fully busy"
             correct: true
-            why: "About 4 programs wanted the processor all the time: one for each core. Look at `top`."
+            why: "For the last 15 minutes, about 4 programs wanted the processor all the time: one for each core. Look at `top`."
           - text: "The Pi has run for 3.98 hours"
             why: "The time is before the load: `up 2:14` means 2 hours 14 minutes."
           - text: "4 users are logged in"
@@ -432,9 +432,9 @@ steps:
         objective: O1
         prompt: "When should you use `kill -9`?"
         options:
-          - text: "Only when `kill` alone did not stop the process"
+          - text: "Only when `kill` did not work"
             correct: true
-            why: "`-9` gives the program no time to save or clean up."
+            why: "When `kill` alone did not stop the process. `-9` gives the program no time to save or clean up."
           - text: "Always, because it is faster"
             why: "A program stopped by force can lose data. Ask first with `kill`."
           - text: "To stop a service at boot"
@@ -444,9 +444,9 @@ steps:
         objective: O3
         prompt: "What is the difference between `start` and `enable`?"
         options:
-          - text: "`start` runs it now; `enable` makes it start at every boot"
+          - text: "`start`: now; `enable`: at every boot"
             correct: true
-            why: "`enable --now` does both."
+            why: "`start` runs it now; `enable` makes it start at every boot. `enable --now` does both."
           - text: "There is no difference"
             why: "After `start` alone, the service is off again after a reboot."
           - text: "`enable` runs it now; `start` at boot"
@@ -456,10 +456,10 @@ steps:
         objective: O3
         prompt: "A service fails. Where do you read its messages?"
         options:
-          - text: "`journalctl -u NAME`, or the last lines of `systemctl status NAME`"
+          - text: "`journalctl -u NAME`"
             correct: true
-            why: "systemd keeps what the service printed in the journal."
-          - text: "`ps aux`"
+            why: "Or the last lines of `systemctl status NAME`: systemd keeps what the service printed in the journal."
+          - text: "`ps aux | grep NAME`"
             why: "`ps` shows what runs now. A failed service is not there any more."
           - text: "`cat NAME.service`"
             why: "That is the service file: what systemd should do, not what happened."
@@ -480,9 +480,9 @@ steps:
         objective: O4
         prompt: "Why `ExecStart=/usr/bin/python3 /home/pi/app.py`, and not `python3 app.py`?"
         options:
-          - text: "A service does not start in your home directory, so `app.py` alone is not found"
+          - text: "`app.py` alone is not found"
             correct: true
-            why: "It starts in `/`. A full path always works."
+            why: "A service does not start in your home directory: it starts in `/`. A full path always works."
           - text: "Services cannot run Python"
             why: "They can run any program."
           - text: "Full paths are faster"
@@ -549,9 +549,9 @@ review:
     objective: O4
     prompt: "A service runs, but its prints never show in `journalctl -u`. What helps?"
     options:
-      - text: "`python3 -u` in `ExecStart`, so each print is written at once"
+      - text: "`python3 -u` in `ExecStart`"
         correct: true
-        why: "Without `-u`, Python keeps the prints in a buffer while the program runs."
+        why: "Then each print is written at once. Without `-u`, Python keeps the prints in a buffer while the program runs."
       - text: "`print` with more text"
         why: "The length does not matter. The prints wait in a buffer."
       - text: "`sudo journalctl`"

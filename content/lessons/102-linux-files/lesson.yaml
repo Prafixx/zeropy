@@ -262,9 +262,9 @@ steps:
         objective: O3
         prompt: "You removed a file with `rm` by mistake. Where do you find it?"
         options:
-          - text: "Nowhere: the terminal has no recycle bin"
+          - text: "Nowhere"
             correct: true
-            why: "`rm` deletes for good. Look with `ls` before you remove."
+            why: "The terminal has no recycle bin: `rm` deletes for good. Look with `ls` before you remove."
           - text: "In the recycle bin"
             why: "The recycle bin belongs to the desktop, not to `rm`."
           - text: "In `/tmp`"

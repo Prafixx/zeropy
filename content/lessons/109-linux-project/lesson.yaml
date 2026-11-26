@@ -188,7 +188,7 @@ steps:
         objective: O1
         prompt: "In part 2, why make the report and the backup before you remove `temp`?"
         options:
-          - text: "If a command goes wrong, the important things are safe already"
+          - text: "If a command fails, those are already safe"
             correct: true
             why: "Delete last: `rm` cannot be undone."
           - text: "`rm -r` only works at the end of a session"
@@ -200,9 +200,9 @@ steps:
         objective: O3
         prompt: "Why `echo 'ls photos | wc -l' > count-photos.sh`, with single quotes?"
         options:
-          - text: "So the `|` is written into the script as text, and not run at once"
+          - text: "So the `|` is written as text"
             correct: true
-            why: "Without quotes, the shell runs the pipe now."
+            why: "And not run at once: without quotes, the shell runs the pipe now."
           - text: "Single quotes make the script faster"
             why: "They only decide what is text."
           - text: "`echo` needs quotes for every text"
@@ -224,9 +224,9 @@ steps:
         objective: O3
         prompt: "What is the gain of the script `count-photos.sh`?"
         options:
-          - text: "Next time, one short command does the work, and nobody needs to remember the pipe"
+          - text: "One short command does the work"
             correct: true
-            why: "Scripts keep commands for later, also for other people."
+            why: "Next time, nobody needs to remember the pipe. Scripts keep commands for later, also for other people."
           - text: "It counts faster than the pipe itself"
             why: "It runs the same pipe."
           - text: "It makes the photos smaller"
@@ -245,12 +245,12 @@ review:
     objective: O1
     prompt: "What should you do before `rm -r` on a directory?"
     options:
-      - text: "Look into it with `ls`, and save what you need"
+      - text: "Look into it with `ls` first"
         correct: true
         why: "`rm -r` deletes everything inside, for good."
       - text: "Nothing: `rm -r` asks first"
         why: "It does not ask. It deletes at once."
-      - text: "Run `sudo`"
+      - text: "Run it with `sudo`, to be safe"
         why: "`sudo` makes it more dangerous, not safer."
   - kind: mcq
     id: r-grep-redirect

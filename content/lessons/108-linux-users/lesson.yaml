@@ -207,9 +207,9 @@ steps:
         objective: O3
         prompt: "What does the `x` in the second field of `/etc/passwd` mean?"
         options:
-          - text: "The password is in `/etc/shadow`, which only root may read"
+          - text: "The password is in `/etc/shadow`"
             correct: true
-            why: "`/etc/passwd` can be read by everyone, so the password is not there."
+            why: "Only root may read that file. `/etc/passwd` can be read by everyone, so the password is not there."
           - text: "The user has no password"
             why: "The x means: look in /etc/shadow."
           - text: "The user is disabled"
@@ -308,21 +308,21 @@ steps:
         objective: O1
         prompt: "`ip route` says `default via 192.168.1.1 dev wlan0`. What is 192.168.1.1?"
         options:
-          - text: "The router: everything outside your network goes through it"
+          - text: "The router"
             correct: true
-            why: "`default` is the way for all addresses that are not in your network."
+            why: "Everything outside your network goes through it: `default` is the way for all addresses that are not in your network."
           - text: "The address of the Pi"
             why: "The Pi's address is in `ip addr` (`inet`), here after `src`."
-          - text: "A DNS name"
-            why: "It is an address, and the router."
+          - text: "A DNS server"
+            why: "Often the router answers DNS too, but here it is the way out: the router."
       - kind: mcq
         id: q-port22
         objective: O1
         prompt: "`ss -tln` shows `0.0.0.0:22`. What does it mean?"
         options:
-          - text: "A program (SSH) listens on port 22, on every address of the Pi"
+          - text: "SSH listens on port 22"
             correct: true
-            why: "0.0.0.0 means all interfaces."
+            why: "On every address of the Pi: 0.0.0.0 means all interfaces."
           - text: "Port 22 is closed"
             why: "ss lists ports that are open (listening)."
           - text: "22 users are logged in"
@@ -332,9 +332,9 @@ steps:
         objective: O2
         prompt: "Why does `sudo echo \"1.2.3.4 box\" >> /etc/hosts` fail?"
         options:
-          - text: "The `>>` is done by your own shell, which is not root"
+          - text: "Your shell does the `>>`, not root"
             correct: true
-            why: "Only `echo` runs as root. `| sudo tee -a /etc/hosts` writes as root."
+            why: "Your own shell is not root, and only `echo` runs as root. `| sudo tee -a /etc/hosts` writes as root."
           - text: "echo cannot write to files"
             why: "With `>>` the shell writes. The shell has no right to /etc/hosts."
           - text: "/etc/hosts cannot be changed"
@@ -347,7 +347,7 @@ steps:
           - text: "Only `gpio` (and her own group `ana`)"
             correct: true
             why: "`-G` without `-a` replaces the list. Use `-aG` to add."
-          - text: "users, video and gpio"
+          - text: "users, video and gpio: one more"
             why: "That needs `-aG`."
           - text: "Nothing changed"
             why: "The groups changed: the old ones are gone."
@@ -359,7 +359,7 @@ steps:
           - text: "Only root may give a file to another user"
             correct: true
             why: "`sudo chown ana report.txt`."
-          - text: "ana does not exist"
+          - text: "ana does not exist on this computer"
             why: "Then it would say `invalid user`."
           - text: "The file is open"
             why: "Changing the owner needs root, nothing else."
@@ -377,9 +377,9 @@ review:
     objective: O1
     prompt: "Where does `ip addr` show the address of an interface?"
     options:
-      - text: "After `inet`, like `inet 192.168.1.42/24`"
+      - text: "After `inet`"
         correct: true
-        why: "`inet6` is the IPv6 address."
+        why: "Like `inet 192.168.1.42/24`. `inet6` is the IPv6 address."
       - text: "After `link/ether`"
         why: "That is the hardware (MAC) address."
       - text: "After `mtu`"
@@ -401,12 +401,12 @@ review:
     objective: O3
     prompt: "What does `cut -d: -f1 /etc/passwd` print?"
     options:
-      - text: "The first field of each line: the user names"
+      - text: "The user names"
         correct: true
-        why: "`-d:` splits at `:`, `-f1` keeps field 1."
+        why: "The first field of each line: `-d:` splits at `:`, `-f1` keeps field 1."
       - text: "The first line"
         why: "That is `head -n 1`."
-      - text: "The passwords"
+      - text: "The passwords of the users"
         why: "They are not in /etc/passwd."
   - kind: mcq
     id: r-groups-why
@@ -416,9 +416,9 @@ review:
       - text: "Groups give rights: gpio may use the pins"
         correct: true
         why: "A user outside the group gets Permission denied."
-      - text: "To sort the users by name"
+      - text: "To sort the users by name in lists"
         why: "Groups are about rights."
-      - text: "Groups make the Pi faster"
+      - text: "Groups make the Pi faster for them"
         why: "They only decide who may do what."
   - kind: mcq
     id: r-add-user

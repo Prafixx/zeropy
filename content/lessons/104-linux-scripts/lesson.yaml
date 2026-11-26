@@ -273,9 +273,9 @@ steps:
         objective: O2
         prompt: "Why `./run.sh`, and not only `run.sh`?"
         options:
-          - text: "`./` says: the file in this folder. Without it, the shell looks for a command called `run.sh`"
+          - text: "`./` means: the file in this folder"
             correct: true
-            why: "The shell runs programs from fixed places, not from the current folder, unless you say `./`."
+            why: "Without it, the shell looks for a command called `run.sh`, in fixed places, not in the current folder."
           - text: "`./` makes the script faster"
             why: "It only says where the file is."
           - text: "`./` gives the run permission"
@@ -285,9 +285,9 @@ steps:
         objective: O4
         prompt: "When should you use `sudo`?"
         options:
-          - text: "Only for a command that changes the system, like installing a program"
+          - text: "Only to change the system"
             correct: true
-            why: "As root, a mistake can break the whole computer. Use it only when needed."
+            why: "Like installing a program. As root, a mistake can break the whole computer: use it only when needed."
           - text: "For every command, to be sure it works"
             why: "That is dangerous: root may delete anything without a question."
           - text: "Never: it is only for experts"
@@ -300,7 +300,7 @@ steps:
           - text: "`python3 app.py`"
             correct: true
             why: "`python3` runs the file."
-          - text: "`run app.py`"
+          - text: "`run python app.py`"
             why: "There is no command `run`."
           - text: "`cat app.py`"
             why: "`cat` shows the code. It does not run it."
@@ -366,9 +366,9 @@ review:
     objective: O3
     prompt: "What is a shell script?"
     options:
-      - text: "A text file with commands that the shell runs one after the other"
+      - text: "A text file of shell commands"
         correct: true
-        why: "It types the commands for you."
+        why: "The shell runs them one after the other: it types the commands for you."
       - text: "A Python program"
         why: "A Python program runs with `python3`. A shell script is commands for the shell."
       - text: "A special kind of directory"

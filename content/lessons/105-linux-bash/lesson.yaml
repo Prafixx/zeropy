@@ -94,9 +94,9 @@ steps:
         objective: O1
         prompt: "`name = Ana` says `name: command not found`. Why?"
         options:
-          - text: "With spaces, the shell runs a command `name` with the words `=` and `Ana`"
+          - text: "The shell runs a command `name`"
             correct: true
-            why: "A variable needs `name=Ana`, with no spaces."
+            why: "With spaces, it is a command `name` with the words `=` and `Ana`. A variable needs `name=Ana`, with no spaces."
           - text: "`name` is a reserved word"
             why: "Any name works. The spaces are the problem."
           - text: "A text needs quotes: `name = \"Ana\"`"
@@ -442,12 +442,12 @@ review:
     objective: O2
     prompt: "Why should a script that finds a problem end with `exit 1`?"
     options:
-      - text: "Other commands and scripts see in `$?` that it failed"
+      - text: "Others see in `$?` that it failed"
         correct: true
-        why: "Then `./check.sh && ./backup.sh` runs the backup only after a good check."
-      - text: "It closes the terminal"
+        why: "Other commands and scripts read `$?`. Then `./check.sh && ./backup.sh` runs the backup only after a good check."
+      - text: "It closes the terminal window"
         why: "In a script, `exit` ends only the script."
-      - text: "It prints the error"
+      - text: "It prints the error message in red"
         why: "`exit` prints nothing. It sets the exit status."
   - kind: mcq
     id: r-file-test
@@ -459,7 +459,7 @@ review:
         why: "`-d` tests a directory, `-e` anything that exists."
       - text: "If `report.txt` is empty"
         why: "That is `-s` (not empty) or `-z` for a text."
-      - text: "If you may run `report.txt`"
+      - text: "If you may run `report.txt` as a program"
         why: "That is `-x`."
   - kind: mcq
     id: r-subst
