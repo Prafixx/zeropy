@@ -92,7 +92,7 @@ Phase 0, not in the audit), and **FIXED (phase N)** once done.
 
 | # | Item | Status | Evidence |
 |---|---|---|---|
-| P2.1 | Correct option is the longest | CONFIRMED | `node scripts/quiz-bias.mjs`: 1,063 questions; correct strictly longest: Python 73%, Linux 61%, Pi 81%, Data 76%, Web 78%, Computer 73% (all 73%); at least 1.5x: 51%; correct strictly shortest: 5%. |
+| P2.1 | Correct option is the longest | FIXED (phase 4) | `node scripts/quiz-bias.mjs`: 1,063 questions; correct strictly longest: Python 73%, Linux 61%, Pi 81%, Data 76%, Web 78%, Computer 73% (all 73%); at least 1.5x: 51%; correct strictly shortest: 5%. |
 | P2.2 | Exactly one correct option | CONFIRMED OK | quiz-bias.mjs finds no question with 0 or 2+ correct. |
 | P2.3 | Correct option always first | WRONG (export only) | Shuffled in `item.ts:33`. |
 
@@ -317,6 +317,61 @@ Verified: check:content, quiz-bias.mjs, the audit, the first-use search
 renumbering (8 folders, the references followed), and the robot on the
 19 changed lessons.
 
+## Phase 4: what changed
+
+About 380 multiple-choice questions were rewritten, one module or path
+per batch, each batch committed on its own. Two ways, never changing
+which answer is true:
+- the reason ("because...") moved from the correct option into its
+  `why`, so the option is a plain answer;
+- a wrong option got a real beginner mistake of the same length and
+  style (for example the LED with its short leg first, VCC and OUT
+  swapped on a PIR, `requests.get(URL, "Oslo", 10)` without names).
+
+`node scripts/quiz-bias.mjs` (per path) and `.local/tools/bias.py` (per
+Python module). Correct option strictly the longest:
+
+| Part | Before | After |
+|---|---|---|
+| M1 | 32% | 32% (left as it was) |
+| M2 | 58% | 38% |
+| M3 | 51% | 39% |
+| M4 | 64% | 41% |
+| M5 | 82% | 40% |
+| M6 | 79% | 38% |
+| M7 | 85% | 39% |
+| M8 | 93% | 42% |
+| Linux | 62% | 37% |
+| Pi | 81% | 39% |
+| Data | 76% | 40% |
+| Web | 78% | 35% |
+| Computer | 73% | 41% |
+| **All** | **73%** | **39%** |
+
+At least 1.5 times the longest wrong option: 50% → 3%. Correct strictly
+the shortest: 5% → 15% (no new "pick the shortest" trick). Every question
+still has exactly one correct option. (The M4 commit message says 39%;
+the true number at that commit was 41%.)
+
+Review: two independent reviewers read samples (about 105 path questions,
+about 90 Python questions), as an expert and as a beginner. They found 11
+real problems, all fixed: a false explanation ("1000 is 10 decimal
+digits"), wrong options that were arguably right ("A DNS server"), a
+correct option made inexact (`self.age` instead of `self.age = ...`),
+explanations that no longer matched a changed option, and unclear
+wordings. While checking my own batches I also caught and undid three of
+my changes: `\w+:\w+` would really match `09:45`, and two options whose
+explanation no longer fitted (`\d+-\d+`, `str(data, "text")`), and I
+fixed explanations for F11 and `Book.new(...)`.
+
+Known trade-off: many correct options are now short ("Not yet", "One",
+"A `ValueError`"), with the reason in the explanation shown after the
+answer. That is the point of the change, but a few now read as fragments.
+
+Verified: check:content (all pass), quiz-bias.mjs (one correct option
+each), the audit (no sentence over 28 words), the robot on 9 lessons from
+all parts (no issues, no page errors).
+
 ## NEEDS HUMAN TEST
 Never marked as tested. Each with steps and the expected result.
 1. **Button (Pi 3)**: button between GPIO 2 and GND, `Button(2)`,
@@ -358,3 +413,4 @@ Never marked as tested. Each with steps and the expected result.
 - 2026-11-26 Phase 1 done (P1: Pi wiring, services, Data 5, path name).
 - 2026-11-26 Phase 2 done (references by id, cross-references, small facts).
 - 2026-11-26 Phase 3 done (Learn steps for 15 concepts, 3 lessons moved).
+- 2026-11-26 Phase 4 done (quizzes: 73% -> 39% correct-longest).
