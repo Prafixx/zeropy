@@ -222,9 +222,9 @@ steps:
           - text: "`a == b` is `True`, `a is b` is `False`"
             correct: true
             why: "Same values, so `==` is True. Two objects, so `is` is False."
-          - text: "Both are `True`"
+          - text: "Both are `True`, as they are equal"
             why: "`copy()` makes a new object. `is` asks about the object, not the values."
-          - text: "Both are `False`"
+          - text: "Both are `False`, as it is a copy"
             why: "The copy has the same values, so `==` is True."
       - kind: predict
         id: d-remove
@@ -694,9 +694,9 @@ review:
     objective: O1
     prompt: "A program has `max = 10` on line 1. Later, `max([3, 8])` stops with `TypeError: 'int' object is not callable`. Why?"
     options:
-      - text: "Line 1 moved the name `max` to the number 10, so `max` is not the function any more"
+      - text: "The name `max` is now the number 10"
         correct: true
-        why: "`=` can put any name on any object, also the name of a function. Choose another name, like `limit`."
+        why: "Line 1 moved it, so `max` is not the function any more. `=` can put any name on any object; choose another name, like `limit`."
       - text: "`max` cannot take a list"
         why: "`max([3, 8])` is 8 in a program that keeps the name `max` free."
       - text: "`max = 10` makes a copy of the function"
@@ -706,10 +706,10 @@ review:
     objective: O2
     prompt: "Why is `[[0] * 3] * 3` a problem for a grid?"
     options:
-      - text: "The three rows are the same list: a change in one shows in all"
+      - text: "The three rows are the same list"
         correct: true
-        why: "`* 3` copies the reference, not the row. Make each row new."
-      - text: "It makes only one row"
+        why: "A change in one shows in all: `* 3` copies the reference, not the row. Make each row new."
+      - text: "It makes only one row of three"
         why: "It makes three places, but they all point at one row."
       - text: "It is a syntax error"
         why: "It runs. The problem only shows when you change a value."

@@ -409,9 +409,9 @@ steps:
         objective: O1
         prompt: "What does `case _:` do?"
         options:
-          - text: "It fits any value: the case for everything else"
+          - text: "It fits any value"
             correct: true
-            why: "Put it last. Python refuses it before other cases."
+            why: "It is the case for everything else. Put it last: Python refuses it before other cases."
           - text: "It fits only an empty value"
             why: "It fits everything."
           - text: "It fits nothing"
@@ -433,9 +433,9 @@ steps:
         objective: O3
         prompt: "`limit = 5`, then `case limit:` in a match. What does it do?"
         options:
-          - text: "It takes any value into a new name `limit`: it does not compare with 5"
+          - text: "It puts any value into `limit`"
             correct: true
-            why: "A bare name is a capture pattern. Write the value: `case 5:`."
+            why: "It does not compare with 5: a bare name is a capture pattern. Write the value: `case 5:`."
           - text: "It fits when the value is 5"
             why: "That is the trap: a bare name does not compare."
           - text: "It is an error at once"
@@ -493,10 +493,10 @@ review:
     objective: O3
     prompt: "Why is `case answer:` before other cases a problem?"
     options:
-      - text: "A bare name takes any value, so the cases after it can never run"
+      - text: "A bare name takes any value"
         correct: true
-        why: "Python refuses it with a SyntaxError. Write the value itself."
-      - text: "`answer` is a keyword"
+        why: "So the cases after it could never run: Python refuses it with a SyntaxError. Write the value itself."
+      - text: "`answer` is a keyword of `match`"
         why: "It is a normal name. A bare name in a case takes the value."
       - text: "There is no problem"
         why: "It fits everything, like `_`."
@@ -505,10 +505,10 @@ review:
     objective: O1
     prompt: "When is `match` a good choice?"
     options:
-      - text: "When one value is compared with many cases, or when the shape of a value matters"
+      - text: "When one value has many cases"
         correct: true
-        why: "Like commands, codes or points. For one or two conditions, `if` is simpler."
-      - text: "Always instead of `if`"
+        why: "Or when the shape of a value matters, like commands, codes or points. For one or two conditions, `if` is simpler."
+      - text: "Always instead of `if` and `elif`"
         why: "For a simple condition, `if` is clearer."
       - text: "Only for numbers"
         why: "It works with text, lists, tuples, dictionaries and more."

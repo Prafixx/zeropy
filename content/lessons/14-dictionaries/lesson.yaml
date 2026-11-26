@@ -270,9 +270,9 @@ steps:
       id: w-votes
       prompt: "Why does the loop need `if v in counts:`?"
       options:
-        - text: "The first time a drink comes, it has no key yet. `counts[v] + 1` would give a `KeyError`"
+        - text: "A new drink has no key yet"
           correct: true
-          why: "A new key must be created with a start value, 1."
+          why: "Then `counts[v] + 1` would give a `KeyError`. A new key must be created with a start value, 1."
         - text: "Without it, every drink is counted two times"
           why: "Without it, the program stops at the first new drink with a `KeyError`."
         - text: "It is not needed. It only makes the program faster"

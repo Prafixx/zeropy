@@ -488,7 +488,7 @@ steps:
           - text: "A dictionary"
             correct: true
             why: "Look up a value by a key: the name is the key."
-          - text: "A set"
+          - text: "A set of names"
             why: "A set holds only values, not pairs."
           - text: "A tuple"
             why: "A tuple has positions, not names."
@@ -542,9 +542,9 @@ review:
     objective: O2
     prompt: "What happens with `t = (1, 2)` and then `t[0] = 5`?"
     options:
-      - text: "A `TypeError`: a tuple cannot change"
+      - text: "A `TypeError`"
         correct: true
-        why: "To get a different tuple, make a new one: `t = (5, t[1])`."
+        why: "A tuple cannot change. To get a different tuple, make a new one: `t = (5, t[1])`."
       - text: "`t` becomes `(5, 2)`"
         why: "That would be a change in place. Tuples do not allow it."
       - text: "`t` becomes a list"

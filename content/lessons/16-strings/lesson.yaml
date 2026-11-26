@@ -141,9 +141,9 @@ steps:
         id: i-unchanged
         prompt: "After line 3, what is `name`?"
         options:
-          - text: "`\"  Ada Lovelace  \"`, with its spaces, as before"
+          - text: "`\"  Ada Lovelace  \"`"
             correct: true
-            why: "Text never changes in place. `strip()` gives back a new text, and `name` keeps the old one."
+            why: "With its spaces, as before: text never changes in place. `strip()` gives back a new text, and `name` keeps the old one."
           - text: "`\"Ada Lovelace\"`"
             why: "That is `clean`. `name.strip()` does not change `name`."
           - text: "`\"ADA LOVELACE\"`"
@@ -698,7 +698,7 @@ review:
       - text: "`index` raises a `ValueError`, `find` gives `-1`"
         correct: true
         why: "The same pair exists from the right: `rindex` and `rfind`."
-      - text: "Both give `-1`"
+      - text: "Both give `-1`, like in other languages"
         why: "Only `find` and `rfind` give `-1`."
       - text: "Both raise a `ValueError`"
         why: "`find` never raises for a missing text."

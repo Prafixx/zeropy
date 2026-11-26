@@ -757,9 +757,9 @@ review:
     objective: O3
     prompt: "A loop runs `nums.remove(n)` for every negative `n` in `nums`. For `[-1, -2, 3]` the result is `[-2, 3]`. Why?"
     options:
-      - text: "When `-1` leaves, `-2` moves to its place, and the loop goes on at the next place"
+      - text: "When `-1` leaves, `-2` moves into its place"
         correct: true
-        why: "The loop skips the value after each one it removes. Build a new list with the values to keep."
+        why: "And the loop goes on at the next place, so it skips `-2`. Build a new list with the values to keep."
       - text: "`remove` takes out only the last negative number"
         why: "`remove` takes out the value it is given. Here the loop never gave it `-2`."
       - text: "The `if` is wrong: `-2` is not below 0"
@@ -781,12 +781,12 @@ review:
     objective: O4
     prompt: "What does `sum([2, 3, 5]) / len([2, 3, 5])` give?"
     options:
-      - text: "`3.3333333333333335`, the average"
+      - text: "`3.3333333333333335`"
         correct: true
-        why: "The total 10 divided by the count 3."
-      - text: "`10`"
+        why: "The average: the total 10 divided by the count 3."
+      - text: "`10`, the total"
         why: "That is the total. The division by the length makes it the average."
-      - text: "`5`"
+      - text: "`5`, the biggest"
         why: "That is `max`. Here the total is divided by the number of values."
   - kind: mcq
     id: r-grid
