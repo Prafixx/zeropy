@@ -2,6 +2,11 @@
 // The page cannot reach Node or the file system through it.
 const { contextBridge, ipcRenderer } = require('electron');
 
+contextBridge.exposeInMainWorld('zeropyWindow', {
+  /** Colors the window buttons like the title bar: { color, symbolColor }. */
+  titleBar: (colors) => ipcRenderer.send('window:title-bar', colors),
+});
+
 contextBridge.exposeInMainWorld('zeropyUpdates', {
   /** Asks GitHub for a newer version. Resolves to { state, version?, size? }. */
   check: () => ipcRenderer.invoke('update:check'),

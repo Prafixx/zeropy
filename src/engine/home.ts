@@ -301,7 +301,6 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
             sprite('m3', 64, 'hero-sticker hero-sticker-a'),
             sprite('m4', 64, 'hero-sticker hero-sticker-b'),
           ),
-          h('span', { class: 'hero-note' }, 'Each line of code changes the picture.'),
         ),
       ),
     ];

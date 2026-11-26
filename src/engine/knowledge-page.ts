@@ -65,7 +65,12 @@ export function mountKnowledge(root: HTMLElement): () => void {
     const topics = topicsOf(lesson);
     const toggle = h(
       'button',
-      { type: 'button', class: 'btn btn-ghost btn-small know-skip', 'aria-pressed': String(skipped) },
+      {
+        type: 'button',
+        class: 'btn btn-ghost btn-small know-skip',
+        'aria-pressed': String(skipped),
+        title: skipped ? 'Count this lesson again' : 'Take this lesson out of your next steps, reviews and practice',
+      },
       h('span', { class: 'btn-label' }, skipped ? 'Include' : 'Skip'),
     );
     toggle.addEventListener('click', (event) => {
@@ -151,7 +156,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
         h(
           'p',
           { class: 'lead', 'data-enter': true },
-          'An estimate from your answers: every question, exercise, table and review card counts. Right on the first try counts more. Without practice, a topic slowly drops again, so it comes back before you forget it.',
+          'How well you know each topic, from your answers.',
         ),
         h('div', { class: 'know-tiles', 'data-enter': true }, ...tiles),
         h('h2', { class: 'sheet-title', 'data-enter': true }, 'Practice your weakest topics'),
@@ -176,11 +181,9 @@ export function mountKnowledge(root: HTMLElement): () => void {
               panel('info', counted.some((t) => t.level !== 'new') ? 'No weak topics right now.' : 'Nothing to show yet.', counted.some((t) => t.level !== 'new') ? 'Everything you practiced is solid or better. Keep going with the next lesson.' : 'Answer questions in the lessons, and your topics appear here.'),
             ),
         h('h2', { class: 'sheet-title', 'data-enter': true }, 'All topics'),
-        h(
-          'p',
-          { class: 'muted', 'data-enter': true },
-          `Open a lesson to see its topics. "Skip" takes a lesson out of your next steps, reviews and practice, and out of these numbers.${skippedCount ? ` You skipped ${skippedCount} lesson${skippedCount === 1 ? '' : 's'}.` : ''}`,
-        ),
+        skippedCount
+          ? h('p', { class: 'muted', 'data-enter': true }, `You skipped ${skippedCount} lesson${skippedCount === 1 ? '' : 's'}: ${skippedCount === 1 ? 'it does' : 'they do'} not count here.`)
+          : null,
         ...modules,
       ),
     );

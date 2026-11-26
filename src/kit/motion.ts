@@ -63,13 +63,13 @@ export function place(targets: gsap.TweenTarget, delay = 0): gsap.core.Tween {
   if (reduced) return done(targets, { clearProps: 'transform,opacity' });
   return gsap.fromTo(
     targets,
-    { y: 6, opacity: 0 },
+    { y: 14, opacity: 0 },
     {
       y: 0,
       opacity: 1,
-      duration: DUR.base,
+      duration: DUR.base * 1.4,
       ease: EASE.place,
-      stagger: 0.03,
+      stagger: 0.05,
       delay,
       clearProps: 'transform,opacity',
     },

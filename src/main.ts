@@ -7,7 +7,7 @@ import '@fontsource-variable/figtree/wght-italic.css';
 import '@fontsource-variable/jetbrains-mono';
 import './styles/tokens.css';
 import './styles/app.css';
-import './kit/settings';
+import { onSettings } from './kit/settings';
 import { mountHome } from './engine/home';
 import { mountLesson } from './engine/player';
 import { mountReview } from './engine/review-page';
@@ -17,6 +17,7 @@ import { mountMistakes } from './engine/mistakes-page';
 import { mountNext } from './engine/next-page';
 import { mountPractice } from './engine/practice-page';
 import { mountKnowledge } from './engine/knowledge-page';
+import { mountTitleBar, paintTitleBar, updateTitleBar } from './engine/titlebar';
 import { createShell, type Place, type Shell } from './engine/shell';
 
 const root = document.getElementById('app')!;
@@ -28,6 +29,7 @@ function route(): void {
   // The player updates the step number with replaceState, which fires no
   // hashchange. So every event here is a real navigation.
   unmount?.();
+  updateTitleBar();
   // A lesson opens in focus mode: full screen, without the sidebar.
   if (parts[0] === 'lesson' && parts[1]) {
     shell?.remove();
@@ -65,6 +67,8 @@ function route(): void {
   }
 }
 
+mountTitleBar();
+onSettings(() => paintTitleBar());
 window.addEventListener('hashchange', route);
 route();
 

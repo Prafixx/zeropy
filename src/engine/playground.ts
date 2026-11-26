@@ -8,8 +8,7 @@ import { loadCode, saveCode } from './store';
 import type { DemoStep } from './types';
 import { button, h, titled } from './ui';
 
-const STARTER = `# Your playground. Write any Python and press Run.
-# Your code is saved on this computer.
+const STARTER = `# Change anything, then press Run.
 name = "Ada"
 apples = 3
 pears = 5
@@ -17,11 +16,6 @@ fruit = apples + pears
 print(name, "has", fruit, "pieces of fruit.")
 `;
 
-const INTRO = `Write any Python here and press **Run** (or **Ctrl + Enter**). Each line plays in the picture, one after the other.
-
-- Nothing is checked here. Try ideas, break things, read the errors.
-- \`input()\` works: the program asks you under the output.
-- Your code is saved on this computer, and in your progress file.`;
 
 const quietContext: StepContext = {
   lesson: undefined as never,
@@ -38,7 +32,7 @@ export function mountPlayground(root: HTMLElement): () => void {
     objective: '',
     title: 'Playground',
     visual: 'variables',
-    intro: INTRO,
+    intro: '',
     code: loadCode('playground', 'main') ?? STARTER,
     experiments: [],
   };
@@ -57,7 +51,13 @@ export function mountPlayground(root: HTMLElement): () => void {
       saveCode('playground', 'main', STARTER);
     },
   });
-  const body = h('div', { class: 'step-body' }, titled('playground', h('h1', { class: 'display' }, 'Playground')), view.el);
+  const body = h(
+    'div',
+    { class: 'step-body playground' },
+    titled('playground', h('h1', { class: 'display' }, 'Playground')),
+    h('p', { class: 'lead playground-lead', 'data-enter': true }, 'Write any Python and press Run. Nothing is checked, and your code is saved.'),
+    view.el,
+  );
 
   root.replaceChildren(
     h(

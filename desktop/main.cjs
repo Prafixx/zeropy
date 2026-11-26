@@ -140,18 +140,39 @@ function setupUpdates() {
 }
 
 function buildMenu() {
-  // The menu bar stays hidden (press Alt to show it). It keeps zoom keys,
-  // which help readers who need bigger text.
-  const view = [
-    { role: 'zoomIn', accelerator: 'CommandOrControl+=' },
-    { role: 'zoomOut' },
-    { role: 'resetZoom' },
-    { type: 'separator' },
-    { role: 'togglefullscreen' },
-  ];
-  if (!app.isPackaged) view.push({ type: 'separator' }, { role: 'reload' }, { role: 'toggleDevTools' });
-  Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: 'View', submenu: view }]));
+  // No menu bar (Alt showed a bare "View" menu). The keys it had still work:
+  // see keys() below.
+  Menu.setApplicationMenu(null);
 }
+
+/** Zoom (for readers who need bigger text), full screen, and in development reload and DevTools. */
+function keys(win) {
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return;
+    const ctrl = input.control || input.meta;
+    const wc = win.webContents;
+    let done = true;
+    if (ctrl && (input.key === '=' || input.key === '+')) wc.setZoomLevel(Math.min(wc.getZoomLevel() + 0.5, 4));
+    else if (ctrl && input.key === '-') wc.setZoomLevel(Math.max(wc.getZoomLevel() - 0.5, -3));
+    else if (ctrl && input.key === '0') wc.setZoomLevel(0);
+    else if (input.key === 'F11') win.setFullScreen(!win.isFullScreen());
+    else if (!app.isPackaged && ctrl && input.key.toLowerCase() === 'r') wc.reload();
+    else if (!app.isPackaged && (input.key === 'F12' || (ctrl && input.shift && input.key.toLowerCase() === 'i'))) wc.toggleDevTools();
+    else done = false;
+    if (done) event.preventDefault();
+  });
+}
+
+// The title bar is the app's own (src/main.ts draws it). Windows keeps its
+// buttons on the right, in the colors of the theme.
+const TITLE_BAR_HEIGHT = 36;
+const titleBar = (dark) => ({ color: dark ? '#151729' : '#fdfbf7', symbolColor: dark ? '#f3f0e8' : '#1d1c26', height: TITLE_BAR_HEIGHT });
+ipcMain.on('window:title-bar', (event, colors) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win && colors && typeof colors.color === 'string' && typeof colors.symbolColor === 'string') {
+    win.setTitleBarOverlay({ color: colors.color, symbolColor: colors.symbolColor, height: TITLE_BAR_HEIGHT });
+  }
+});
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -162,7 +183,8 @@ function createWindow() {
     title: 'ZeroPy',
     icon: ICON,
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#0d0e19' : '#f7f3ec',
-    autoHideMenuBar: true,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: titleBar(nativeTheme.shouldUseDarkColors),
     show: false,
     webPreferences: {
       contextIsolation: true,
@@ -173,6 +195,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.cjs'),
     },
   });
+  keys(win);
   win.once('ready-to-show', () => win.show());
   void win.loadURL(`${ORIGIN}/index.html`);
   return win;

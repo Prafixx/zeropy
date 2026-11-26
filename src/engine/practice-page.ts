@@ -213,19 +213,17 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
         h(
           'p',
           { class: 'lead', 'data-enter': true },
-          'Exercises and questions from your finished lessons, in a mixed order. In a lesson you know the topic of each task. In a real program you must choose the right tool yourself: mixed practice trains exactly that.',
+          'Tasks from your finished lessons, in a mixed order.',
         ),
-        h('p', { class: 'muted', 'data-enter': true }, 'It feels harder than practice of one topic. That is normal, and it is why memory lasts longer. The tasks you practiced longest ago come first.'),
         any
           ? h(
               'div',
               { class: 'practice-start', 'data-enter': true },
               h('a', { class: 'btn btn-primary btn-big', href: '#/practice/all' }, h('span', { class: 'btn-label' }, 'Start a mixed set'), icon('mix', 20)),
-              h('span', { class: 'muted' }, `About ${SET.exercises} exercises and ${SET.items} questions, from all your finished lessons.`),
+              h('span', { class: 'muted' }, `${SET.exercises} exercises, ${SET.items} questions`),
             )
           : h('div', { 'data-enter': true }, panel('info', 'Finish a lesson first.', 'Mixed practice uses the tasks of the lessons you finished.')),
         h('h2', { class: 'sheet-title', 'data-enter': true }, 'By module'),
-        h('p', { class: 'muted', 'data-enter': true }, 'Best at the end of a module: mostly its own lessons, and a little from the modules before.'),
         h('ol', { class: 'practice-list', 'data-enter': true }, ...rows),
         ...challengeList(),
       ),
@@ -274,7 +272,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
       h(
         'p',
         { class: 'muted', 'data-enter': true },
-        'Bigger tasks, from a short description only, like real work: no starter code, and the checks stay hidden until you are stuck. Three at the end of each module.',
+        'Bigger tasks, with no starter code.',
       ),
       h('ol', { class: 'practice-list', 'data-enter': true }, ...rows),
     ];

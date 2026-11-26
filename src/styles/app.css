@@ -541,7 +541,7 @@ code {
   right: 0;
   top: calc(100% + var(--s-2));
   width: 320px;
-  max-height: calc(100dvh - 90px);
+  max-height: calc(100dvh - 90px - var(--titlebar-h));
   overflow-y: auto;
   z-index: 50;
   background: var(--paper-2);
@@ -743,7 +743,7 @@ code {
 
 /* ---------- Player ---------- */
 .player {
-  height: 100dvh;
+  height: calc(100dvh - var(--titlebar-h));
   display: grid;
   grid-template-rows: var(--bar-h) minmax(0, 1fr) auto;
 }
@@ -4491,7 +4491,7 @@ code {
 .app {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
-  height: 100dvh;
+  height: calc(100dvh - var(--titlebar-h));
 }
 .side {
   display: flex;
@@ -4585,7 +4585,7 @@ code {
 }
 .app-page {
   min-width: 0;
-  height: 100dvh;
+  height: calc(100dvh - var(--titlebar-h));
   overflow-y: auto;
 }
 .app-page > .player {
@@ -5134,5 +5134,97 @@ code {
   .module-head.has-emblem .module-meta,
   .module-head.has-emblem .module-hours {
     grid-column: 1 / -1;
+  }
+}
+
+/* ---------- The title bar of the desktop app (src/engine/titlebar.ts) ----------
+   It replaces the plain bar of Windows. Windows draws its buttons on the
+   right (about 140px), over the same color. */
+:root {
+  --titlebar-h: 0px;
+}
+:root.has-titlebar {
+  --titlebar-h: 36px;
+}
+.has-titlebar body {
+  padding-top: var(--titlebar-h);
+}
+.titlebar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--titlebar-h);
+  padding: 0 156px 0 var(--s-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--paper-2);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.titlebar-name {
+  font: 400 11px/1 var(--font-tiny);
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+.titlebar-hud {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font: 400 11px/1 var(--font-tiny);
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+.titlebar-meter {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 2px solid var(--border-strong);
+}
+.titlebar-meter i {
+  width: 6px;
+  height: 8px;
+  background: var(--paper-4);
+}
+.titlebar-meter i.is-on {
+  background: var(--success);
+}
+
+/* ---------- Playground: the editor first, the picture beside it ---------- */
+.step-body.playground > .title-row:first-child {
+  margin-bottom: var(--s-2);
+}
+.playground-lead {
+  margin-bottom: var(--s-6);
+}
+.playground .split {
+  display: block;
+}
+.playground .split-text {
+  display: none;
+}
+.playground .split-visual {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-areas: 'bench stage' 'bench legend';
+  grid-template-rows: auto 1fr;
+  gap: var(--s-3) var(--s-6);
+  align-items: start;
+}
+.playground .bench {
+  grid-area: bench;
+  margin: 0;
+}
+.playground .stage-frame {
+  grid-area: stage;
+}
+.playground .legend {
+  grid-area: legend;
+}
+@media (max-width: 900px) {
+  .playground .split-visual {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'bench' 'stage' 'legend';
   }
 }
