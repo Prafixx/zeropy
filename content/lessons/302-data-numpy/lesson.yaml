@@ -114,9 +114,9 @@ steps:
         id: i-std
         prompt: "`celsius.std()` gives 2.02, but `statistics.stdev` of the same values gives 2.18. Why?"
         options:
-          - text: "They use two formulas: numpy divides by n, `stdev` by n - 1"
+          - text: "They use two formulas"
             correct: true
-            why: "For many values the two are close. `np.std(a, ddof=1)` gives the same as `stdev`."
+            why: "numpy divides by n, `stdev` by n - 1. For many values the two are close; `np.std(a, ddof=1)` gives the same as `stdev`."
           - text: "numpy is less exact"
             why: "Both are exact. They answer slightly different questions."
           - text: "numpy rounds the values"
@@ -434,12 +434,12 @@ review:
     objective: O1
     prompt: "Why do data and AI tools use numpy arrays and not lists?"
     options:
-      - text: "One type and a fixed size make them fast, and you calculate with all values at once"
+      - text: "They are fast, and calculate with all values at once"
         correct: true
-        why: "That is also why `a * 2` multiplies each value."
+        why: "One type and a fixed size make them fast. That is also why `a * 2` multiplies each value."
       - text: "Arrays can hold texts and numbers mixed"
         why: "An array holds one type. That is part of its speed."
-      - text: "Lists cannot hold numbers"
+      - text: "Lists cannot hold numbers with decimals"
         why: "They can; arrays are faster for many numbers."
   - kind: mcq
     id: r-times

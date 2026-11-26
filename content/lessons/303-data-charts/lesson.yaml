@@ -88,7 +88,7 @@ steps:
         id: i-show
         prompt: "Why are there two charts, and not one with a line and bars?"
         options:
-          - text: "`plt.show()` ends a chart; what comes after it starts a new one"
+          - text: "`plt.show()` ends a chart"
             correct: true
             why: "Without the first `plt.show()`, the line and the bars would share one chart."
           - text: "A line and bars can never be in one chart"
@@ -203,7 +203,7 @@ steps:
           - text: "Points: `plt.scatter(height, shoe)`"
             correct: true
             why: "One point per person shows if the two go together."
-          - text: "Bars, one per person"
+          - text: "Bars, one per person, sorted by size"
             why: "50 bars of shoe sizes would not show the link to height."
           - text: "A line through all people"
             why: "A line suggests an order in time. The people have none."
@@ -364,9 +364,9 @@ steps:
         objective: O4
         prompt: "A bar chart shows 95 and 96, and its axis starts at 94. What is wrong?"
         options:
-          - text: "The second bar looks twice as long, but it is only 1% more"
+          - text: "One bar looks twice as long"
             correct: true
-            why: "Bars must start at 0, so their length matches the value."
+            why: "It is only 1% more. Bars must start at 0, so their length matches the value."
           - text: "Nothing: the axis is closer to the data"
             why: "For bars, cutting the axis changes the story."
           - text: "The bars are too thin"
@@ -379,7 +379,7 @@ steps:
           - text: "`a`: the first values are x, across"
             correct: true
             why: "x first, then y (up)."
-          - text: "`b`"
+          - text: "`b`: the values on the y axis"
             why: "`b` goes up: it is y."
           - text: "Both: matplotlib chooses"
             why: "The order decides."
@@ -400,10 +400,10 @@ steps:
         objective: O2
         prompt: "What does `plt.hist(ages, bins=4)` show?"
         options:
-          - text: "How many ages fall into each of 4 ranges of the same width"
+          - text: "How many ages fall in 4 ranges"
             correct: true
-            why: "A histogram counts values per bin."
-          - text: "The first 4 ages"
+            why: "4 ranges of the same width: a histogram counts values per bin."
+          - text: "The first 4 ages, as 4 bars"
             why: "It uses all ages."
           - text: "4 lines"
             why: "It draws one bar per bin."
@@ -448,7 +448,7 @@ review:
       - text: "A scatter chart"
         correct: true
         why: "One point per pair of values."
-      - text: "A histogram"
+      - text: "A histogram of each"
         why: "That shows how one set of values spreads."
       - text: "A bar chart"
         why: "Bars compare things side by side."
@@ -457,9 +457,9 @@ review:
     objective: O3
     prompt: "Two lines in one chart. How does the reader know which is which?"
     options:
-      - text: "`label=` on each `plot`, and `plt.legend()`"
+      - text: "`label=` and `plt.legend()`"
         correct: true
-        why: "The legend shows each label with its color."
+        why: "`label=` on each `plot`. The legend shows each label with its color."
       - text: "Two `plt.title` calls"
         why: "A chart has one title."
       - text: "Two `plt.show()` calls"

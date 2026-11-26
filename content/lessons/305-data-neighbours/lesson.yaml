@@ -131,9 +131,9 @@ steps:
         id: i-odd
         prompt: "The nearest penguin is an Adelie, but the next two are Gentoo. What is special about the nearest one?"
         options:
-          - text: "It is an unusual Adelie, with measurements like a Gentoo"
+          - text: "It is an unusual Adelie"
             correct: true
-            why: "Row 6, `[46.0, 209]`, sits among the Gentoo penguins. Real data has such cases."
+            why: "Its measurements are like a Gentoo: row 6, `[46.0, 209]`, sits among them. Real data has such cases."
           - text: "The distance was calculated wrong"
             why: "It is the closest: 2.2 mm away."
           - text: "Adelie and Gentoo are the same"
@@ -142,12 +142,12 @@ steps:
         id: i-argmin
         prompt: "What does `np.argmin(d)` give here?"
         options:
-          - text: "6: the place of the smallest distance"
+          - text: "6: a place in the list"
             correct: true
-            why: "A place, so `labels[6]` gives its class."
+            why: "The place of the smallest distance, so `labels[6]` gives its class."
           - text: "2.2: the smallest distance"
             why: "That is `d.min()`. `argmin` gives the place."
-          - text: "\"Adelie\""
+          - text: "\"Adelie\": the class of the nearest"
             why: "That is `labels[np.argmin(d)]`."
 
   # 4. EXERCISE: completion --------------------------------------------------
@@ -594,9 +594,9 @@ steps:
         objective: O3
         prompt: "1 in 100 patients has a rare illness. A model always says \"healthy\". What is its accuracy?"
         options:
-          - text: "99%, and it is useless: it never finds the illness"
+          - text: "99%"
             correct: true
-            why: "With rare classes, accuracy alone fools you."
+            why: "And it is useless: it never finds the illness. With rare classes, accuracy alone fools you."
           - text: "0%"
             why: "It is right for the 99 healthy patients."
           - text: "50%"
@@ -631,12 +631,12 @@ steps:
         objective: O4
         prompt: "Why can `k = 1` be a bad choice?"
         options:
-          - text: "One unusual example decides alone: the model learns the noise"
+          - text: "One unusual example decides alone"
             correct: true
-            why: "That is overfitting. More neighbours outvote odd examples."
-          - text: "It is slower than k = 5"
+            why: "The model learns the noise: that is overfitting. More neighbours outvote odd examples."
+          - text: "It is much slower than k = 5"
             why: "It is faster. The problem is the noise."
-          - text: "It cannot classify at all"
+          - text: "It cannot classify new examples"
             why: "It can: it takes the class of the one nearest example."
 
   # 12. REVIEW --------------------------------------------------------------
@@ -664,9 +664,9 @@ review:
     objective: O2
     prompt: "How does k nearest neighbours classify a new example?"
     options:
-      - text: "It takes the class that most of the k most similar examples have"
+      - text: "The class most of the k nearest have"
         correct: true
-        why: "Similar means: a small distance between the features."
+        why: "The k most similar examples vote. Similar means: a small distance between the features."
       - text: "It draws the best line"
         why: "That is the line model."
       - text: "It always takes the first class"
@@ -688,9 +688,9 @@ review:
     objective: O3
     prompt: "A k = 1 model is 100% right on its training data. What does it prove?"
     options:
-      - text: "Nothing: each example finds itself"
+      - text: "Nothing"
         correct: true
-        why: "Measure on a test set."
+        why: "Each training example finds itself. Measure on a test set."
       - text: "The model is perfect"
         why: "On new data it can be much worse."
       - text: "The data is easy"
@@ -700,12 +700,12 @@ review:
     objective: O4
     prompt: "What is overfitting?"
     options:
-      - text: "The model learns the noise of its examples, and does worse on new data"
+      - text: "The model learns the noise of its examples"
         correct: true
-        why: "The test set shows it."
+        why: "And then it does worse on new data. The test set shows it."
       - text: "The model is too small"
         why: "That is the other problem: it misses the rule."
-      - text: "The data has too many rows"
+      - text: "The data has too many rows to learn"
         why: "More data usually helps."
   - kind: mcq
     id: r-validation

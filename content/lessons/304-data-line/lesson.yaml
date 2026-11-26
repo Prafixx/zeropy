@@ -109,21 +109,21 @@ steps:
         id: i-mae
         prompt: "What does `np.abs(y - predicted).mean()` calculate?"
         options:
-          - text: "How far each prediction is from the truth, without the sign, on average"
+          - text: "The mean distance to the truth"
             correct: true
-            why: "`abs` removes the minus: too high and too low both count as wrong."
+            why: "How far each prediction is from the truth, on average. `abs` removes the minus: too high and too low both count as wrong."
           - text: "The average fuel of the cars"
             why: "That is `y.mean()`."
-          - text: "The best `w`"
+          - text: "The best `w` for the line"
             why: "It only measures the line that you chose."
       - kind: mcq
         id: i-abs
         prompt: "Why `abs`? What if we took the plain mean of `y - predicted`?"
         options:
-          - text: "Errors above and below would cancel out: a bad line could get 0"
+          - text: "Errors above and below would cancel out"
             correct: true
-            why: "+1 and -1 give a mean of 0. The loss must count distance, not direction."
-          - text: "Nothing changes"
+            why: "A bad line could get 0: +1 and -1 give a mean of 0. The loss must count distance, not direction."
+          - text: "Nothing changes: the mean is the same"
             why: "Negative and positive errors would cancel each other."
           - text: "It would be faster"
             why: "Speed is not the point: the meaning is."
@@ -421,9 +421,9 @@ steps:
           - text: "Each extra tonne adds 4.6 litres per 100 km"
             correct: true
             why: "w is the slope: how much y grows when x grows by 1."
-          - text: "A car of 0 t uses 4.6 litres"
+          - text: "A car of 0 t uses 4.6 litres per 100 km"
             why: "That is b, here 2."
-          - text: "The model is 4.6 litres off"
+          - text: "The model is 4.6 litres off, on average"
             why: "That would be the loss."
       - kind: predict
         id: q-mse
@@ -442,9 +442,9 @@ steps:
         objective: O4
         prompt: "A model has a tiny loss on its training data, and a big loss on the test data. What happened?"
         options:
-          - text: "It learned the examples by heart, not a rule that works for new data"
+          - text: "It learned the examples by heart"
             correct: true
-            why: "This is **overfitting**. The test set shows it."
+            why: "Not a rule that works for new data: this is **overfitting**. The test set shows it."
           - text: "The test data is wrong"
             why: "The test data is new data: that is what the model must handle."
           - text: "Nothing: the training loss counts"
@@ -454,12 +454,12 @@ steps:
         objective: O3
         prompt: "What does `np.polyfit(x, y, 1)` give?"
         options:
-          - text: "The slope w and the bias b of the line with the smallest MSE"
+          - text: "The slope w and the bias b"
             correct: true
-            why: "In that order: first w, then b."
+            why: "Of the line with the smallest MSE, in that order: first w, then b."
           - text: "The predictions for x"
             why: "You make those yourself: `b + w * x`."
-          - text: "The MAE"
+          - text: "The MAE of the best line"
             why: "It gives the line, not its loss."
 
   # 11. REVIEW ---------------------------------------------------------------
@@ -478,7 +478,7 @@ review:
       - text: "A value we know, that the model uses to predict"
         correct: true
         why: "Like the weight of a car."
-      - text: "The value the model predicts"
+      - text: "The value that the model predicts from the data"
         why: "That is the label."
       - text: "A mistake of the model"
         why: "That is the error."
@@ -487,9 +487,9 @@ review:
     objective: O1
     prompt: "What happens in training?"
     options:
-      - text: "The computer finds the w and b that make the loss small on the examples"
+      - text: "The computer finds w and b"
         correct: true
-        why: "Then the model can predict new cases."
+        why: "The ones that make the loss small on the examples. Then the model can predict new cases."
       - text: "The model predicts new cases"
         why: "That is inference, after training."
       - text: "You type the rule yourself"
@@ -499,7 +499,7 @@ review:
     objective: O2
     prompt: "A model has an MAE of 0.3 litres. What does that mean?"
     options:
-      - text: "On average, its predictions are 0.3 litres away from the truth"
+      - text: "On average, it is 0.3 litres off"
         correct: true
         why: "MAE is the average distance."
       - text: "It is right 30% of the time"
@@ -523,10 +523,10 @@ review:
     objective: O4
     prompt: "Why keep a test set apart, before training?"
     options:
-      - text: "To measure the model on data it has never seen"
+      - text: "To measure it on unseen data"
         correct: true
-        why: "That is what it must do in real use."
-      - text: "To train faster"
+        why: "Data the model has never seen: that is what it must do in real use."
+      - text: "To train faster on less data"
         why: "It is about an honest measure, not speed."
       - text: "Test data is not needed"
         why: "Without it, you only know how well the model knows its examples."

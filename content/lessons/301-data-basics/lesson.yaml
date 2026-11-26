@@ -425,12 +425,12 @@ steps:
         objective: O3
         prompt: "Three of 30 temperatures are missing. A friend writes them as 0. What happens?"
         options:
-          - text: "The mean is too low: 0 looks like a real, cold day"
+          - text: "The mean is too low"
             correct: true
-            why: "Leave holes out, and say how many there were."
+            why: "0 looks like a real, cold day. Leave holes out, and say how many there were."
           - text: "Nothing: 0 is like nothing"
             why: "0 is a value. It changes the mean."
-          - text: "The program stops"
+          - text: "The program stops with an error"
             why: "0 is a normal number: the program runs, with a wrong answer."
       - kind: predict
         id: q-counter
@@ -459,19 +459,19 @@ review:
       - text: "`[float(r[\"price\"]) for r in rows]`"
         correct: true
         why: "One value from each row, turned into a number."
-      - text: "`rows[\"price\"]`"
+      - text: "`[r for r in rows[\"price\"]]`"
         why: "`rows` is a list: it has places 0, 1, 2..., not a key `price`."
-      - text: "`float(rows)`"
-        why: "A list cannot become one number."
+      - text: "`float(rows[\"price\"])` for each row"
+        why: "`rows[\"price\"]` fails: `rows` is a list, not a dictionary."
   - kind: mcq
     id: r-outlier
     objective: O2
     prompt: "When is the median better than the mean?"
     options:
-      - text: "When a few values are far from the others"
+      - text: "With a few outliers"
         correct: true
-        why: "The median is the middle value: outliers do not move it."
-      - text: "Always"
+        why: "When a few values are far from the others. The median is the middle value: outliers do not move it."
+      - text: "Always: it is the better average"
         why: "Without outliers, the mean is fine and uses every value."
       - text: "Never"
         why: "With outliers, the mean can be far from any normal value."
@@ -480,9 +480,9 @@ review:
     objective: O2
     prompt: "What does a big `stdev` tell you?"
     options:
-      - text: "The values are far apart: a big spread"
+      - text: "The values are far apart"
         correct: true
-        why: "A small stdev: the values are close to the mean."
+        why: "A big spread. A small stdev: the values are close to the mean."
       - text: "The values are big"
         why: "[100, 100, 100] has big values and a stdev of 0."
       - text: "There are many values"
@@ -495,9 +495,9 @@ review:
       - text: "Leave them out, and count how many were missing"
         correct: true
         why: "The mean of the real values, and an honest count of the holes."
-      - text: "Write 0 into them"
+      - text: "Write 0 into them, so every row counts"
         why: "0 is a real value: it changes the mean."
-      - text: "Nothing: `float` handles them"
+      - text: "Nothing: `float` turns them into 0"
         why: "`float(\"\")` stops with a ValueError."
   - kind: mcq
     id: r-counter

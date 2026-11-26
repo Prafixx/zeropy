@@ -373,10 +373,10 @@ steps:
         objective: O1
         prompt: "You change `LinearRegression()` to `KNeighborsRegressor()`. What else must change in the program?"
         options:
-          - text: "Often nothing: both have `fit` and `predict`"
+          - text: "Often nothing"
             correct: true
-            why: "All scikit-learn models are used the same way."
-          - text: "The CSV file"
+            why: "Both have `fit` and `predict`: all scikit-learn models are used the same way."
+          - text: "The CSV file, for the new model"
             why: "The data stays the same."
           - text: "Everything"
             why: "That is the point of scikit-learn: one way for all models."
@@ -385,12 +385,12 @@ steps:
         objective: O3
         prompt: "Why `random_state=0` in `train_test_split`?"
         options:
-          - text: "So the shuffle is the same each run, and the results can be repeated"
+          - text: "So the shuffle is the same each run"
             correct: true
-            why: "Any number works. The same number gives the same split."
-          - text: "So there is no shuffle"
+            why: "Then the results can be repeated. Any number works: the same number gives the same split."
+          - text: "So there is no shuffle at all"
             why: "It still shuffles, the same way each time."
-          - text: "So the test set is empty"
+          - text: "So the test set has 0 % of the data"
             why: "`test_size` sets the size of the test set."
       - kind: mcq
         id: q-pip-name
@@ -418,9 +418,9 @@ review:
     objective: O1
     prompt: "What is pandas for?"
     options:
-      - text: "Reading, cleaning and describing tables of data"
+      - text: "Tables of data"
         correct: true
-        why: "A table in pandas is a DataFrame."
+        why: "Reading, cleaning and describing them. A table in pandas is a DataFrame."
       - text: "Training models"
         why: "That is scikit-learn."
       - text: "Drawing windows and buttons"
@@ -430,9 +430,9 @@ review:
     objective: O1
     prompt: "What does `model.fit(X_train, y_train)` do?"
     options:
-      - text: "The model learns from the training examples"
+      - text: "It learns from the examples"
         correct: true
-        why: "For a line: it finds `w` and `b`."
+        why: "From the training examples. For a line: it finds `w` and `b`."
       - text: "It predicts the answers"
         why: "That is `predict`."
       - text: "It measures the error"
@@ -454,10 +454,10 @@ review:
     objective: O3
     prompt: "What does `train_test_split(X, y, test_size=0.2)` give back?"
     options:
-      - text: "X_train, X_test, y_train, y_test: 80% for training, 20% for the test"
+      - text: "X_train, X_test, y_train, y_test"
         correct: true
-        why: "In this order. Shuffled first."
-      - text: "A trained model"
+        why: "In this order: 80% for training, 20% for the test, shuffled first."
+      - text: "A trained model and its test score"
         why: "It only splits the data."
       - text: "The MAE"
         why: "It only splits the data."
@@ -466,9 +466,9 @@ review:
     objective: O4
     prompt: "In which order does a model program work?"
     options:
-      - text: "Read the data, split it, fit on training, measure on test"
+      - text: "Read, split, fit, measure"
         correct: true
-        why: "The test set stays unseen until the end."
+        why: "Read the data, split it, fit on training, measure on test. The test set stays unseen until the end."
       - text: "Fit on all data, then split it"
         why: "Then the test examples were seen in training."
       - text: "Measure first, then fit"
