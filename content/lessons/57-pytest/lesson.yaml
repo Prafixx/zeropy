@@ -130,17 +130,17 @@ steps:
           - text: "Only `test_negative`"
             correct: true
             why: "With positive numbers and 0, `abs` changes nothing. Only the negative numbers show the bug: 5 is not -5."
-          - text: "All three"
+          - text: "All three of the tests"
             why: "`abs(2) + abs(3)` is still 5, and `abs(0) + abs(7)` is still 7."
-          - text: "None"
+          - text: "None of them"
             why: "`abs(-2) + abs(-3)` is 5, but the test wants -5."
       - kind: mcq
         id: i-names
         prompt: "Why does the name of each test function start with `test`?"
         options:
-          - text: "pytest finds and runs the functions whose names start with `test`"
+          - text: "pytest finds them by that name"
             correct: true
-            why: "No list of tests is needed: the name is enough."
+            why: "It runs the functions whose names start with `test`. No list of tests is needed: the name is enough."
           - text: "Python does not allow other names"
             why: "Any name is allowed. pytest only looks for this one."
           - text: "So that `add` runs faster"
@@ -157,9 +157,9 @@ steps:
         objective: O2
         prompt: "pytest shows `main.py .F..`. What happened?"
         options:
-          - text: "Four tests ran: the second failed, the other three passed"
+          - text: "Four tests: the second one failed"
             correct: true
-            why: "One mark for each test, in the order of the file."
+            why: "The other three passed: one mark for each test, in the order of the file."
           - text: "One test failed four times"
             why: "Each mark is a different test."
           - text: "The file has an error on line 2"
@@ -181,21 +181,21 @@ steps:
         objective: O2
         prompt: "A test fails. What is wrong: the code or the test?"
         options:
-          - text: "Find out: check what is right first. Usually the code, but a test can be wrong too"
+          - text: "Find out what is right first"
             correct: true
-            why: "Never change a test only to make it pass. Decide what the right answer is."
-          - text: "Always the test"
+            why: "Usually it is the code, but a test can be wrong too. Never change a test only to make it pass."
+          - text: "Always the test, never the code"
             why: "Then tests would never find a bug."
-          - text: "Always pytest"
+          - text: "Always pytest itself"
             why: "pytest only reports what your code did."
       - kind: mcq
         id: d-did-not-raise
         objective: O3
         prompt: "The report says `Failed: DID NOT RAISE ValueError`. What does it mean?"
         options:
-          - text: "The test expected a `ValueError`, but the code ran without one"
+          - text: "No `ValueError` came"
             correct: true
-            why: "The code inside `pytest.raises(ValueError)` must raise. It did not."
+            why: "But one was expected: the code inside `pytest.raises(ValueError)` must raise. It did not."
           - text: "The test raised a `ValueError`"
             why: "Then `pytest.raises` would have caught it, and the test would pass."
           - text: "pytest cannot find ValueError"
@@ -205,12 +205,12 @@ steps:
         objective: O1
         prompt: "pytest says `collected 0 items`, but your file has the function `check_add()`. Why?"
         options:
-          - text: "pytest only runs functions whose names start with `test`"
+          - text: "Its name does not start with `test`"
             correct: true
-            why: "Rename it to `test_add`."
-          - text: "The function has a bug"
+            why: "pytest only runs functions whose names start with `test`. Rename it to `test_add`."
+          - text: "The function has a bug in it"
             why: "pytest did not even run it."
-          - text: "pytest needs a `main()`"
+          - text: "pytest needs a `main()` to start"
             why: "pytest finds tests by their names."
 
   # 4. EXERCISE: completion --------------------------------------------------
@@ -668,9 +668,9 @@ steps:
         objective: O3
         prompt: "How do you test that `parse_days(\"0\")` raises a `ValueError`?"
         options:
-          - text: "`with pytest.raises(ValueError):` and then `parse_days(\"0\")` inside"
+          - text: "`with pytest.raises(ValueError):`"
             correct: true
-            why: "The test passes only if the code inside raises `ValueError`."
+            why: "Around the call: the test passes only if the code inside raises `ValueError`."
           - text: "`assert parse_days(\"0\") == ValueError`"
             why: "The call raises before `==` can compare anything, so the test fails with the error."
           - text: "`try:` and `except:` with no `assert`"
@@ -680,9 +680,9 @@ steps:
         objective: O5
         prompt: "Why does `weather.py` need `if __name__ == \"__main__\":`?"
         options:
-          - text: "So that `import weather` in a test does not start the tool and ask for input"
+          - text: "So an import does not start the tool"
             correct: true
-            why: "The lines under it run only when the file itself is started."
+            why: "`import weather` in a test would start it and ask for input. The lines under it run only when the file itself is started."
           - text: "Because pytest needs a function `main`"
             why: "pytest needs nothing like that. The `if` protects the import."
           - text: "It makes the tool faster"
@@ -695,9 +695,9 @@ steps:
           - text: "When a bug in the code makes it fail"
             correct: true
             why: "A test that passes with broken code proves nothing."
-          - text: "When it always passes"
+          - text: "When it always passes, also with bugs"
             why: "A test that cannot fail cannot find a bug."
-          - text: "When it is long"
+          - text: "When it is long and checks a lot"
             why: "Short tests with one idea each are easier to read."
 
   # 10. REVIEW ---------------------------------------------------------------
@@ -725,9 +725,9 @@ review:
     objective: O2
     prompt: "In a pytest report, what does the line that starts with `E` show?"
     options:
-      - text: "Why the test failed: the values that were compared, or the error"
+      - text: "Why the test failed"
         correct: true
-        why: "For example `E   assert 20 == 27`."
+        why: "The values that were compared, or the error: for example `E   assert 20 == 27`."
       - text: "The end of the report"
         why: "`E` lines are under each failed test."
       - text: "The tests that passed"
@@ -749,10 +749,10 @@ review:
     objective: O4
     prompt: "Your tests pass, also with a bug in the code. What does that tell you?"
     options:
-      - text: "A test is missing: add one that this bug makes fail"
+      - text: "A test is missing for this bug"
         correct: true
-        why: "Good tests fail when the code is wrong."
-      - text: "The bug does not matter"
+        why: "Add one that this bug makes fail: good tests fail when the code is wrong."
+      - text: "The bug does not matter if tests pass"
         why: "It matters. The tests do not see it yet."
       - text: "pytest is broken"
         why: "pytest runs what you wrote. The tests need another case."
@@ -761,9 +761,9 @@ review:
     objective: O1
     prompt: "What does `assert grade(90) == \"A\"` do in a test?"
     options:
-      - text: "The test fails if `grade(90)` is not `\"A\"`"
+      - text: "It fails if it is not `\"A\"`"
         correct: true
-        why: "If it is true, nothing happens, and the test goes on."
+        why: "The test fails if `grade(90)` is not `\"A\"`. If it is true, nothing happens, and the test goes on."
       - text: "It sets the grade of 90 to A"
         why: "`assert` only checks. It changes nothing."
       - text: "It prints the grade"

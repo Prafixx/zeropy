@@ -498,9 +498,9 @@ steps:
         objective: O1
         prompt: "A class has `@property def fahrenheit(self)` and no setter. What does `t.fahrenheit = 50` do?"
         options:
-          - text: "AttributeError: the property has no setter"
+          - text: "An AttributeError"
             correct: true
-            why: "A property without a setter is read-only."
+            why: "The property has no setter: a property without a setter is read-only."
           - text: "It changes celsius too"
             why: "Only a setter could do that."
           - text: "It makes a new attribute"
@@ -540,9 +540,9 @@ steps:
           - text: "`__lt__`, for <"
             correct: true
             why: "Or give sorted a `key=` instead."
-          - text: "`__len__`"
+          - text: "`__len__`, for len"
             why: "That is for len()."
-          - text: "`__repr__`"
+          - text: "`__repr__`, for text"
             why: "That is for showing the object."
 
   # 10. REVIEW --------------------------------------------------------------
@@ -558,36 +558,36 @@ review:
     objective: O1
     prompt: "What is a property?"
     options:
-      - text: "A method that is used like an attribute, for example to check a value"
+      - text: "A method used like an attribute"
         correct: true
-        why: "`@property` for reading, `@name.setter` for writing."
+        why: "For example to check a value. `@property` for reading, `@name.setter` for writing."
       - text: "A private attribute"
         why: "A leading `_` marks inside use."
-      - text: "An attribute of the class"
+      - text: "An attribute of the class itself"
         why: "That is a class attribute."
   - kind: mcq
     id: r-underscore
     objective: O1
     prompt: "Why does the setter keep the value in `self._age`, not `self.age`?"
     options:
-      - text: "`self.age = ...` would call the setter again, forever"
+      - text: "`self.age` would call the setter again"
         correct: true
-        why: "The property has the name `age`; the stored value needs another name."
-      - text: "Underscores are faster"
+        why: "Forever. The property has the name `age`; the stored value needs another name."
+      - text: "Underscores are faster to read"
         why: "It is about the name, not speed."
-      - text: "Python forbids self.age"
+      - text: "Python forbids `self.age` in a class"
         why: "It would call the setter again."
   - kind: mcq
     id: r-static
     objective: O2
     prompt: "When is a staticmethod a good choice?"
     options:
-      - text: "For a helper that belongs to the class's topic, but needs neither the object nor the class"
+      - text: "For a helper that needs no `self`"
         correct: true
-        why: "Like `Date.is_leap(2024)`."
-      - text: "For every method"
+        why: "It belongs to the class's topic, but needs neither the object nor the class, like `Date.is_leap(2024)`."
+      - text: "For every method of a class"
         why: "Most methods need self."
-      - text: "To make objects"
+      - text: "To make objects from a text"
         why: "That is a classmethod."
   - kind: mcq
     id: r-add
@@ -597,18 +597,18 @@ review:
       - text: "`a.__add__(b)`"
         correct: true
         why: "Special methods connect your class to Python's operators."
-      - text: "`a.add(b)`"
+      - text: "`a.add(b)` itself"
         why: "Only the dunder name is used."
-      - text: "`sum(a, b)`"
+      - text: "`sum([a, b])`"
         why: "`+` calls `__add__`."
   - kind: mcq
     id: r-eq
     objective: O3
     prompt: "Without `__eq__`, what does `Money(5) == Money(5)` give?"
     options:
-      - text: "False: == asks if they are the same object"
+      - text: "False"
         correct: true
-        why: "Two new objects are different objects."
+        why: "Without `__eq__`, == asks if they are the same object, and two new objects are different objects."
       - text: "True"
         why: "Only with an `__eq__` that compares the values."
       - text: "An error"

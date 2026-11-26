@@ -132,9 +132,9 @@ steps:
         id: i-not-added
         prompt: "You add `milk = Item(\"milk\", 1.5)`, but never `cart.add(milk)`. Does `cart.total()` change?"
         options:
-          - text: "No: the cart only knows the items in its list"
+          - text: "No: it is not in its list"
             correct: true
-            why: "Making an item does not put it in a cart. Only `add` does."
+            why: "The cart only knows the items in its list. Making an item does not put it in a cart; only `add` does."
           - text: "Yes: every item counts"
             why: "The cart adds up `self.items`, and milk is not in it."
           - text: "An error"
@@ -548,9 +548,9 @@ steps:
         objective: O1
         prompt: "What is composition?"
         options:
-          - text: "An object that holds other objects as its parts, like a cart with items"
+          - text: "An object made of other objects"
             correct: true
-            why: "Each part keeps its own job, and the big object asks them."
+            why: "Like a cart with items. Each part keeps its own job, and the big object asks them."
           - text: "A class that is written twice"
             why: "Composition is about objects inside objects."
           - text: "A long method"
@@ -560,22 +560,22 @@ steps:
         objective: O2
         prompt: "How should `Cart.total()` get the price of each item?"
         options:
-          - text: "Ask each item: `item.price`, or a method like `item.cost()`"
+          - text: "Ask each item for its price"
             correct: true
-            why: "The item knows its price. The cart only adds up."
+            why: "With `item.price`, or a method like `item.cost()`. The item knows its price; the cart only adds up."
           - text: "Keep a second list of prices in the cart"
             why: "Then the prices exist twice, and they can disagree."
-          - text: "Read `self.price`"
+          - text: "Read `self.price` in the cart"
             why: "A cart has no price of its own. Its items have."
       - kind: mcq
         id: q-free
         objective: O3
         prompt: "What does `@dataclass` write for you?"
         options:
-          - text: "`__init__`, a clear text for print, and `==` that compares the fields"
+          - text: "`__init__`, a print text, and `==`"
             correct: true
-            why: "You only write the fields and your own methods."
-          - text: "All methods of the class"
+            why: "`==` compares the fields. You only write the fields and your own methods."
+          - text: "All methods of the class, also yours"
             why: "Your own methods, like `cost()`, you still write."
           - text: "Checks that the types of the fields are right"
             why: "Python does not check the types. They are notes."
@@ -584,9 +584,9 @@ steps:
         objective: O4
         prompt: "Why `field(default_factory=list)` and not `= []`?"
         options:
-          - text: "Each object must get its own new list, not one list for all"
+          - text: "Each object needs its own list"
             correct: true
-            why: "`default_factory` makes a new list for every object. Python refuses `[]` for this reason."
+            why: "Not one list for all: `default_factory` makes a new list for every object. Python refuses `[]` for this reason."
           - text: "`[]` is too slow"
             why: "Speed is not the reason. Sharing one list is."
           - text: "A dataclass cannot hold lists"
@@ -596,9 +596,9 @@ steps:
         objective: O3
         prompt: "When is a dataclass a good choice?"
         options:
-          - text: "When the class is mostly data, like an item, a point or a song"
+          - text: "When the class is mostly data"
             correct: true
-            why: "It saves the boring `__init__`, and gives a clear print and `==`."
+            why: "Like an item, a point or a song. It saves the boring `__init__`, and gives a clear print and `==`."
           - text: "Only for classes without methods"
             why: "A dataclass can have methods, like `cost()`."
           - text: "Never: it is only for experts"
@@ -629,10 +629,10 @@ review:
     objective: O1
     prompt: "`cart.add(tea)`, then `tea.price = 5`. What does the cart see?"
     options:
-      - text: "The new price 5: the cart holds the same object"
+      - text: "The new price 5"
         correct: true
-        why: "A list holds objects, not copies."
-      - text: "The old price"
+        why: "The cart holds the same object: a list holds objects, not copies."
+      - text: "The old price, from the copy"
         why: "There is only one tea object."
       - text: "An error"
         why: "Changing an attribute is fine."
@@ -641,9 +641,9 @@ review:
     objective: O3
     prompt: "In a dataclass, what is `count: int = 1`?"
     options:
-      - text: "A field with the type `int` and the default value 1"
+      - text: "An `int` field with default 1"
         correct: true
-        why: "`Item(\"tea\", 2.5)` gets `count` 1."
+        why: "A field with the type `int` and the default value 1: `Item(\"tea\", 2.5)` gets `count` 1."
       - text: "A check that `count` is always 1"
         why: "It is only the default. Any value can be given."
       - text: "A variable outside the class"
@@ -656,9 +656,9 @@ review:
       - text: "`from dataclasses import dataclass, field`"
         correct: true
         why: "Both come from the module `dataclasses`."
-      - text: "`import dataclass`"
-        why: "The module is `dataclasses`, and this does not import `field`."
-      - text: "`from dataclass import field`"
+      - text: "`import dataclass, field`"
+        why: "This looks for modules called `dataclass` and `field`. The module is `dataclasses`."
+      - text: "`from dataclass import dataclass, field`"
         why: "The module has an `es` at the end: `dataclasses`."
   - kind: mcq
     id: r-eq

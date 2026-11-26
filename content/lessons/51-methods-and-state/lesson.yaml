@@ -180,12 +180,12 @@ steps:
         id: i-too-much
         prompt: "After line 21, the balance is 30. You add `account.withdraw(100)`. What happens?"
         options:
-          - text: "A `ValueError`: Not enough money. The balance stays 30"
+          - text: "A `ValueError`; it stays 30"
             correct: true
             why: "The check comes before the change, so the balance is not touched."
-          - text: "The balance becomes -70"
+          - text: "The balance becomes -70, a debt"
             why: "The method refuses: it raises an error before it subtracts."
-          - text: "The balance becomes 0"
+          - text: "The balance becomes 0, the rest"
             why: "The method takes all or nothing. Here: nothing."
 
   # 4. EXERCISE: completion --------------------------------------------------
@@ -522,12 +522,12 @@ steps:
         objective: O1
         prompt: "`glass.is_empty()` gives `True` or `False`. What kind of method is it?"
         options:
-          - text: "A question: it answers, and changes nothing"
+          - text: "A question"
             correct: true
-            why: "A question returns a value and leaves the object as it was."
-          - text: "A command: it changes the glass"
+            why: "It answers, and changes nothing: it returns a value and leaves the object as it was."
+          - text: "A command, as it changes the glass"
             why: "It only reads `self.water`."
-          - text: "Neither: it is an attribute"
+          - text: "Neither, as it is an attribute"
             why: "It has parentheses: it is a method call."
       - kind: mcq
         id: q-order
@@ -546,10 +546,10 @@ steps:
         objective: O3
         prompt: "What must `__str__` do?"
         options:
-          - text: "Return the text that shows the object"
+          - text: "Return a text for the object"
             correct: true
             why: "`print`, `str()` and f-strings use the returned text."
-          - text: "Print the object"
+          - text: "Print the object on the screen"
             why: "Then it returns `None`, and `print(obj)` fails with a `TypeError`."
           - text: "Change the object into a text"
             why: "The object stays as it is. `__str__` only describes it."
@@ -561,16 +561,16 @@ steps:
           - text: "`sum(a.balance for a in accounts)`"
             correct: true
             why: "One attribute of each object, added up."
-          - text: "`sum(accounts)`"
+          - text: "`sum(accounts)` of the objects"
             why: "Python cannot add up `Account` objects."
-          - text: "`accounts.balance`"
-            why: "A list has no attribute `balance`. Each object has one."
+          - text: "`sum(accounts.balance)`"
+            why: "A list has no attribute `balance`: each object has one, so take it from each."
       - kind: mcq
         id: q-catch
         objective: O2
         prompt: "`account.withdraw(100)` raises `ValueError`. How does the program go on?"
         options:
-          - text: "Put the call in `try:` and handle it in `except ValueError:`"
+          - text: "Put the call in `try`/`except ValueError`"
             correct: true
             why: "The method says no, and the caller decides what to do."
           - text: "Change `withdraw` so it never raises"
@@ -591,10 +591,10 @@ review:
     objective: O1
     prompt: "What is the state of an object?"
     options:
-      - text: "The values of its attributes right now"
+      - text: "The values of its attributes"
         correct: true
         why: "Commands change it, questions read it."
-      - text: "Its class"
+      - text: "Its class and its parents"
         why: "The class is the plan. The state is in each object."
       - text: "The lines of its methods"
         why: "The methods are the same for all objects of the class."
@@ -603,9 +603,9 @@ review:
     objective: O2
     prompt: "A method gets a value that would break a rule of the object. What does it do?"
     options:
-      - text: "`raise ValueError(...)`, before it changes anything"
+      - text: "Raise a `ValueError` first"
         correct: true
-        why: "The object stays valid, and the caller learns why."
+        why: "`raise ValueError(...)`, before it changes anything: the object stays valid, and the caller learns why."
       - text: "Change the value, then print a warning"
         why: "Then the object already holds the wrong value."
       - text: "Return `None` and say nothing"
@@ -618,9 +618,9 @@ review:
       - text: "`__str__`, with `return`"
         correct: true
         why: "`print` uses the text that `__str__` returns."
-      - text: "`__init__`"
+      - text: "`__init__`, with `print`"
         why: "`__init__` sets the first attributes. It does not make text."
-      - text: "`print_task`"
+      - text: "`print_task`, with `return`"
         why: "A method with any other name is not used by `print`."
   - kind: mcq
     id: r-loop
@@ -639,12 +639,12 @@ review:
     objective: O3
     prompt: "`print(t)` says `TypeError: __str__ returned non-string (type NoneType)`. What is wrong?"
     options:
-      - text: "`__str__` prints instead of returning the text"
+      - text: "`__str__` prints, and returns nothing"
         correct: true
         why: "A function without `return` gives back `None`."
-      - text: "`t` is not an object"
+      - text: "`t` is not an object of the class"
         why: "`print` found a `__str__` on it, so it is an object."
-      - text: "The text is too long"
+      - text: "The text is too long for `print`"
         why: "Any length is fine. It must be a `str`."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).

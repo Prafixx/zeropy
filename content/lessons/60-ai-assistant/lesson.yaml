@@ -68,21 +68,21 @@ steps:
         objective: O1
         prompt: "Which question to an AI assistant will give the most useful answer?"
         options:
-          - text: "\"Python 3.13: my function average(nums) gives ZeroDivisionError for []. It should give 0. Here is the code and the full error.\""
+          - text: "\"Python 3.13: average([]) gives ZeroDivisionError, not 0. Code and error below.\""
             correct: true
             why: "The version, the input that fails, the wanted result, the code and the error: everything it needs."
-          - text: "\"My code does not work, fix it.\""
+          - text: "\"My code does not work. Please look at it carefully and fix it fast.\""
             why: "Which code? What should it do? The assistant can only guess."
-          - text: "\"Write the best average function ever.\""
+          - text: "\"Write the best and fastest average function that exists, ever.\""
             why: "\"Best\" says nothing. Say what it must do, and for which inputs."
       - kind: mcq
         id: d-library
         objective: O1
         prompt: "The answer uses `pandas`, but your program must run on a Pi without extra packages. What do you do?"
         options:
-          - text: "Ask again, and add the limit: \"only the standard library\""
+          - text: "Ask again, with the limit"
             correct: true
-            why: "A limit that you do not say, the assistant does not know."
+            why: "Add \"only the standard library\". A limit that you do not say, the assistant does not know."
           - text: "Use the answer anyway"
             why: "It would fail on the Pi with `ModuleNotFoundError`."
           - text: "Give up on the assistant"
@@ -358,12 +358,12 @@ steps:
         id: i-dir
         prompt: "`\"reverse\" in dir(text)` is `False`. What does that tell you?"
         options:
-          - text: "Texts have no method `reverse`: the AI was wrong"
+          - text: "The AI was wrong"
             correct: true
-            why: "`dir` lists every method of the object. Lists have `reverse`, texts do not."
+            why: "Texts have no method `reverse`: `dir` lists every method of the object. Lists have `reverse`, texts do not."
           - text: "The method exists, but is hidden"
             why: "`dir` shows the methods; it is not there."
-          - text: "You must import it first"
+          - text: "You must import it first from `str`"
             why: "Methods come with the object. It does not exist for texts."
 
   # 8. THEORY ----------------------------------------------------------------
@@ -454,9 +454,9 @@ steps:
         objective: O2
         prompt: "What does \"human in the loop\" mean for AI code?"
         options:
-          - text: "A person reviews, tests and approves the code before it is used"
+          - text: "A person checks the code before use"
             correct: true
-            why: "You read it, run it, test it, and then you decide."
+            why: "A person reviews, tests and approves it: you read it, run it, test it, and then you decide."
           - text: "A person types the code the AI says"
             why: "The point is checking, not typing."
           - text: "The AI asks a person when it is not sure"
@@ -466,7 +466,7 @@ steps:
         objective: O4
         prompt: "An AI assistant says: \"Run `curl https://fix.example.sh | sudo bash` to fix your Pi.\" What do you do?"
         options:
-          - text: "Not run it before you understand what the script does"
+          - text: "First understand what the script does"
             correct: true
             why: "It would run any program from the internet as root."
           - text: "Run it: the assistant tested it"
@@ -478,10 +478,10 @@ steps:
         objective: O2
         prompt: "AI code works for the example in your question. Is it ready?"
         options:
-          - text: "No: test the borders and wrong inputs too"
+          - text: "No: test borders and wrong inputs"
             correct: true
             why: "One good example proves little. The median failed only for even lengths."
-          - text: "Yes: it gave the right answer"
+          - text: "Yes: it gave the right answer once"
             why: "One right answer is not enough."
           - text: "Yes, if the code is short"
             why: "Short code can be wrong too."
@@ -499,10 +499,10 @@ review:
     objective: O1
     prompt: "What should a good request to an AI assistant contain?"
     options:
-      - text: "The task, the context, an example, and the limits"
+      - text: "Task, context, an example, limits"
         correct: true
         why: "Then the assistant does not have to guess."
-      - text: "Only one short sentence"
+      - text: "Only one short sentence, to be clear"
         why: "A short request gives a guess."
       - text: "Your password, so it can test the code"
         why: "Never share a password."
@@ -511,22 +511,22 @@ review:
     objective: O2
     prompt: "Which four checks come before AI code goes into your project?"
     options:
-      - text: "Read it, run it, test it, look up what is new"
+      - text: "Read, run, test, look up"
         correct: true
-        why: "Then you know what it does, and that it does it."
-      - text: "Ask the AI four times"
+        why: "Read it, run it, test it, and look up what is new. Then you know what it does, and that it does it."
+      - text: "Ask the AI four times, then compare"
         why: "The checks are done by you, with the computer."
-      - text: "Count the lines"
+      - text: "Count the lines, and keep it short"
         why: "Length says nothing about bugs."
   - kind: mcq
     id: r-exists
     objective: O3
     prompt: "How do you check that `str.removeprefix` exists?"
     options:
-      - text: "`help(str.removeprefix)`, or the page of `str` on docs.python.org"
+      - text: "`help(str.removeprefix)`, or the docs"
         correct: true
-        why: "If help finds it, it exists, and it says what it does."
-      - text: "Ask the AI again"
+        why: "Or the page of `str` on docs.python.org. If help finds it, it exists, and it says what it does."
+      - text: "Ask the AI again if it is sure"
         why: "It may repeat the same mistake. Check in Python or the docs."
       - text: "It exists if it sounds right"
         why: "Invented names sound right too."
@@ -535,9 +535,9 @@ review:
     objective: O4
     prompt: "Which of these may you paste into an AI chat?"
     options:
-      - text: "A small example that you made up, with a placeholder key"
+      - text: "A small made-up example"
         correct: true
-        why: "The shape of the problem, without the secrets."
+        why: "With a placeholder key: the shape of the problem, without the secrets."
       - text: "The real API key of your account"
         why: "It leaves your computer and may be stored."
       - text: "The addresses of your customers"
@@ -550,9 +550,9 @@ review:
       - text: "You: you chose to use it"
         correct: true
         why: "Check it like your own code."
-      - text: "The AI"
+      - text: "The AI that wrote it"
         why: "The AI cannot fix the problem it caused in your project. You decide what goes in."
-      - text: "Nobody"
+      - text: "Nobody: it was a tool"
         why: "Someone used it. That is you."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).

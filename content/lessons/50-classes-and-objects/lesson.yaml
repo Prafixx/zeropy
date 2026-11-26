@@ -477,10 +477,10 @@ steps:
         objective: O1
         prompt: "What does `class Dog:` with its methods make, when Python runs it?"
         options:
-          - text: "A plan for dogs. No dog yet: `Dog(...)` makes one"
+          - text: "A plan for dogs, but no dog yet"
             correct: true
-            why: "The class is the plan, and each call `Dog(...)` makes a new object."
-          - text: "One dog called Dog"
+            why: "`Dog(...)` makes one. The class is the plan, and each call `Dog(...)` makes a new object."
+          - text: "One dog called `Dog`, ready to use"
             why: "The class is not an object of itself. Objects come from `Dog(...)`."
           - text: "A list of all dogs"
             why: "A class does not keep its objects. You keep them in variables or lists."
@@ -501,9 +501,9 @@ steps:
         objective: O2
         prompt: "When does `__init__` run?"
         options:
-          - text: "Each time an object is made, for example by `Dog(\"Rex\", 3)`"
+          - text: "Each time an object is made"
             correct: true
-            why: "It gives the new object its first attributes."
+            why: "For example by `Dog(\"Rex\", 3)`. It gives the new object its first attributes."
           - text: "Once, when Python reads the class"
             why: "Reading the class only makes the plan."
           - text: "Only when you call `rex.__init__()`"
@@ -525,10 +525,10 @@ steps:
         objective: O5
         prompt: "In a method, you write `count = count + 1` instead of `self.count = self.count + 1`. What happens?"
         options:
-          - text: "An error: `count` is a new local name without a value"
+          - text: "An error: `count` has no value"
             correct: true
-            why: "Without `self.`, Python does not look at the object."
-          - text: "It works the same"
+            why: "`count` is a new local name. Without `self.`, Python does not look at the object."
+          - text: "It works the same as `self.count`"
             why: "Only `self.count` is the attribute."
           - text: "Python adds `self.` for you"
             why: "Python never adds it. You write it."
@@ -549,9 +549,9 @@ review:
       - text: "`b = Book(\"Atlas\", 120)`"
         correct: true
         why: "Calling the class makes an object and runs `__init__`."
-      - text: "`b = Book`"
-        why: "That gives the class a second name. It makes no object."
-      - text: "`class b(Book):`"
+      - text: "`b = Book.new(\"Atlas\")`"
+        why: "A class has no `new` method. Call the class itself: `Book(\"Atlas\", 120)`."
+      - text: "`class b(Book): pass`"
         why: "That starts a new class."
   - kind: mcq
     id: r-attr
@@ -582,10 +582,10 @@ review:
     objective: O5
     prompt: "`Dog(\"Rex\", 3)` says `TypeError: Dog() takes no arguments`. What is wrong?"
     options:
-      - text: "The class has no `__init__`, maybe because of a typo in its name"
+      - text: "The class has no `__init__`"
         correct: true
-        why: "`__init__` has two underscores on each side."
-      - text: "Rex is too old"
+        why: "Maybe because of a typo in its name: `__init__` has two underscores on each side."
+      - text: "Rex is too old for a new dog"
         why: "Python does not check the values. It found no `__init__`."
       - text: "Objects cannot get values"
         why: "They get them through `__init__`."

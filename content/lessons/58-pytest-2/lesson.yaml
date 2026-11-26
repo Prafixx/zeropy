@@ -629,9 +629,9 @@ steps:
         objective: O1
         prompt: "A test has `@pytest.mark.parametrize(\"n\", [1, 2, 3])` and another `@pytest.mark.parametrize(\"x\", [0, 1])` above it. How many tests does pytest run?"
         options:
-          - text: "6: every n with every x"
+          - text: "6"
             correct: true
-            why: "Two parametrize lines make all combinations: 3 × 2."
+            why: "Every n with every x: two parametrize lines make all combinations, 3 × 2."
           - text: "5"
             why: "The rows are not added; they are combined."
           - text: "2"
@@ -641,10 +641,10 @@ steps:
         objective: O2
         prompt: "Why does a fixture give each test a new object?"
         options:
-          - text: "So no test can change the data of another test"
+          - text: "So tests cannot change each other's data"
             correct: true
             why: "Then the result does not depend on the order of the tests."
-          - text: "To make the tests faster"
+          - text: "To make the tests faster to run"
             why: "A new object is a little slower; it is about safety."
           - text: "Because pytest cannot share objects"
             why: "It can (with other scopes), but a fresh object is the safe default."
@@ -653,9 +653,9 @@ steps:
         objective: O3
         prompt: "Why write test files in `tmp_path`, not in the folder of the project?"
         options:
-          - text: "The test cannot overwrite your real files, and each test starts with an empty folder"
+          - text: "Your real files stay safe"
             correct: true
-            why: "A test that writes `notes.txt` in your project could delete your real notes."
+            why: "And each test starts with an empty folder. A test that writes `notes.txt` in your project could delete your real notes."
           - text: "Because tests cannot write in the project"
             why: "They can, and that is the danger."
           - text: "To keep the files after the tests"
@@ -668,18 +668,18 @@ steps:
           - text: "99, 100 and 101"
             correct: true
             why: "A bug like `>` for `>=` shows only at exactly 100."
-          - text: "50 and 500"
+          - text: "50 and 500, far away"
             why: "Both are far from the border; they cannot see that kind of bug."
-          - text: "Only 100"
+          - text: "Only 100, the border"
             why: "Good, but 99 and 101 show that each side is right."
       - kind: mcq
         id: q-monkey
         objective: O3
         prompt: "What does `monkeypatch.setattr(\"builtins.input\", lambda prompt: \"7\")` do?"
         options:
-          - text: "In this test, `input()` gives `\"7\"` without waiting; after the test, input is normal again"
+          - text: "In this test, `input()` gives `\"7\"`"
             correct: true
-            why: "monkeypatch puts everything back when the test ends."
+            why: "Without waiting. monkeypatch puts everything back when the test ends."
           - text: "It types 7 on the keyboard"
             why: "It replaces the function `input` for a moment."
           - text: "It changes `input` for the whole program, for ever"
@@ -710,10 +710,10 @@ review:
     objective: O1
     prompt: "The report says `FAILED test_price[0-0.0]`. What does `[0-0.0]` tell you?"
     options:
-      - text: "The row of values that failed: 0 and 0.0"
+      - text: "The values of the row that failed"
         correct: true
-        why: "pytest adds the values of the row to the name."
-      - text: "The line number"
+        why: "Here 0 and 0.0: pytest adds the values of the row to the name."
+      - text: "The line number of the test"
         why: "The line is shown in the details below the name."
       - text: "That 0 tests passed"
         why: "It is the name of one test."
@@ -722,9 +722,9 @@ review:
     objective: O2
     prompt: "How does a test get a fixture called `users`?"
     options:
-      - text: "With a parameter called `users`: `def test_x(users):`"
+      - text: "A parameter called `users`"
         correct: true
-        why: "pytest finds the fixture by the name of the parameter."
+        why: "Like `def test_x(users):`. pytest finds the fixture by the name of the parameter."
       - text: "By calling `users()` in the test"
         why: "pytest calls it for you, before the test."
       - text: "With `import users`"
@@ -734,9 +734,9 @@ review:
     objective: O2
     prompt: "In a fixture, what runs after `yield`?"
     options:
-      - text: "The code that cleans up, when the test is done"
+      - text: "The cleanup after the test"
         correct: true
-        why: "Even when the test failed."
+        why: "It runs when the test is done, even when the test failed."
       - text: "Nothing: `yield` ends the fixture"
         why: "The fixture goes on after the test."
       - text: "The test itself"
@@ -746,12 +746,12 @@ review:
     objective: O2
     prompt: "A test passes alone, but fails when all tests run. What is the most likely cause?"
     options:
-      - text: "Tests share an object or a file that one of them changes"
+      - text: "Tests share data that one changes"
         correct: true
-        why: "Give each test fresh data with a fixture."
-      - text: "pytest is too slow"
+        why: "An object or a file that one test changes. Give each test fresh data with a fixture."
+      - text: "pytest is too slow for many tests"
         why: "Speed does not change results."
-      - text: "The test has a typo"
+      - text: "The test has a typo in its name"
         why: "Then it would also fail alone."
   - kind: mcq
     id: r-builtins

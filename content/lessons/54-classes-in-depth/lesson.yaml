@@ -213,9 +213,9 @@ steps:
         id: i-legs-dict
         prompt: "`rex.__dict__` is `{'name': 'Rex'}`. Why is `legs` not in it, while `rex.legs` is 4?"
         options:
-          - text: "`legs` is in the class, not in the object; Python finds it there"
+          - text: "`legs` is in the class, not the object"
             correct: true
-            why: "The object's dictionary has only its own attributes. The search goes on in the class, then in the parents."
+            why: "Python finds it there: the object's dictionary has only its own attributes, and the search goes on in the class, then in the parents."
           - text: "`__dict__` shows only text values"
             why: "It shows every attribute of the object, of any type."
           - text: "`legs` was deleted"
@@ -224,9 +224,9 @@ steps:
         id: i-isinstance
         prompt: "Why is `isinstance(rex, Dog)` `True`, when `rex` is a `Puppy`?"
         options:
-          - text: "A Puppy is a Dog: `isinstance` counts the child classes too"
+          - text: "A Puppy is a Dog"
             correct: true
-            why: "`type(rex) is Dog` would be `False`: the type is exactly `Puppy`."
+            why: "`isinstance` counts the child classes too. `type(rex) is Dog` would be `False`: the type is exactly `Puppy`."
           - text: "Because both have the attribute `legs`"
             why: "`isinstance` looks at the classes, not at the attributes."
           - text: "It is a mistake of Python"
@@ -622,9 +622,9 @@ steps:
         objective: O2
         prompt: "`hasattr(rex, \"legs\")` is `True`, but `\"legs\" in rex.__dict__` is `False`. How?"
         options:
-          - text: "`legs` is a class attribute: `hasattr` looks in the class too"
+          - text: "`legs` is a class attribute"
             correct: true
-            why: "`__dict__` has only the object's own attributes."
+            why: "`hasattr` looks in the class too; `__dict__` has only the object's own attributes."
           - text: "`hasattr` is wrong"
             why: "`rex.legs` works, so `hasattr` is right."
           - text: "`__dict__` is always empty"
@@ -667,13 +667,13 @@ review:
     objective: O1
     prompt: "A class has `count = 0`. A method does `self.count += 1`. What happens?"
     options:
-      - text: "The object gets its own `count`; the class keeps 0"
+      - text: "The object gets its own `count`"
         correct: true
-        why: "Write `ClassName.count += 1` to change the shared value."
+        why: "The class keeps 0. Write `ClassName.count += 1` to change the shared value."
       - text: "The class count grows"
         why: "`self.count = ...` writes into the object."
-      - text: "An error"
-        why: "It works, but it does not do what you wanted."
+      - text: "An error: `self` has no `count`"
+        why: "It works: Python reads the class value first. But it does not do what you wanted."
   - kind: mcq
     id: r-getattr
     objective: O2
@@ -703,12 +703,12 @@ review:
     objective: O4
     prompt: "In `class C(A, B):`, where does Python look first for a method?"
     options:
-      - text: "In `C`, then `A`, then `B`, then `object`"
+      - text: "`C`, `A`, `B`, then `object`"
         correct: true
         why: "The class itself first, then the parents from left to right."
-      - text: "In `B`, the last parent"
+      - text: "In `B`, the last parent, first"
         why: "The parents are searched from left to right."
-      - text: "In `object`"
+      - text: "In `object`, then in `C`"
         why: "`object` comes last."
 
   - kind: mcq
@@ -716,9 +716,9 @@ review:
     objective: O2
     prompt: "A `Library` hides how it keeps its books, and you only call `add` and `borrow`. Which idea of object-oriented programming is that?"
     options:
-      - text: "Encapsulation: the data and its rules stay inside, behind methods"
+      - text: "Encapsulation"
         correct: true
-        why: "The other three ideas: abstraction (show only what matters), inheritance (reuse a class), polymorphism (one call, many classes)."
+        why: "The data and its rules stay inside, behind methods. The other three ideas: abstraction (show only what matters), inheritance (reuse a class), polymorphism (one call, many classes)."
       - text: "Inheritance"
         why: "Inheritance is a class built on another class."
       - text: "Polymorphism"
@@ -728,9 +728,9 @@ review:
     objective: O2
     prompt: "`for shape in [Circle(1), Square(2)]: print(shape.area())` works for both. What is this called?"
     options:
-      - text: "Polymorphism: each class gives its own `area`, and the loop does not care which class it is"
+      - text: "Polymorphism"
         correct: true
-        why: "Code that only needs \"something with `area()`\" works for any such class."
+        why: "Each class gives its own `area`, and the loop does not care which class it is. Code that only needs \"something with `area()`\" works for any such class."
       - text: "Encapsulation"
         why: "Encapsulation is about keeping data behind methods."
       - text: "Abstraction"

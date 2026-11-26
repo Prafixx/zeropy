@@ -358,9 +358,9 @@ steps:
       id: w-why-super
       prompt: "Why `super().greet(name)`, and not `return \"HELLO, \" + name.upper() + \"!\"`?"
       options:
-        - text: "The greeting stays in one place. If `Greeter` changes it, the loud one follows"
+        - text: "The greeting stays in one place"
           correct: true
-          why: "No copy of the text, so no copy to forget when it changes."
+          why: "If `Greeter` changes it, the loud one follows. No copy of the text, so no copy to forget when it changes."
         - text: "`upper()` only works after `super()`"
           why: "`upper()` works on any text. The reason is to avoid a copy."
         - text: "Python requires `super()` in every method of a child class"
@@ -558,9 +558,9 @@ steps:
         objective: O1
         prompt: "What does `class Truck(Vehicle):` mean?"
         options:
-          - text: "A `Truck` object has everything of `Vehicle`, plus what `Truck` adds"
+          - text: "A `Truck` has all of `Vehicle`, and more"
             correct: true
-            why: "`Vehicle` is the parent. Python looks there for what `Truck` does not have."
+            why: "Plus what `Truck` adds. `Vehicle` is the parent: Python looks there for what `Truck` does not have."
           - text: "A `Truck` object holds a `Vehicle` object"
             why: "That would be composition (has a). This is inheritance (is a)."
           - text: "`Truck` is a function that takes a `Vehicle`"
@@ -582,9 +582,9 @@ steps:
         objective: O2
         prompt: "What does `super().describe()` do inside a child method?"
         options:
-          - text: "It runs the parent's `describe` and gives back its result"
+          - text: "It runs the parent's `describe`"
             correct: true
-            why: "So the child can add to it, instead of copying it."
+            why: "And gives back its result, so the child can add to it, instead of copying it."
           - text: "It runs the child's own `describe` again"
             why: "That would be `self.describe()`. `super()` skips to the parent."
           - text: "It makes the object a parent object"
@@ -594,24 +594,24 @@ steps:
         objective: O3
         prompt: "A child class has its own `__init__`, without `super().__init__(...)`. What happens?"
         options:
-          - text: "The parent's `__init__` does not run, so its attributes are missing"
+          - text: "The parent's attributes are missing"
             correct: true
-            why: "The child's `__init__` replaces the parent's. You must call it with `super().__init__(...)`."
+            why: "The parent's `__init__` does not run: the child's replaces it. You must call it with `super().__init__(...)`."
           - text: "Python runs the parent's `__init__` first, by itself"
             why: "It does not. Only the `__init__` of the child runs."
-          - text: "A SyntaxError"
+          - text: "A SyntaxError in the child class"
             why: "The code is valid. The problem shows later, as an `AttributeError`."
       - kind: mcq
         id: q-choose
         objective: O4
         prompt: "A `Library` keeps many `Book` objects. Which design fits?"
         options:
-          - text: "Composition: a library has books, in a list"
+          - text: "Composition: a list of books"
             correct: true
             why: "A library is not a kind of book. It has books."
-          - text: "`class Library(Book):`"
+          - text: "Inheritance: `class Library(Book):`"
             why: "That says a library is a book. It is not."
-          - text: "`class Book(Library):`"
+          - text: "Inheritance: `class Book(Library):`"
             why: "A book is not a kind of library either. The link is \"has\"."
 
   # 11. REVIEW ---------------------------------------------------------------
@@ -679,9 +679,9 @@ review:
     objective: O4
     prompt: "\"A car has an engine.\" Inheritance or composition?"
     options:
-      - text: "Composition: the car keeps an `Engine` object as an attribute"
+      - text: "Composition: an `Engine` attribute"
         correct: true
-        why: "\"Has a\" is composition. A car is not a kind of engine."
+        why: "The car keeps an `Engine` object as an attribute. \"Has a\" is composition; a car is not a kind of engine."
       - text: "Inheritance: `class Car(Engine)`"
         why: "That would say that a car is an engine."
       - text: "Neither: it needs one class"

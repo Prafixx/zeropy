@@ -285,9 +285,9 @@ steps:
       id: w-red
       prompt: "Your tests pass on your computer, but the check on the PR is red with `ModuleNotFoundError: requests`. What is the most likely fix?"
       options:
-        - text: "Add `requests` to `requirements.txt`: the server installs only what is listed there"
+        - text: "Add `requests` to `requirements.txt`"
           correct: true
-          why: "Your computer has it installed by hand; the fresh server does not."
+          why: "The server installs only what is listed there. Your computer has it installed by hand; the fresh server does not."
         - text: "Run the tests again until they pass"
           why: "The same server setup fails the same way."
         - text: "Delete the workflow"
@@ -435,9 +435,9 @@ steps:
         objective: O1
         prompt: "Why does a team not commit directly on `main`?"
         options:
-          - text: "So each change can be reviewed and tested before it reaches the code everyone uses"
+          - text: "So each change is reviewed first"
             correct: true
-            why: "`main` stays working; a broken idea stays on its branch."
+            why: "And tested, before it reaches the code everyone uses. `main` stays working; a broken idea stays on its branch."
           - text: "Because git does not allow it"
             why: "git allows it; teams choose not to."
           - text: "To have fewer commits"
@@ -447,9 +447,9 @@ steps:
         objective: O1
         prompt: "What does `Fixes #12` in the description of a pull request do?"
         options:
-          - text: "It links the PR to issue 12, and closes the issue when the PR is merged"
+          - text: "It links the PR to issue 12"
             correct: true
-            why: "Then the issue shows how it was solved."
+            why: "And it closes the issue when the PR is merged. Then the issue shows how it was solved."
           - text: "It merges the PR at once"
             why: "It only links the issue."
           - text: "It fixes the code by itself"
@@ -459,9 +459,9 @@ steps:
         objective: O2
         prompt: "A reviewer comments: \"This crashes on an empty list.\" What is the best answer?"
         options:
-          - text: "A commit that fixes it and adds a test for the empty list, then a reply that says so"
+          - text: "A fix with a test, and a reply"
             correct: true
-            why: "The test keeps the bug from coming back."
+            why: "A commit that fixes it and adds a test for the empty list, then a reply that says so. The test keeps the bug from coming back."
           - text: "Close the pull request and open a new one"
             why: "New commits on the same branch update the PR."
           - text: "Answer \"works for me\""
@@ -483,9 +483,9 @@ steps:
         objective: O4
         prompt: "Why do teams like small pull requests?"
         options:
-          - text: "They are faster to review well, cause fewer conflicts, and are easy to undo"
+          - text: "They are easier to review well"
             correct: true
-            why: "A PR of 2000 lines often gets only a quick look."
+            why: "They also cause fewer conflicts, and are easy to undo. A PR of 2000 lines often gets only a quick look."
           - text: "GitHub does not accept big ones"
             why: "It accepts them; people review them badly."
           - text: "Small PRs need no tests"
@@ -504,22 +504,22 @@ review:
     objective: O1
     prompt: "What is an issue on GitHub?"
     options:
-      - text: "A note about one problem or wish, with a number and a discussion"
+      - text: "A note about one problem or wish"
         correct: true
-        why: "Pull requests then say which issue they fix."
-      - text: "An error message of git"
+        why: "With a number and a discussion. Pull requests then say which issue they fix."
+      - text: "An error message of git or GitHub"
         why: "Issues are written by people."
-      - text: "A branch"
+      - text: "A branch for a bug"
         why: "A branch holds the code of a change; an issue describes the task."
   - kind: mcq
     id: r-pr
     objective: O1
     prompt: "What does a pull request ask for?"
     options:
-      - text: "To merge one branch into another, usually into `main`, after a review"
+      - text: "To merge a branch, after a review"
         correct: true
-        why: "GitLab calls the same thing a merge request."
-      - text: "To download the code"
+        why: "Usually into `main`. GitLab calls the same thing a merge request."
+      - text: "To download the code of a branch"
         why: "That is `git pull` or a clone."
       - text: "To delete a branch"
         why: "The branch can be deleted after the merge, but that is not the request."
@@ -528,21 +528,21 @@ review:
     objective: O2
     prompt: "A reviewer asks for changes. How do you update the pull request?"
     options:
-      - text: "Commit the fixes on the same branch and push: the PR shows the new commits"
+      - text: "Push new commits to the same branch"
         correct: true
-        why: "A PR follows its branch."
-      - text: "Open a second pull request"
+        why: "The PR shows the new commits: a PR follows its branch."
+      - text: "Open a second pull request for the fix"
         why: "Not needed: the same PR updates."
-      - text: "Change the code on `main`"
+      - text: "Change the code directly on `main`"
         why: "The change belongs on the branch of the PR."
   - kind: mcq
     id: r-ci-what
     objective: O3
     prompt: "What does continuous integration do?"
     options:
-      - text: "It runs the tests (and other checks) by itself on every push and pull request"
+      - text: "It runs the tests by itself on every push"
         correct: true
-        why: "So a broken change is seen before the merge, not after."
+        why: "And other checks, on every pull request too. So a broken change is seen before the merge, not after."
       - text: "It merges every pull request by itself"
         why: "It only checks; people decide to merge."
       - text: "It writes the tests"
@@ -555,9 +555,9 @@ review:
       - text: "In YAML files in `.github/workflows/`"
         correct: true
         why: "Each file is one workflow, for example `tests.yml`."
-      - text: "In `requirements.txt`"
+      - text: "In `requirements.txt`, at the end"
         why: "That lists the packages; the workflow installs them."
-      - text: "In the README"
+      - text: "In the README of the project"
         why: "The README is for people."
   - kind: mcq
     id: r-blocked

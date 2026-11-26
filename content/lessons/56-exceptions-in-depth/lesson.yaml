@@ -158,9 +158,9 @@ steps:
         id: i-args
         prompt: "The second line prints `unknown: ('pear',)`. What is `('pear',)`?"
         options:
-          - text: "`error.args`: the values the `KeyError` was made with"
+          - text: "`error.args`"
             correct: true
-            why: "Python made it with the missing key. A tuple with one value has a comma."
+            why: "The values the `KeyError` was made with: Python made it with the missing key. A tuple with one value has a comma."
           - text: "The whole dictionary"
             why: "Only the missing key is in it."
           - text: "The line number"
@@ -384,12 +384,12 @@ steps:
         objective: O2
         prompt: "Why never a bare `except:`?"
         options:
-          - text: "It also catches Ctrl+C and sys.exit(), and hides every bug"
+          - text: "It also catches Ctrl+C and every bug"
             correct: true
-            why: "Catch the errors you expect, or `Exception` at the top."
+            why: "And sys.exit(), and hides them. Catch the errors you expect, or `Exception` at the top."
           - text: "It is a syntax error"
             why: "It is allowed. That is why it is dangerous."
-          - text: "It is slower"
+          - text: "It is slower than one `except`"
             why: "Speed is not the problem."
       - kind: predict
         id: q-reraise
@@ -422,9 +422,9 @@ steps:
         objective: O4
         prompt: "`class OutOfStock(ShopError):` and `class ShopError(Exception):`. Which branch catches `OutOfStock`?"
         options:
-          - text: "`except ShopError:` and `except OutOfStock:` both do"
+          - text: "Both shop errors catch it"
             correct: true
-            why: "A branch catches its class and the children of it."
+            why: "`except ShopError:` and `except OutOfStock:`: a branch catches its class and the children of it."
           - text: "Only `except OutOfStock:`"
             why: "`ShopError` is its parent: it catches it too."
           - text: "Only `except Exception:`"
@@ -467,12 +467,12 @@ review:
     objective: O3
     prompt: "Where should a program catch an error?"
     options:
-      - text: "Where it can do something about it, often near the user"
+      - text: "Where it can do something about it"
         correct: true
-        why: "Deep down, catching often only hides the problem."
+        why: "Often near the user. Deep down, catching often only hides the problem."
       - text: "In every function, to be safe"
         why: "That hides bugs and makes the code long."
-      - text: "Never"
+      - text: "Never: errors must stop it"
         why: "Expected errors, like a missing file, should be caught."
   - kind: mcq
     id: r-raise-alone
@@ -482,21 +482,21 @@ review:
       - text: "It passes the same error on"
         correct: true
         why: "Good after you noted the error."
-      - text: "It stops the error"
+      - text: "It stops the error here"
         why: "It sends it on, up to the caller."
-      - text: "It is a syntax error"
+      - text: "It is a syntax error alone"
         why: "In an except branch it is allowed."
   - kind: mcq
     id: r-own-parent
     objective: O4
     prompt: "From which class should your own error inherit?"
     options:
-      - text: "`Exception`, or a fitting child of it like `ValueError`"
+      - text: "`Exception`, or a child of it"
         correct: true
-        why: "Then `except Exception` catches it, and Ctrl+C still works."
-      - text: "`BaseException`"
+        why: "Like `ValueError`. Then `except Exception` catches it, and Ctrl+C still works."
+      - text: "`BaseException`, the top"
         why: "That is for system errors like Ctrl+C."
-      - text: "`object`"
+      - text: "`object`, like any class"
         why: "Only classes of the error tree can be raised."
 
   - kind: predict

@@ -922,9 +922,9 @@ steps:
         objective: O2
         prompt: "Why is the rule \"no book twice\" in `Library.add`, and not in the `add` command of `main.py`?"
         options:
-          - text: "In the class, every part of the program meets the rule, also `load` and the tests"
+          - text: "Then every part meets the rule"
             correct: true
-            why: "A rule in one place holds everywhere. A rule in the app holds only for one command."
+            why: "Also `load` and the tests. A rule in the class holds everywhere; a rule in the app holds only for one command."
           - text: "`main.py` cannot raise errors"
             why: "Any file can raise errors."
           - text: "It makes no difference"
@@ -934,24 +934,24 @@ steps:
         objective: O1
         prompt: "`main.py` has `from models import Book`. What does Python look for?"
         options:
-          - text: "A file `models.py`, first in the folder of `main.py`"
+          - text: "A file `models.py`, next to `main.py`"
             correct: true
-            why: "The folder of the program comes first, then the standard library."
+            why: "Python looks first in the folder of `main.py`, then in the standard library."
           - text: "A function called `models`"
             why: "`models` is the name of a module: the file `models.py`."
-          - text: "A file `Book.py`"
+          - text: "A file `Book.py` in the same folder"
             why: "`Book` is a name inside `models.py`."
       - kind: mcq
         id: q-which-file
         objective: O3
         prompt: "One day the library should keep its books in a database, not in JSON. Which files change?"
         options:
-          - text: "Only `storage.py`, and the test of saving and loading"
+          - text: "Only `storage.py` and its test"
             correct: true
             why: "Only `storage.py` knows how the data is kept."
-          - text: "All four"
+          - text: "All four files of the project"
             why: "`models.py` and `main.py` do not know about JSON."
-          - text: "Only `main.py`"
+          - text: "Only `main.py`, where the commands are"
             why: "`main.py` only calls `load` and `save`."
       - kind: predict
         id: q-asdict
@@ -973,9 +973,9 @@ steps:
         objective: O4
         prompt: "Your tests pass. Why did the check also put bugs into your code?"
         options:
-          - text: "Tests that pass with a bug do not protect you; each bug must make a test fail"
+          - text: "Each bug must make a test fail"
             correct: true
-            why: "A test is good when it fails for a real mistake."
+            why: "Tests that pass with a bug do not protect you: a test is good when it fails for a real mistake."
           - text: "To make your code slower"
             why: "The bugs are put in only for the check, then taken out."
           - text: "Because pytest needs bugs to run"
@@ -994,21 +994,21 @@ review:
     objective: O1
     prompt: "What is a module in Python?"
     options:
-      - text: "A `.py` file that another file can import"
+      - text: "A `.py` file you can import"
         correct: true
         why: "Your own `models.py` is a module, like `json` or `random`."
-      - text: "A class with many methods"
+      - text: "A class with many methods in it"
         why: "A class lives inside a module."
-      - text: "A folder of programs"
+      - text: "A folder of programs and files"
         why: "A folder of modules is a package."
   - kind: mcq
     id: r-direction
     objective: O1
     prompt: "In a good project, which file imports nothing of yours?"
     options:
-      - text: "`models.py`: the data and its rules"
+      - text: "`models.py`"
         correct: true
-        why: "So you can test it alone, and every other file can use it."
+        why: "The data and its rules: so you can test it alone, and every other file can use it."
       - text: "`main.py`"
         why: "`main.py` imports the others to make the app."
       - text: "The test file"
@@ -1048,9 +1048,9 @@ review:
     objective: O3
     prompt: "Why does `json.dumps(book)` fail for a dataclass `Book`?"
     options:
-      - text: "`json` knows lists, dictionaries, texts, numbers, booleans and None, not your classes"
+      - text: "`json` does not know your classes"
         correct: true
-        why: "Make a dictionary first with `asdict(book)`."
+        why: "It knows lists, dictionaries, texts, numbers, booleans and None. Make a dictionary first with `asdict(book)`."
       - text: "Dataclasses cannot be saved at all"
         why: "They can, as dictionaries."
       - text: "The book is too big"
@@ -1060,9 +1060,9 @@ review:
     objective: O4
     prompt: "How does pytest find your tests in a project?"
     options:
-      - text: "Files named `test_*.py`, and in them the functions named `test_...`"
+      - text: "`test_` functions in `test_` files"
         correct: true
-        why: "That is why the file is `test_library.py`."
+        why: "Files named `test_*.py`, and in them the functions named `test_...`. That is why the file is `test_library.py`."
       - text: "Every function in every file"
         why: "Only the functions whose names start with `test`."
       - text: "Only the functions in `main.py`"
