@@ -267,8 +267,9 @@ steps:
     body: |
       ## A pin is not a power supply
 
-      A GPIO pin gives 3.3 V and only a little current: keep each pin at
-      **about 16 mA or less**, and the Pi stays healthy. That is fine for
+      A GPIO pin gives 3.3 V and only a little current. Raspberry Pi says:
+      **16 mA at most for one pin**, and **50 mA at most for all pins
+      together**. Stay below both, and the Pi stays healthy. That is fine for
       an LED with a resistor, or a small active buzzer. It is not enough
       for motors, servos, long LED strips or a loud speaker: those get their
       **own power**, and the Pi only sends a signal (like the motor board
@@ -293,8 +294,8 @@ steps:
       python3 -m venv --system-site-packages .venv
       ```
     keys:
-      - code: "about 16 mA"
-        means: "The most one GPIO pin should give."
+      - code: "16 mA / 50 mA"
+        means: "The most for one GPIO pin / for all pins together."
       - code: "own power"
         means: "For motors, servos and other hungry parts."
       - code: "--system-site-packages"
@@ -520,6 +521,18 @@ review:
         why: "That is 50 mA."
       - text: "5000 A"
         why: "That is the other way round."
+  - kind: mcq
+    id: r-total
+    objective: O3
+    prompt: "Eight LEDs, each on its own pin, each at 10 mA. Is that safe?"
+    options:
+      - text: "No: 80 mA is over the total"
+        correct: true
+        why: "Each pin is fine, but all pins together may give 50 mA at most. Use bigger resistors, or fewer LEDs at once."
+      - text: "Yes: each pin is under 16 mA"
+        why: "There is also a limit for all pins together: 50 mA."
+      - text: "Yes: LEDs take no real current"
+        why: "Each LED takes what its resistor allows: here 10 mA, 80 mA in all."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).
 extra:

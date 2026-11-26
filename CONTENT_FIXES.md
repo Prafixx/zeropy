@@ -451,4 +451,4 @@ Never marked as tested. Each with steps and the expected result.
 - 2026-11-26 Phase 3 done (Learn steps for 15 concepts, 3 lessons moved).
 - 2026-11-26 Phase 4 done (quizzes: 73% -> 39% correct-longest).
 - 2026-11-26 Phase 5 done (3 new lessons, small additions). Published as 1.6.0.
-- Also check: "about 16 mA per pin" (Pi 2) against the Raspberry Pi documentation.
+- Checked: the Raspberry Pi documentation ("Outputs") says 16 mA per pin and 50 mA for all pins together; Pi 2 now teaches both (1.6.1).
