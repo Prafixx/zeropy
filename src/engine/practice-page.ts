@@ -220,7 +220,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
               'div',
               { class: 'practice-start', 'data-enter': true },
               h('a', { class: 'btn btn-primary btn-big', href: '#/practice/all' }, h('span', { class: 'btn-label' }, 'Start a mixed set'), icon('mix', 20)),
-              h('span', { class: 'muted' }, `${SET.exercises} exercises, ${SET.items} questions`),
+              h('span', { class: 'muted' }, `Up to ${SET.exercises} exercises and ${SET.items} questions`),
             )
           : h('div', { 'data-enter': true }, panel('info', 'Finish a lesson first.', 'Mixed practice uses the tasks of the lessons you finished.')),
         h('h2', { class: 'sheet-title', 'data-enter': true }, 'By module'),
