@@ -469,24 +469,24 @@ steps:
         objective: O3
         prompt: "How does your countdown program loop, without `for` or `while`?"
         options:
-          - text: "JNZ jumps back to an earlier instruction while a register is not 0"
+          - text: "JNZ jumps back while a register is not 0"
             correct: true
-            why: "Every loop in every language ends up like this in the CPU."
+            why: "To an earlier instruction. Every loop in every language ends up like this in the CPU."
           - text: "The CPU runs the program again"
             why: "It jumps back inside the program."
-          - text: "HALT starts it again"
+          - text: "HALT starts it again from the top"
             why: "HALT stops it."
       - kind: mcq
         id: q-mul
         objective: O3
         prompt: "Your CPU has no multiply instruction. Why can it still multiply?"
         options:
-          - text: "Multiplying is adding in a loop, and the CPU can add and jump"
+          - text: "Multiplying is adding in a loop"
             correct: true
-            why: "A few simple instructions can compute anything, given time and memory."
+            why: "And the CPU can add and jump. A few simple instructions can compute anything, given time and memory."
           - text: "Python multiplies for it"
             why: "The program only uses ADD, SUB and JNZ."
-          - text: "It cannot"
+          - text: "It cannot: it needs a new chip"
             why: "Your program computed 6 × 7."
 
   # 7. REVIEW ---------------------------------------------------------------
@@ -502,9 +502,9 @@ review:
     objective: O1
     prompt: "What is a register?"
     options:
-      - text: "A very fast place for one value, inside the CPU"
+      - text: "A fast place for one value"
         correct: true
-        why: "A CPU has only a few: your CPU has A, B, C and D."
+        why: "It is inside the CPU, and the CPU has only a few: yours has A, B, C and D."
       - text: "A list of all instructions"
         why: "That is the program, in memory."
       - text: "A part of the screen"
@@ -517,33 +517,33 @@ review:
       - text: "The address of the next instruction"
         correct: true
         why: "After each fetch it goes up by one, unless a jump sets it."
-      - text: "How many programs have run"
+      - text: "How many programs have run so far"
         why: "It points at the next instruction."
-      - text: "The result of the last ADD"
+      - text: "The result of the last ADD instruction"
         why: "That is in a register."
   - kind: mcq
     id: r-decode
     objective: O1
     prompt: "In your `run`, which part is the decode?"
     options:
-      - text: "`op = instruction[0]` and the `if`/`elif` that picks what to do"
+      - text: "`op = instruction[0]` and the `if`/`elif`"
         correct: true
-        why: "Fetch is `program[pc]`, execute is the code in each branch."
-      - text: "`program[pc]`"
+        why: "The `if`/`elif` picks what to do. Fetch is `program[pc]`, execute is the code in each branch."
+      - text: "`instruction = program[pc]` at the start"
         why: "That is the fetch."
-      - text: "`return outputs`"
+      - text: "`return outputs` after the loop ends"
         why: "That is HALT."
   - kind: mcq
     id: r-jnz
     objective: O2
     prompt: "What does `(\"JNZ\", \"B\", 4)` do when B is 0?"
     options:
-      - text: "Nothing: the CPU goes on with the next instruction"
+      - text: "It goes on with the next one"
         correct: true
-        why: "It jumps only when B is not zero."
+        why: "Nothing happens: it jumps only when B is not zero."
       - text: "It jumps to 4"
         why: "Only when B is not 0."
-      - text: "It stops the CPU"
+      - text: "It stops the CPU with an error"
         why: "Only HALT stops it."
   - kind: mcq
     id: r-wrap

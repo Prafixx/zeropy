@@ -86,9 +86,9 @@ steps:
         id: i-zero
         prompt: "Why a byte 0 after each text?"
         options:
-          - text: "Memory has no gaps: the 0 says where the text ends"
+          - text: "The 0 says where the text ends"
             correct: true
-            why: "Without it, a program cannot know if \"Hi\" ends after i, or goes on into \"Zoe\"."
+            why: "Memory has no gaps. Without it, a program cannot know if \"Hi\" ends after i, or goes on into \"Zoe\"."
           - text: "To make the text look nice"
             why: "The 0 is not shown. It marks the end."
           - text: "Python needs it"
@@ -97,9 +97,9 @@ steps:
         id: i-overflow
         prompt: "With `memory[4] = 33`, a program that reads the text at address 2 up to the 0 now gets `Hi!Zoe`. What does this show?"
         options:
-          - text: "Writing one byte too far changes other data: a classic bug, and a security hole"
+          - text: "Writing one byte too far changes other data"
             correct: true
-            why: "This is a \"buffer overflow\". Many attacks on programs in C start like this."
+            why: "A classic bug and a security hole: a \"buffer overflow\". Many attacks on programs in C start like this."
           - text: "Nothing: \"Hi\" and \"Zoe\" are the same text"
             why: "They were two texts. Now the end mark is gone."
           - text: "That the memory is too small"
@@ -342,12 +342,12 @@ steps:
         objective: O1
         prompt: "The power goes off. What is lost?"
         options:
-          - text: "What was only in RAM: the programs that ran and their data"
+          - text: "What was only in RAM"
             correct: true
-            why: "Saved files are in storage, and stay."
+            why: "The programs that ran and their data. Saved files are in storage, and stay."
           - text: "The files on the SSD"
             why: "Storage keeps its data without power."
-          - text: "Nothing"
+          - text: "Nothing: RAM keeps it"
             why: "RAM forgets without power."
       - kind: predict
         id: q-bytes
@@ -364,10 +364,10 @@ steps:
         objective: O2
         prompt: "A text in memory ends with a byte 0. What happens when a bug overwrites that 0?"
         options:
-          - text: "A reader goes on into the next bytes, and gets other data"
+          - text: "A reader goes on into other data"
             correct: true
-            why: "It reads until the next 0, wherever that is."
-          - text: "The text gets shorter"
+            why: "It reads on into the next bytes, until the next 0, wherever that is."
+          - text: "The text gets shorter by one letter"
             why: "It gets longer: the end mark is gone."
           - text: "The computer stops"
             why: "Usually nothing stops: it reads the wrong data."
@@ -397,10 +397,10 @@ review:
     objective: O1
     prompt: "What is an address in memory?"
     options:
-      - text: "The number of one byte in the long row of memory"
+      - text: "The number of one byte"
         correct: true
-        why: "The CPU reads and writes by address."
-      - text: "The name of a variable"
+        why: "Its place in the long row of memory. The CPU reads and writes by address."
+      - text: "The name of a variable in memory"
         why: "Names are for people. The CPU uses addresses."
       - text: "A place on the internet"
         why: "That is a web address."
@@ -436,7 +436,7 @@ review:
       - text: "65 535"
         correct: true
         why: "2 ** 16 - 1."
-      - text: "510"
+      - text: "510 (255 + 255)"
         why: "Bytes do not add: they are places in base 256."
       - text: "255"
         why: "That is one byte."

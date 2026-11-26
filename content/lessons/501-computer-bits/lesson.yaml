@@ -75,9 +75,9 @@ steps:
         id: i-prefix
         prompt: "`bin(13)` gives `'0b1101'`. What is `0b`?"
         options:
-          - text: "A mark that says: the digits after it are binary"
+          - text: "A mark for binary"
             correct: true
-            why: "Python writes `0b` in front, so `0b1101` is not read as one thousand one hundred and one."
+            why: "It says: the digits after it are binary. Then `0b1101` is not read as one thousand one hundred and one."
           - text: "Two more bits"
             why: "It is not part of the number. `format(13, \"b\")` gives the bits without it."
           - text: "A mistake of Python"
@@ -422,8 +422,8 @@ review:
       - text: "1024"
         correct: true
         why: "2 ** 10 = 1024."
-      - text: "100"
-        why: "Each bit doubles the values."
+      - text: "1000"
+        why: "That is 10 decimal digits. Each bit doubles the values: 2 ** 10."
       - text: "20"
         why: "That would be adding, not doubling."
   - kind: mcq

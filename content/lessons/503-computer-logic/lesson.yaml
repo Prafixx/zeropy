@@ -75,12 +75,12 @@ steps:
         id: i-not
         prompt: "Why is NOT written as `1 - a` here?"
         options:
-          - text: "For a bit, 1 - 0 is 1 and 1 - 1 is 0: the opposite"
+          - text: "It gives the opposite bit"
             correct: true
-            why: "Python's `~` works on whole numbers in another way (it gives -1 for 0), so `1 - a` is simpler for one bit."
+            why: "1 - 0 is 1 and 1 - 1 is 0. Python's `~` works on whole numbers in another way (it gives -1 for 0), so `1 - a` is simpler for one bit."
           - text: "Python has no NOT"
             why: "It has `not` for True and False. For a bit as 0 or 1, `1 - a` gives 0 or 1."
-          - text: "It is faster"
+          - text: "It is faster than `not`"
             why: "It is about getting 0 or 1 back."
       - kind: mcq
         id: i-xor-diff
@@ -394,7 +394,7 @@ steps:
           - text: "1 if n is odd, 0 if n is even"
             correct: true
             why: "The last bit is worth 1. Only odd numbers have it."
-          - text: "If n is 1"
+          - text: "If n is 1, it gives True"
             why: "It reads the last bit of any number."
           - text: "If n is positive"
             why: "It reads the last bit."
@@ -403,9 +403,9 @@ steps:
         objective: O3
         prompt: "In a half adder, which gate gives the carry?"
         options:
-          - text: "AND: there is a carry only for 1 + 1"
+          - text: "AND"
             correct: true
-            why: "And the sum is XOR."
+            why: "There is a carry only for 1 + 1. And the sum is XOR."
           - text: "OR"
             why: "OR is 1 also for 0 + 1, which has no carry."
           - text: "XOR"
@@ -436,10 +436,10 @@ review:
     objective: O2
     prompt: "What does `n << 1` do to a number?"
     options:
-      - text: "It doubles it: all bits move one place to the left"
+      - text: "It doubles it"
         correct: true
-        why: "`n >> 1` halves it (rounding down)."
-      - text: "It adds 1"
+        why: "All bits move one place to the left. `n >> 1` halves it (rounding down)."
+      - text: "It adds 1 to it"
         why: "It moves the bits."
       - text: "It compares n with 1"
         why: "`<<` is a shift, not `<`."
@@ -448,9 +448,9 @@ review:
     objective: O2
     prompt: "Permission 5 (`r-x`). How do you test in Python that write is allowed?"
     options:
-      - text: "`mode & 2`: it is 0, so no"
+      - text: "`mode & 2`"
         correct: true
-        why: "5 is 101: the bit worth 2 is not set."
+        why: "It gives 0, so no: 5 is 101, and the bit worth 2 is not set."
       - text: "`mode == 2`"
         why: "That tests the whole number."
       - text: "`mode > 2`"
@@ -460,10 +460,10 @@ review:
     objective: O3
     prompt: "What is a half adder made of?"
     options:
-      - text: "An XOR for the sum and an AND for the carry"
+      - text: "An XOR and an AND"
         correct: true
-        why: "Two gates add two bits."
-      - text: "Two OR gates"
+        why: "XOR for the sum, AND for the carry: two gates add two bits."
+      - text: "Two OR gates, one per bit"
         why: "OR cannot tell 1 + 1 apart from 0 + 1."
       - text: "A small CPU"
         why: "It is a part of the CPU."
@@ -472,10 +472,10 @@ review:
     objective: O3
     prompt: "Why does adding long numbers need full adders, not half adders?"
     options:
-      - text: "Each place also adds the carry from the place on its right: three bits"
+      - text: "Each place also adds a carry"
         correct: true
-        why: "A full adder takes a, b and the carry in."
-      - text: "Half adders are too slow"
+        why: "The carry from the place on its right: three bits. A full adder takes a, b and the carry in."
+      - text: "Half adders are too slow for long numbers"
         why: "They only take two bits."
       - text: "Full adders can multiply"
         why: "They add three bits."

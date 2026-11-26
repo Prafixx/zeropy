@@ -79,9 +79,9 @@ steps:
         id: i-next
         prompt: "Why does `chr(ord(\"a\") + 2)` give `c`?"
         options:
-          - text: "The small letters have codes in a row: a 97, b 98, c 99"
+          - text: "The letters have codes in a row"
             correct: true
-            why: "So adding to a code moves through the alphabet."
+            why: "a 97, b 98, c 99. So adding to a code moves through the alphabet."
           - text: "Python knows the alphabet"
             why: "Python only adds numbers. The codes are in order."
           - text: "It is a coincidence"
@@ -378,9 +378,9 @@ steps:
         objective: O1
         prompt: "Why is `\"Zebra\" < \"apple\"` True?"
         options:
-          - text: "Capitals have smaller codes than small letters: Z is 90, a is 97"
+          - text: "Capitals have smaller codes"
             correct: true
-            why: "Text is compared code by code."
+            why: "Z is 90, a is 97: all capitals come before the small letters. Text is compared code by code."
           - text: "Z is the last letter"
             why: "By code, all capitals come before all small letters."
           - text: "Shorter words come first"
@@ -393,18 +393,18 @@ steps:
           - text: "UTF-8 bytes were read with another encoding"
             correct: true
             why: "The 2 bytes of é became 2 wrong characters."
-          - text: "The word was spelled wrong"
+          - text: "The word was typed with a wrong key"
             why: "The bytes are right, the reading is wrong."
-          - text: "The font is missing"
+          - text: "The font of the page has no letter é"
             why: "A missing font shows boxes, not other letters."
       - kind: mcq
         id: q-hex
         objective: O3
         prompt: "What is the colour `#00FF00`?"
         options:
-          - text: "Green: red 0, green 255, blue 0"
+          - text: "Green"
             correct: true
-            why: "Two hex digits per colour: 00, FF, 00."
+            why: "Red 0, green 255, blue 0: two hex digits per colour, 00, FF, 00."
           - text: "Red"
             why: "Red would be `#FF0000`."
           - text: "White"
@@ -462,7 +462,7 @@ review:
       - text: "One hex digit is 4 bits; a byte is 8 bits"
         correct: true
         why: "16 values per digit: 16 × 16 = 256."
-      - text: "Because hex has two letters"
+      - text: "Because hex has two letters per digit"
         why: "Hex has 16 digits, 0-9 and a-f."
       - text: "It is a rule of colours"
         why: "It is true for every byte."
