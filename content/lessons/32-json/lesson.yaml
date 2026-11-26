@@ -82,9 +82,9 @@ steps:
         id: i-no-save
         prompt: "You remove line 9. What changes?"
         options:
-          - text: "The file stays as it was: the new level is only in memory"
+          - text: "The file stays as it was"
             correct: true
-            why: "Changing the dictionary does not change the file. Only writing does."
+            why: "The new level is only in memory: changing the dictionary does not change the file. Only writing does."
           - text: "Nothing: line 8 already saved the level"
             why: "Line 8 changes the dictionary in memory. The file is not touched."
           - text: "The file becomes empty"
@@ -253,9 +253,9 @@ steps:
           - text: "`dumps` gives back a text. `dump` writes into an open file `f`"
             correct: true
             why: "The `s` is for string: a text."
-          - text: "`dump` is faster"
+          - text: "`dump` is faster, for big data only"
             why: "They make the same JSON. One gives a text, one writes to a file."
-          - text: "`dumps` saves more than one value"
+          - text: "`dumps` saves more than one value at once, `dump` one"
             why: "Both save one value, for example one dictionary with many keys."
       - kind: predict
         id: d-list
@@ -303,9 +303,9 @@ steps:
       id: w-highscore
       prompt: "What happens on the second run, if the first run saved a best score of 42?"
       options:
-        - text: "The program loads 42 from the file. A score of 42 is not a new best"
+        - text: "It loads 42 from the file"
           correct: true
-          why: "The file keeps the state from the first run."
+          why: "So a score of 42 is not a new best: the file keeps the state from the first run."
         - text: "It starts again at 0"
           why: "Only the first run has no file. Later runs load it."
         - text: "It stops with an error, because the file exists"
@@ -576,9 +576,9 @@ steps:
         objective: O4
         prompt: "A program loads its state from `state.json` at the start. What must it do on the very first run?"
         options:
-          - text: "Start with a default value, because the file does not exist yet"
+          - text: "Start with a default value"
             correct: true
-            why: "Check `exists()`, or the first run stops with `FileNotFoundError`."
+            why: "The file does not exist yet. Check `exists()`, or the first run stops with `FileNotFoundError`."
           - text: "Nothing: Python makes the file"
             why: "Reading never makes a file. Only writing does."
           - text: "Ask the user to make the file"

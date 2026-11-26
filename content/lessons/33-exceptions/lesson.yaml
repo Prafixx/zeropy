@@ -261,7 +261,7 @@ steps:
         objective: O3
         prompt: "Which error should a program catch with `except`?"
         options:
-          - text: "`FileNotFoundError` when it opens a file that the user named"
+          - text: "`FileNotFoundError` for a file the user named"
             correct: true
             why: "The program is correct, but the user may give a wrong name. Catch it and say so."
           - text: "`NameError` from a name with a typo"
@@ -326,9 +326,9 @@ steps:
         - text: "A `NameError` stops the program, because nobody catches it"
           correct: true
           why: "Good: the bug shows at once. `except Exception:` would have hidden it."
-        - text: "It returns `{}`"
+        - text: "It returns `{}`, the empty default"
           why: "Only `FileNotFoundError` and `JSONDecodeError` are caught. A `NameError` is neither."
-        - text: "It prints that the file is broken"
+        - text: "It prints that the file is broken, and goes on"
           why: "That block runs only for a `JSONDecodeError`."
 
   # PUZZLE: put the lines in order (Parsons) ----------------------------
@@ -587,10 +587,10 @@ steps:
         objective: O3
         prompt: "Why is `except:` without an error name a bad idea?"
         options:
-          - text: "It catches every error, also bugs like a `NameError`, and hides them"
+          - text: "It also catches and hides bugs"
             correct: true
-            why: "Name the error you expect. Bugs must stop the program, so you see and fix them."
-          - text: "It is slower"
+            why: "It catches every error, also a `NameError`. Name the error you expect: bugs must stop the program, so you see and fix them."
+          - text: "It is slower than naming the error"
             why: "Speed is not the problem. Hidden bugs are."
           - text: "Python does not allow it"
             why: "Python allows it. It is still a bad idea."
@@ -614,9 +614,9 @@ steps:
         objective: O4
         prompt: "`withdraw(amount)` gets a negative amount. What is the best thing for the function to do?"
         options:
-          - text: "`raise ValueError(\"The amount must be positive.\")`"
+          - text: "Raise a `ValueError`"
             correct: true
-            why: "The caller learns at once what is wrong, and where."
+            why: "Like `raise ValueError(\"The amount must be positive.\")`. The caller learns at once what is wrong, and where."
           - text: "Return 0 and say nothing"
             why: "Then the wrong value goes on in the program, without a sign."
           - text: "Print a message and go on"
@@ -692,9 +692,9 @@ review:
       - text: "Only when the try block had no error"
         correct: true
         why: "`else` is for the code that needs the try block to have worked."
-      - text: "Always"
+      - text: "Always, after the try block"
         why: "That is `finally`."
-      - text: "Only after an error"
+      - text: "Only after an error in the try block"
         why: "That is `except`."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).

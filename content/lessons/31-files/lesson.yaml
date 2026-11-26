@@ -303,9 +303,9 @@ steps:
       id: w-total
       prompt: "What happens without the `if line == \"\":` part, when the file has an empty line?"
       options:
-        - text: "`float(\"\")` stops the program with a `ValueError`"
+        - text: "A `ValueError` stops it"
           correct: true
-          why: "An empty text is not a number. Skip empty lines first."
+          why: "`float(\"\")` fails: an empty text is not a number. Skip empty lines first."
         - text: "The empty line counts as 0"
           why: "`float` does not accept an empty text."
         - text: "Nothing changes"
@@ -551,9 +551,9 @@ steps:
         objective: O3
         prompt: "Why does a program check `path.exists()` before `path.read_text()`?"
         options:
-          - text: "On the first run there may be no file yet, and `read_text` would stop with `FileNotFoundError`"
+          - text: "On the first run there may be no file"
             correct: true
-            why: "Then the program can start with empty data instead."
+            why: "Then `read_text` would stop with `FileNotFoundError`. With the check, the program can start with empty data instead."
           - text: "`read_text` is faster after `exists`"
             why: "Speed is not the reason. A missing file is."
           - text: "`exists` opens the file"

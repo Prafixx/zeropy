@@ -83,9 +83,9 @@ steps:
         id: i-index
         prompt: "What is `data[0]` when `data` is `\"café\".encode()`?"
         options:
-          - text: "`99`: one byte is a number"
+          - text: "`99`"
             correct: true
-            why: "The letter c is the byte 99. Indexing `bytes` gives an `int`."
+            why: "One byte is a number: the letter c is the byte 99. Indexing `bytes` gives an `int`."
           - text: "`'c'`"
             why: "That is indexing a `str`."
           - text: "`b'c'`"
@@ -94,9 +94,9 @@ steps:
         id: i-ascii
         prompt: "Why can `ascii` not decode these bytes?"
         options:
-          - text: "ASCII has only 128 characters, 0 to 127; the bytes of é are bigger"
+          - text: "ASCII has only 128 characters"
             correct: true
-            why: "195 and 169 are not ASCII, so Python raises a `UnicodeDecodeError`."
+            why: "0 to 127, and the bytes of é are bigger: 195 and 169 are not ASCII, so Python raises a `UnicodeDecodeError`."
           - text: "ASCII cannot read the letter c"
             why: "c is 99, which is ASCII."
           - text: "decode needs no name"
@@ -599,9 +599,9 @@ steps:
         objective: O3
         prompt: "Your download gives another SHA-256 than the one on the download page. What does that mean?"
         options:
-          - text: "The file is not the same: broken, cut short, or changed"
+          - text: "The file is not the same"
             correct: true
-            why: "One different byte gives a very different code. Download it again from the real page."
+            why: "It is broken, cut short, or changed: one different byte gives a very different code. Download it again from the real page."
           - text: "Nothing: checksums are often different"
             why: "The same bytes always give the same SHA-256."
           - text: "The file is a newer version"
@@ -630,7 +630,7 @@ review:
       - text: "`data.decode(\"utf-8\")`"
         correct: true
         why: "`decode` reads bytes with the rules of an encoding."
-      - text: "`data.encode()`"
+      - text: "`data.encode(\"utf-8\")`"
         why: "`encode` turns text into bytes, the other way."
       - text: "`str(data)`"
         why: "That gives the text `b'...'`, with the b and the quotes."
@@ -639,9 +639,9 @@ review:
     objective: O2
     prompt: "Why does `open(\"photo.jpg\").read()` often stop with a `UnicodeDecodeError`?"
     options:
-      - text: "Text mode decodes the bytes as UTF-8, and a photo is not UTF-8 text"
+      - text: "Text mode decodes the bytes as text"
         correct: true
-        why: "Open it with `\"rb\"` to get its bytes."
+        why: "As UTF-8, and a photo is not UTF-8 text. Open it with `\"rb\"` to get its bytes."
       - text: "The photo is too big"
         why: "The size is not the problem: the mode is."
       - text: "Python cannot open photos"
@@ -654,9 +654,9 @@ review:
       - text: "A ZIP file (or a file inside ZIP, like .docx)"
         correct: true
         why: "The first bytes say what a file is, not its name."
-      - text: "A PDF, because of the name"
+      - text: "A PDF, because the name ends in .pdf"
         why: "A name can be anything; a PDF starts with `%PDF`."
-      - text: "A broken file"
+      - text: "A broken file that nothing can read"
         why: "It is a correct ZIP file with the wrong name."
   - kind: predict
     id: r-chunks
@@ -679,9 +679,9 @@ review:
       - text: "Try UTF-8 first; on `UnicodeDecodeError`, use cp1252"
         correct: true
         why: "UTF-8 is strict, so its error is a good sign that the file is in another encoding."
-      - text: "Try cp1252 first, then UTF-8"
+      - text: "Try cp1252 first; on an error, use UTF-8"
         why: "cp1252 accepts almost any bytes, so UTF-8 files would be read wrong without an error."
-      - text: "Always use `errors=\"replace\"`"
+      - text: "Always use `errors=\"replace\"` with UTF-8"
         why: "Then letters are lost and become �."
 
 # "Practice more": extra exercises, not shown in the lesson (practice page).

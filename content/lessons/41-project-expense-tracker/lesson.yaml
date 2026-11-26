@@ -512,9 +512,9 @@ steps:
         objective: O2
         prompt: "Why is the `try` in the loop, around the call of `parse_amount`, and not inside `parse_amount`?"
         options:
-          - text: "`parse_amount` only refuses a bad value. The loop decides what to do: tell the user and go on"
+          - text: "The loop decides what to do"
             correct: true
-            why: "Functions raise, the caller catches. A test can then check that `parse_amount` raises."
+            why: "`parse_amount` only refuses a bad value; the loop tells the user and goes on. Functions raise, the caller catches, and a test can check that `parse_amount` raises."
           - text: "Because `try` is not allowed inside a function"
             why: "It is allowed, as in `load_expenses`."
           - text: "It makes no difference"
@@ -524,9 +524,9 @@ steps:
         objective: O1
         prompt: "`expenses.json` is broken. What does the tool do, and why?"
         options:
-          - text: "It prints a message and starts with an empty list, so the user can go on"
+          - text: "It prints a message and starts empty"
             correct: true
-            why: "A broken file must not stop the tool. The message tells the user what happened."
+            why: "With an empty list, so the user can go on: a broken file must not stop the tool. The message tells the user what happened."
           - text: "It stops with a `JSONDecodeError`"
             why: "`load_expenses` catches that error."
           - text: "It deletes the file"
@@ -573,10 +573,10 @@ review:
     objective: O1
     prompt: "What should a program do when its data file does not exist yet?"
     options:
-      - text: "Start with empty data, and make the file at the first save"
+      - text: "Start with empty data"
         correct: true
-        why: "On the first run there is never a file."
-      - text: "Stop with an error"
+        why: "And make the file at the first save. On the first run there is never a file."
+      - text: "Stop with a clear error message"
         why: "A missing file is normal on the first day."
       - text: "Ask the user to make the file"
         why: "The program can make it itself."
@@ -615,10 +615,10 @@ review:
     objective: O4
     prompt: "Which functions of the tool were the easiest to test with `assert`?"
     options:
-      - text: "`parse_amount` and `totals`: they only take values and give back values"
+      - text: "`parse_amount` and `totals`"
         correct: true
         why: "No file and no input, so a test needs only one line."
-      - text: "The command loop"
+      - text: "The command loop with `input`"
         why: "The loop needs input from a user. It is the hardest to test."
       - text: "`save_expenses`, because it writes a file"
         why: "Writing files makes tests harder, not easier."
@@ -627,10 +627,10 @@ review:
     objective: O4
     prompt: "In the `add` command, what does `continue` do after `Not a valid amount.`?"
     options:
-      - text: "It goes back to the start of the loop, so nothing is added"
+      - text: "It goes back to the start of the loop"
         correct: true
-        why: "The lines after it, the append and the message, are skipped."
-      - text: "It ends the loop"
+        why: "So nothing is added: the lines after it, the append and the message, are skipped."
+      - text: "It ends the loop and the program"
         why: "That is `break`."
       - text: "It adds the expense anyway"
         why: "`continue` skips the rest of this round."

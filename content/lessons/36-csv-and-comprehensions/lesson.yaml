@@ -193,10 +193,10 @@ steps:
         id: i-float
         prompt: "Why `float(r[\"amount\"])`, and not only `r[\"amount\"]`?"
         options:
-          - text: "The csv module gives every value as text. `sum` needs numbers"
+          - text: "The csv module gives every value as text"
             correct: true
             why: "A CSV file is only text. You turn the values into numbers yourself."
-          - text: "To round the amount"
+          - text: "To round the amount to cents"
             why: "`float` does not round. It turns text into a number."
           - text: "Because `amount` is a keyword of Python"
             why: "`amount` is a normal key of the row."
@@ -283,9 +283,9 @@ steps:
         objective: O3
         prompt: "When is a normal `for` loop better than a comprehension?"
         options:
-          - text: "When the loop does more than build a list, for example print or count several things"
+          - text: "When it does more than build a list"
             correct: true
-            why: "A comprehension is for one job: a new list or dictionary from old values."
+            why: "For example print or count several things. A comprehension is for one job: a new list or dictionary from old values."
           - text: "Never: a comprehension is always better"
             why: "A long comprehension with many parts is hard to read."
           - text: "When the list is short"
@@ -359,9 +359,9 @@ steps:
         - text: "CSV values are texts, and `sum` cannot add texts"
           correct: true
           why: "`sum` of texts raises a `TypeError`. Turn each into a number first."
-        - text: "To round the amounts"
+        - text: "To round the amounts to two decimals"
           why: "`float` does not round. It turns the text into a number."
-        - text: "`float` makes the sum faster"
+        - text: "`float` makes the sum faster for big files"
           why: "Without it, the sum does not work at all."
 
   # PUZZLE: put the lines in order (Parsons) ----------------------------
@@ -600,9 +600,9 @@ steps:
         objective: O1
         prompt: "`row[\"price\"]` comes from `csv.DictReader`. What type is it?"
         options:
-          - text: "Always `str`, also when it looks like a number"
+          - text: "Always `str`"
             correct: true
-            why: "CSV is only text. Use `float()` or `int()` to compute."
+            why: "Also when it looks like a number: CSV is only text. Use `float()` or `int()` to compute."
           - text: "`float` when it has a point"
             why: "The `csv` module does not guess types. Everything is a text."
           - text: "`int` or `float`, as in the file"
@@ -620,9 +620,9 @@ steps:
         objective: O2
         prompt: "Why do you open a CSV file with `newline=\"\"`?"
         options:
-          - text: "The `csv` module handles the ends of lines itself. Without it, Windows can get empty rows"
+          - text: "`csv` handles the line ends itself"
             correct: true
-            why: "The `csv` docs say so, too."
+            why: "Without it, Windows can get empty rows. The `csv` docs say so, too."
           - text: "To add an empty line at the end"
             why: "It does not add lines. It lets the `csv` module control them."
           - text: "It makes the file smaller"
@@ -668,9 +668,9 @@ review:
     objective: O1
     prompt: "What does `list(csv.DictReader(f))` give?"
     options:
-      - text: "A list of dictionaries, one for each row, with the header names as keys"
+      - text: "A list of dictionaries, one per row"
         correct: true
-        why: "The first line of the file gives the keys."
+        why: "With the header names as keys: the first line of the file gives them."
       - text: "A list of lists of numbers"
         why: "The rows are dictionaries, and their values are texts."
       - text: "One dictionary for the whole file"

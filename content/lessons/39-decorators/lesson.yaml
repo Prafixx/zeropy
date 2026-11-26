@@ -109,9 +109,9 @@ steps:
         id: i-args
         prompt: "Why does the wrapper use `*args` and `**kwargs`?"
         options:
-          - text: "So it takes any arguments, and passes them on to the real function"
+          - text: "So it takes any arguments"
             correct: true
-            why: "Then one decorator fits functions with any parameters."
+            why: "And passes them on to the real function. Then one decorator fits functions with any parameters."
           - text: "Because decorators must use stars"
             why: "Only a wrapper for any function needs them."
           - text: "To make the function faster"
@@ -120,12 +120,12 @@ steps:
         id: i-wraps
         prompt: "What does `@functools.wraps(func)` keep?"
         options:
-          - text: "The name and the docstring of the real function"
+          - text: "The name and the docstring"
             correct: true
             why: "Without it, every decorated function would be called `wrapper`, also in error messages and help()."
-          - text: "The result of the function"
+          - text: "The result of the last call"
             why: "The result comes from `return result`."
-          - text: "A copy of the arguments"
+          - text: "A copy of all the arguments"
             why: "It copies the name and the docs."
 
   # 3. EXERCISE: completion --------------------------------------------------
@@ -510,16 +510,16 @@ steps:
             why: "And the error still reaches the caller."
           - text: "So no error ever reaches the caller"
             why: "`finally` does not catch the error."
-          - text: "Python needs it for every generator"
+          - text: "Python needs it in every generator function"
             why: "Only cleanup that must always run needs it."
       - kind: mcq
         id: q-choose
         objective: O4
         prompt: "You want to measure how long a few lines in the middle of a function take. Which tool fits?"
         options:
-          - text: "A context manager: `with timer():` around those lines"
+          - text: "A context manager around the lines"
             correct: true
-            why: "A decorator works on a whole function; a with block on any lines."
+            why: "Like `with timer():`. A decorator works on a whole function; a with block on any lines."
           - text: "A decorator on the function"
             why: "That measures the whole function."
           - text: "A generator expression"
@@ -538,10 +538,10 @@ review:
     objective: O1
     prompt: "What is a decorator?"
     options:
-      - text: "A function that takes a function and gives back a new function around it"
+      - text: "A function that wraps a function"
         correct: true
-        why: "Written with @ above a def."
-      - text: "A class for HTML"
+        why: "It takes a function and gives back a new function around it. Written with @ above a def."
+      - text: "A class for HTML pages"
         why: "It is about functions."
       - text: "A comment above a function"
         why: "It changes the function."
@@ -550,9 +550,9 @@ review:
     objective: O2
     prompt: "What happens without `functools.wraps` in a decorator?"
     options:
-      - text: "The decorated function is called `wrapper`, and loses its docstring"
+      - text: "It is called `wrapper` now"
         correct: true
-        why: "wraps copies the name and docs of the real function."
+        why: "And it loses its docstring. wraps copies the name and docs of the real function."
       - text: "The function stops working"
         why: "It works; only the name and docs are lost."
       - text: "The arguments are lost"
@@ -574,9 +574,9 @@ review:
     objective: O3
     prompt: "What does `with open(\"a.txt\") as f:` promise?"
     options:
-      - text: "The file is closed at the end of the block, also after an error"
+      - text: "The file is closed after the block"
         correct: true
-        why: "That is what a context manager is for."
+        why: "Also after an error: that is what a context manager is for."
       - text: "No error can happen in the block"
         why: "Errors can happen; cleanup still runs."
       - text: "The file is read at once"

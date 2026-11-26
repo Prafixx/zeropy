@@ -137,9 +137,9 @@ steps:
           - text: "6: each group of digits in a row is one match"
             correct: true
             why: '`555`, `1234`, `555`, `9876`, `18` and `00`. The dash and the colon end a match.'
-          - text: "2: the two phone numbers"
+          - text: "2: the two phone numbers in it"
             why: '`\d+` knows nothing about phone numbers. A dash is not a digit, so it ends a match.'
-          - text: "18: one for each digit"
+          - text: "18: one text for each digit found"
             why: 'That would be `\d` alone. The `+` takes all digits in a row.'
 
   # 4. DRILL -----------------------------------------------------------------
@@ -168,9 +168,9 @@ steps:
           - text: "`['a', 'a', 'a']`"
             correct: true
             why: '`[aeiou]` is one vowel. Each vowel is one match.'
-          - text: "`['aaa']`"
+          - text: "`['aaa']`, one match"
             why: "Without a `+`, each match is one character."
-          - text: "`3`"
+          - text: "`3`, the count"
             why: '`findall` gives back a list of the matches. `len(...)` would give 3.'
       - kind: mcq
         id: d-optional
@@ -320,9 +320,9 @@ steps:
       id: w-why-search
       prompt: "Why does the example use `re.search`, and not `re.fullmatch`?"
       options:
-        - text: "The time is only one part of the sentence. `fullmatch` would need the whole sentence to be a time"
+        - text: "The time is only one part of the text"
           correct: true
-          why: "`fullmatch` is for checking a whole text. `search` finds the shape inside a longer text."
+          why: "`fullmatch` would need the whole sentence to be a time: it is for checking a whole text. `search` finds the shape inside a longer text."
         - text: "`fullmatch` cannot use groups"
           why: "It can. The reason is the rest of the sentence around the time."
         - text: "`search` is faster"
@@ -497,9 +497,9 @@ steps:
         objective: O2
         prompt: "You check that a user typed a valid postcode. Which function fits?"
         options:
-          - text: "`re.fullmatch`: the whole text must have the shape"
+          - text: "`re.fullmatch`"
             correct: true
-            why: "A check is about the whole text. `search` would accept extra text around it."
+            why: "The whole text must have the shape. `search` would accept extra text around it."
           - text: "`re.search`"
             why: "`search` finds the shape anywhere, so `xx1234yy` would pass."
           - text: "`re.findall`"
@@ -566,18 +566,18 @@ review:
       - text: '`\d{2}:\d{2}`'
         correct: true
         why: "Two digits, a colon, two digits."
-      - text: '`\d:\d`'
-        why: "That is one digit on each side: `9:4`."
-      - text: '`\w+`'
+      - text: "`\\d:\\d` (one digit each)"
+        why: "One digit on each side fits `9:4`, not `09:45`."
+      - text: "`\\w+`"
         why: '`\w` has no colon, so it finds `09` and `45` apart.'
   - kind: mcq
     id: r-trap
     objective: O2
     prompt: '`re.search(r"\d{3}", "12345")` finds a match. Why is this a trap for a check of "exactly three digits"?'
     options:
-      - text: "`search` finds three digits inside the longer text. Use `fullmatch` for a check"
+      - text: "`search` finds them inside"
         correct: true
-        why: "`fullmatch` asks for the whole text, so `12345` gives `None`."
+        why: "It finds three digits inside the longer text. Use `fullmatch` for a check: it asks for the whole text, so `12345` gives `None`."
       - text: "`\\d{3}` means at least three digits"
         why: "It means exactly three in a row, but `search` finds them inside a longer text."
       - text: "There is no trap"

@@ -128,9 +128,9 @@ steps:
         objective: O2
         prompt: "In Python, what is each row of the result?"
         options:
-          - text: "A tuple, with one value for each column you asked for"
+          - text: "A tuple of values"
             correct: true
-            why: "`SELECT title, year` gives tuples like `('Dune', 1965)`."
+            why: "One value for each column you asked for: `SELECT title, year` gives tuples like `('Dune', 1965)`."
           - text: "A dict with the column names"
             why: "By default sqlite3 gives tuples. The values are in the order of the SELECT."
           - text: "One long text"
@@ -202,9 +202,9 @@ steps:
         - text: "An empty list: no author has that strange name"
           correct: true
           why: "With `?`, the whole text is one value. It is compared with the authors, and none fits."
-        - text: "Every book in the table"
+        - text: "Every book in the table, all of them"
           why: "That happens only when the value is pasted into the SQL text. With `?`, it stays a value."
-        - text: "An error, because of the quotes"
+        - text: "An error, because of the quotes in it"
           why: "Quotes inside a value are no problem with `?`. They are only a problem inside the SQL text."
 
   # 6. EXERCISE: completion --------------------------------------------------
@@ -499,9 +499,9 @@ steps:
         objective: O4
         prompt: "A program adds rows to `shop.db`, then stops before `con.commit()`. **What is in the file afterwards?**"
         options:
-          - text: "Not the new rows: they were never saved"
+          - text: "Not the new rows"
             correct: true
-            why: "Changes are kept only after a commit. `with con:` commits for you at the end of its block."
+            why: "They were never saved: changes are kept only after a commit. `with con:` commits for you at the end of its block."
           - text: "All the new rows"
             why: "Without a commit, SQLite throws the changes away when the connection closes."
           - text: "Half of them"
@@ -526,9 +526,9 @@ steps:
           - text: "It deletes every row of the table"
             correct: true
             why: "`WHERE` chooses the rows. Without it, all rows are chosen."
-          - text: "It deletes the last row"
+          - text: "It deletes the last row you added"
             why: "SQL has no \"last row\" unless you choose one with WHERE."
-          - text: "It gives an error"
+          - text: "It gives an error: WHERE is missing"
             why: "It is allowed, and that is why it is dangerous."
       - kind: predict
         id: q-update
@@ -559,9 +559,9 @@ review:
     objective: O3
     prompt: "What does the `?` do in `WHERE name = ?`?"
     options:
-      - text: "It marks a place for a value that sqlite3 fills in safely"
+      - text: "A place for a value"
         correct: true
-        why: "The value comes apart, as a tuple, and is never read as SQL."
+        why: "sqlite3 fills it in safely: the value comes apart, as a tuple, and is never read as SQL."
       - text: "It matches any name"
         why: "That is not what `?` does in sqlite3. It is a place for one value."
       - text: "It asks the user for a name"
@@ -585,9 +585,9 @@ review:
     objective: O3
     prompt: "Why `(name,)` and not `(name)` after the SQL?"
     options:
-      - text: "The comma makes a tuple of one value; `(name)` is only the name itself"
+      - text: "The comma makes it a tuple"
         correct: true
-        why: "sqlite3 wants a tuple (or a list) of values, one for each `?`."
+        why: "A tuple of one value; `(name)` is only the name itself. sqlite3 wants a tuple (or a list) of values, one for each `?`."
       - text: "There is no difference"
         why: "Brackets alone do not make a tuple. The comma does."
       - text: "The comma adds an empty second value"
@@ -597,9 +597,9 @@ review:
     objective: O4
     prompt: "What does `with con:` do around some changes?"
     options:
-      - text: "It commits them at the end, or undoes them all if an error happens"
+      - text: "It commits them, or undoes them all"
         correct: true
-        why: "All or nothing: the database is never left half changed."
+        why: "It commits at the end, or undoes all after an error. All or nothing: the database is never left half changed."
       - text: "It closes the database at the end"
         why: "It commits or rolls back. The connection stays open."
       - text: "It makes the changes faster"

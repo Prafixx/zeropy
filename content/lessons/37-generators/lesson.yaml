@@ -86,9 +86,9 @@ steps:
         id: i-pause
         prompt: "Why do `(making 2)` and `got 3` take turns, instead of all `making` lines first?"
         options:
-          - text: "The generator pauses at each yield, until the loop asks for the next value"
+          - text: "It pauses at each `yield`"
             correct: true
-            why: "Values are made one at a time, only when needed."
+            why: "Until the loop asks for the next value: values are made one at a time, only when needed."
           - text: "Python runs two programs at once"
             why: "It is one program: the generator and the loop take turns."
           - text: "print is slow"
@@ -97,12 +97,12 @@ steps:
         id: i-call
         prompt: "What does `countdown(3)` give back, before any loop runs?"
         options:
-          - text: "A generator object: no line of the function has run yet"
+          - text: "A generator object"
             correct: true
-            why: "Even `start` is printed only at the first next()."
+            why: "No line of the function has run yet: even `start` is printed only at the first next()."
           - text: "The list [3, 2, 1]"
             why: "`list(countdown(3))` makes that list."
-          - text: "3"
+          - text: "3, the first value"
             why: "The values come one by one, when asked."
 
   # 3. EXERCISE: completion --------------------------------------------------
@@ -415,9 +415,9 @@ steps:
         objective: O3
         prompt: "Why is `sum(n * n for n in range(10_000_000))` better than `sum([n * n for n in range(10_000_000)])`?"
         options:
-          - text: "It never builds the list of ten million numbers: each one is made and forgotten"
+          - text: "It never builds the big list"
             correct: true
-            why: "The result is the same; the memory is almost none."
+            why: "Each number is made and forgotten. The result is the same; the memory is almost none."
           - text: "It gives another result"
             why: "Both give the same sum."
           - text: "Round brackets are faster to type"
@@ -442,7 +442,7 @@ steps:
           - text: "`list(islice(gen, 10))`"
             correct: true
             why: "islice stops after 10 values."
-          - text: "`list(gen)[:10]`"
+          - text: "`list(gen)[:10]`, a slice"
             why: "`list(gen)` never ends."
           - text: "`gen[:10]`"
             why: "A generator has no slices."
@@ -460,9 +460,9 @@ review:
     objective: O2
     prompt: "What does `yield` do in a function?"
     options:
-      - text: "It hands out one value and pauses the function until the next value is asked"
+      - text: "It hands out a value and pauses"
         correct: true
-        why: "A function with yield is a generator."
+        why: "Until the next value is asked. A function with yield is a generator."
       - text: "It ends the function, like return"
         why: "It pauses, it does not end."
       - text: "It prints a value"
@@ -472,9 +472,9 @@ review:
     objective: O1
     prompt: "What does a for loop do with a list, behind the scenes?"
     options:
-      - text: "It gets an iterator with iter(), and calls next() until StopIteration"
+      - text: "It uses iter() and next()"
         correct: true
-        why: "That works for every iterable."
+        why: "It gets an iterator with iter(), and calls next() until StopIteration. That works for every iterable."
       - text: "It counts the items with len()"
         why: "Many iterables have no length at all."
       - text: "It copies the list"
@@ -484,9 +484,9 @@ review:
     objective: O3
     prompt: "You call `sum(gen)` twice on the same generator. What is the second result?"
     options:
-      - text: "0: the generator is already empty"
+      - text: "0"
         correct: true
-        why: "A generator can be used only once."
+        why: "The generator is already empty: it can be used only once."
       - text: "The same sum"
         why: "Only a list gives the same values again."
       - text: "An error"
@@ -496,9 +496,9 @@ review:
     objective: O4
     prompt: "Why is `for line in f` good for a huge file?"
     options:
-      - text: "It reads one line at a time, so the file never has to fit in memory"
+      - text: "It reads one line at a time"
         correct: true
-        why: "A file object is an iterator of lines."
+        why: "So the file never has to fit in memory: a file object is an iterator of lines."
       - text: "It reads the whole file faster"
         why: "It reads it bit by bit."
       - text: "It skips empty lines"
@@ -508,9 +508,9 @@ review:
     objective: O2
     prompt: "`gen = countdown(3)` with a generator function. What has run?"
     options:
-      - text: "Nothing of its body yet: it runs at the first next()"
+      - text: "Nothing of its body yet"
         correct: true
-        why: "Calling a generator function only makes the generator."
+        why: "It runs at the first next(): calling a generator function only makes the generator."
       - text: "The whole function"
         why: "It runs step by step, when asked."
       - text: "The first line"

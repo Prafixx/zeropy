@@ -99,9 +99,9 @@ steps:
         id: i-loop
         prompt: "Why does the loop not print `start`?"
         options:
-          - text: "`readline` already read it, and the file goes on from where it is"
+          - text: "`readline` already read it"
             correct: true
-            why: "A file object remembers its place."
+            why: "The file goes on from where it is: a file object remembers its place."
           - text: "A `for` loop skips the first line"
             why: "It starts where the file is now."
           - text: "`start` is not in the file"
@@ -655,10 +655,10 @@ steps:
         objective: O3
         prompt: "`open(\"prices.csv\")` works in the terminal of the project, but fails from another folder. Why?"
         options:
-          - text: "The path is relative to the working folder, which changed"
+          - text: "The working folder changed"
             correct: true
-            why: "`Path(__file__).parent / \"prices.csv\"` finds the file next to the program."
-          - text: "The file was deleted"
+            why: "The path is relative to it. `Path(__file__).parent / \"prices.csv\"` finds the file next to the program."
+          - text: "The file was deleted by the other folder"
             why: "It is still there; Python looks in another folder."
           - text: "`open` needs the mode `\"r\"`"
             why: "`\"r\"` is the default."
@@ -670,9 +670,9 @@ steps:
           - text: "`x` into the file, `y` on the screen"
             correct: true
             why: "`>` sends only stdout to the file."
-          - text: "Both into the file"
+          - text: "Both into the file `out.txt`"
             why: "stderr needs `2>` to go to a file."
-          - text: "Both on the screen"
+          - text: "Both on the screen, as before"
             why: "stdout goes to `out.txt` now."
 
   # 12. REVIEW ---------------------------------------------------------------
@@ -688,12 +688,12 @@ review:
     objective: O1
     prompt: "What does `f.readlines()` give?"
     options:
-      - text: "A list of the lines that are left, each with its `\\n`"
+      - text: "A list of the lines that are left"
         correct: true
-        why: "Use `line.rstrip(\"\\n\")` to take the ending away."
-      - text: "The next line"
+        why: "Each line keeps its `\\n`: use `line.rstrip(\"\\n\")` to take the ending away."
+      - text: "The next line, as a text"
         why: "That is `readline()`."
-      - text: "The number of lines"
+      - text: "The number of lines left"
         why: "`len(f.readlines())` would give that."
   - kind: predict
     id: r-place
@@ -710,10 +710,10 @@ review:
     objective: O2
     prompt: "What is the difference between `\"r+\"` and `\"w+\"`?"
     options:
-      - text: "Both read and write; `\"w+\"` empties the file first, `\"r+\"` keeps it (and needs it to exist)"
+      - text: "`\"w+\"` empties the file first"
         correct: true
-        why: "To change a file that you also read, use `\"r+\"`."
-      - text: "`\"r+\"` only reads"
+        why: "Both read and write; `\"r+\"` keeps the file, and needs it to exist. To change a file that you also read, use `\"r+\"`."
+      - text: "`\"r+\"` only reads, `\"w+\"` only writes"
         why: "The `+` adds writing."
       - text: "None: they are the same"
         why: "`w` always empties the file."
@@ -743,9 +743,9 @@ review:
     objective: O4
     prompt: "What does `sys.stdout.write(\"Done\")` do that `print(\"Done\")` does not?"
     options:
-      - text: "It adds no line ending: the next output goes on in the same line"
+      - text: "It adds no line ending"
         correct: true
-        why: "`print` adds `\\n` for you; `write` writes exactly the text."
+        why: "The next output goes on in the same line. `print` adds `\\n` for you; `write` writes exactly the text."
       - text: "It writes to a file"
         why: "It writes to standard output, like `print`."
       - text: "It is faster for numbers"
