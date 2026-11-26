@@ -433,9 +433,9 @@ steps:
         objective: O1
         prompt: "You ran and tested the program after **every** step. Why is that better than writing everything first?"
         options:
-          - text: "A mistake is then in the few lines that are new, so it is easy to find"
+          - text: "A mistake is in the few new lines"
             correct: true
-            why: "With 20 new lines, a mistake can be anywhere. With 3 new lines, you know where to look."
+            why: "So it is easy to find. With 20 new lines, a mistake can be anywhere; with 3 new lines, you know where to look."
           - text: "Python can only run short programs"
             why: "Python runs programs of any length. The reason is about finding mistakes."
           - text: "The program gets faster"
@@ -488,9 +488,9 @@ steps:
         objective: O3
         prompt: "Before the loop, the program sets `guess = 0`. Why?"
         options:
-          - text: "The condition of the loop needs a value for `guess`, and 0 is never the secret number"
+          - text: "The condition needs a value for `guess`"
             correct: true
-            why: "So the first answer of the condition is always True, and the block runs at least one time."
+            why: "And 0 is never the secret number. So the first answer of the condition is always True, and the block runs at least one time."
           - text: "The first guess of every player is 0"
             why: "The player has not typed anything at that moment. The 0 is only a start value."
           - text: "Python gives every new variable the value 0"

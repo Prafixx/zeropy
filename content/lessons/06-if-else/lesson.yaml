@@ -227,9 +227,9 @@ steps:
       id: w-ticket
       prompt: "The `print` line is written **one time**, after the chain. Why is that better than a `print` in each block?"
       options:
-        - text: "The text is written in one place, so a change is made in one place"
+        - text: "A change is then made in one place"
           correct: true
-          why: "The blocks only decide the value. What is the same for all cases comes after the chain."
+          why: "The text is written in one place. The blocks only decide the value; what is the same for all cases comes after the chain."
         - text: "`print` is not allowed inside a block"
           why: "`print` works in a block. You saw it in the examples before."
         - text: "Python runs faster with fewer lines"
@@ -493,12 +493,12 @@ steps:
         objective: O4
         prompt: "You see `IndentationError: expected an indented block after 'if' statement on line 2`. What do you fix?"
         options:
-          - text: "Add 4 spaces at the start of the line under the `if`"
+          - text: "Add 4 spaces to the line under the `if`"
             correct: true
             why: "\"Indented\" means: moved to the right with spaces. The block under line 2 has no spaces."
-          - text: "Remove the colon on line 2"
+          - text: "Remove the colon at the end of line 2"
             why: "The colon is needed. The message is about the line after it."
-          - text: "Change the condition on line 2"
+          - text: "Change the condition on line 2 to `True`"
             why: "The condition is fine. Python cannot find the block that belongs to it."
       - kind: predict
         id: q-zero

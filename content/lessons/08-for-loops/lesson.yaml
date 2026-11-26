@@ -487,9 +487,9 @@ steps:
         objective: O1
         prompt: "A program must ask for a password until it is right. Which loop fits?"
         options:
-          - text: "`while`, because nobody knows how many tries the user needs"
+          - text: "`while`"
             correct: true
-            why: "Use `while` to repeat until something happens. Use `for` for a known row of values."
+            why: "Nobody knows how many tries the user needs. Use `while` to repeat until something happens; use `for` for a known row of values."
           - text: "`for` with `range(10)`"
             why: "That stops after 10 tries, also when the password is still wrong, and goes on asking after a right one."
           - text: "It makes no difference"
@@ -575,9 +575,9 @@ review:
     objective: O4
     prompt: "A loop with `range(1, n)` gives a result that is a little too small. What do you check first?"
     options:
-      - text: "If the last value `n` must be included: then the stop is `n + 1`"
+      - text: "If `n` itself must be in the row"
         correct: true
-        why: "The stop value is never in the row. This is the most common mistake with `range`."
+        why: "Then the stop is `n + 1`: the stop value is never in the row. This is the most common mistake with `range`."
       - text: "If the block has 4 spaces"
         why: "Wrong spaces give an error or a very different result, not a result that is a little too small."
       - text: "If the loop variable has a good name"

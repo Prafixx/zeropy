@@ -205,9 +205,9 @@ steps:
         id: i-typo
         prompt: "Line 4 becomes `print(nmae)`. Which kind of error is it?"
         options:
-          - text: "`NameError`: there is no variable called `nmae`"
+          - text: "`NameError`"
             correct: true
-            why: "The line is valid Python, but the name does not exist."
+            why: "There is no variable called `nmae`. The line is valid Python, but the name does not exist."
           - text: "`SyntaxError`"
             why: "The grammar of the line is fine. Only the name is unknown."
           - text: "`TypeError`"
@@ -552,9 +552,9 @@ steps:
         objective: O3
         prompt: "A program runs without an error, but the result is wrong. What is a good first step?"
         options:
-          - text: "Print the values in the middle of the program and compare them with what you expect"
+          - text: "Print the values in the middle, and compare"
             correct: true
-            why: "The first value that is not what you expect shows where the mistake is."
+            why: "Compare them with what you expect: the first value that is not what you expect shows where the mistake is."
           - text: "Run the program again a few times"
             why: "The same code with the same values gives the same result every time."
           - text: "Delete everything and write the program again"
@@ -615,9 +615,9 @@ review:
     objective: O3
     prompt: "A program gives a wrong result and no error message. How do you find the mistake?"
     options:
-      - text: "Add `print` lines that show values, and compare them with what you expect"
+      - text: "Add `print` lines that show values"
         correct: true
-        why: "The first value that surprises you shows where the mistake is."
+        why: "Compare them with what you expect: the first value that surprises you shows where the mistake is."
       - text: "Read the last line of the error message"
         why: "There is no message in this case. You must make the program show its values."
       - text: "Change several lines and see what happens"

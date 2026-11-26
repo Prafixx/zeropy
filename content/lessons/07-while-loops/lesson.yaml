@@ -175,9 +175,9 @@ steps:
         id: i-no-change
         prompt: "You remove line 4, `count = count - 1`. What happens?"
         options:
-          - text: "The loop never ends: `count` stays 3, so `count > 0` is always True"
+          - text: "The loop never ends"
             correct: true
-            why: "Something in the block must change the condition. The app stops such a loop after a while."
+            why: "`count` stays 3, so `count > 0` is always True. Something in the block must change the condition; the app stops such a loop after a while."
           - text: "It prints 3 once, then `Go!`"
             why: "The condition is checked again after each round, and it is still True."
           - text: "An error on line 2"
@@ -625,12 +625,12 @@ review:
     objective: O4
     prompt: "A loop never stops. What do you check first?"
     options:
-      - text: "The line in the block that changes the variable of the condition"
+      - text: "The line that changes the condition's variable"
         correct: true
-        why: "Most endless loops have no change, or a change in the wrong direction."
-      - text: "The `print` lines"
+        why: "That line is in the block. Most endless loops have no change, or a change in the wrong direction."
+      - text: "The `print` lines inside the loop"
         why: "`print` does not change any value, so it cannot stop or keep a loop."
-      - text: "The lines after the loop"
+      - text: "The lines after the end of the loop"
         why: "Python never reaches them. The cause is inside the loop."
   - kind: predict
     id: r-collect
@@ -648,9 +648,9 @@ review:
     objective: O2
     prompt: "What does `score += 5` do?"
     options:
-      - text: "It adds 5 to `score` and stores the result in `score`"
+      - text: "It adds 5 to `score`"
         correct: true
-        why: "It is a short form of `score = score + 5`."
+        why: "And stores the result in `score`: a short form of `score = score + 5`."
       - text: "It asks if `score` is equal to 5"
         why: "A comparison uses `==`."
       - text: "It stores 5 in `score`"
@@ -660,12 +660,12 @@ review:
     objective: O2
     prompt: "What does `:=` do in `while (word := input()) != \"end\":`?"
     options:
-      - text: "It keeps the answer in `word` and gives it to the comparison at once"
+      - text: "It names the answer `word` and compares it"
         correct: true
-        why: "The walrus operator gives a name and gives the value back."
+        why: "It keeps the answer in `word` and gives it to the comparison at once. The walrus operator gives a name and gives the value back."
       - text: "It compares `word` with the answer"
         why: "Comparing is `==` or `!=`. `:=` gives a name."
-      - text: "It is a syntax error"
+      - text: "It is a syntax error in a `while`"
         why: "It is allowed since Python 3.8, with the brackets."
   - kind: mcq
     id: r-break
