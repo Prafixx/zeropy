@@ -12,7 +12,8 @@ import { renderTerminal } from './steps/terminal';
 import { renderItem } from './steps/item';
 import { isSkipped, lastPracticed, lessonState, noteAnswer, notePracticed } from './store';
 import type { ExerciseStep, Item, Lesson, TerminalStep } from './types';
-import { button, h, icon, panel, sectionHead, shuffle } from './ui';
+import { button, h, icon, panel, shuffle } from './ui';
+import { twoPane, type PaneItem } from './two-pane';
 
 type Task = { lesson: Lesson; ref: string } & ({ kind: 'exercise'; step: ExerciseStep | TerminalStep } | { kind: 'item'; item: Item });
 
@@ -183,57 +184,109 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
     place(el.querySelectorAll('[data-enter]').length ? el.querySelectorAll('[data-enter]') : el);
   }
 
+  /** A row of a list in a panel: the name and a note, then a button. */
+  function row(title: string, small: string, action: HTMLElement, locked = false): HTMLElement {
+    return h('li', { class: `pane-row${locked ? ' is-locked' : ''}` }, h('span', { class: 'pane-row-text' }, h('strong', null, title), h('small', null, small)), action);
+  }
+  function go(label: string, href: string, open: boolean): HTMLElement {
+    const el = h('a', { class: `btn btn-plain btn-small${open ? '' : ' is-disabled'}`, href, 'aria-disabled': open ? null : 'true' }, h('span', { class: 'btn-label' }, label), icon('right', 16));
+    if (!open) el.addEventListener('click', (event) => event.preventDefault());
+    return el;
+  }
+  const meterOf = (done: number, all: number): HTMLElement =>
+    h('span', { class: 'meter pane-meter', role: 'img', 'aria-label': `${done} of ${all} lessons done` }, h('i', { style: `width: ${Math.round((done / Math.max(all, 1)) * 100)}%` }));
+
   function overview(): void {
     primary.hidden = true;
     back.hidden = true;
     note.textContent = '';
     const any = finishedLessons().length > 0;
-    const rows = course.modules.map((m, i) => {
-      const done = finishedLessons(i).length;
-      const all = m.lessons.length;
-      const start = h(
-        'a',
-        { class: `btn btn-plain btn-small${done ? '' : ' is-disabled'}`, href: `#/practice/${i + 1}`, 'aria-disabled': done ? null : 'true' },
-        h('span', { class: 'btn-label' }, 'Practice'),
-        icon('right', 16),
-      );
-      if (!done) start.addEventListener('click', (event) => event.preventDefault());
-      return h(
-        'li',
-        { class: `zp-card practice-card${done ? '' : ' is-locked'}` },
-        h('span', { class: 'zp-card-kicker' }, `Module ${i + 1}`),
-        h('h3', { class: 'zp-card-title' }, m.title),
-        h('span', { class: 'meter', role: 'img', 'aria-label': `${done} of ${all} lessons done` }, h('i', { style: `width: ${Math.round((done / Math.max(all, 1)) * 100)}%` })),
-        h('div', { class: 'zp-card-foot' }, h('small', null, `${done} of ${all} lessons done`), start),
-      );
-    });
+    const challenges = challengeRows();
+    const items: PaneItem[] = [
+      {
+        id: 'mixed',
+        label: 'A mixed set',
+        note: any ? `Up to ${SET.exercises} exercises and ${SET.items} questions` : 'Opens after your first lesson',
+        render: () =>
+          h(
+            'div',
+            { class: 'pane-part' },
+            h('span', { class: 'kicker' }, 'All your lessons'),
+            h('h2', { class: 'pane-title' }, 'A mixed set'),
+            h('p', { class: 'pane-text' }, `Up to ${SET.exercises} exercises and ${SET.items} questions, from all your finished lessons, in a mixed order. In a real program you must choose the right tool yourself: a mixed set trains exactly that.`),
+            any
+              ? h('a', { class: 'btn btn-primary btn-big', href: '#/practice/all' }, h('span', { class: 'btn-label' }, 'Start a mixed set'), icon('mix', 20))
+              : panel('info', 'Finish a lesson first.', 'Mixed practice uses the tasks of the lessons you finished.'),
+          ),
+      },
+      ...course.modules.map((m, i) => {
+        const done = finishedLessons(i).length;
+        const all = m.lessons.length;
+        return {
+          id: `module-${i + 1}`,
+          group: i === 0 ? 'By module' : undefined,
+          label: m.title,
+          note: `Module ${i + 1} · ${done} of ${all} done`,
+          extra: meterOf(done, all),
+          render: () =>
+            h(
+              'div',
+              { class: 'pane-part' },
+              h('span', { class: 'kicker' }, `Module ${i + 1}`),
+              h('h2', { class: 'pane-title' }, m.title),
+              h('div', { class: 'pane-line' }, meterOf(done, all), h('span', { class: 'muted' }, `${done} of ${all} lessons done`)),
+              h('p', { class: 'pane-text' }, 'Mostly the tasks of this module, and a few from the modules before it. Best at the end of the module.'),
+              go(done ? 'Practice this module' : 'Finish a lesson of it first', `#/practice/${i + 1}`, done > 0),
+              h(
+                'ol',
+                { class: 'pane-rows' },
+                ...m.lessons.map((entry) => {
+                  const lesson = getLesson(entry.id);
+                  const state = lesson ? lessonState(lesson.id) : null;
+                  return lesson ? row(lesson.title, state?.done ? 'Done' : state && state.reached > 0 ? 'Started' : 'Not started', go('Open', `#/lesson/${lesson.id}`, true)) : h('li');
+                }),
+              ),
+            ),
+        };
+      }),
+      ...(challenges.length
+        ? [
+            {
+              id: 'challenges',
+              group: 'Bigger tasks',
+              label: 'Challenges',
+              note: `${challenges.length} tasks with no starter code`,
+              render: () => {
+                const byModule = new Map<number, HTMLElement[]>();
+                for (const c of challenges) byModule.set(c.module, [...(byModule.get(c.module) ?? []), c.el]);
+                return h(
+                  'div',
+                  { class: 'pane-part' },
+                  h('span', { class: 'kicker' }, 'No starter code'),
+                  h('h2', { class: 'pane-title' }, 'Challenges'),
+                  h('p', { class: 'pane-text' }, 'Bigger tasks, from a short description only. Each one opens when its lesson is done.'),
+                  ...[...byModule].map(([mi, els]) =>
+                    h('section', { class: 'pane-block' }, h('h3', { class: 'pane-subtitle' }, `Module ${mi + 1}: ${course.modules[mi].title}`), h('ol', { class: 'pane-rows' }, ...els)),
+                  ),
+                );
+              },
+            },
+          ]
+        : []),
+    ];
     show(
       h(
         'div',
-        { class: 'zp-page practice' },
+        { class: 'zp-page pane-page practice' },
         h('header', { class: 'zp-page-head', 'data-enter': true }, h('h1', { class: 'display' }, 'Mixed practice'), h('p', { class: 'lead' }, 'Tasks from your finished lessons, in a mixed order.')),
-        any
-          ? h(
-              'div',
-              { class: 'zp-card zp-card-hero practice-start', 'data-enter': true },
-              h('div', null, h('h2', { class: 'zp-card-title' }, 'A mixed set'), h('p', { class: 'zp-card-text' }, `Up to ${SET.exercises} exercises and ${SET.items} questions, from all your finished lessons.`)),
-              h('a', { class: 'btn btn-primary btn-big', href: '#/practice/all' }, h('span', { class: 'btn-label' }, 'Start a mixed set'), icon('mix', 20)),
-            )
-          : h('div', { 'data-enter': true }, panel('info', 'Finish a lesson first.', 'Mixed practice uses the tasks of the lessons you finished.')),
-        h(
-          'section',
-          { class: 'zp-section', 'data-enter': true },
-          sectionHead('One module', 'By module', `${course.modules.length} modules`),
-          h('ol', { class: 'zp-grid practice-grid' }, ...rows),
-        ),
-        ...challengeList(),
+        h('div', { class: 'pane-wrap', 'data-enter': true }, twoPane('Parts of mixed practice', items).el),
       ),
     );
   }
 
-  /** The challenges of all modules: open when their lesson is done. */
-  function challengeList(): HTMLElement[] {
-    const rows = course.modules.flatMap((m) =>
+  /** The challenges of all modules, as rows: open when their lesson is done. */
+  function challengeRows(): { module: number; el: HTMLElement }[] {
+    return course.modules.flatMap((m, mi) =>
       m.lessons.flatMap((entry) => {
         const lesson = getLesson(entry.id);
         if (!lesson) return [];
@@ -242,35 +295,13 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
           .map((step) => {
             const open = lessonState(lesson.id).done;
             const done = lastPracticed(lesson.id, `extra:${step.id}`) > 0;
-            const start = h(
-              'a',
-              {
-                class: `btn btn-plain btn-small${open ? '' : ' is-disabled'}`,
-                href: `#/practice/lesson/${lesson.id}/${step.id}`,
-                'aria-disabled': open ? null : 'true',
-              },
-              h('span', { class: 'btn-label' }, done ? 'Again' : 'Start'),
-              icon('right', 16),
-            );
-            if (!open) start.addEventListener('click', (event) => event.preventDefault());
-            return h(
-              'li',
-              { class: `zp-card practice-card${open ? '' : ' is-locked'}` },
-              h('h3', { class: 'zp-card-title' }, step.title),
-              h('div', { class: 'zp-card-foot' }, h('small', null, done ? 'Done' : open ? `After ${lesson.title}` : `Opens after ${lesson.title}`), start),
-            );
+            return {
+              module: mi,
+              el: row(step.title.replace(/^Challenge:\s*/i, ''), done ? 'Done' : open ? `After ${lesson.title}` : `Opens after ${lesson.title}`, go(done ? 'Again' : 'Start', `#/practice/lesson/${lesson.id}/${step.id}`, open), !open),
+            };
           });
       }),
     );
-    if (!rows.length) return [];
-    return [
-      h(
-        'section',
-        { class: 'zp-section', 'data-enter': true },
-        sectionHead('No starter code', 'Challenges', `${rows.length} bigger tasks`),
-        h('ol', { class: 'zp-grid practice-grid' }, ...rows),
-      ),
-    ];
   }
 
   function run(tasks: Task[]): void {

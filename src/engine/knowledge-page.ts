@@ -7,7 +7,8 @@ import type { Level } from './knowledge';
 import { course, getLesson, lessonLabel } from './registry';
 import { includeLesson, isSkipped, knowledgeOf, lessonState, skipLesson } from './store';
 import type { Lesson } from './types';
-import { h, icon, panel, sectionHead } from './ui';
+import { h, icon, panel } from './ui';
+import { twoPane, type PaneItem, type TwoPane } from './two-pane';
 
 const ORDER: Level[] = ['mastered', 'solid', 'learning', 'weak', 'new'];
 
@@ -114,6 +115,8 @@ export function mountKnowledge(root: HTMLElement): () => void {
     );
   }
 
+  let pane: TwoPane | null = null;
+
   function render(keepOpen?: string): void {
     // The Python modules, then the modules of each path ("Linux: The terminal").
     const groups = [
@@ -132,58 +135,72 @@ export function mountKnowledge(root: HTMLElement): () => void {
       h('div', { class: `zp-card know-tile is-${level}` }, h('b', null, String(counted.filter((t) => t.level === level).length)), h('span', null, LEVEL_NAME[level])),
     );
 
-    const modules = groups.map((m) => {
-      const own = m.lessons.map((e) => getLesson(e.id)).filter((l): l is Lesson => Boolean(l));
-      return h(
-        'section',
-        { class: 'zp-card know-module' },
+    // The first part: how it stands, and what to practice now.
+    const overview: PaneItem = {
+      id: 'overview',
+      label: 'Overview',
+      note: `${counted.filter((t) => t.level !== 'new').length} of ${counted.length} topics practiced`,
+      render: () =>
         h(
           'div',
-          { class: 'know-module-head' },
-          h('div', null, h('span', { class: 'kicker' }, m.path || `Module ${m.num}`), h('h3', { class: 'zp-card-title' }, m.title)),
-          bar(own.filter((l) => !isSkipped(l.id)).flatMap(topicsOf)),
+          { class: 'pane-part knowledge-part' },
+          h('span', { class: 'kicker' }, 'All your topics'),
+          h('h2', { class: 'pane-title' }, 'How it stands'),
+          h('div', { class: 'zp-grid know-tiles' }, ...tiles),
+          h('h3', { class: 'pane-subtitle' }, 'Practice your weakest topics'),
+          weakest.length
+            ? h(
+                'ol',
+                { class: 'pane-rows' },
+                ...weakest.map((t) =>
+                  h('li', { class: 'pane-row' }, h('span', { class: 'pane-row-text' }, h('strong', null, t.text), h('small', null, `From ${t.lesson.title}`)), h('span', { class: 'pane-row-end' }, badge(t.level), practiceLink(t))),
+                ),
+              )
+            : panel(
+                'info',
+                counted.some((t) => t.level !== 'new') ? 'No weak topics right now.' : 'Nothing to show yet.',
+                counted.some((t) => t.level !== 'new') ? 'Everything you practiced is solid or better. Keep going with the next lesson.' : 'Answer questions in the lessons, and your topics appear here.',
+              ),
+          skippedCount
+            ? h('p', { class: 'muted' }, `You skipped ${skippedCount} lesson${skippedCount === 1 ? '' : 's'}: ${skippedCount === 1 ? 'it does' : 'they do'} not count here.`)
+            : null,
         ),
-        h('div', { class: 'know-lessons' }, ...own.map(lessonRow)),
-      );
+    };
+
+    // Then one part for each module: its lessons, each one opens to its topics.
+    const modules: PaneItem[] = groups.map((m, i) => {
+      const own = m.lessons.map((e) => getLesson(e.id)).filter((l): l is Lesson => Boolean(l));
+      const topics = own.filter((l) => !isSkipped(l.id)).flatMap(topicsOf);
+      const known = topics.filter((t) => t.level !== 'new').length;
+      const first = i === 0 ? 'Python' : m.path && groups[i - 1].path !== m.path ? m.path : undefined;
+      return {
+        id: `m${i}`,
+        group: first,
+        label: m.title,
+        note: `${m.path ? 'Path' : `Module ${m.num}`} · ${own.length} lessons`,
+        extra: bar(topics),
+        render: () =>
+          h(
+            'div',
+            { class: 'pane-part knowledge-part' },
+            h('span', { class: 'kicker' }, m.path || `Module ${m.num}`),
+            h('h2', { class: 'pane-title' }, m.title),
+            h('div', { class: 'pane-line' }, bar(topics), h('span', { class: 'muted' }, `${known} of ${topics.length} topics practiced`)),
+            h('div', { class: 'know-lessons pane-rows' }, ...own.map(lessonRow)),
+          ),
+      };
     });
 
+    const items = [overview, ...modules];
+    // A lesson changed (skipped or included): stay on its module, open it again.
+    const keep = keepOpen ? `m${groups.findIndex((g) => g.lessons.some((e) => e.id === keepOpen))}` : pane?.current();
+    pane = twoPane('Parts of my knowledge', items, keep);
     body.replaceChildren(
       h(
         'div',
-        { class: 'zp-page knowledge' },
+        { class: 'zp-page pane-page knowledge' },
         h('header', { class: 'zp-page-head', 'data-enter': true }, h('h1', { class: 'display' }, 'My knowledge'), h('p', { class: 'lead' }, 'How well you know each topic, from your answers.')),
-        h('div', { class: 'zp-grid know-tiles', 'data-enter': true }, ...tiles),
-        h('div', { class: 'zp-section-head', 'data-enter': true }, h('div', null, h('span', { class: 'kicker' }, 'Next'), h('h2', { class: 'zp-section-title' }, 'Practice your weakest topics'))),
-        weakest.length
-          ? h(
-              'ul',
-              { class: 'zp-grid know-weak', 'data-enter': true },
-              ...weakest.map((t) =>
-                h(
-                  'li',
-                  { class: 'zp-card' },
-                  h('span', { class: 'mistake-where' }, `From ${t.lesson.title}`),
-                  h('strong', null, t.text),
-                  badge(t.level),
-                  practiceLink(t),
-                ),
-              ),
-            )
-          : h(
-              'div',
-              { 'data-enter': true },
-              panel('info', counted.some((t) => t.level !== 'new') ? 'No weak topics right now.' : 'Nothing to show yet.', counted.some((t) => t.level !== 'new') ? 'Everything you practiced is solid or better. Keep going with the next lesson.' : 'Answer questions in the lessons, and your topics appear here.'),
-            ),
-        h(
-          'section',
-          { class: 'zp-section', 'data-enter': true },
-          sectionHead(
-            'Every lesson',
-            'All topics',
-            skippedCount ? `You skipped ${skippedCount} lesson${skippedCount === 1 ? '' : 's'}: ${skippedCount === 1 ? 'it does' : 'they do'} not count here.` : `${groups.length} modules`,
-          ),
-          h('div', { class: 'zp-stack' }, ...modules),
-        ),
+        h('div', { class: 'pane-wrap', 'data-enter': true }, pane.el),
       ),
     );
     if (keepOpen) {
