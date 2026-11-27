@@ -37,41 +37,7 @@ export interface Shell {
   remove(): void;
 }
 
-// The sidebar can fold into a rail of icons (wide windows; narrower ones
-// always have the rail). The choice stays on this device.
-const RAIL_KEY = 'zeropy:rail';
-function railSaved(): boolean {
-  try {
-    return localStorage.getItem(RAIL_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
 export function createShell(root: HTMLElement): Shell {
-  function railButton(): HTMLElement {
-    const el = h('button', { type: 'button', class: 'side-link side-rail-toggle' });
-    const paint = (): void => {
-      const rail = app.classList.contains('is-rail');
-      el.replaceChildren(icon(rail ? 'right' : 'left', 20), h('span', { class: 'side-label' }, rail ? 'Open the menu' : 'Fold the menu'));
-      el.setAttribute('aria-label', rail ? 'Open the menu' : 'Fold the menu into icons');
-      el.setAttribute('aria-pressed', String(rail));
-      el.title = rail ? 'Open the menu' : 'Fold the menu into icons';
-    };
-    el.addEventListener('click', () => {
-      const rail = !app.classList.contains('is-rail');
-      app.classList.toggle('is-rail', rail);
-      try {
-        localStorage.setItem(RAIL_KEY, rail ? '1' : '0');
-      } catch {
-        // Not saved: the menu opens again next time.
-      }
-      paint();
-    });
-    queueMicrotask(paint);
-    return el;
-  }
-
   const links = new Map<Place, HTMLAnchorElement[]>();
   const counts = new Map<Place, HTMLElement[]>();
 
@@ -79,7 +45,8 @@ export function createShell(root: HTMLElement): Shell {
     const count = h('span', { class: 'nav-count', hidden: true });
     const el = h(
       'a',
-      { class: `${kind}-link`, href: item.href },
+      // The label is also a tooltip: the folded menu shows only the icons.
+      { class: `${kind}-link`, href: item.href, title: item.label },
       icon(item.icon, kind === 'tab' ? 22 : 20),
       h('span', { class: `${kind}-label` }, item.label),
       count,
@@ -101,7 +68,7 @@ export function createShell(root: HTMLElement): Shell {
       h('span', { class: 'side-heading' }, 'Tools'),
       ...TOOLS.map((item) => link(item, 'side')),
     ),
-    h('div', { class: 'side-foot' }, railButton(), settingsButton({ side: true })),
+    h('div', { class: 'side-foot' }, settingsButton({ side: true })),
   );
 
   // Phone: four places as tabs, the rest (and Settings) under "More".
@@ -123,7 +90,51 @@ export function createShell(root: HTMLElement): Shell {
 
   const page = h('div', { class: 'app-page' });
   const top = h('header', { class: 'app-top' }, brand());
-  const app = h('div', { class: `app${railSaved() ? ' is-rail' : ''}` }, side, scrim, top, page, tabs);
+  // The pin: a small tab on the edge of the menu. It keeps the menu open
+  // until it is pressed again. It is not saved: the app starts folded.
+  const pin = h('button', { type: 'button', class: 'side-pin', 'aria-pressed': 'false', 'aria-label': 'Keep the menu open', title: 'Keep the menu open' }, h('i'), h('i'), h('i'));
+  const app = h('div', { class: 'app' }, side, pin, scrim, top, page, tabs);
+
+  // Wide windows: the menu is a rail of icons that opens under the pointer,
+  // over the page (the page keeps room for it: nothing moves, nothing hides).
+  const wide = window.matchMedia('(min-width: 1081px)');
+  let openTimer = 0;
+  let closeTimer = 0;
+  const menuOpen = (): boolean => Boolean(side.querySelector('.menu:not([hidden])'));
+  const setOpen = (open: boolean): void => {
+    app.classList.toggle('is-open', open && wide.matches);
+  };
+  const enter = (): void => {
+    window.clearTimeout(closeTimer);
+    openTimer = window.setTimeout(() => setOpen(true), 90);
+  };
+  const leave = (): void => {
+    window.clearTimeout(openTimer);
+    closeTimer = window.setTimeout(() => {
+      if (!app.classList.contains('is-pinned') && !menuOpen() && !side.contains(document.activeElement)) setOpen(false);
+    }, 280);
+  };
+  for (const part of [side, pin]) {
+    part.addEventListener('pointerenter', enter);
+    part.addEventListener('pointerleave', leave);
+  }
+  side.addEventListener('focusin', () => setOpen(true));
+  side.addEventListener('focusout', leave);
+  // A click outside the menu (also after the Settings menu closes) folds it.
+  document.addEventListener('pointerdown', (event) => {
+    if (!app.isConnected || app.classList.contains('is-pinned')) return;
+    if (!side.contains(event.target as Node) && !pin.contains(event.target as Node)) leave();
+  });
+  pin.addEventListener('click', () => {
+    const pinned = !app.classList.contains('is-pinned');
+    app.classList.toggle('is-pinned', pinned);
+    pin.setAttribute('aria-pressed', String(pinned));
+    const text = pinned ? 'Let the menu fold again' : 'Keep the menu open';
+    pin.setAttribute('aria-label', text);
+    pin.title = text;
+    setOpen(pinned || side.matches(':hover'));
+  });
+  wide.addEventListener('change', () => setOpen(app.classList.contains('is-pinned')));
   root.replaceChildren(app);
 
   return {

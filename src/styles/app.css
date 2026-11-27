@@ -5024,7 +5024,7 @@ code {
   display: flex;
   align-items: center;
   height: 36px;
-  padding: 0 156px 0 var(--s-4);
+  padding: 0 var(--s-1) 0 var(--s-3); /* the name lines up with the edge of the menu */
   border-bottom: 1px solid var(--border);
   background: var(--paper-2);
   font: 400 11px / 1 var(--font-tiny);
@@ -5064,50 +5064,55 @@ code {
 .titlebar-meter i.is-on {
   background: var(--success);
 }
-.titlebar-full {
+/* The window buttons: minimize, full screen, close. One size (40 x 28),
+   one centre line, 4px apart, in the pixel style of the app; close turns
+   red under the pointer, like every window. */
+.titlebar-controls {
   flex: none;
   display: flex;
   align-items: center;
-  height: 28px;
+  gap: 4px;
   margin-left: var(--s-10);
-  padding: 0 var(--s-1);
-  border: 2px solid transparent;
-  background: none;
-  color: var(--ink-2);
-  font: inherit;
-  cursor: pointer;
   -webkit-app-region: no-drag;
-  transition:
-    background var(--dur-2) var(--ease),
-    border-color var(--dur-2) var(--ease);
 }
-.titlebar-full-icon {
+.titlebar-btn {
   display: grid;
   place-items: center;
-  width: 24px;
-}
-/* The words open to the left of the icon, under the pointer only. */
-.titlebar-full-text {
-  max-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  opacity: 0;
+  width: 40px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
   transition:
-    max-width var(--dur-3) var(--ease),
-    opacity var(--dur-2) var(--ease),
-    margin var(--dur-3) var(--ease);
+    background var(--dur-2) var(--ease),
+    border-color var(--dur-2) var(--ease),
+    color var(--dur-2) var(--ease);
 }
-.titlebar-full:hover,
-.titlebar-full:focus-visible {
+.titlebar-btn .icon {
+  display: grid;
+  place-items: center;
+}
+.titlebar-btn:hover,
+.titlebar-btn:focus-visible {
   border-color: var(--border-strong);
   background: var(--paper-3);
   color: var(--ink);
 }
-.titlebar-full:hover .titlebar-full-text,
-.titlebar-full:focus-visible .titlebar-full-text {
-  max-width: 160px;
-  margin: 0 var(--s-2) 0 var(--s-1);
-  opacity: 1;
+.titlebar-btn:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 1px;
+}
+.titlebar-close:hover,
+.titlebar-close:focus-visible {
+  border-color: color-mix(in srgb, var(--tomato) 70%, #000);
+  background: var(--tomato);
+  color: #fff;
+}
+.titlebar-btn:active {
+  translate: 0 1px;
 }
 /* Full screen: the page takes the whole screen and the bar hides. It slides
    down when the pointer touches the top edge, and stays while it is over it.
@@ -5126,7 +5131,6 @@ code {
   height: 6px;
 }
 .is-full-screen .titlebar {
-  padding-right: var(--s-3);
   transform: translateY(-100%);
 }
 .is-full-screen .titlebar-edge:hover + .titlebar,
@@ -5135,8 +5139,7 @@ code {
   transform: none;
   box-shadow: 0 4px 0 var(--ledge);
 }
-:root[data-motion='reduced'] .titlebar,
-:root[data-motion='reduced'] .titlebar-full-text {
+:root[data-motion='reduced'] .titlebar {
   transition: none;
 }
 
@@ -5725,18 +5728,20 @@ code {
   display: block;
 }
 .sc-boat-up {
-  animation: zp-rock 2.4s steps(2) infinite;
+  animation: zp-rock 2.4s ease-in-out infinite alternate;
 }
 .sc-boat-down {
   position: absolute;
   top: 100%;
   left: 0;
+  /* Flipped around its own middle: it stays under the boat, in the water.
+     (Around its top edge it turned up over the boat: a grey box behind it.) */
   scale: 1 -0.8;
-  transform-origin: 50% 0;
+  transform-origin: 50% 50%;
   opacity: 0.35;
   -webkit-mask: repeating-linear-gradient(transparent 0 4px, #000 4px 12px);
   mask: repeating-linear-gradient(transparent 0 4px, #000 4px 12px);
-  animation: zp-rock 2.4s steps(2) infinite reverse;
+  animation: zp-rock 2.4s ease-in-out infinite alternate-reverse;
 }
 @keyframes zp-rock {
   50% {
@@ -6502,56 +6507,76 @@ code {
 }
 
 /* ==========================================================================
-   The sidebar folds into a rail of icons (wide windows; narrower windows
-   always have the rail). Its top lines up with the top of the page: the
-   name plate and the first title start at the same height.
+   The sidebar on wide windows: a rail of icons that opens under the pointer
+   as an overlay; the pin on its edge keeps it open. The app always starts
+   folded. The page keeps a safe zone on the left as wide as the open menu,
+   so opening it moves nothing and covers no text. (Narrower windows: the
+   rail of icons only, the labels as tooltips: there is no room to open it
+   without covering the page.)
    ========================================================================== */
-.side-rail-toggle {
+:root {
+  --rail-w: 88px;
+  --side-w: 236px;
+  --side-gap: var(--s-3);
+}
+.side-pin {
   display: none;
 }
 @media (min-width: 1081px) {
   .app {
-    transition: grid-template-columns var(--dur-3) var(--ease);
+    position: relative;
+    grid-template-columns: calc(var(--rail-w) + var(--side-gap)) minmax(0, 1fr);
   }
   .side {
+    z-index: 30;
+    width: var(--rail-w);
     padding-top: var(--s-3);
+    transition:
+      width var(--dur-3) var(--ease),
+      padding var(--dur-3) var(--ease);
   }
-  .side .side-rail-toggle {
-    display: flex;
-    margin-bottom: var(--s-1);
-    color: var(--ink-3);
+  .app.is-open .side {
+    width: var(--side-w);
   }
-  .app.is-rail {
-    grid-template-columns: 96px minmax(0, 1fr);
+  /* The safe zone: the page starts where the open menu ends. */
+  .app-page > .player > .player-main,
+  .app-page > .home > .home-main {
+    padding-left: calc(var(--side-w) - var(--rail-w) + var(--s-6));
+    padding-right: calc(var(--side-w) - var(--rail-w) + var(--s-6));
   }
-  .app.is-rail .side {
-    align-items: center;
+  /* Folded: every icon on the middle line of the rail. */
+  .app:not(.is-open) .side {
     padding-inline: var(--s-2);
   }
-  .app.is-rail .side-brand .brand-text,
-  .app.is-rail .side-label,
-  .app.is-rail .side-heading {
+  .app:not(.is-open) .side-brand .brand-text,
+  .app:not(.is-open) .side-label,
+  .app:not(.is-open) .side-heading,
+  .app:not(.is-open) .side .brand-sub {
     display: none;
   }
-  .app.is-rail .side .brand {
+  .app:not(.is-open) .side-brand {
+    display: flex;
     justify-content: center;
-    padding: 8px;
   }
-  .app.is-rail .side-nav,
-  .app.is-rail .side-foot {
-    justify-items: center;
-    width: 100%;
-  }
-  .app.is-rail .side .side-link {
+  .app:not(.is-open) .side .brand {
     justify-content: center;
     width: 52px;
-    height: 44px;
-    padding: 0;
+    padding: 8px 0;
   }
-  .app.is-rail .side .side-link.is-current::after {
+  .app:not(.is-open) .side-nav,
+  .app:not(.is-open) .side-foot {
+    justify-items: center;
+  }
+  .app:not(.is-open) .side .side-link {
+    justify-content: center;
+    width: 52px;
+    padding: 0;
+    gap: 0;
+  }
+  .app:not(.is-open) .side .side-link.is-current::after {
     display: none;
   }
-  .app.is-rail .side-link .nav-count {
+  .app:not(.is-open) .side-link .nav-count {
     position: absolute;
     top: 3px;
     right: 2px;
@@ -6561,11 +6586,277 @@ code {
     font-size: 11px;
     line-height: 16px;
   }
-  .app.is-rail .menu-side {
-    left: calc(96px + var(--s-3));
+  .side .side-link {
+    overflow: hidden;
   }
+  .menu-side {
+    left: calc(var(--side-w) + var(--side-gap) + var(--s-3));
+  }
+  /* The pin: a small tab on the edge of the menu, in the middle of its
+     height; three pixels in a row, amber when the menu is pinned. */
+  .side-pin {
+    position: absolute;
+    z-index: 31;
+    top: 50%;
+    left: calc(var(--side-gap) + var(--rail-w) - 2px);
+    display: grid;
+    grid-auto-flow: row;
+    place-content: center;
+    gap: 3px;
+    width: 14px;
+    height: 56px;
+    margin-top: -28px;
+    padding: 0;
+    border: 2px solid var(--border-strong);
+    border-left: 0;
+    border-radius: 0 6px 6px 0;
+    background: var(--paper-2);
+    cursor: pointer;
+    transition:
+      left var(--dur-3) var(--ease),
+      background var(--dur-2) var(--ease);
+  }
+  .app.is-open .side-pin {
+    left: calc(var(--side-gap) + var(--side-w) - 2px);
+  }
+  .side-pin i {
+    width: 4px;
+    height: 4px;
+    background: var(--ink-3);
+  }
+  .side-pin:hover i {
+    background: var(--ink);
+  }
+  .app.is-pinned .side-pin {
+    border-color: var(--accent-ledge);
+    background: var(--accent);
+  }
+  .app.is-pinned .side-pin i {
+    background: var(--accent-ink);
+  }
+  .side-pin:focus-visible {
+    outline: 2px solid var(--info);
+    outline-offset: 2px;
+  }
+}
+:root[data-motion='reduced'] .side,
+:root[data-motion='reduced'] .side-pin {
+  transition: none;
 }
 .side-foot {
   display: grid;
   gap: 2px;
+}
+
+/* Balance (28 Nov 2026): cards of very different length never stand side by
+   side, where the short one looked cut in half. Long cards stack in one
+   column; counted cards fill whole rows; the grids measure the width the
+   page really has (a container), not the window. */
+.zp-section,
+.zp-page {
+  container-type: inline-size;
+}
+.zp-stack {
+  display: grid;
+  gap: var(--s-4);
+}
+/* A long card with its links on the right: text left, links right. */
+.zp-card-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-auto-rows: min-content;
+  column-gap: var(--s-8);
+  align-content: start;
+}
+.zp-card-split > :not(.zp-card-foot) {
+  grid-column: 1;
+}
+.zp-card-split > .zp-card-foot {
+  grid-column: 2;
+  grid-row: 1 / span 8;
+  align-self: start;
+  margin: 0;
+  padding: 0 0 0 var(--s-6);
+  border-top: 0;
+  border-left: 1px solid var(--border);
+}
+@container (max-width: 720px) {
+  .zp-card-split {
+    display: flex;
+  }
+  .zp-card-split > .zp-card-foot {
+    padding: var(--s-3) 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}
+/* Mixed practice: 8 modules and 24 challenges, in whole rows of 4, 2 or 1. */
+.practice-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@container (max-width: 860px) {
+  .practice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (max-width: 440px) {
+  .practice-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Cheat sheet: four, three, two or one column, by the room there is. */
+.sheet .zp-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@container (max-width: 980px) {
+  .sheet .zp-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container (max-width: 720px) {
+  .sheet .zp-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (max-width: 460px) {
+  .sheet .zp-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Knowledge: one module per row; its lessons in two columns when wide. */
+.know-module .know-lessons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--s-8);
+  align-items: start;
+}
+@container (max-width: 720px) {
+  .know-module .know-lessons {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   Settings: a framed panel like the rest of the app. A title bar, then two
+   columns of cards (look and motion; progress and version). The choices are
+   pixel segments: the chosen one amber, on a ledge. One column on a phone.
+   ========================================================================== */
+.menu-side {
+  container-type: inline-size;
+  width: min(620px, calc(100vw - var(--side-w) - var(--side-gap) - var(--s-8)));
+  padding: 0;
+  border: 2px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--paper-1);
+  box-shadow:
+    0 6px 0 var(--ledge),
+    0 24px 60px rgb(0 0 0 / 0.45);
+  overflow: auto;
+}
+:root[data-theme='dark'] .menu-side {
+  text-shadow: none;
+}
+.menu-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5);
+  border-bottom: 2px solid var(--border);
+  background: var(--paper-2);
+}
+.menu-title {
+  margin: 0;
+  font: var(--display-weight) 20px / 1.1 var(--font-display);
+}
+.menu-close {
+  width: 32px;
+  height: 32px;
+}
+.menu-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-5);
+  padding: var(--s-5);
+}
+.menu-col {
+  display: grid;
+  align-content: start;
+  gap: var(--s-3);
+}
+.menu-kicker {
+  color: var(--accent-text);
+}
+@container (max-width: 520px) {
+  .menu-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.menu-side .menu-card {
+  margin: 0;
+  padding: var(--s-4);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper-2);
+  box-shadow: 0 4px 0 var(--border);
+}
+.menu-side .menu-group + .menu-group,
+.menu-side .menu-note-info + .menu-group {
+  margin-top: 0;
+  padding-top: var(--s-4);
+  border-top: 2px solid var(--border);
+}
+.menu-side .menu-group legend {
+  float: left;
+  width: 100%;
+  margin-bottom: var(--s-3);
+  font: var(--display-weight) 16px / 1.2 var(--font-display);
+  color: var(--ink);
+}
+.menu-side .menu-group legend + * {
+  clear: both;
+}
+/* Pixel segments: one frame, the chosen one amber on a ledge. */
+.menu-side .segmented {
+  gap: 4px;
+  padding: 4px;
+  border: 2px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--paper-1);
+}
+.menu-side .segment {
+  border-radius: 3px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  transition:
+    background var(--dur-2) var(--ease),
+    color var(--dur-2) var(--ease);
+}
+:root .menu-side .segment:has(input:checked) {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 2px 0 var(--accent-ledge);
+}
+.menu-side .menu-note {
+  margin-top: var(--s-2);
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.menu-side .menu-note-info {
+  margin: 0;
+}
+.menu-side .menu-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+.menu-side .menu-version {
+  font: var(--display-weight) 18px / 1.2 var(--font-display);
+}
+@media (max-width: 720px) {
+  .menu-side {
+    width: auto;
+  }
 }

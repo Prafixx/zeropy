@@ -241,16 +241,6 @@ function fit(win) {
   if (key === lastFit) return;
   lastFit = key;
   if (win.webContents.getZoomFactor() !== zoom) win.webContents.setZoomFactor(zoom);
-  // The bar of the page grows with the zoom: the window buttons grow with it.
-  const barHeight = Math.round(TITLE_BAR_HEIGHT * zoom);
-  if (barHeight !== barColors.height) {
-    barColors.height = barHeight;
-    try {
-      win.setTitleBarOverlay(barColors);
-    } catch {
-      // No overlay (full screen on some systems): nothing to size.
-    }
-  }
   win.webContents.send('window:state', { full, zoom });
 }
 
@@ -293,18 +283,14 @@ ipcMain.on('window:full-screen', (event, on) => {
   if (win && typeof on === 'boolean') win.setFullScreen(on);
 });
 
-// The title bar is the app's own (src/main.ts draws it). Windows keeps its
-// buttons on the right, in the colors of the theme.
-const TITLE_BAR_HEIGHT = 36;
-const titleBar = (dark) => ({ color: dark ? '#151729' : '#fdfbf7', symbolColor: dark ? '#f3f0e8' : '#1d1c26', height: TITLE_BAR_HEIGHT });
-const barColors = titleBar(nativeTheme.shouldUseDarkColors);
-ipcMain.on('window:title-bar', (event, colors) => {
+// The title bar is the app's own (src/engine/titlebar.ts), with its own
+// buttons: minimize, full screen, close. Windows draws none (no overlay), so
+// they look like the app. The bar is the place to drag the window.
+ipcMain.on('window:control', (event, what) => {
   const win = BrowserWindow.fromWebContents(event.sender);
-  if (win && colors && typeof colors.color === 'string' && typeof colors.symbolColor === 'string') {
-    barColors.color = colors.color;
-    barColors.symbolColor = colors.symbolColor;
-    win.setTitleBarOverlay(barColors);
-  }
+  if (!win) return;
+  if (what === 'minimize') win.minimize();
+  else if (what === 'close') win.close();
 });
 
 function createWindow() {
@@ -317,7 +303,6 @@ function createWindow() {
     icon: ICON,
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#0d0e19' : '#f7f3ec',
     titleBarStyle: 'hidden',
-    titleBarOverlay: titleBar(nativeTheme.shouldUseDarkColors),
     maximizable: false,
     show: false,
     webPreferences: {

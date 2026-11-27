@@ -33,6 +33,7 @@ export const PIXEL_ICONS: Record<string, string> = {
   upload: '<rect x="5" y="1" width="2" height="1"/><rect x="4" y="2" width="4" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="5" y="3" width="2" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="5" y="4" width="2" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="5" y="5" width="2" height="1"/><rect x="5" y="6" width="2" height="1"/><rect x="5" y="7" width="2" height="1"/><rect x="1" y="9" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/><rect x="1" y="10" width="10" height="1"/>',
   expand: '<rect x="1" y="1" width="4" height="1"/><rect x="1" y="1" width="1" height="4"/><rect x="7" y="1" width="4" height="1"/><rect x="10" y="1" width="1" height="4"/><rect x="1" y="10" width="4" height="1"/><rect x="1" y="7" width="1" height="4"/><rect x="7" y="10" width="4" height="1"/><rect x="10" y="7" width="1" height="4"/>',
   shrink: '<rect x="1" y="4" width="4" height="1"/><rect x="4" y="1" width="1" height="4"/><rect x="7" y="4" width="4" height="1"/><rect x="7" y="1" width="1" height="4"/><rect x="1" y="7" width="4" height="1"/><rect x="4" y="7" width="1" height="4"/><rect x="7" y="7" width="4" height="1"/><rect x="7" y="7" width="1" height="4"/>',
+  minus: '<rect x="2" y="6" width="8" height="1"/><rect x="2" y="7" width="8" height="1" opacity="0"/>',
 };
 
 /** The crate mascot as SVG markup (its own colors, crisp at any size). */

@@ -7,7 +7,7 @@ import '@fontsource-variable/figtree/wght-italic.css';
 import '@fontsource-variable/jetbrains-mono';
 import './styles/tokens.css';
 import './styles/app.css';
-import { onSettings } from './kit/settings';
+import './kit/settings'; // applies the saved theme and motion before the first paint
 import { mountSky } from './kit/sky';
 import { mountHorizon, setHorizon, type HorizonPlace } from './kit/horizon';
 import { mountHome } from './engine/home';
@@ -19,7 +19,7 @@ import { mountMistakes } from './engine/mistakes-page';
 import { mountNext } from './engine/next-page';
 import { mountPractice } from './engine/practice-page';
 import { mountKnowledge } from './engine/knowledge-page';
-import { mountTitleBar, paintTitleBar, updateTitleBar } from './engine/titlebar';
+import { mountTitleBar, updateTitleBar } from './engine/titlebar';
 import { createShell, type Place, type Shell } from './engine/shell';
 
 const root = document.getElementById('app')!;
@@ -90,7 +90,6 @@ function route(): void {
 mountSky();
 mountHorizon();
 mountTitleBar();
-onSettings(() => paintTitleBar());
 window.addEventListener('hashchange', route);
 route();
 

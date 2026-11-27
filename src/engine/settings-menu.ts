@@ -39,7 +39,7 @@ export function settingsButton(options: { side?: boolean } = {}): HTMLElement {
     const note = h('p', { class: 'menu-note' }, options.find((o) => o.value === current)?.note ?? '');
     return h(
       'fieldset',
-      { class: 'menu-group' },
+      { class: 'menu-group menu-card' },
       h('legend', null, title),
       h(
         'div',
@@ -70,7 +70,7 @@ export function settingsButton(options: { side?: boolean } = {}): HTMLElement {
       group('Colors', 'theme', THEME, settings.theme, (theme) => setSettings({ theme })),
       h(
         'fieldset',
-        { class: 'menu-group' },
+        { class: 'menu-group menu-card' },
         h('legend', null, 'My progress'),
         h(
           'div',
@@ -107,7 +107,24 @@ export function settingsButton(options: { side?: boolean } = {}): HTMLElement {
       ),
       updateBlock(),
     ];
-    menu.replaceChildren(...parts.filter((part) => part !== null));
+    // Two columns of cards: how ZeroPy looks and moves; then the progress
+    // and the version. A title bar on top, with a way to close it.
+    const [graphics, motionNote, motion, colors, progress, about] = parts;
+    about?.classList.add('menu-card');
+    const shut = h('button', { type: 'button', class: 'icon-btn menu-close', 'aria-label': 'Close the settings', title: 'Close' }, icon('close', 16));
+    shut.addEventListener('click', () => {
+      close();
+      toggle.focus();
+    });
+    menu.replaceChildren(
+      h('header', { class: 'menu-head' }, h('h2', { class: 'menu-title' }, 'Settings'), shut),
+      h(
+        'div',
+        { class: 'menu-cols' },
+        h('div', { class: 'menu-col' }, h('span', { class: 'kicker menu-kicker' }, 'Look and motion'), ...[graphics, motionNote, motion, colors].filter((p): p is HTMLElement => p !== null)),
+        h('div', { class: 'menu-col' }, h('span', { class: 'kicker menu-kicker' }, 'Progress and version'), ...[progress, about].filter((p): p is HTMLElement => p !== null)),
+      ),
+    );
   }
 
   function close(): void {

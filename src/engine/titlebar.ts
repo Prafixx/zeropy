@@ -1,8 +1,7 @@
 // The title bar of the desktop app: the app's own, in place of the plain
 // bar of Windows. Left: the name in the tiny pixel font. In the middle: a
 // meter with one cell for each Python lesson, like the status bar of a game.
-// Right: the full-screen button. Windows draws
-// its own buttons to the right of it, in the colors of the theme.
+// Right: the window buttons (minimize, full screen, close), the app's own.
 // In full screen the bar hides; it slides down when the pointer reaches the
 // top edge of the screen.
 import { course } from './registry';
@@ -10,7 +9,8 @@ import { lessonState } from './store';
 import { h, icon } from './ui';
 
 interface WindowBridge {
-  titleBar(colors: { color: string; symbolColor: string }): void;
+  minimize?(): void;
+  close?(): void;
   fullScreen?(on: boolean): void;
   onState?(listener: (state: { full: boolean; zoom: number }) => void): void;
 }
@@ -25,22 +25,24 @@ export function mountTitleBar(): void {
   if (!bridge() || document.querySelector('.titlebar')) return;
   document.documentElement.classList.add('has-titlebar');
   meter = h('span', { class: 'titlebar-meter', 'aria-hidden': 'true' });
-  // Full screen: fills the whole screen, over the taskbar. Esc leaves it.
-  // Only the icon; the words open beside it under the pointer.
-  const label = h('span', { class: 'titlebar-full-text' });
-  const glyph = h('span', { class: 'titlebar-full-icon' });
-  const toggle = h('button', { type: 'button', class: 'titlebar-full' }, label, glyph);
   const win = bridge()!;
+  // The window buttons: the same size and line, in the style of the app.
+  const control = (cls: string, name: string, label: string, onClick: () => void): HTMLButtonElement => {
+    const el = h('button', { type: 'button', class: `titlebar-btn ${cls}`, 'aria-label': label, title: label }, icon(name, 20));
+    el.addEventListener('click', onClick);
+    return el;
+  };
+  // Full screen: fills the whole screen, over the taskbar. Esc leaves it.
+  const toggle = control('titlebar-full', 'expand', 'Full screen (F11)', () => win.fullScreen?.(!full));
   const show = (on: boolean): void => {
     full = on;
     document.documentElement.classList.toggle('is-full-screen', on);
-    glyph.replaceChildren(icon(on ? 'shrink' : 'expand', 20));
-    label.textContent = on ? 'EXIT FULL SCREEN' : 'FULL SCREEN';
+    toggle.replaceChildren(icon(on ? 'shrink' : 'expand', 20));
     const text = on ? 'Leave full screen (Esc)' : 'Full screen (F11)';
     toggle.setAttribute('aria-label', text);
+    toggle.title = text;
   };
   show(false);
-  toggle.addEventListener('click', () => win.fullScreen?.(!full));
   win.onState?.((state) => show(state.full));
   document.addEventListener('keydown', (event) => {
     // Esc closes a dialog or a menu first; only a free Esc leaves full screen.
@@ -57,10 +59,15 @@ export function mountTitleBar(): void {
       { class: 'titlebar' },
       h('span', { class: 'titlebar-name' }, 'ZEROPY'),
       h('span', { class: 'titlebar-progress' }, meter),
-      win.fullScreen ? toggle : null,
+      h(
+        'span',
+        { class: 'titlebar-controls' },
+        win.minimize ? control('titlebar-min', 'minus', 'Minimize', () => win.minimize?.()) : null,
+        win.fullScreen ? toggle : null,
+        win.close ? control('titlebar-close', 'close', 'Close', () => win.close?.()) : null,
+      ),
     ),
   );
-  paintTitleBar();
   updateTitleBar();
 }
 
@@ -76,12 +83,4 @@ export function updateTitleBar(): void {
     meter!.children[i].classList.toggle('is-on', on);
   });
   meter.title = `${done} of ${ids.length} Python lessons done`;
-}
-
-/** The window buttons take the colors of the bar (after a change of theme). */
-export function paintTitleBar(): void {
-  const win = bridge();
-  if (!win) return;
-  const css = getComputedStyle(document.documentElement);
-  win.titleBar({ color: css.getPropertyValue('--paper-2').trim(), symbolColor: css.getPropertyValue('--ink').trim() });
 }

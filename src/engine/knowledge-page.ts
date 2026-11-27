@@ -182,7 +182,7 @@ export function mountKnowledge(root: HTMLElement): () => void {
             'All topics',
             skippedCount ? `You skipped ${skippedCount} lesson${skippedCount === 1 ? '' : 's'}: ${skippedCount === 1 ? 'it does' : 'they do'} not count here.` : `${groups.length} modules`,
           ),
-          h('div', { class: 'zp-grid zp-grid-wide' }, ...modules),
+          h('div', { class: 'zp-stack' }, ...modules),
         ),
       ),
     );

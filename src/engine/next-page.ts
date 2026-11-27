@@ -52,11 +52,11 @@ export function mountNext(root: HTMLElement): () => void {
           sectionHead('Step by step', 'First, for everyone'),
           h(
             'div',
-            { class: 'zp-grid zp-grid-wide' },
+            { class: 'zp-stack' },
             ...data.stages.map((stage, i) =>
               h(
                 'article',
-                { class: 'zp-card next-card' },
+                { class: 'zp-card zp-card-split next-card' },
                 h('span', { class: 'zp-card-kicker' }, `${i + 1} · ${stage.when}`),
                 h('h3', { class: 'zp-card-title' }, stage.title),
                 h('p', { class: 'zp-card-text' }, stage.why),
@@ -97,7 +97,7 @@ export function mountNext(root: HTMLElement): () => void {
           sectionHead('Later', data.languages.title),
           h(
             'div',
-            { class: 'zp-grid zp-grid-wide' },
+            { class: 'zp-stack' },
             h(
               'article',
               { class: 'zp-card next-card' },
