@@ -3,9 +3,10 @@
 // with pines, under the sky, and a lake in front that mirrors them. The land
 // is drawn for the width of the page, in pixels of 4 x 4, and again when the
 // page changes size.
-// On the lake: lines of light that come and go, a small sailboat that drifts
-// across with its reflection, and now and then a fish that jumps and leaves
-// a ring on the water. Reduced motion: all still, and no fish.
+// Life on the lake, each at its own random time and never in a crowd: a
+// small sailboat comes in from one side and sails out of the other, with
+// its reflection; a fish jumps and leaves a ring; a few birds fly across.
+// Lines of light come and go on the water. Reduced motion: all still.
 import { isReduced } from './motion';
 
 const CELL = 4;
@@ -26,7 +27,7 @@ class Layer {
 }
 
 /** A small sprite: cells by class, drawn at the pixel size of the land. */
-function sprite(cols: number, rows: number, cell: (x: number, y: number) => string, className: string): string {
+function sprite(cols: number, rows: number, cell: (x: number, y: number) => string, className: string, size = CELL): string {
   const layers = new Map<string, Layer>();
   for (let y = 0; y < rows; y += 1) {
     for (let x = 0; x < cols; x += 1) {
@@ -37,7 +38,7 @@ function sprite(cols: number, rows: number, cell: (x: number, y: number) => stri
     }
   }
   const paths = [...layers].map(([c, l]) => `<path class="${c}" d="${l.d}"/>`).join('');
-  return `<svg class="${className}" viewBox="0 0 ${cols} ${rows}" width="${cols * CELL}" height="${rows * CELL}" shape-rendering="crispEdges">${paths}</svg>`;
+  return `<svg class="${className}" viewBox="0 0 ${cols} ${rows}" width="${cols * size}" height="${rows * size}" shape-rendering="crispEdges">${paths}</svg>`;
 }
 
 /** The sailboat: a mast with a small flag, two white sails, a wooden hull. */
@@ -54,6 +55,7 @@ const BOAT = sprite(
     return '';
   },
   'bt',
+  6,
 );
 
 /** A small fish, seen from the side. */
@@ -69,7 +71,14 @@ const FISH = sprite(
     return '';
   },
   'fs',
+  6,
 );
+
+/** A bird, two frames: the wings up (a V), then down. */
+const BIRD_UP = ['x.....x', '.x...x.', '..xxx..'];
+const BIRD_DOWN = ['..xxx..', '.x...x.', 'x.....x'];
+const birdFrame = (rows: string[]): string => sprite(7, 3, (x, y) => (rows[y][x] === 'x' ? 'bd-body' : ''), 'bd', 3);
+const BIRD = birdFrame(BIRD_UP) + birdFrame(BIRD_DOWN);
 
 export function landscape(): Scene {
   const el = document.createElement('div');
@@ -91,18 +100,16 @@ export function landscape(): Scene {
     el.append(r);
     return r;
   });
-  // The boat and its reflection move together.
+  // The boat and its reflection move together; the fish leaves a ring.
   const boat = document.createElement('div');
   boat.className = 'sc-boat';
   boat.innerHTML = `<div class="sc-boat-up">${BOAT}</div><div class="sc-boat-down">${BOAT}</div>`;
-  el.append(boat);
-  // A fish that jumps now and then, and the ring it leaves.
   const fish = document.createElement('div');
   fish.className = 'sc-fish';
   fish.innerHTML = FISH;
   const ring = document.createElement('i');
   ring.className = 'sc-ring';
-  el.append(fish, ring);
+  el.append(boat, fish, ring);
 
   let shore = 0; // the shoreline, in % of the height of the scene, from the bottom
 
@@ -196,28 +203,68 @@ export function landscape(): Scene {
     });
   }
 
-  // The fish: a jump every 9 to 18 seconds, somewhere on the lake.
-  let timer = 0;
-  const jump = (): void => {
-    timer = window.setTimeout(
-      () => {
-        if (!document.hidden && !isReduced()) {
-          const x = 8 + Math.random() * 84;
-          const y = shore * (0.25 + Math.random() * 0.5);
-          for (const part of [fish, ring]) {
-            part.style.left = `${x}%`;
-            part.style.bottom = `${y}%`;
-            part.classList.remove('is-on');
-            void part.offsetWidth; // start the animation again
-            part.classList.add('is-on');
-          }
-        }
-        jump();
-      },
-      9000 + Math.random() * 9000,
-    );
+  // The life of the lake: each thing comes at its own random time, crosses
+  // or jumps, and goes. Never two boats at once; never in a hidden window.
+  const timers: number[] = [];
+  const later = (ms: number, fn: () => void): void => {
+    timers.push(window.setTimeout(fn, ms));
   };
-  jump();
+  const between = (a: number, b: number): number => a + Math.random() * (b - a);
+  const quiet = (): boolean => document.hidden || isReduced();
+
+  /** Moves an element across the scene, from one side out to the other. */
+  function cross(thing: HTMLElement, seconds: number, toLeft: boolean): Promise<void> {
+    const off = `-${thing.offsetWidth + 20}px`;
+    const end = 'calc(100% + 20px)';
+    thing.classList.toggle('is-left', toLeft);
+    thing.classList.add('is-on');
+    const run = thing.animate([{ left: toLeft ? end : off }, { left: toLeft ? off : end }], { duration: seconds * 1000, easing: 'linear' });
+    return run.finished.then(
+      () => thing.classList.remove('is-on'),
+      () => thing.classList.remove('is-on'),
+    );
+  }
+
+  const sail = (): void => {
+    if (quiet()) return later(20000, sail);
+    void cross(boat, between(80, 120), Math.random() < 0.3).then(() => later(between(20000, 60000), sail));
+  };
+  const leap = (): void => {
+    if (!quiet()) {
+      const x = between(8, 90);
+      const y = shore * between(0.2, 0.6);
+      for (const part of [fish, ring]) {
+        part.style.left = `${x}%`;
+        part.style.bottom = `${y}%`;
+        part.classList.remove('is-on');
+        void part.offsetWidth; // start the animation again
+        part.classList.add('is-on');
+      }
+    }
+    later(between(9000, 26000), leap);
+  };
+  const fly = (): void => {
+    if (!quiet()) {
+      // One to three birds, close together, at the height of the mountains.
+      const toLeft = Math.random() < 0.5;
+      const count = 1 + Math.floor(Math.random() * 3);
+      const height = between(78, 94);
+      const seconds = between(24, 38);
+      for (let i = 0; i < count; i += 1) {
+        const bird = document.createElement('div');
+        bird.className = 'sc-bird';
+        bird.innerHTML = BIRD;
+        bird.style.bottom = `${height - i * 3}%`;
+        bird.style.animationDelay = `${-i * 0.2}s`;
+        el.append(bird);
+        later(i * 700, () => void cross(bird, seconds, toLeft).then(() => bird.remove()));
+      }
+    }
+    later(between(25000, 60000), fly);
+  };
+  later(between(1500, 4000), sail);
+  later(between(4000, 9000), leap);
+  later(between(9000, 16000), fly);
 
   const observer = new ResizeObserver(() => draw());
   observer.observe(el);
@@ -225,7 +272,8 @@ export function landscape(): Scene {
     el,
     dispose: () => {
       observer.disconnect();
-      window.clearTimeout(timer);
+      for (const t of timers) window.clearTimeout(t);
+      for (const a of el.getAnimations({ subtree: true })) a.cancel();
     },
   };
 }
