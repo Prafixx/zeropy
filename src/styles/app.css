@@ -7184,3 +7184,328 @@ code {
     display: none;
   }
 }
+
+/* ==========================================================================
+   The Back button (ui.ts backButton): one for the whole app. A small frame
+   like the window buttons: the arrow first, then the word.
+   ========================================================================== */
+.btn.btn-back {
+  gap: var(--s-2);
+  min-height: 36px;
+  padding: 0 var(--s-4) 0 var(--s-3);
+  border: 2px solid var(--border-strong);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--paper-2) 80%, transparent);
+  box-shadow: none;
+  color: var(--ink-2);
+  font: var(--display-weight) 15px / 1 var(--font-display);
+}
+.btn.btn-back .icon {
+  order: -1;
+  transition: translate var(--dur-2) var(--ease);
+}
+.btn.btn-back:hover:not(:disabled) {
+  border-color: var(--ink-3);
+  background: var(--paper-3);
+  color: var(--ink);
+}
+.btn.btn-back:hover:not(:disabled) .icon {
+  translate: -2px 0;
+}
+.btn.btn-back:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+.btn.btn-back:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+.btn.btn-back[hidden] {
+  opacity: 0.45;
+}
+.btn.btn-back[hidden] {
+  display: none;
+}
+
+/* ==========================================================================
+   The landing: two buttons with a clear order. The first: amber on its
+   ledge, it rises a little under the pointer and presses down on a click.
+   The second: a framed glass panel of the night. Focus: a blue ring.
+   The title: a soft light from the top of the letters, an entrance that
+   rises and fades in, and "today." that floats very slowly.
+   ========================================================================== */
+.landing .btn-big {
+  border-radius: 6px;
+  transition:
+    transform var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease),
+    background var(--dur-2) var(--ease),
+    border-color var(--dur-2) var(--ease);
+}
+.landing .btn-primary {
+  box-shadow: 0 5px 0 var(--accent-ledge);
+}
+.landing .btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 var(--accent-ledge);
+}
+.landing .btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--accent-ledge);
+}
+.landing .btn-primary .icon {
+  transition: translate var(--dur-2) var(--ease);
+}
+.landing .btn-primary:hover .icon {
+  translate: 3px 0;
+}
+.landing .btn-plain,
+.landing .btn:not(.btn-primary) {
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--paper-2) 75%, transparent);
+  box-shadow: 0 5px 0 var(--ledge);
+  color: var(--ink);
+}
+.landing .btn:not(.btn-primary):hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--ink-3);
+  background: color-mix(in srgb, var(--paper-3) 85%, transparent);
+  box-shadow: 0 7px 0 var(--ledge);
+}
+.landing .btn:not(.btn-primary):active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--ledge);
+}
+.landing .btn:focus-visible {
+  outline: 3px solid var(--info);
+  outline-offset: 4px;
+}
+.landing .btn:disabled,
+.landing .btn[aria-disabled='true'] {
+  transform: none;
+}
+/* The title: lit softly from above (a gradient inside the letters), on
+   each part apart, one light for each line. */
+.landing-lit {
+  background: linear-gradient(180deg, var(--ink) 35%, color-mix(in srgb, var(--ink) 78%, var(--ink-3)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.landing-claim em {
+  display: inline-block;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-text) 85%, #fff) 20%, var(--accent-text));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: zp-float 7s ease-in-out infinite;
+}
+@keyframes zp-float {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+:root[data-theme='dark'] .landing-claim,
+:root[data-theme='dark'] .landing-lit,
+:root[data-theme='dark'] .landing-claim em {
+  text-shadow: none;
+}
+/* The entrance: the title, then the buttons, rise a little and fade in. */
+.landing > * {
+  animation: zp-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.landing > .landing-actions {
+  animation-delay: 0.18s;
+}
+@keyframes zp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+:root[data-motion='reduced'] .landing > *,
+:root[data-motion='reduced'] .landing-claim em {
+  animation: none;
+}
+
+/* "See the course": the same index and panel, in the home frame. */
+.home:has(.pane-page) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.home:has(.pane-page) > .home-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  overflow: hidden;
+  padding-bottom: var(--s-4);
+}
+.home:has(.pane-page) > .foot {
+  flex: none;
+  margin-top: 0;
+  padding-block: var(--s-2) var(--s-3);
+}
+.course-row.is-next {
+  background: color-mix(in srgb, var(--accent) 10%, var(--paper-2));
+}
+.course-row.is-done .pane-row-text strong {
+  color: var(--ink-2);
+}
+.course-check {
+  display: inline-grid;
+  margin-right: var(--s-2);
+  color: var(--success);
+  vertical-align: -2px;
+}
+.course-outcome {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  color: var(--ink);
+  font-size: 15px;
+}
+.course-outcome .icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--success);
+}
+.pane-tab .meter {
+  flex: none;
+  width: 44px;
+}
+
+/* ==========================================================================
+   Page titles: centred on the content area (the window less the folded
+   menu; the open menu is an overlay and changes nothing), at the same
+   height on every page. A Back button sits on its own line above, on the
+   left, inside the content area: never under the menu or the bar.
+   ========================================================================== */
+:root {
+  --page-top: var(--s-8);
+}
+.app-page > .player > .player-main,
+.app-page > .home > .home-main:not(.home-start) {
+  padding-top: var(--page-top);
+}
+.zp-page-head,
+.player-main.is-page .single > h1.display,
+.step-body.playground > h1,
+.step-body.playground > .playground-lead {
+  text-align: center;
+}
+.zp-page-head {
+  justify-items: center;
+}
+.zp-page-head .lead,
+.step-body.playground > .playground-lead {
+  margin-inline: auto;
+}
+.zp-page-head .sheet-tools {
+  justify-content: center;
+  width: 100%;
+}
+.page-back {
+  justify-self: start;
+  margin-bottom: calc(var(--s-1) * -1);
+}
+/* Lessons: the head of each step centred above its content too. */
+.step-head {
+  justify-items: center;
+  text-align: center;
+}
+.step-head .step-kicker {
+  justify-content: center;
+}
+/* Every page: the same gutter on both sides (a scrollbar no longer pulls
+   the centre to the left); one-column pages centre their title too. */
+.app-page .player-main {
+  scrollbar-gutter: stable both-edges;
+}
+.app-page .single > h1.display {
+  margin-top: 0;
+  text-align: center;
+}
+/* The Back button on the line of the title, on the left: the title stays
+   at the height of every other title. A narrow window: its own line. */
+.zp-page-head {
+  position: relative;
+}
+.zp-page-head > .page-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+}
+@media (max-width: 900px) {
+  .zp-page-head > .page-back {
+    position: static;
+  }
+}
+
+/* ==========================================================================
+   The audit of the lesson screens (29 Nov 2026): each kind of detail fixed
+   once, for every screen.
+   ========================================================================== */
+/* Ghost buttons (Show a hint, Skip, the steps of the debugger, Start
+   again) read as buttons: a light frame at rest, a clear one under the
+   pointer, the same radius and line as the others. */
+.btn.btn-ghost {
+  border-color: var(--border);
+  background: transparent;
+}
+.btn.btn-ghost:hover:not(:disabled) {
+  border-color: var(--ink-3);
+  background: var(--paper-3);
+  color: var(--ink);
+}
+.btn.btn-ghost:focus-visible,
+.btn.btn-plain:focus-visible,
+.btn.btn-primary:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+/* A disabled button: a dashed frame and quiet words, still readable; no
+   ledge, no pointer. */
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 1;
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-3);
+  cursor: default;
+}
+:root[data-theme='dark'] .btn:disabled,
+:root[data-theme='dark'] .btn[aria-disabled='true'] {
+  border-color: var(--border-strong);
+}
+.btn.btn-back:disabled {
+  opacity: 1;
+}
+/* "Check my prediction": as tall as the answer box beside it. */
+.predict-row {
+  align-items: stretch;
+}
+.predict-row > .btn {
+  height: auto;
+  align-self: stretch;
+}
+/* Captions in pictures: the tiny pixel caps of every other label. */
+.pr2d-cap {
+  font: 400 11px / 1.2 var(--font-tiny);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+/* Scrollbars: thin, in the colours of the app (no light grey default). */
+:root {
+  scrollbar-color: color-mix(in srgb, var(--border-strong) 80%, transparent) transparent;
+}
+* {
+  scrollbar-width: thin;
+}

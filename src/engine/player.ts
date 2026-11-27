@@ -8,7 +8,7 @@ import { confirmDialog } from './dialog';
 import { settingsButton } from './settings-menu';
 import { describeWait, finishLesson, includeLesson, isSkipped, lessonState, nextDue, reachStep, skipLesson } from './store';
 import type { Lesson, Step } from './types';
-import { button, h, icon, panel } from './ui';
+import { backButton, button, h, icon, panel } from './ui';
 import type { StepContext, StepView } from './steps/context';
 import { renderDemo } from './steps/demo';
 import { renderExercise } from './steps/exercise';
@@ -139,7 +139,7 @@ export function mountLesson(root: HTMLElement, lessonId: string, startStep?: num
   const stepTitle = h('h1', { class: 'step-title' });
   const objective = h('p', { class: 'objective' });
   const body = h('div', { class: 'step-body' });
-  const back = button('Back', { kind: 'ghost', icon: 'left', onClick: () => void go(index - 1) });
+  const back = backButton('Back', () => void go(index - 1)) as HTMLButtonElement;
   back.classList.add('btn-icon-first');
   const primary = button('Continue', { kind: 'primary', icon: 'right', onClick: () => primaryAction() });
   const note = h('div', { class: 'dock-note', 'aria-live': 'polite' });

@@ -114,10 +114,13 @@ export function createShell(root: HTMLElement): Shell {
       if (!app.classList.contains('is-pinned') && !menuOpen() && !side.contains(document.activeElement)) setOpen(false);
     }, 280);
   };
-  for (const part of [side, pin]) {
-    part.addEventListener('pointerenter', enter);
-    part.addEventListener('pointerleave', leave);
-  }
+  side.addEventListener('pointerenter', enter);
+  side.addEventListener('pointerleave', leave);
+  // The pin does not open the menu under the pointer: opening moves the pin
+  // to the open edge, and the click would land on what is under it then.
+  // It only keeps an open menu open while the pointer is on it.
+  pin.addEventListener('pointerenter', () => window.clearTimeout(closeTimer));
+  pin.addEventListener('pointerleave', leave);
   side.addEventListener('focusin', () => setOpen(true));
   side.addEventListener('focusout', leave);
   // A click outside the menu (also after the Settings menu closes) folds it.

@@ -12,7 +12,7 @@ import { renderTerminal } from './steps/terminal';
 import { renderItem } from './steps/item';
 import { isSkipped, lastPracticed, lessonState, noteAnswer, notePracticed } from './store';
 import type { ExerciseStep, Item, Lesson, TerminalStep } from './types';
-import { button, h, icon, panel, shuffle } from './ui';
+import { backButton, button, h, icon, panel, shuffle } from './ui';
 import { twoPane, type PaneItem } from './two-pane';
 
 type Task = { lesson: Lesson; ref: string } & ({ kind: 'exercise'; step: ExerciseStep | TerminalStep } | { kind: 'item'; item: Item });
@@ -151,7 +151,7 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
   const note = h('div', { class: 'dock-note', 'aria-live': 'polite' });
   const primary = button('Next task', { kind: 'primary', icon: 'right', onClick: () => primaryAction() });
   primary.hidden = true;
-  const back = h('a', { class: 'btn btn-ghost', href: '#/practice' }, h('span', { class: 'btn-label' }, 'All practice'));
+  const back = backButton('All practice', '#/practice');
   back.hidden = !which;
   const main = h('main', { class: 'player-main is-page', tabindex: '0' }, body);
   root.replaceChildren(

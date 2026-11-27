@@ -209,3 +209,15 @@ export function sectionHead(kicker: string, title: string, note?: string | HTMLE
     note ? h('span', { class: 'zp-section-note' }, note) : null,
   );
 }
+
+/**
+ * The one Back button of the app: the arrow first, then the word, in a
+ * small frame like the window buttons. A link (`href`) or a button (`onClick`).
+ */
+export function backButton(label: string, target: string | (() => void)): HTMLElement {
+  const parts = [icon('left', 16), h('span', { class: 'btn-label' }, label)];
+  if (typeof target === 'string') return h('a', { class: 'btn btn-back', href: target }, ...parts);
+  const el = h('button', { type: 'button', class: 'btn btn-back' }, ...parts);
+  el.addEventListener('click', target);
+  return el;
+}

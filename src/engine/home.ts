@@ -7,7 +7,8 @@ import { course, getLesson, lessons } from './registry';
 import { lessonAvailable, pathStatus, paths } from './paths';
 import { dueCards, isSkipped, lessonState, mistakes, openPath } from './store';
 import type { CourseModule } from './types';
-import { h, icon, mascot } from './ui';
+import { backButton, h, icon, mascot } from './ui';
+import { twoPane, type PaneItem } from './two-pane';
 import { APP_VERSION } from './updates';
 
 /** `view`: 'start' is the first screen only; 'course' is the map of the course. */
@@ -23,123 +24,10 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
   const minutesOf = (ids: string[]): number => ids.reduce((sum, id) => sum + (getLesson(id)?.minutes ?? 0), 0);
   const hours = (minutes: number): string => String(Math.round((minutes / 60) * 2) / 2);
 
-  /** The lessons of a module as chips. `practice`: the link to its mixed practice. */
-  const lessonChips = (module: CourseModule, practice?: string): HTMLElement =>
-    h(
-      'ol',
-      { class: 'module-lessons' },
-      ...module.lessons.map((entry) => {
-        const lesson = getLesson(entry.id);
-        const kind = entry.kind === 'project' ? ' is-project' : '';
-        if (!lesson) {
-          return h('li', { class: `chip is-locked${kind}` }, icon('lock', 13), h('span', null, entry.title));
-        }
-        const state = lessonState(lesson.id);
-        const skipped = isSkipped(lesson.id);
-        return h(
-          'li',
-          null,
-          h(
-            'a',
-            {
-              class: `chip is-open${state.done ? ' is-done' : ''}${skipped ? ' is-skipped' : ''}${kind}`,
-              href: `#/lesson/${lesson.id}`,
-              title: skipped ? 'You skipped this lesson' : null,
-            },
-            icon(skipped ? 'skip' : state.done ? 'check' : 'play', 13),
-            h('span', null, entry.title),
-            h('small', null, skipped ? 'skipped' : `${lesson.minutes} min`),
-          ),
-        );
-      }),
-      // Mixed practice of the module, once one of its lessons is done.
-      practice && module.lessons.some((entry) => lessonState(entry.id).done)
-        ? h('li', null, h('a', { class: 'chip is-open is-practice', href: practice }, icon('mix', 13), h('span', null, 'Mixed practice')))
-        : null,
-    );
-
   const doneIn = (ids: string[]): number => ids.filter((id) => lessonState(id).done).length;
   const progressBar = (done: number, all: number): HTMLElement =>
     h('span', { class: 'meter', role: 'img', 'aria-label': `${done} of ${all} done` }, h('i', { style: `width: ${all ? (100 * done) / all : 0}%` }));
 
-  const modules = course.modules.map((module, m) => {
-    const ids = module.lessons.map((l) => l.id);
-    const done = doneIn(ids);
-    return h(
-      'section',
-      { class: `module${ids.includes(current?.id ?? '') ? ' is-current' : ''}` },
-      h(
-        'div',
-        { class: 'module-head' },
-        h('div', null, h('span', { class: 'kicker' }, `Module ${m + 1}`), h('h3', null, module.title), h('p', null, module.goal)),
-        h(
-          'div',
-          { class: 'module-meta' },
-          h('span', null, `${done} of ${ids.length}`),
-          progressBar(done, ids.length),
-          h('span', { class: 'module-hours' }, icon('clock', 14), `${hours(minutesOf(ids))} h`),
-        ),
-      ),
-      lessonChips(module, `#/practice/${m + 1}`),
-    );
-  });
-
-  // Paths after Python: open when their Python lessons are ready, or by hand.
-  const pathCards = paths().map((path) => {
-    const status = pathStatus(path);
-    const minutes = minutesOf(path.modules.flatMap((m) => m.lessons.map((l) => l.id)));
-    const ready = status.needs.filter((n) => n.ready).length;
-    const openAnyway = h(
-      'button',
-      { type: 'button', class: 'btn btn-plain btn-small' },
-      h('span', { class: 'btn-label' }, 'Open it anyway'),
-      icon('right', 16),
-    );
-    openAnyway.addEventListener('click', () => {
-      openPath(path.id);
-      // Draw the home page again, with the path open.
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    });
-    return h(
-      'section',
-      { class: `module path-card${status.open ? ' is-open' : ' is-closed'}` },
-      h(
-        'div',
-        { class: 'module-head' },
-        h('span', { class: 'path-icon', 'aria-hidden': 'true' }, status.open ? '>_' : icon('lock', 22)),
-        h('div', null, h('h3', null, path.title), h('p', null, path.goal)),
-        h('span', { class: 'module-hours' }, icon('clock', 14), `${hours(minutes)} h`),
-      ),
-      status.open
-        ? h(
-            'div',
-            { class: 'path-modules' },
-            ...path.modules.map((module) => h('div', null, h('h4', { class: 'path-module-title' }, module.title), lessonChips(module))),
-          )
-        : h(
-            'div',
-            { class: 'path-needs' },
-            h('p', null, `Opens when these Python lessons are done and their topics are not weak (${ready} of ${status.needs.length} ready):`),
-            h(
-              'ul',
-              { class: 'module-lessons' },
-              ...status.needs.map((n) =>
-                h(
-                  'li',
-                  null,
-                  h(
-                    'a',
-                    { class: `chip is-open${n.ready ? ' is-done' : ''}`, href: `#/lesson/${n.lesson.id}` },
-                    icon(n.ready ? 'check' : 'play', 13),
-                    h('span', null, n.lesson.title),
-                  ),
-                ),
-              ),
-            ),
-            h('div', { class: 'path-open' }, openAnyway, h('span', { class: 'muted small' }, 'You decide: the path opens now, and the Python lessons stay where they are.')),
-          ),
-    );
-  });
 
   const pythonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
   const anyProgress = available.some((l) => lessonState(l.id).reached > 0 || lessonState(l.id).done);
@@ -197,7 +85,9 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
 
   /** A first visit: the claim and the way in, over the pixel scene of the lake. */
   function welcome(): HTMLElement[] {
-    const claim = h('h1', { class: 'landing-claim', 'data-enter': true }, 'Code your first program ', h('em', null, 'today.'));
+    // Two parts, each with its own soft light: one light over the whole title
+    // and a moving word inside it made Chromium draw the word twice.
+    const claim = h('h1', { class: 'landing-claim' }, h('span', { class: 'landing-lit' }, 'Code your first program'), ' ', h('em', null, 'today.'));
     const start = current
       ? h('a', { class: 'btn btn-primary btn-big', href: `#/lesson/${current.id}` }, h('span', { class: 'btn-label' }, 'Start the first lesson'), icon('right', 20))
       : null;
@@ -206,44 +96,120 @@ export function mountHome(root: HTMLElement, view: 'start' | 'course' = 'start')
         'section',
         { class: 'landing' },
         claim,
-        h('div', { class: 'landing-actions', 'data-enter': true }, start, h('a', { class: 'btn btn-big', href: '#/course' }, h('span', { class: 'btn-label' }, 'See the course'))),
+        h('div', { class: 'landing-actions' }, start, h('a', { class: 'btn btn-big', href: '#/course' }, h('span', { class: 'btn-label' }, 'See the course'))),
       ),
     ];
   }
 
-  /** The modules, the outcomes and the paths. */
-  function courseMap(): HTMLElement {
+  /** A lesson as a row: its name, its state, and the way in. */
+  const lessonRow = (entry: CourseModule['lessons'][number]): HTMLElement => {
+    const lesson = getLesson(entry.id);
+    const project = entry.kind === 'project' ? ' · project' : '';
+    if (!lesson) return h('li', { class: 'pane-row is-locked' }, h('span', { class: 'pane-row-text' }, h('strong', null, entry.title), h('small', null, `Coming later${project}`)), icon('lock', 16));
+    const state = lessonState(lesson.id);
+    const skipped = isSkipped(lesson.id);
+    const note = skipped ? 'You skipped it' : state.done ? 'Done' : state.reached > 0 ? 'Started' : 'Not started';
     return h(
-      'section',
-      { class: 'course-map', id: 'course' },
-      h(
-        'div',
-        { class: 'section-head' },
-        h('a', { class: 'back-link', href: '#/' }, icon('left', 16), h('span', null, 'Back')),
-        h('h1', { class: 'course-title' }, 'The course'),
-        h('p', { class: 'muted' }, `${course.modules.length} modules, ${pythonIds.length} lessons. Each module ends with a project.`),
-      ),
-      h('div', { class: 'modules' }, ...modules),
-      h(
-        'div',
-        { class: 'outcomes-box' },
-        h('h3', null, 'At the end you can, alone:'),
-        h('ul', { class: 'outcomes' }, ...course.outcomes.map((text) => h('li', null, icon('check', 16), h('span', null, text)))),
-        h('a', { class: 'btn btn-small', href: '#/next' }, h('span', { class: 'btn-label' }, 'And after the course?'), icon('right', 16)),
-      ),
-      pathCards.length
-        ? h(
+      'li',
+      { class: `pane-row course-row${state.done ? ' is-done' : ''}${lesson.id === current?.id ? ' is-next' : ''}` },
+      h('span', { class: 'pane-row-text' }, h('strong', null, state.done ? h('span', { class: 'course-check' }, icon('check', 14)) : null, entry.title), h('small', null, `${note} · ${lesson.minutes} min${project}`)),
+      h('a', { class: `btn btn-small ${lesson.id === current?.id ? 'btn-primary' : 'btn-plain'}`, href: `#/lesson/${lesson.id}` }, h('span', { class: 'btn-label' }, state.done ? 'Again' : state.reached > 0 ? 'Continue' : 'Start'), icon('right', 16)),
+    );
+  };
+
+  /** The modules, the outcomes and the paths: an index and one panel. */
+  function courseMap(): HTMLElement {
+    const items: PaneItem[] = course.modules.map((module, m) => {
+      const ids = module.lessons.map((l) => l.id);
+      const done = doneIn(ids);
+      return {
+        id: `module-${m + 1}`,
+        group: m === 0 ? 'Python' : undefined,
+        label: module.title,
+        note: `Module ${m + 1} · ${done} of ${ids.length} · ${hours(minutesOf(ids))} h`,
+        extra: progressBar(done, ids.length),
+        render: () =>
+          h(
             'div',
-            { class: 'paths', id: 'paths' },
-            h(
-              'div',
-              { class: 'section-head' },
-              h('h2', null, 'Paths after Python'),
-              h('p', { class: 'muted' }, 'The world around Python, in the same kind of lessons. A path opens when the Python it needs is solid.'),
-            ),
-            h('div', { class: 'modules' }, ...pathCards),
-          )
-        : h('span'),
+            { class: 'pane-part' },
+            h('span', { class: 'kicker' }, `Module ${m + 1}`),
+            h('h2', { class: 'pane-title' }, module.title),
+            h('p', { class: 'pane-text' }, module.goal),
+            h('div', { class: 'pane-line' }, progressBar(done, ids.length), h('span', { class: 'muted' }, `${done} of ${ids.length} lessons done`), h('span', { class: 'module-hours' }, icon('clock', 14), `${hours(minutesOf(ids))} h`)),
+            h('ol', { class: 'pane-rows' }, ...module.lessons.map(lessonRow)),
+            done ? h('a', { class: 'btn btn-plain btn-small', href: `#/practice/${m + 1}` }, icon('mix', 16), h('span', { class: 'btn-label' }, 'Mixed practice of this module')) : null,
+          ),
+      };
+    });
+    items.push({
+      id: 'outcomes',
+      group: 'At the end',
+      label: 'What you can do, alone',
+      note: `${course.outcomes.length} skills`,
+      render: () =>
+        h(
+          'div',
+          { class: 'pane-part' },
+          h('span', { class: 'kicker' }, 'At the end of the course'),
+          h('h2', { class: 'pane-title' }, 'You can, alone:'),
+          h('ul', { class: 'pane-rows' }, ...course.outcomes.map((text) => h('li', { class: 'pane-row' }, h('span', { class: 'pane-row-text course-outcome' }, icon('check', 16), h('span', null, text))))),
+          h('a', { class: 'btn btn-plain btn-small', href: '#/next' }, h('span', { class: 'btn-label' }, 'And after the course?'), icon('right', 16)),
+        ),
+    });
+    // Paths after Python: open when their Python lessons are ready, or by hand.
+    paths().forEach((path, i) => {
+      const status = pathStatus(path);
+      const minutes = minutesOf(path.modules.flatMap((m) => m.lessons.map((l) => l.id)));
+      items.push({
+        id: `path-${path.id}`,
+        group: i === 0 ? 'Paths after Python' : undefined,
+        label: path.title,
+        note: `${status.open ? 'Open' : 'Closed for now'} · ${hours(minutes)} h`,
+        extra: status.open ? null : icon('lock', 16),
+        render: () => {
+          const openAnyway = h('button', { type: 'button', class: 'btn btn-plain btn-small' }, h('span', { class: 'btn-label' }, 'Open it anyway'), icon('right', 16));
+          openAnyway.addEventListener('click', () => {
+            openPath(path.id);
+            // Draw the page again, with the path open.
+            window.dispatchEvent(new HashChangeEvent('hashchange'));
+          });
+          return h(
+            'div',
+            { class: 'pane-part' },
+            h('span', { class: 'kicker' }, 'A path after Python'),
+            h('h2', { class: 'pane-title' }, path.title),
+            h('p', { class: 'pane-text' }, path.goal),
+            h('div', { class: 'pane-line' }, h('span', { class: 'module-hours' }, icon('clock', 14), `${hours(minutes)} h`), h('span', { class: 'muted' }, status.open ? 'Open' : 'Closed for now')),
+            ...(status.open
+              ? path.modules.map((module) => h('section', { class: 'pane-block' }, h('h3', { class: 'pane-subtitle' }, module.title), h('ol', { class: 'pane-rows' }, ...module.lessons.map(lessonRow))))
+              : [
+                  h('p', { class: 'pane-text' }, `It opens when these Python lessons are done and their topics are not weak (${status.needs.filter((n) => n.ready).length} of ${status.needs.length} ready):`),
+                  h(
+                    'ol',
+                    { class: 'pane-rows' },
+                    ...status.needs.map((n) =>
+                      h('li', { class: 'pane-row' }, h('span', { class: 'pane-row-text' }, h('strong', null, n.lesson.title), h('small', null, n.ready ? 'Ready' : 'Not ready yet')), h('a', { class: 'btn btn-plain btn-small', href: `#/lesson/${n.lesson.id}` }, h('span', { class: 'btn-label' }, 'Open'), icon('right', 16))),
+                    ),
+                  ),
+                  h('div', { class: 'path-open' }, openAnyway, h('span', { class: 'muted small' }, 'You decide: the path opens now, and the Python lessons stay where they are.')),
+                ]),
+          );
+        },
+      });
+    });
+    // The module of the next lesson is open first.
+    const at = course.modules.findIndex((m) => m.lessons.some((l) => l.id === current?.id));
+    return h(
+      'div',
+      { class: 'zp-page pane-page course-map', id: 'course' },
+      h(
+        'header',
+        { class: 'zp-page-head', 'data-enter': true },
+        h('div', { class: 'page-back' }, backButton('Back', '#/')),
+        h('h1', { class: 'display' }, 'The course'),
+        h('p', { class: 'lead' }, `${course.modules.length} modules, ${pythonIds.length} lessons. Each module ends with a project.`),
+      ),
+      h('div', { class: 'pane-wrap', 'data-enter': true }, twoPane('Modules and paths of the course', items, at >= 0 ? `module-${at + 1}` : undefined).el),
     );
   }
 
