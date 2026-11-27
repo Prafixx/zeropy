@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('zeropyWindow', {
 contextBridge.exposeInMainWorld('zeropyUpdates', {
   /** Asks GitHub for a newer version. Resolves to { state, version?, size? }. */
   check: () => ipcRenderer.invoke('update:check'),
+  /** The newest version on GitHub (for the portable app): { state, version?, reason? }. */
+  latest: () => ipcRenderer.invoke('update:latest'),
   /** Downloads the new version. Progress comes as events. */
   download: () => ipcRenderer.invoke('update:download'),
   /** Closes the app, installs the new version and starts it again. */

@@ -32,6 +32,8 @@ function route(): void {
   // hashchange. So every event here is a real navigation.
   unmount?.();
   updateTitleBar();
+  // A lesson or a practice session: the sky dims a little (--lesson-dim).
+  document.documentElement.classList.toggle('in-lesson', parts[0] === 'lesson' || ((parts[0] === 'practice' || parts[0] === 'review') && parts.length > 1));
   // A lesson opens in focus mode: full screen, without the sidebar.
   if (parts[0] === 'lesson' && parts[1]) {
     shell?.remove();

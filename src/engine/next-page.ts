@@ -1,7 +1,7 @@
 // "What next": a path after the course, from content/next.yaml.
 import { place } from '@/kit/motion';
 import nextData from '../../content/next.yaml';
-import { h, icon } from './ui';
+import { h, icon, sectionHead } from './ui';
 
 interface Link {
   name: string;
@@ -43,50 +43,78 @@ export function mountNext(root: HTMLElement): () => void {
       { class: 'player-main', tabindex: '0' },
       h(
         'div',
-        { class: 'single next' },
-        h('h1', { class: 'display', 'data-enter': true }, data.title),
-        h('p', { class: 'lead', 'data-enter': true }, data.lead),
-        ...data.stages.map((stage) =>
-          h(
-            'section',
-            { class: 'next-card', 'data-enter': true },
-            h('p', { class: 'next-when' }, stage.when),
-            h('h2', { class: 'sheet-title' }, stage.title),
-            h('p', null, stage.why),
-            stage.ideas ? h('ul', { class: 'next-ideas' }, ...stage.ideas.map((idea) => h('li', null, idea))) : null,
-            links(stage.links),
-          ),
-        ),
-        h('h2', { class: 'display next-head', 'data-enter': true }, 'Then choose a branch'),
-        ...data.branches.map((branch) =>
-          h(
-            'section',
-            { class: 'next-card', 'data-enter': true },
-            h('h2', { class: 'sheet-title' }, branch.title),
-            h('p', null, branch.why),
-            h(
-              'ol',
-              { class: 'next-path' },
-              ...branch.path.map((p) => h('li', null, h('strong', null, p.step), h('span', null, p.detail))),
-            ),
-            links(branch.links),
-          ),
-        ),
+        { class: 'zp-page next' },
+        h('header', { class: 'zp-page-head', 'data-enter': true }, h('h1', { class: 'display' }, data.title), h('p', { class: 'lead' }, data.lead)),
+        // First: the steps for everyone, in order, side by side.
         h(
           'section',
-          { class: 'next-card', 'data-enter': true },
-          h('h2', { class: 'sheet-title' }, data.languages.title),
+          { class: 'zp-section', 'data-enter': true },
+          sectionHead('Step by step', 'First, for everyone'),
           h(
-            'ol',
-            { class: 'next-path' },
-            ...data.languages.items.map((l) => h('li', null, h('strong', null, l.name), h('span', null, l.why))),
+            'div',
+            { class: 'zp-grid zp-grid-wide' },
+            ...data.stages.map((stage, i) =>
+              h(
+                'article',
+                { class: 'zp-card next-card' },
+                h('span', { class: 'zp-card-kicker' }, `${i + 1} · ${stage.when}`),
+                h('h3', { class: 'zp-card-title' }, stage.title),
+                h('p', { class: 'zp-card-text' }, stage.why),
+                stage.ideas ? h('ul', { class: 'next-ideas' }, ...stage.ideas.map((idea) => h('li', null, idea))) : null,
+                h('div', { class: 'zp-card-foot' }, links(stage.links)),
+              ),
+            ),
           ),
-          links([data.languages.link]),
         ),
+        // Then: one branch to choose, each a card of the same size.
         h(
-          'div',
-          { class: 'next-advice', 'data-enter': true },
-          ...data.advice.map((a) => h('div', { class: 'next-tip' }, h('strong', null, a.title), h('p', null, a.text))),
+          'section',
+          { class: 'zp-section', 'data-enter': true },
+          sectionHead('Your choice', 'Then choose a branch', `${data.branches.length} branches`),
+          h(
+            'div',
+            { class: 'zp-grid' },
+            ...data.branches.map((branch) =>
+              h(
+                'article',
+                { class: 'zp-card next-card' },
+                h('h3', { class: 'zp-card-title' }, branch.title),
+                h('p', { class: 'zp-card-text' }, branch.why),
+                h(
+                  'ol',
+                  { class: 'next-path' },
+                  ...branch.path.map((p) => h('li', null, h('strong', null, p.step), h('span', null, p.detail))),
+                ),
+                h('div', { class: 'zp-card-foot' }, links(branch.links)),
+              ),
+            ),
+          ),
+        ),
+        // Last: other languages, and advice, side by side.
+        h(
+          'section',
+          { class: 'zp-section', 'data-enter': true },
+          sectionHead('Later', data.languages.title),
+          h(
+            'div',
+            { class: 'zp-grid zp-grid-wide' },
+            h(
+              'article',
+              { class: 'zp-card next-card' },
+              h(
+                'ol',
+                { class: 'next-path' },
+                ...data.languages.items.map((l) => h('li', null, h('strong', null, l.name), h('span', null, l.why))),
+              ),
+              h('div', { class: 'zp-card-foot' }, links([data.languages.link])),
+            ),
+            h(
+              'article',
+              { class: 'zp-card next-card' },
+              h('h3', { class: 'zp-card-title' }, 'Good advice'),
+              ...data.advice.map((a) => h('div', { class: 'next-tip' }, h('strong', null, a.title), h('p', null, a.text))),
+            ),
+          ),
         ),
       ),
     ),

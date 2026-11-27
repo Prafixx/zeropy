@@ -80,17 +80,48 @@ const BIRD_DOWN = ['..xxx..', '.x...x.', 'x.....x'];
 const birdFrame = (rows: string[]): string => sprite(7, 3, (x, y) => (rows[y][x] === 'x' ? 'bd-body' : ''), 'bd', 3);
 export const BIRD = birdFrame(BIRD_UP) + birdFrame(BIRD_DOWN);
 
-/** Moves an element across the scene, from one side out to the other. */
+/** Moves an element across the scene, from one side out to the other.
+ * A transform only: the browser moves it on the GPU, with no layout. */
 export function cross(thing: HTMLElement, seconds: number, toLeft: boolean): Promise<void> {
-  const off = `-${thing.offsetWidth + 20}px`;
-  const end = 'calc(100% + 20px)';
+  const room = thing.parentElement?.clientWidth ?? window.innerWidth;
+  const size = thing.offsetWidth + 20;
+  const from = toLeft ? room + 20 : -size;
+  const to = toLeft ? -size : room + 20;
   thing.classList.toggle('is-left', toLeft);
   thing.classList.add('is-on');
-  const run = thing.animate([{ left: toLeft ? end : off }, { left: toLeft ? off : end }], { duration: seconds * 1000, easing: 'linear' });
+  const run = thing.animate([{ transform: `translate3d(${from}px, 0, 0)` }, { transform: `translate3d(${to}px, 0, 0)` }], {
+    duration: seconds * 1000,
+    easing: 'linear',
+  });
   return run.finished.then(
     () => thing.classList.remove('is-on'),
     () => thing.classList.remove('is-on'),
   );
+}
+
+/**
+ * The waves of a lake live in two layers of their own, on top of the land,
+ * so they can sway with a transform (smooth, on the GPU) without drawing the
+ * land again. Returns the land and the two layers of waves, as SVG paths.
+ */
+export function splitWaves(L: Record<string, Layer>): { land: string; a: string; b: string } {
+  const land = Object.entries(L)
+    .filter(([name]) => name !== 'waveA' && name !== 'waveB')
+    .map(([name, layer]) => `<path class="s-${name}" d="${layer.d}"/>`)
+    .join('');
+  return { land, a: L.waveA ? `<path class="s-wave" d="${L.waveA.d}"/>` : '', b: L.waveB ? `<path class="s-wave" d="${L.waveB.d}"/>` : '' };
+}
+
+/** Two empty layers of waves, the size of the scene. */
+export function waveLayers(parent: HTMLElement): SVGSVGElement[] {
+  return ['a', 'b'].map((k) => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', `scene-waves scene-waves-${k}`);
+    svg.setAttribute('shape-rendering', 'crispEdges');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    parent.append(svg);
+    return svg;
+  });
 }
 
 /**
@@ -151,7 +182,7 @@ export function paintLake(
     const width = 1 + Math.round(t * 4);
     const gap = 14 + Math.round(t * 34);
     const layer = n % 2 ? L.waveB : L.waveA;
-    for (let x = ((n * 11) % gap) - gap; x < cols; x += gap) {
+    for (let x = ((n * 11) % gap) - gap * 2; x < cols + gap; x += gap) {
       const y = rows - lakeH + d;
       layer.cell(x, y, width, 1);
       if (t > 0.55) layer.cell(x + 1, y - 1, Math.max(width - 2, 1), 1);
@@ -169,6 +200,7 @@ export function landscape(): Scene {
   art.setAttribute('shape-rendering', 'crispEdges');
   art.setAttribute('preserveAspectRatio', 'none');
   el.append(art);
+  const [wavesA, wavesB] = waveLayers(el);
 
   // Short lines of light on the water.
   const ripples = Array.from({ length: 16 }, (_, i) => {
@@ -249,9 +281,12 @@ export function landscape(): Scene {
       });
     }
     paintLake(L, cols, rows, lakeH, midH, backH, treeCells);
-    art.innerHTML = Object.entries(L)
-      .map(([name, layer]) => `<path class="s-${name}" d="${layer.d}"/>`)
-      .join('');
+    const parts = splitWaves(L);
+    art.innerHTML = parts.land;
+    for (const [svg, html] of [[wavesA, parts.a], [wavesB, parts.b]] as const) {
+      svg.setAttribute('viewBox', `0 0 ${cols} ${rows}`);
+      svg.innerHTML = html;
+    }
     shore = (lakeH / rows) * 100;
     boat.style.bottom = `${shore * 0.62}%`;
     ripples.forEach((r, i) => {

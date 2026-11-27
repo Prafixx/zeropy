@@ -5646,25 +5646,32 @@ code {
 .s-edge {
   fill: color-mix(in srgb, var(--scene-rim) 45%, var(--scene-front));
 }
-/* Wave crests: two sets that sway the opposite way, one pixel at a time. */
-.s-waveA,
-.s-waveB {
+/* Wave crests: two layers that sway the opposite way, smoothly (a sine:
+   ease-in-out, there and back), with a transform only, on the GPU. */
+.scene-waves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  will-change: transform;
+  animation: zp-sway 5.6s ease-in-out infinite alternate;
+}
+.scene-waves-b {
+  animation-delay: -2.8s;
+  animation-direction: alternate-reverse;
+}
+@keyframes zp-sway {
+  from {
+    transform: translate3d(-7px, 0, 0);
+  }
+  to {
+    transform: translate3d(7px, 0, 0);
+  }
+}
+.s-wave {
   fill: color-mix(in srgb, var(--ink-3) 40%, var(--scene-rim));
   opacity: 0.45;
-  animation: zp-wave-a 3.2s steps(1) infinite;
-}
-.s-waveB {
-  animation-name: zp-wave-b;
-}
-@keyframes zp-wave-a {
-  50% {
-    translate: 1px 0;
-  }
-}
-@keyframes zp-wave-b {
-  50% {
-    translate: -1px 0;
-  }
 }
 .s-rBack {
   fill: var(--scene-back);
@@ -5701,8 +5708,9 @@ code {
 .sc-boat,
 .sc-bird {
   position: absolute;
-  left: -200px;
+  left: 0;
   visibility: hidden;
+  will-change: transform;
 }
 .sc-boat.is-on,
 .sc-bird.is-on {
@@ -6173,13 +6181,14 @@ code {
 .fl-cloth {
   fill: var(--accent);
 }
-.hz-next svg {
-  animation: zp-wave 1.2s steps(1) infinite;
+/* The flag only (its own class: .hz-next is the whole land of that page). */
+.hz-mark-next svg {
+  transform-origin: 0 100%;
+  animation: zp-flag 1.4s ease-in-out infinite alternate;
 }
-@keyframes zp-wave {
-  50% {
-    scale: 1 0.94;
-    transform-origin: 0 100%;
+@keyframes zp-flag {
+  to {
+    transform: scaleY(0.94);
   }
 }
 /* An empty page (nothing to review, no mistakes): the title stays at the
@@ -6203,4 +6212,360 @@ code {
   :root:has(.app-page .dock > .btn:not([hidden])) .horizon {
     bottom: calc(60px + var(--dock-h) + env(safe-area-inset-bottom));
   }
+}
+
+/* ==========================================================================
+   Cards and grids: one system for the pages of many cards (Cheat sheet,
+   Knowledge, Mixed practice, After the course). A page head, sections with a
+   small label and a title, a grid that fills the width, and cards of one
+   kind: the same padding, radius, border and ledge; a foot that always sits
+   at the bottom, so cards in a row line up.
+   ========================================================================== */
+.zp-page {
+  width: 100%;
+  max-width: 1080px;
+  margin-inline: auto;
+}
+.player-main.is-page > .step-body:has(> .zp-page) {
+  max-width: 1080px;
+}
+.zp-page-head {
+  display: grid;
+  gap: var(--s-3);
+  margin-bottom: var(--s-8);
+}
+.zp-page-head .lead {
+  margin: 0;
+  max-width: 62ch;
+}
+.zp-section {
+  margin-top: var(--s-12);
+}
+.zp-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin: var(--s-10) 0 var(--s-5);
+  padding-bottom: var(--s-3);
+  background: repeating-linear-gradient(90deg, var(--border-strong) 0 4px, transparent 4px 8px) left bottom / 100% 2px no-repeat;
+}
+.zp-section > .zp-section-head {
+  margin-top: 0;
+}
+.zp-section-head .kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--accent-text);
+}
+.zp-section-title {
+  margin: 0;
+  font: var(--display-weight) 24px / 1.15 var(--font-display);
+}
+.zp-section-note {
+  flex: none;
+  max-width: 50%;
+  color: var(--ink-3);
+  font-size: 14px;
+  text-align: right;
+}
+.zp-grid {
+  --zp-min: 250px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--zp-min)), 1fr));
+  gap: var(--s-4);
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.zp-grid-wide {
+  --zp-min: 420px;
+}
+.zp-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+  margin: 0;
+  padding: var(--s-5);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper-2);
+  box-shadow: 0 4px 0 var(--border);
+}
+.zp-card-kicker {
+  font: 400 10px / 1.2 var(--font-tiny);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.zp-card-title {
+  margin: 0;
+  font: var(--display-weight) 19px / 1.2 var(--font-display);
+}
+.zp-card-text {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.zp-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-3);
+  margin-top: auto;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--border);
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.zp-card.is-locked {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--paper-2) 70%, transparent);
+  box-shadow: none;
+}
+/* The one card that matters most on a page: amber edge, side by side. */
+.zp-card-hero {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-6);
+  padding: var(--s-6) var(--s-8);
+  border-color: var(--accent);
+  box-shadow: 0 4px 0 var(--accent-ledge);
+}
+:root[data-theme='dark'] .zp-card {
+  text-shadow: none;
+}
+@media (max-width: 560px) {
+  .zp-card-hero {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--s-5);
+  }
+  .zp-section-head {
+    flex-wrap: wrap;
+  }
+  .zp-section-note {
+    max-width: none;
+    text-align: left;
+  }
+}
+
+/* The four pages on the card system: what each one needs on top of it. */
+.sheet-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3) var(--s-5);
+}
+.sheet-tools .sheet-search-row {
+  flex: 1 1 360px;
+  margin-top: 0;
+}
+.sheet-tools .sheet-count {
+  margin: 0;
+}
+.sheet .zp-section {
+  margin-top: var(--s-10);
+}
+.sheet .zp-grid {
+  --zp-min: 240px;
+}
+.sheet-card {
+  padding: var(--s-4) var(--s-5);
+  box-shadow: 0 4px 0 var(--border);
+}
+.sheet-card .zp-card-foot {
+  font-size: 12px;
+}
+.practice .practice-start {
+  margin-top: 0;
+}
+.practice-grid {
+  --zp-min: 230px;
+}
+.practice-card .meter {
+  margin-top: var(--s-1);
+}
+.next .zp-card {
+  margin-top: 0;
+  padding: var(--s-6);
+}
+.next .next-ideas,
+.next .next-path {
+  margin: 0;
+}
+.next .zp-card-foot {
+  font-size: 14px;
+}
+/* Knowledge: the levels as five small cards; each module a card with its
+   lessons inside, two modules side by side on a wide screen. */
+.know-tiles {
+  --zp-min: 150px;
+  margin-top: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+}
+.know-tile {
+  gap: var(--s-1);
+  padding: var(--s-4);
+}
+.know-tile + .know-tile {
+  border-left: 2px solid var(--border);
+}
+.know-weak {
+  --zp-min: 300px;
+}
+.know-weak li {
+  display: grid;
+}
+.know-module {
+  gap: var(--s-4);
+  margin-top: 0;
+  padding: var(--s-5) var(--s-5) var(--s-3);
+}
+.know-module-head {
+  grid-template-columns: minmax(0, 1fr) minmax(90px, 30%);
+}
+.know-lessons .know-lesson {
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+}
+.know-lessons .know-lesson > summary {
+  padding-inline: 0;
+}
+.know-tiles {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+}
+
+/* ==========================================================================
+   Playground: a workbench of its own, raised off the sky. One panel holds
+   the editor, the output and the picture; each part has its own surface:
+   the editor dark, the output a paper slip, the picture a dotted board.
+   ========================================================================== */
+.playground .split-visual {
+  padding: var(--s-5);
+  border: 2px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--paper-2);
+  box-shadow:
+    0 6px 0 var(--ledge),
+    0 18px 40px rgb(0 0 0 / 0.35);
+}
+:root[data-theme='dark'] .playground .split-visual {
+  text-shadow: none;
+}
+.playground .bench-frame {
+  border: 2px solid var(--border-strong);
+}
+.playground .out {
+  border: 2px solid var(--border);
+  background: var(--paper-3);
+}
+.playground .stage-frame,
+.playground .stage2d,
+.playground .stage {
+  background:
+    radial-gradient(circle, var(--dot) 1px, transparent 1.4px) 0 0 / 22px 22px,
+    var(--paper-1);
+}
+.playground .legend {
+  padding: var(--s-2) var(--s-3);
+  border-radius: 4px;
+  background: var(--paper-3);
+}
+
+/* ==========================================================================
+   Lessons and practice sessions: the sky and the land behind dim a little,
+   so the exercise stands out. One knob: --lesson-dim (0 = no dimming).
+   ========================================================================== */
+:root {
+  --lesson-dim: 0.45;
+}
+.sky,
+.horizon {
+  transition: opacity var(--dur-3) var(--ease);
+}
+.in-lesson .sky,
+.in-lesson .horizon {
+  opacity: calc(1 - var(--lesson-dim));
+}
+.in-lesson .horizon.hz-lesson {
+  opacity: calc(0.8 * (1 - var(--lesson-dim)));
+}
+
+/* ==========================================================================
+   The sidebar folds into a rail of icons (wide windows; narrower windows
+   always have the rail). Its top lines up with the top of the page: the
+   name plate and the first title start at the same height.
+   ========================================================================== */
+.side-rail-toggle {
+  display: none;
+}
+@media (min-width: 1081px) {
+  .app {
+    transition: grid-template-columns var(--dur-3) var(--ease);
+  }
+  .side {
+    padding-top: var(--s-3);
+  }
+  .side .side-rail-toggle {
+    display: flex;
+    margin-bottom: var(--s-1);
+    color: var(--ink-3);
+  }
+  .app.is-rail {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+  .app.is-rail .side {
+    align-items: center;
+    padding-inline: var(--s-2);
+  }
+  .app.is-rail .side-brand .brand-text,
+  .app.is-rail .side-label,
+  .app.is-rail .side-heading {
+    display: none;
+  }
+  .app.is-rail .side .brand {
+    justify-content: center;
+    padding: 8px;
+  }
+  .app.is-rail .side-nav,
+  .app.is-rail .side-foot {
+    justify-items: center;
+    width: 100%;
+  }
+  .app.is-rail .side .side-link {
+    justify-content: center;
+    width: 52px;
+    height: 44px;
+    padding: 0;
+  }
+  .app.is-rail .side .side-link.is-current::after {
+    display: none;
+  }
+  .app.is-rail .side-link .nav-count {
+    position: absolute;
+    top: 3px;
+    right: 2px;
+    min-width: 18px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 11px;
+    line-height: 16px;
+  }
+  .app.is-rail .menu-side {
+    left: calc(96px + var(--s-3));
+  }
+}
+.side-foot {
+  display: grid;
+  gap: 2px;
 }

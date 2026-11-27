@@ -196,3 +196,16 @@ export function shuffle<T>(items: T[]): T[] {
   }
   return out;
 }
+
+/**
+ * The head of a section of cards (the shared card system, app.css "zp-"):
+ * a tiny label, the title, and a note on the right (a count, a state).
+ */
+export function sectionHead(kicker: string, title: string, note?: string | HTMLElement | null): HTMLElement {
+  return h(
+    'div',
+    { class: 'zp-section-head' },
+    h('div', null, kicker ? h('span', { class: 'kicker' }, kicker) : null, h('h2', { class: 'zp-section-title' }, title)),
+    note ? h('span', { class: 'zp-section-note' }, note) : null,
+  );
+}

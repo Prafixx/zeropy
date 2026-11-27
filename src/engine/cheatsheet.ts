@@ -3,7 +3,7 @@
 import { place } from '@/kit/motion';
 import { course, getLesson, lessonLabel } from './registry';
 import { lessonState } from './store';
-import { h, icon, mdInline } from './ui';
+import { h, icon, sectionHead, mdInline } from './ui';
 
 interface Entry {
   code: string;
@@ -27,14 +27,18 @@ export function mountCheatSheet(root: HTMLElement): () => void {
         for (const key of step.keys ?? []) {
           const el = h(
             'div',
-            { class: 'sheet-card' },
+            { class: 'zp-card sheet-card' },
             h('code', { class: 'keycard-code' }, key.code),
-            h('span', { class: 'keycard-means' }, mdInline(key.means)),
+            h('span', { class: 'zp-card-text keycard-means' }, mdInline(key.means)),
             h(
-              'a',
-              { class: `sheet-from${done ? ' is-done' : ''}`, href: `#/lesson/${lesson.id}`, title: lessonLabel(lesson) },
-              done ? icon('check', 14) : null,
-              lesson.title,
+              'span',
+              { class: 'zp-card-foot' },
+              h(
+                'a',
+                { class: `sheet-from${done ? ' is-done' : ''}`, href: `#/lesson/${lesson.id}`, title: lessonLabel(lesson) },
+                done ? icon('check', 14) : null,
+                lesson.title,
+              ),
             ),
           );
           entries.push({ code: key.code, means: key.means, find: `${key.code} ${key.means} ${lesson.title}`.toLowerCase(), el });
@@ -44,9 +48,9 @@ export function mountCheatSheet(root: HTMLElement): () => void {
     if (entries.length === 0) return;
     const section = h(
       'section',
-      { class: 'sheet-module' },
-      h('h2', { class: 'sheet-title' }, h('span', { class: 'sheet-num' }, `Module ${m + 1}`), mod.title),
-      h('div', { class: 'sheet-grid' }, ...entries.map((e) => e.el)),
+      { class: 'zp-section sheet-module' },
+      sectionHead(`Module ${m + 1}`, mod.title, `${entries.length} facts`),
+      h('div', { class: 'zp-grid' }, ...entries.map((e) => e.el)),
     );
     groups.push({ section, entries });
   });
@@ -87,11 +91,14 @@ export function mountCheatSheet(root: HTMLElement): () => void {
       { class: 'player-main', tabindex: '0' },
       h(
         'div',
-        { class: 'sheet' },
-        h('h1', { class: 'display', 'data-enter': true }, 'Cheat sheet'),
-        h('p', { class: 'lead', 'data-enter': true }, 'The key facts of every lesson on one page. Search for a word, or open the lesson to learn more.'),
-        h('label', { class: 'sheet-search-row', 'data-enter': true }, icon('search', 20), search),
-        count,
+        { class: 'zp-page sheet' },
+        h(
+          'header',
+          { class: 'zp-page-head', 'data-enter': true },
+          h('h1', { class: 'display' }, 'Cheat sheet'),
+          h('p', { class: 'lead' }, 'The key facts of every lesson on one page. Search for a word, or open the lesson to learn more.'),
+          h('div', { class: 'sheet-tools' }, h('label', { class: 'sheet-search-row' }, icon('search', 20), search), count),
+        ),
         empty,
         ...groups.map((g) => g.section),
       ),

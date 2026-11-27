@@ -12,7 +12,7 @@
 //   next:       a dotted path up to a flag on a far hill (the road ahead),
 //   lesson:     plain hills, lower, above the bar of the lesson.
 // Birds cross now and then everywhere. Reduced motion: all still.
-import { BIRD, CELL, Layer, bayer, cross, paintLake, sprite } from './landscape';
+import { BIRD, CELL, Layer, bayer, cross, paintLake, splitWaves, sprite, waveLayers } from './landscape';
 import { isReduced } from './motion';
 
 export type HorizonPlace = 'course' | 'review' | 'practice' | 'mistakes' | 'knowledge' | 'playground' | 'cheatsheet' | 'next' | 'lesson' | 'plain';
@@ -126,6 +126,7 @@ const FLAG = sprite(
 
 let el: HTMLElement | null = null;
 let art: SVGSVGElement | null = null;
+let waves: SVGSVGElement[] = [];
 let place: HorizonPlace | null = null;
 const timers: number[] = [];
 
@@ -209,9 +210,12 @@ function draw(): void {
       L.path.cell(x, y, 2, 1);
     }
   }
-  art.innerHTML = Object.entries(L)
-    .map(([name, layer]) => `<path class="s-${name}" d="${layer.d}"/>`)
-    .join('');
+  const parts = splitWaves(L);
+  art.innerHTML = parts.land;
+  waves.forEach((svg, i) => {
+    svg.setAttribute('viewBox', `0 0 ${cols} ${rows}`);
+    svg.innerHTML = i ? parts.b : parts.a;
+  });
   // The landmark stands on the hills at its place.
   const mark = el.querySelector<HTMLElement>('.hz-mark');
   if (mark) {
@@ -259,6 +263,7 @@ export function mountHorizon(): void {
   art.setAttribute('shape-rendering', 'crispEdges');
   art.setAttribute('preserveAspectRatio', 'none');
   el.append(art);
+  waves = waveLayers(el);
   const sky = document.querySelector('.sky');
   if (sky) sky.after(el);
   else document.body.prepend(el);
@@ -276,7 +281,7 @@ export function setHorizon(next: HorizonPlace | null): void {
   el.className = `horizon hz-${next}`;
   for (const old of el.querySelectorAll('.hz-mark, .sc-fly')) old.remove();
   const mark = (html: string, on: 'mid' | 'front', extra = ''): void => {
-    el!.insertAdjacentHTML('beforeend', `<div class="hz-mark hz-${next}" data-at="${MARK_AT[next]}" data-on="${on}">${extra}${html}</div>`);
+    el!.insertAdjacentHTML('beforeend', `<div class="hz-mark hz-mark-${next}" data-at="${MARK_AT[next]}" data-on="${on}">${extra}${html}</div>`);
   };
   if (next === 'review') mark(LIGHTHOUSE, 'front', '<i class="hz-beam"></i>');
   else if (next === 'knowledge') mark(OBSERVATORY + '<i class="sc-scope"></i>', 'mid');

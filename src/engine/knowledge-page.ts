@@ -7,7 +7,7 @@ import type { Level } from './knowledge';
 import { course, getLesson, lessonLabel } from './registry';
 import { includeLesson, isSkipped, knowledgeOf, lessonState, skipLesson } from './store';
 import type { Lesson } from './types';
-import { h, icon, panel } from './ui';
+import { h, icon, panel, sectionHead } from './ui';
 
 const ORDER: Level[] = ['mastered', 'solid', 'learning', 'weak', 'new'];
 
@@ -129,44 +129,39 @@ export function mountKnowledge(root: HTMLElement): () => void {
     const skippedCount = lessons.filter((l) => isSkipped(l.id)).length;
 
     const tiles = ORDER.map((level) =>
-      h('div', { class: `know-tile is-${level}` }, h('b', null, String(counted.filter((t) => t.level === level).length)), h('span', null, LEVEL_NAME[level])),
+      h('div', { class: `zp-card know-tile is-${level}` }, h('b', null, String(counted.filter((t) => t.level === level).length)), h('span', null, LEVEL_NAME[level])),
     );
 
     const modules = groups.map((m) => {
       const own = m.lessons.map((e) => getLesson(e.id)).filter((l): l is Lesson => Boolean(l));
       return h(
         'section',
-        { class: 'know-module' },
+        { class: 'zp-card know-module' },
         h(
           'div',
           { class: 'know-module-head' },
-          h('div', null, h('span', { class: 'kicker' }, m.path || `Module ${m.num}`), h('h2', null, m.title)),
+          h('div', null, h('span', { class: 'kicker' }, m.path || `Module ${m.num}`), h('h3', { class: 'zp-card-title' }, m.title)),
           bar(own.filter((l) => !isSkipped(l.id)).flatMap(topicsOf)),
         ),
-        ...own.map(lessonRow),
+        h('div', { class: 'know-lessons' }, ...own.map(lessonRow)),
       );
     });
 
     body.replaceChildren(
       h(
         'div',
-        { class: 'single knowledge' },
-        h('h1', { class: 'display', 'data-enter': true }, 'My knowledge'),
-        h(
-          'p',
-          { class: 'lead', 'data-enter': true },
-          'How well you know each topic, from your answers.',
-        ),
-        h('div', { class: 'know-tiles', 'data-enter': true }, ...tiles),
-        h('h2', { class: 'sheet-title', 'data-enter': true }, 'Practice your weakest topics'),
+        { class: 'zp-page knowledge' },
+        h('header', { class: 'zp-page-head', 'data-enter': true }, h('h1', { class: 'display' }, 'My knowledge'), h('p', { class: 'lead' }, 'How well you know each topic, from your answers.')),
+        h('div', { class: 'zp-grid know-tiles', 'data-enter': true }, ...tiles),
+        h('div', { class: 'zp-section-head', 'data-enter': true }, h('div', null, h('span', { class: 'kicker' }, 'Next'), h('h2', { class: 'zp-section-title' }, 'Practice your weakest topics'))),
         weakest.length
           ? h(
               'ul',
-              { class: 'know-weak', 'data-enter': true },
+              { class: 'zp-grid know-weak', 'data-enter': true },
               ...weakest.map((t) =>
                 h(
                   'li',
-                  null,
+                  { class: 'zp-card' },
                   h('span', { class: 'mistake-where' }, `From ${t.lesson.title}`),
                   h('strong', null, t.text),
                   badge(t.level),
@@ -179,11 +174,16 @@ export function mountKnowledge(root: HTMLElement): () => void {
               { 'data-enter': true },
               panel('info', counted.some((t) => t.level !== 'new') ? 'No weak topics right now.' : 'Nothing to show yet.', counted.some((t) => t.level !== 'new') ? 'Everything you practiced is solid or better. Keep going with the next lesson.' : 'Answer questions in the lessons, and your topics appear here.'),
             ),
-        h('h2', { class: 'sheet-title', 'data-enter': true }, 'All topics'),
-        skippedCount
-          ? h('p', { class: 'muted', 'data-enter': true }, `You skipped ${skippedCount} lesson${skippedCount === 1 ? '' : 's'}: ${skippedCount === 1 ? 'it does' : 'they do'} not count here.`)
-          : null,
-        ...modules,
+        h(
+          'section',
+          { class: 'zp-section', 'data-enter': true },
+          sectionHead(
+            'Every lesson',
+            'All topics',
+            skippedCount ? `You skipped ${skippedCount} lesson${skippedCount === 1 ? '' : 's'}: ${skippedCount === 1 ? 'it does' : 'they do'} not count here.` : `${groups.length} modules`,
+          ),
+          h('div', { class: 'zp-grid zp-grid-wide' }, ...modules),
+        ),
       ),
     );
     if (keepOpen) {

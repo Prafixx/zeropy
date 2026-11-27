@@ -12,7 +12,7 @@ import { renderTerminal } from './steps/terminal';
 import { renderItem } from './steps/item';
 import { isSkipped, lastPracticed, lessonState, noteAnswer, notePracticed } from './store';
 import type { ExerciseStep, Item, Lesson, TerminalStep } from './types';
-import { button, h, icon, panel, shuffle } from './ui';
+import { button, h, icon, panel, sectionHead, shuffle } from './ui';
 
 type Task = { lesson: Lesson; ref: string } & ({ kind: 'exercise'; step: ExerciseStep | TerminalStep } | { kind: 'item'; item: Item });
 
@@ -200,31 +200,32 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
       if (!done) start.addEventListener('click', (event) => event.preventDefault());
       return h(
         'li',
-        { class: 'practice-row' },
-        h('span', { class: 'practice-name' }, h('strong', null, m.title), h('small', null, `${done} of ${all} lessons done`)),
-        start,
+        { class: `zp-card practice-card${done ? '' : ' is-locked'}` },
+        h('span', { class: 'zp-card-kicker' }, `Module ${i + 1}`),
+        h('h3', { class: 'zp-card-title' }, m.title),
+        h('span', { class: 'meter', role: 'img', 'aria-label': `${done} of ${all} lessons done` }, h('i', { style: `width: ${Math.round((done / Math.max(all, 1)) * 100)}%` })),
+        h('div', { class: 'zp-card-foot' }, h('small', null, `${done} of ${all} lessons done`), start),
       );
     });
     show(
       h(
         'div',
-        { class: 'single practice' },
-        h('h1', { class: 'display', 'data-enter': true }, 'Mixed practice'),
-        h(
-          'p',
-          { class: 'lead', 'data-enter': true },
-          'Tasks from your finished lessons, in a mixed order.',
-        ),
+        { class: 'zp-page practice' },
+        h('header', { class: 'zp-page-head', 'data-enter': true }, h('h1', { class: 'display' }, 'Mixed practice'), h('p', { class: 'lead' }, 'Tasks from your finished lessons, in a mixed order.')),
         any
           ? h(
               'div',
-              { class: 'practice-start', 'data-enter': true },
+              { class: 'zp-card zp-card-hero practice-start', 'data-enter': true },
+              h('div', null, h('h2', { class: 'zp-card-title' }, 'A mixed set'), h('p', { class: 'zp-card-text' }, `Up to ${SET.exercises} exercises and ${SET.items} questions, from all your finished lessons.`)),
               h('a', { class: 'btn btn-primary btn-big', href: '#/practice/all' }, h('span', { class: 'btn-label' }, 'Start a mixed set'), icon('mix', 20)),
-              h('span', { class: 'muted' }, `Up to ${SET.exercises} exercises and ${SET.items} questions`),
             )
           : h('div', { 'data-enter': true }, panel('info', 'Finish a lesson first.', 'Mixed practice uses the tasks of the lessons you finished.')),
-        h('h2', { class: 'sheet-title', 'data-enter': true }, 'By module'),
-        h('ol', { class: 'practice-list', 'data-enter': true }, ...rows),
+        h(
+          'section',
+          { class: 'zp-section', 'data-enter': true },
+          sectionHead('One module', 'By module', `${course.modules.length} modules`),
+          h('ol', { class: 'zp-grid practice-grid' }, ...rows),
+        ),
         ...challengeList(),
       ),
     );
@@ -254,27 +255,21 @@ export function mountPractice(root: HTMLElement, which?: string, rest: string[] 
             if (!open) start.addEventListener('click', (event) => event.preventDefault());
             return h(
               'li',
-              { class: 'practice-row' },
-              h(
-                'span',
-                { class: 'practice-name' },
-                h('strong', null, step.title),
-                h('small', null, done ? 'Done' : open ? `After ${lesson.title}` : `Opens after the lesson ${lesson.title}`),
-              ),
-              start,
+              { class: `zp-card practice-card${open ? '' : ' is-locked'}` },
+              h('h3', { class: 'zp-card-title' }, step.title),
+              h('div', { class: 'zp-card-foot' }, h('small', null, done ? 'Done' : open ? `After ${lesson.title}` : `Opens after ${lesson.title}`), start),
             );
           });
       }),
     );
     if (!rows.length) return [];
     return [
-      h('h2', { class: 'sheet-title', 'data-enter': true }, 'Challenges'),
       h(
-        'p',
-        { class: 'muted', 'data-enter': true },
-        'Bigger tasks, with no starter code.',
+        'section',
+        { class: 'zp-section', 'data-enter': true },
+        sectionHead('No starter code', 'Challenges', `${rows.length} bigger tasks`),
+        h('ol', { class: 'zp-grid practice-grid' }, ...rows),
       ),
-      h('ol', { class: 'practice-list', 'data-enter': true }, ...rows),
     ];
   }
 

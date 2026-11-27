@@ -37,7 +37,41 @@ export interface Shell {
   remove(): void;
 }
 
+// The sidebar can fold into a rail of icons (wide windows; narrower ones
+// always have the rail). The choice stays on this device.
+const RAIL_KEY = 'zeropy:rail';
+function railSaved(): boolean {
+  try {
+    return localStorage.getItem(RAIL_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export function createShell(root: HTMLElement): Shell {
+  function railButton(): HTMLElement {
+    const el = h('button', { type: 'button', class: 'side-link side-rail-toggle' });
+    const paint = (): void => {
+      const rail = app.classList.contains('is-rail');
+      el.replaceChildren(icon(rail ? 'right' : 'left', 20), h('span', { class: 'side-label' }, rail ? 'Open the menu' : 'Fold the menu'));
+      el.setAttribute('aria-label', rail ? 'Open the menu' : 'Fold the menu into icons');
+      el.setAttribute('aria-pressed', String(rail));
+      el.title = rail ? 'Open the menu' : 'Fold the menu into icons';
+    };
+    el.addEventListener('click', () => {
+      const rail = !app.classList.contains('is-rail');
+      app.classList.toggle('is-rail', rail);
+      try {
+        localStorage.setItem(RAIL_KEY, rail ? '1' : '0');
+      } catch {
+        // Not saved: the menu opens again next time.
+      }
+      paint();
+    });
+    queueMicrotask(paint);
+    return el;
+  }
+
   const links = new Map<Place, HTMLAnchorElement[]>();
   const counts = new Map<Place, HTMLElement[]>();
 
@@ -67,7 +101,7 @@ export function createShell(root: HTMLElement): Shell {
       h('span', { class: 'side-heading' }, 'Tools'),
       ...TOOLS.map((item) => link(item, 'side')),
     ),
-    h('div', { class: 'side-foot' }, settingsButton({ side: true })),
+    h('div', { class: 'side-foot' }, railButton(), settingsButton({ side: true })),
   );
 
   // Phone: four places as tabs, the rest (and Settings) under "More".
@@ -89,7 +123,7 @@ export function createShell(root: HTMLElement): Shell {
 
   const page = h('div', { class: 'app-page' });
   const top = h('header', { class: 'app-top' }, brand());
-  const app = h('div', { class: 'app' }, side, scrim, top, page, tabs);
+  const app = h('div', { class: `app${railSaved() ? ' is-rail' : ''}` }, side, scrim, top, page, tabs);
   root.replaceChildren(app);
 
   return {

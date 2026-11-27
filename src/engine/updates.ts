@@ -4,11 +4,15 @@
 // restart. The portable app and the web version get the download page.
 import { h } from './ui';
 
+/** Why a check failed (desktop/main.cjs, classify). */
+type Reason = 'offline' | 'unreachable' | 'timeout' | 'limited' | 'not-ready' | 'github-down' | 'unknown';
+
 interface UpdateBridge {
-  check(): Promise<{ state: 'available' | 'none' | 'manual' | 'error'; version?: string; size?: number | null }>;
+  check(): Promise<{ state: 'available' | 'none' | 'manual' | 'error'; version?: string; size?: number | null; reason?: Reason; retryAfter?: number | null }>;
+  latest?(): Promise<{ state: 'latest' | 'error'; version?: string; reason?: Reason; retryAfter?: number | null }>;
   download(): Promise<boolean>;
   install(): Promise<boolean>;
-  onEvent(listener: (data: { state: 'progress' | 'ready' | 'error'; percent?: number; version?: string }) => void): () => void;
+  onEvent(listener: (data: { state: 'progress' | 'ready' | 'error'; percent?: number; version?: string; reason?: Reason }) => void): () => void;
 }
 
 /** Set by desktop/preload.cjs in the desktop app; undefined on the web. */
@@ -27,6 +31,28 @@ export function compareVersions(a: string, b: string): number {
     if (d !== 0) return Math.sign(d);
   }
   return 0;
+}
+
+/** A plain sentence for each reason a check can fail. */
+function failure(reason: Reason | undefined, retryAfter?: number | null): string {
+  switch (reason) {
+    case 'offline':
+      return 'This computer is offline. Connect to the internet, then try again.';
+    case 'unreachable':
+      return 'This computer is online, but github.com could not be reached (ZeroPy tried three times). A firewall, a VPN or the network may block it. Try again, or ';
+    case 'timeout':
+      return 'GitHub took too long to answer (ZeroPy tried three times). Try again in a minute.';
+    case 'limited': {
+      const minutes = retryAfter ? Math.max(1, Math.round(retryAfter / 60)) : 0;
+      return `GitHub has had many checks from your network and is waiting a little.${minutes ? ` Try again in about ${minutes} minutes.` : ' Try again later.'} Your connection is fine.`;
+    }
+    case 'not-ready':
+      return 'A new version is being published right now. Try again in a few minutes.';
+    case 'github-down':
+      return 'GitHub has a problem right now (ZeroPy tried three times). Your connection is fine. Try again later.';
+    default:
+      return 'The check did not work this time. Try again, or ';
+  }
 }
 
 /** A small block for the settings menu: the version and the check button. */
@@ -49,10 +75,11 @@ export function updateBlock(): HTMLElement {
     const found = await bridge.check();
     if (found.state === 'manual') return false;
     if (found.state === 'error') {
+      const text = failure(found.reason, found.retryAfter);
       result.replaceChildren(
-        'GitHub could not be reached. Check your internet connection and try again, or ',
-        h('a', { href: PAGE, target: '_blank', rel: 'noopener noreferrer' }, 'open the download page'),
-        '.',
+        text,
+        text.endsWith('or ') ? h('a', { href: PAGE, target: '_blank', rel: 'noopener noreferrer' }, 'open the download page') : '',
+        text.endsWith('or ') ? '.' : '',
       );
       return true;
     }
@@ -77,14 +104,14 @@ export function updateBlock(): HTMLElement {
         if (event.state === 'error') {
           stop();
           check.disabled = false;
-          result.textContent = 'The download stopped. Check your internet connection and try again.';
+          result.textContent = event.reason === 'offline' ? 'The download stopped: this computer went offline. Try again.' : 'The download stopped. Try again.';
         }
       });
       void bridge.download().then((ok) => {
         if (!ok) {
           stop();
           check.disabled = false;
-          result.textContent = 'The download stopped. Check your internet connection and try again.';
+          result.textContent = navigator.onLine ? 'The download stopped. Try again.' : 'The download stopped: this computer went offline. Try again.';
         }
       });
     });
@@ -97,11 +124,22 @@ export function updateBlock(): HTMLElement {
     result.textContent = 'Asking GitHub…';
     try {
       if (await selfUpdate()) return;
-      const response = await fetch(LATEST, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
-      if (!response.ok) throw new Error(String(response.status));
-      const release = (await response.json()) as { tag_name?: string };
-      const newest = (release.tag_name ?? '').replace(/^v/, '');
-      if (!newest) throw new Error('no tag');
+      let newest = '';
+      if (bridge?.latest) {
+        const found = await bridge.latest();
+        if (found.state === 'error') {
+          const text = failure(found.reason, found.retryAfter);
+          result.replaceChildren(text, text.endsWith('or ') ? h('a', { href: PAGE, target: '_blank', rel: 'noopener noreferrer' }, 'open the download page') : '', text.endsWith('or ') ? '.' : '');
+          return;
+        }
+        newest = found.version ?? '';
+      } else {
+        const response = await fetch(LATEST, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
+        if (!response.ok) throw new Error(String(response.status));
+        const release = (await response.json()) as { tag_name?: string };
+        newest = (release.tag_name ?? '').replace(/^v/, '');
+      }
+      if (!newest) throw new Error('no version');
       if (compareVersions(newest, APP_VERSION) > 0) {
         result.replaceChildren(
           `Version ${newest} is ready. `,
@@ -112,7 +150,7 @@ export function updateBlock(): HTMLElement {
         result.textContent = 'You have the newest version.';
       }
     } catch {
-      result.textContent = 'GitHub could not be reached. Check your internet connection and try again.';
+      result.replaceChildren(navigator.onLine ? failure('unknown') : failure('offline'), navigator.onLine ? h('a', { href: PAGE, target: '_blank', rel: 'noopener noreferrer' }, 'open the download page') : '', navigator.onLine ? '.' : '');
     } finally {
       check.disabled = false;
     }

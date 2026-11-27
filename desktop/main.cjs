@@ -4,6 +4,7 @@
 // (app://zeropy), saved in %APPDATA%\ZeroPy. It stays there across
 // restarts and updates, because the origin and the app id never change.
 const { app, BrowserWindow, ipcMain, Menu, nativeTheme, net, protocol, session, shell } = require('electron');
+const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
@@ -104,22 +105,93 @@ function getUpdater() {
   const send = (data) => BrowserWindow.getAllWindows().forEach((w) => w.webContents.send('update:event', data));
   updater.on('download-progress', (p) => send({ state: 'progress', percent: Math.round(p.percent) }));
   updater.on('update-downloaded', (info) => send({ state: 'ready', version: info.version }));
-  updater.on('error', () => send({ state: 'error' }));
+  updater.on('error', (error) => {
+    logUpdate(`updater: ${classify(error)}: ${String(error && error.message).replace(/\s+/g, ' ').slice(0, 240)}`);
+    send({ state: 'error', reason: classify(error) });
+  });
   return updater;
+}
+
+// Why a check failed, from the error itself: no more "check your connection"
+// for everything. offline | timeout | limited (GitHub refuses for a while) |
+// not-ready (a release without its files yet, just after publishing) |
+// github-down (an error on GitHub's side) | unknown.
+function classify(error) {
+  const status = Number(error && (error.statusCode || error.status)) || 0;
+  const text = String((error && (error.code || '')) + ' ' + (error && error.message) || '');
+  if (!net.isOnline() || /ERR_INTERNET_DISCONNECTED/.test(text)) return 'offline';
+  // Online, but github.com cannot be found or reached: DNS, a firewall, a VPN.
+  if (/ERR_NAME_NOT_RESOLVED|ENOTFOUND|EAI_AGAIN|ENETUNREACH|ERR_ADDRESS_UNREACHABLE|ERR_CONNECTION_REFUSED|ERR_PROXY|ERR_CERT/.test(text)) return 'unreachable';
+  if (/timed? ?out|ETIMEDOUT|ESOCKETTIMEDOUT|ERR_TIMED_OUT|ERR_CONNECTION_TIMED_OUT/i.test(text)) return 'timeout';
+  if (status === 429 || status === 403 || /rate limit/i.test(text)) return 'limited';
+  if (status === 404 || /Cannot find .*latest\.yml|No published versions/i.test(text)) return 'not-ready';
+  if (status >= 500 || /ERR_CONNECTION_RESET|ERR_CONNECTION_CLOSED|ERR_EMPTY_RESPONSE|ERR_NETWORK_CHANGED|ECONNRESET/.test(text)) return 'github-down';
+  return 'unknown';
+}
+
+// A short log of failed checks (in the folder of the app's data), to find a
+// problem later. Only the reason and GitHub's message: nothing personal.
+function logUpdate(line) {
+  try {
+    const file = path.join(app.getPath('userData'), 'logs', 'updates.log');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    const old = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').slice(-199) : [];
+    fs.writeFileSync(file, [...old, `${new Date().toISOString()} ${line}`].join('\n'));
+  } catch {
+    // A log that cannot be written is no reason to fail.
+  }
+}
+
+const withTimeout = (promise, ms) =>
+  Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error('timed out'), { code: 'ETIMEDOUT' })), ms))]);
+
+/** Tries a check up to three times when the failure may pass (1.5 s, then 4 s later). */
+async function withRetry(name, task) {
+  const waits = [1500, 4000];
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await withTimeout(task(), 20000);
+    } catch (error) {
+      const reason = classify(error);
+      logUpdate(`${name} try ${attempt + 1}: ${reason}: ${String(error && error.message).replace(/\s+/g, ' ').slice(0, 240)}`);
+      const passing = reason === 'timeout' || reason === 'github-down' || reason === 'unreachable' || reason === 'unknown';
+      if (!passing || attempt >= waits.length) {
+        const retryAfter = Number(error && error.headers && (error.headers['retry-after'] || error.headers['Retry-After'])) || null;
+        return { state: 'error', reason, retryAfter };
+      }
+      await new Promise((r) => setTimeout(r, waits[attempt]));
+    }
+  }
+}
+
+// The newest version, read from latest.yml of the newest release (a file,
+// not the API of GitHub, which allows only 60 calls an hour per network).
+// (ZEROPY_LATEST_URL: only for the tests of the failure messages.)
+const LATEST_YML = process.env.ZEROPY_LATEST_URL || 'https://github.com/Prafixx/zeropy/releases/latest/download/latest.yml';
+async function latestVersion() {
+  const response = await net.fetch(LATEST_YML, { cache: 'no-store', headers: { 'User-Agent': `ZeroPy/${app.getVersion()}` } });
+  if (!response.ok) throw Object.assign(new Error(`HTTP ${response.status}`), { statusCode: response.status, headers: { 'retry-after': response.headers.get('retry-after') } });
+  const match = /^version:\s*['"]?([\d.]+)/m.exec(await response.text());
+  if (!match) throw new Error('latest.yml has no version');
+  return match[1];
 }
 
 function setupUpdates() {
   ipcMain.handle('update:check', async () => {
     if (!canSelfUpdate()) return { state: 'manual' };
-    try {
+    if (!net.isOnline()) return { state: 'error', reason: 'offline' };
+    return withRetry('check', async () => {
       const result = await getUpdater().checkForUpdates();
       const info = result?.updateInfo;
       if (!result || !result.isUpdateAvailable || !info) return { state: 'none' };
       const size = info.files?.[0]?.size;
       return { state: 'available', version: info.version, size: typeof size === 'number' ? size : null };
-    } catch {
-      return { state: 'error' };
-    }
+    });
+  });
+  // The portable app cannot update itself: it only asks for the newest version.
+  ipcMain.handle('update:latest', async () => {
+    if (!net.isOnline()) return { state: 'error', reason: 'offline' };
+    return withRetry('latest', async () => ({ state: 'latest', version: await latestVersion() }));
   });
   ipcMain.handle('update:download', async () => {
     if (!canSelfUpdate()) return false;
@@ -154,20 +226,32 @@ function buildMenu() {
 const BASE_SIZE = { width: 1280, height: 760 };
 const MAX_FIT = 1.75;
 let ownZoom = 0; // steps of Ctrl + / Ctrl -
+let lastFit = '';
 function fit(win) {
   if (win.isDestroyed() || win.isMinimized()) return;
   const [width, height] = win.getContentSize();
   const auto = Math.min(MAX_FIT, Math.max(1, Math.min(width / BASE_SIZE.width, height / BASE_SIZE.height)));
   const zoom = Math.round(auto * 1.15 ** ownZoom * 100) / 100;
-  win.webContents.setZoomFactor(zoom);
+  const full = win.isFullScreen();
+  // Windows sends a resize when a full-screen window gets the focus back
+  // (Alt+Tab). Setting the same zoom and title bar again made Chromium lay
+  // out and paint the whole page: about a second of black. So only a real
+  // change does anything.
+  const key = `${zoom}|${full}`;
+  if (key === lastFit) return;
+  lastFit = key;
+  if (win.webContents.getZoomFactor() !== zoom) win.webContents.setZoomFactor(zoom);
   // The bar of the page grows with the zoom: the window buttons grow with it.
-  barColors.height = Math.round(TITLE_BAR_HEIGHT * zoom);
-  try {
-    win.setTitleBarOverlay(barColors);
-  } catch {
-    // No overlay (full screen on some systems): nothing to size.
+  const barHeight = Math.round(TITLE_BAR_HEIGHT * zoom);
+  if (barHeight !== barColors.height) {
+    barColors.height = barHeight;
+    try {
+      win.setTitleBarOverlay(barColors);
+    } catch {
+      // No overlay (full screen on some systems): nothing to size.
+    }
   }
-  win.webContents.send('window:state', { full: win.isFullScreen(), zoom });
+  win.webContents.send('window:state', { full, zoom });
 }
 
 /** Zoom, full screen, and in development reload and DevTools. */
@@ -186,25 +270,23 @@ function keys(win) {
     else done = false;
     if (done) {
       event.preventDefault();
+      lastFit = '';
       fit(win);
     }
   });
 }
 
 /**
- * Full screen for real: the maximize button (and a double click on the bar)
- * fills the whole screen, over the taskbar. The app's bar has a button to
- * leave it; F11 and Esc work too.
+ * Full screen for real, over the taskbar: the button in the app's bar, F11,
+ * and Esc to leave. The window has no maximize button of its own (it would
+ * be a second full-screen button); it can still be resized at its edges.
  */
 function fullScreen(win) {
-  // Not maximized under the full screen: leaving it would maximize the
-  // window again, and that would start full screen again.
-  win.on('maximize', () => {
-    win.unmaximize();
-    win.setFullScreen(true);
-  });
   for (const name of ['resize', 'enter-full-screen', 'leave-full-screen', 'restore']) win.on(name, () => fit(win));
-  win.webContents.on('did-finish-load', () => fit(win));
+  win.webContents.on('did-finish-load', () => {
+    lastFit = '';
+    fit(win);
+  });
 }
 ipcMain.on('window:full-screen', (event, on) => {
   const win = BrowserWindow.fromWebContents(event.sender);
@@ -236,6 +318,7 @@ function createWindow() {
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#0d0e19' : '#f7f3ec',
     titleBarStyle: 'hidden',
     titleBarOverlay: titleBar(nativeTheme.shouldUseDarkColors),
+    maximizable: false,
     show: false,
     webPreferences: {
       contextIsolation: true,
@@ -261,6 +344,11 @@ function flush() {
     // Nothing to flush.
   }
 }
+
+// Windows tells Chromium when a window is covered, and Chromium stops
+// drawing it; coming back to a full-screen window then showed black for a
+// moment. The window is drawn as usual instead.
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 // One window only: two copies would fight over the same saved progress.
 if (!app.requestSingleInstanceLock()) {
