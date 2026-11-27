@@ -9,6 +9,7 @@ import './styles/tokens.css';
 import './styles/app.css';
 import { onSettings } from './kit/settings';
 import { mountSky } from './kit/sky';
+import { mountHorizon, setHorizon, type HorizonPlace } from './kit/horizon';
 import { mountHome } from './engine/home';
 import { mountLesson } from './engine/player';
 import { mountReview } from './engine/review-page';
@@ -36,11 +37,27 @@ function route(): void {
     shell?.remove();
     shell = null;
     unmount = mountLesson(root, parts[1], parts[2] ? Number(parts[2]) : undefined);
+    setHorizon('lesson');
     return;
   }
   shell ??= createShell(root);
   const page = shell.page;
-  const at = (place: Place): void => shell!.show(place);
+  // Each tab is its own place in the land at the foot of the page.
+  const LAND: Record<Place, HorizonPlace> = {
+    course: 'course',
+    review: 'review',
+    practice: 'practice',
+    mistakes: 'mistakes',
+    knowledge: 'knowledge',
+    playground: 'playground',
+    cheatsheet: 'cheatsheet',
+    next: 'next',
+  };
+  const at = (place: Place): void => {
+    shell!.show(place);
+    // The landing (a first visit) has its own scene, the lake.
+    setHorizon(document.querySelector('.home.has-scene') ? null : LAND[place]);
+  };
   if (parts[0] === 'review') {
     unmount = mountReview(page);
     at('review');
@@ -69,6 +86,7 @@ function route(): void {
 }
 
 mountSky();
+mountHorizon();
 mountTitleBar();
 onSettings(() => paintTitleBar());
 window.addEventListener('hashchange', route);

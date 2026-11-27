@@ -5633,8 +5633,38 @@ code {
   fill: var(--scene-front);
   opacity: 0.6;
 }
-.s-water {
+.s-bank {
   fill: var(--scene-front);
+}
+.s-bankRim,
+.s-grass {
+  fill: var(--scene-rim);
+}
+.s-water {
+  fill: color-mix(in srgb, var(--scene-front) 72%, var(--scene-mid));
+}
+.s-edge {
+  fill: color-mix(in srgb, var(--scene-rim) 45%, var(--scene-front));
+}
+/* Wave crests: two sets that sway the opposite way, one pixel at a time. */
+.s-waveA,
+.s-waveB {
+  fill: color-mix(in srgb, var(--ink-3) 40%, var(--scene-rim));
+  opacity: 0.45;
+  animation: zp-wave-a 3.2s steps(1) infinite;
+}
+.s-waveB {
+  animation-name: zp-wave-b;
+}
+@keyframes zp-wave-a {
+  50% {
+    translate: 1px 0;
+  }
+}
+@keyframes zp-wave-b {
+  50% {
+    translate: -1px 0;
+  }
 }
 .s-rBack {
   fill: var(--scene-back);
@@ -5646,9 +5676,6 @@ code {
 .s-rStars {
   fill: var(--star-w);
   opacity: 0.5;
-}
-.s-shore {
-  fill: var(--scene-rim);
 }
 /* Short lines of light that come and go on the water. */
 .sc-ripple {
@@ -5835,5 +5862,345 @@ code {
   }
   .home.has-scene {
     --scene-h: 32%;
+  }
+}
+
+/* ==========================================================================
+   The land at the foot of every page (src/kit/horizon.ts): the same night
+   as the landing, a different place on each tab. Behind the content.
+   ========================================================================== */
+.horizon {
+  --hz-h: 150px;
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 0;
+  height: var(--hz-h);
+  pointer-events: none;
+}
+.horizon[hidden] {
+  display: none;
+}
+/* A page with a bar of buttons at the foot: the land stands on it. */
+:root:has(.app-page .dock > .btn:not([hidden])) .horizon {
+  bottom: var(--dock-h);
+}
+.horizon.hz-lesson {
+  --hz-h: 96px;
+  bottom: var(--dock-h);
+  opacity: 0.8;
+}
+/* Room at the end of a page, so the last lines can scroll above the land. */
+.has-horizon .player-main,
+.has-horizon .home-main {
+  padding-bottom: calc(var(--s-10) + 120px);
+}
+.horizon .s-mid,
+.horizon .s-trees {
+  fill: var(--scene-mid);
+}
+.horizon .s-front {
+  fill: var(--scene-front);
+}
+.horizon .s-frontRim {
+  fill: var(--scene-rim);
+}
+.hz-mark {
+  position: absolute;
+  translate: -50% 0;
+}
+.hz-mark svg {
+  display: block;
+}
+.lh-dark,
+.lh-rock {
+  fill: var(--scene-front);
+}
+.lh-rock {
+  fill: color-mix(in srgb, var(--scene-front) 60%, var(--scene-mid));
+}
+.lh-lamp {
+  fill: var(--accent);
+}
+.lh-red {
+  fill: var(--tomato);
+}
+.lh-white {
+  fill: var(--code-text);
+}
+/* The light of the lighthouse sweeps from one side to the other. */
+.hz-beam {
+  position: absolute;
+  left: 18px;
+  top: 6px;
+  width: 260px;
+  height: 22px;
+  margin-top: -9px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 45%, transparent), transparent);
+  clip-path: polygon(0 45%, 100% 0, 100% 100%, 0 55%);
+  transform-origin: 0 50%;
+  animation: zp-sweep 9s ease-in-out infinite;
+}
+@keyframes zp-sweep {
+  0%,
+  100% {
+    scale: 1 1;
+    opacity: 0.9;
+  }
+  45%,
+  55% {
+    scale: -1 1;
+    opacity: 0.6;
+  }
+}
+.ob-dome {
+  fill: var(--scene-rim);
+}
+.ob-dome-lit {
+  fill: color-mix(in srgb, var(--scene-rim) 70%, var(--ink));
+}
+.ob-wall {
+  fill: var(--scene-back);
+}
+.ob-slit {
+  fill: color-mix(in srgb, var(--accent) 45%, var(--scene-front));
+}
+.sc-scope {
+  position: absolute;
+  left: 30px;
+  top: -14px;
+  width: 8px;
+  height: 26px;
+  background: var(--ink-3);
+  box-shadow: inset -2px 0 0 var(--scene-rim);
+  transform-origin: 50% 100%;
+  rotate: 28deg;
+  animation: zp-scope 14s steps(6) infinite;
+}
+@keyframes zp-scope {
+  50% {
+    rotate: 42deg;
+  }
+}
+.sc-fly {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: color-mix(in srgb, var(--accent) 70%, #fff);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 70%, transparent);
+  opacity: 0;
+  animation:
+    zp-fly-glow 5s ease-in-out infinite,
+    zp-fly-drift 7s ease-in-out infinite;
+}
+@keyframes zp-fly-glow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  40%,
+  60% {
+    opacity: 0.9;
+  }
+}
+@keyframes zp-fly-drift {
+  50% {
+    translate: 8px -10px;
+  }
+}
+:root[data-motion='reduced'] .horizon * {
+  animation: none !important;
+}
+@media (max-width: 720px) {
+  .horizon {
+    --hz-h: 96px;
+    bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+}
+/* The places of the tabs: their landmarks. */
+.cb-roof {
+  fill: var(--kraft-dark);
+}
+.cb-wall,
+.br-deck {
+  fill: var(--kraft);
+}
+.br-post,
+.br-rail {
+  fill: var(--kraft-dark);
+}
+.cb-window {
+  fill: var(--accent);
+  animation: zp-window 5s steps(1) infinite;
+}
+@keyframes zp-window {
+  70% {
+    fill: var(--accent-hover);
+  }
+  76% {
+    fill: var(--accent);
+  }
+}
+.s-stream {
+  fill: color-mix(in srgb, var(--scene-mid) 60%, var(--scene-rim));
+}
+.s-glow {
+  fill: var(--accent);
+  opacity: 0.3;
+}
+.s-path {
+  fill: var(--accent);
+  opacity: 0.7;
+}
+/* Mistakes: the water of the stream runs down under the bridge. */
+.hz-flow {
+  position: absolute;
+  top: 34px;
+  width: 4px;
+  height: 8px;
+  background: color-mix(in srgb, var(--ink-3) 50%, var(--scene-rim));
+  opacity: 0;
+  animation: zp-flow 1.8s linear infinite;
+}
+.hz-flow:nth-child(1) {
+  left: 30px;
+}
+.hz-flow:nth-child(2) {
+  left: 44px;
+  animation-delay: -0.6s;
+}
+.hz-flow:nth-child(3) {
+  left: 56px;
+  animation-delay: -1.2s;
+}
+@keyframes zp-flow {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 26px;
+  }
+}
+/* Playground: a fire of three frames, and sparks that rise and go out. */
+.hz-fire {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+  width: 16px;
+  height: 20px;
+  background: var(--accent);
+  clip-path: polygon(0 100%, 0 60%, 25% 60%, 25% 30%, 50% 30%, 50% 0, 75% 0, 75% 40%, 100% 40%, 100% 100%);
+  box-shadow: inset 0 -8px 0 var(--tomato);
+  animation: zp-fire 0.6s steps(1) infinite;
+}
+@keyframes zp-fire {
+  33% {
+    clip-path: polygon(0 100%, 0 40%, 25% 40%, 25% 10%, 50% 10%, 50% 40%, 75% 40%, 75% 20%, 100% 20%, 100% 100%);
+  }
+  66% {
+    clip-path: polygon(0 100%, 0 50%, 25% 50%, 25% 0, 50% 0, 50% 30%, 75% 30%, 75% 60%, 100% 60%, 100% 100%);
+  }
+}
+.hz-spark {
+  position: absolute;
+  left: 22px;
+  bottom: 26px;
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  opacity: 0;
+  animation: zp-spark 2.6s steps(10) infinite;
+}
+.hz-spark:nth-of-type(3) {
+  animation-delay: -0.9s;
+  left: 16px;
+}
+.hz-spark:nth-of-type(4) {
+  animation-delay: -1.7s;
+  left: 28px;
+}
+@keyframes zp-spark {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 8px -44px;
+  }
+}
+/* Cheat sheet: smoke from the chimney of the cabin. */
+.hz-smoke {
+  position: absolute;
+  left: 40px;
+  top: -6px;
+  width: 8px;
+  height: 8px;
+  background: var(--scene-rim);
+  opacity: 0;
+  animation: zp-smoke 4.5s linear infinite;
+}
+.hz-smoke:nth-of-type(2) {
+  animation-delay: -1.5s;
+}
+.hz-smoke:nth-of-type(3) {
+  animation-delay: -3s;
+}
+@keyframes zp-smoke {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    translate: 14px -54px;
+  }
+}
+/* After the course: the flag on the far hill waves. */
+.fl-pole {
+  fill: var(--ink-3);
+}
+.fl-cloth {
+  fill: var(--accent);
+}
+.hz-next svg {
+  animation: zp-wave 1.2s steps(1) infinite;
+}
+@keyframes zp-wave {
+  50% {
+    scale: 1 0.94;
+    transform-origin: 0 100%;
+  }
+}
+/* An empty page (nothing to review, no mistakes): the title stays at the
+   top, the message sits in the middle of the open space above the land. */
+.player-main.is-page:has(.empty-state) {
+  display: flex;
+  flex-direction: column;
+}
+.player-main.is-page:has(.empty-state) > .step-body,
+.player-main.is-page .single:has(> .empty-state) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.single > .empty-state {
+  margin-block: auto;
+  border-top: 0;
+}
+@media (max-width: 720px) {
+  :root:has(.app-page .dock > .btn:not([hidden])) .horizon {
+    bottom: calc(60px + var(--dock-h) + env(safe-area-inset-bottom));
   }
 }

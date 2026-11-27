@@ -9,9 +9,9 @@
 // Lines of light come and go on the water. Reduced motion: all still.
 import { isReduced } from './motion';
 
-const CELL = 4;
+export const CELL = 4;
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-const bayer = (x: number, y: number): number => (BAYER[(y % 4) * 4 + (x % 4)] + 0.5) / 16;
+export const bayer = (x: number, y: number): number => (BAYER[(y % 4) * 4 + (x % 4)] + 0.5) / 16;
 
 export interface Scene {
   el: HTMLElement;
@@ -19,7 +19,7 @@ export interface Scene {
 }
 
 /** A path of one class made of 1 x 1 cells. */
-class Layer {
+export class Layer {
   d = '';
   cell(x: number, y: number, w = 1, h = 1): void {
     if (w > 0 && h > 0) this.d += `M${x} ${y}h${w}v${h}h-${w}z`;
@@ -27,7 +27,7 @@ class Layer {
 }
 
 /** A small sprite: cells by class, drawn at the pixel size of the land. */
-function sprite(cols: number, rows: number, cell: (x: number, y: number) => string, className: string, size = CELL): string {
+export function sprite(cols: number, rows: number, cell: (x: number, y: number) => string, className: string, size = CELL): string {
   const layers = new Map<string, Layer>();
   for (let y = 0; y < rows; y += 1) {
     for (let x = 0; x < cols; x += 1) {
@@ -78,7 +78,87 @@ const FISH = sprite(
 const BIRD_UP = ['x.....x', '.x...x.', '..xxx..'];
 const BIRD_DOWN = ['..xxx..', '.x...x.', 'x.....x'];
 const birdFrame = (rows: string[]): string => sprite(7, 3, (x, y) => (rows[y][x] === 'x' ? 'bd-body' : ''), 'bd', 3);
-const BIRD = birdFrame(BIRD_UP) + birdFrame(BIRD_DOWN);
+export const BIRD = birdFrame(BIRD_UP) + birdFrame(BIRD_DOWN);
+
+/** Moves an element across the scene, from one side out to the other. */
+export function cross(thing: HTMLElement, seconds: number, toLeft: boolean): Promise<void> {
+  const off = `-${thing.offsetWidth + 20}px`;
+  const end = 'calc(100% + 20px)';
+  thing.classList.toggle('is-left', toLeft);
+  thing.classList.add('is-on');
+  const run = thing.animate([{ left: toLeft ? end : off }, { left: toLeft ? off : end }], { duration: seconds * 1000, easing: 'linear' });
+  return run.finished.then(
+    () => thing.classList.remove('is-on'),
+    () => thing.classList.remove('is-on'),
+  );
+}
+
+/**
+ * The lake, at the foot of a scene: a dark bank with grass that is never
+ * straight, the water under it with the land mirrored in it, and wave crests
+ * that grow from the far shore to the front, so the water has depth.
+ * Heights are counted in cells from the bottom; `midH` and `backH` are the
+ * hills and the mountains above the lake.
+ */
+export function paintLake(
+  L: Record<string, Layer>,
+  cols: number,
+  rows: number,
+  lakeH: number,
+  midH: (x: number) => number,
+  backH: (x: number) => number,
+  trees: [number, number, number][],
+): void {
+  // The water line wobbles a little; the bank above it a little more.
+  const water = (x: number): number => lakeH + Math.round(0.9 * Math.sin(x * 0.07 + 0.5) + 0.6 * Math.sin(x * 0.23));
+  const bank = (x: number): number => water(x) + 2 + Math.round(1.4 * Math.sin(x * 0.045 + 1.4) + Math.sin(x * 0.16 + 0.3));
+  for (let x = 0; x < cols; x += 1) {
+    const top = rows - bank(x);
+    const line = rows - water(x);
+    L.bank.cell(x, top + 1, 1, line - top - 1);
+    L.bankRim.cell(x, top);
+    if (bayer(x * 7, x) < 0.12) {
+      L.grass.cell(x, top - 1);
+      if (bayer(x, 3) < 0.5) L.grass.cell(x + 1, top - 2);
+    }
+    L.water.cell(x, line, 1, water(x));
+    L.edge.cell(x, line);
+    // The mirror: the bank (dark, like the water), then the hills, then the
+    // mountains. Every third row is left out and the rows shift: water.
+    const h = water(x);
+    for (let d = 1; d < h; d += 1) {
+      if (d % 3 === 2) continue;
+      const y = line + d;
+      const shift = Math.round(Math.sin(d * 1.7) * (1 + d / 8));
+      const sx = Math.min(cols - 1, Math.max(0, x + shift));
+      const up = d + (bank(sx) - water(sx));
+      const fade = d / h;
+      if (up <= midH(sx) - h) {
+        if (bayer(x, y) < 0.95 - fade * 0.5) L.rMid.cell(x, y);
+      } else if (up <= backH(sx) - h && bayer(x, y) < 0.8 - fade * 0.6) L.rBack.cell(x, y);
+      else if (bayer(x * 5, y) < 0.012) L.rStars.cell(x, y);
+    }
+  }
+  for (const [x0, y, w] of trees) {
+    const line = rows - water(x0);
+    const d = line - 1 - y + (bank(x0) - water(x0));
+    if (d >= 1 && d < water(x0) && d % 3 !== 2) L.rTrees.cell(x0 + Math.round(Math.sin(d * 1.7)), line + d, w, 1);
+  }
+  // Wave crests: small and close near the far shore, longer and wider apart
+  // at the front. Two sets, so they can sway the opposite way.
+  for (let d = 3, n = 0; d < lakeH; n += 1) {
+    const t = d / lakeH;
+    const width = 1 + Math.round(t * 4);
+    const gap = 14 + Math.round(t * 34);
+    const layer = n % 2 ? L.waveB : L.waveA;
+    for (let x = ((n * 11) % gap) - gap; x < cols; x += gap) {
+      const y = rows - lakeH + d;
+      layer.cell(x, y, width, 1);
+      if (t > 0.55) layer.cell(x + 1, y - 1, Math.max(width - 2, 1), 1);
+    }
+    d += 3 + Math.round(t * 4);
+  }
+}
 
 export function landscape(): Scene {
   const el = document.createElement('div');
@@ -126,16 +206,20 @@ export function landscape(): Scene {
       mid: new Layer(),
       midShade: new Layer(),
       trees: new Layer(),
+      bank: new Layer(),
+      bankRim: new Layer(),
+      grass: new Layer(),
       water: new Layer(),
       rBack: new Layer(),
       rMid: new Layer(),
       rTrees: new Layer(),
-      shore: new Layer(),
       rStars: new Layer(),
+      edge: new Layer(),
+      waveA: new Layer(),
+      waveB: new Layer(),
     };
     const tri = (v: number): number => 1 - Math.abs((((v % 1) + 1) % 1) - 0.5) * 2;
     const lakeH = Math.round(rows * 0.34);
-    const shoreY = rows - lakeH; // the first row of water
     // Far mountains: sharp peaks of different sizes.
     const backH = (x: number): number =>
       Math.round(rows * 0.52 + rows * 0.2 * tri(x / 61 + 0.3) ** 1.4 + rows * 0.11 * tri(x / 23 + 0.1) ** 2 + 2 * Math.sin(x * 0.4));
@@ -164,35 +248,7 @@ export function landscape(): Scene {
         treeCells.push([x0, y, w]);
       });
     }
-    // The lake: the water, then the land mirrored in it. Every third row of
-    // the mirror is left out and the rows shift a little: that reads as water.
-    L.water.cell(0, shoreY, cols, lakeH);
-    for (let d = 0; d < lakeH; d += 1) {
-      if (d % 3 === 2) continue;
-      const y = shoreY + d;
-      const shift = Math.round(Math.sin(d * 1.7) * (1 + d / 8));
-      const fade = d / lakeH;
-      for (let x = 0; x < cols; x += 1) {
-        const sx = Math.min(cols - 1, Math.max(0, x + shift));
-        const up = d + 1; // the height above the shore that this row mirrors
-        if (up <= midH(sx) - lakeH) {
-          if (bayer(x, y) < 0.95 - fade * 0.5) L.rMid.cell(x, y);
-        } else if (up <= backH(sx) - lakeH && bayer(x, y) < 0.8 - fade * 0.6) L.rBack.cell(x, y);
-      }
-    }
-    for (const [x0, y, w] of treeCells) {
-      const d = shoreY - 1 - y;
-      if (d >= 0 && d < lakeH && d % 3 !== 2) L.rTrees.cell(x0 + Math.round(Math.sin(d * 1.7)), shoreY + d, w, 1);
-    }
-    // A few stars mirrored in the open water, where no land is mirrored.
-    for (let x = 3; x < cols; x += 1) {
-      if (bayer(x * 5, x) < 0.05) {
-        const d = 4 + ((x * 7) % (lakeH - 6));
-        if (d % 3 !== 2 && d + 1 > backH(x) - lakeH) L.rStars.cell(x, shoreY + d);
-      }
-    }
-    // The shoreline: a thin bright edge where the land meets the water.
-    for (let x = 0; x < cols; x += 1) if (bayer(x, 1) < 0.85) L.shore.cell(x, shoreY);
+    paintLake(L, cols, rows, lakeH, midH, backH, treeCells);
     art.innerHTML = Object.entries(L)
       .map(([name, layer]) => `<path class="s-${name}" d="${layer.d}"/>`)
       .join('');
@@ -211,19 +267,6 @@ export function landscape(): Scene {
   };
   const between = (a: number, b: number): number => a + Math.random() * (b - a);
   const quiet = (): boolean => document.hidden || isReduced();
-
-  /** Moves an element across the scene, from one side out to the other. */
-  function cross(thing: HTMLElement, seconds: number, toLeft: boolean): Promise<void> {
-    const off = `-${thing.offsetWidth + 20}px`;
-    const end = 'calc(100% + 20px)';
-    thing.classList.toggle('is-left', toLeft);
-    thing.classList.add('is-on');
-    const run = thing.animate([{ left: toLeft ? end : off }, { left: toLeft ? off : end }], { duration: seconds * 1000, easing: 'linear' });
-    return run.finished.then(
-      () => thing.classList.remove('is-on'),
-      () => thing.classList.remove('is-on'),
-    );
-  }
 
   const sail = (): void => {
     if (quiet()) return later(20000, sail);
